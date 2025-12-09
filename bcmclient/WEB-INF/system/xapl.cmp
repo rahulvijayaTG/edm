@@ -1,0 +1,604 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<x2:components description="Library of scripting/utility components" 
+               xmlns:xapl="http://www.i2.com/xapl"
+               xmlns:util="http://www.i2.com/util"
+               xmlns:x2="http://www.i2.com/x2"
+               xmlns:docutil="http://www.i2.com/docutil">
+
+	<x2:component name="return" 
+                description="Breaks execution of a x2:command and sets the result data.">
+		<x2:class value="com.i2.x2.components.xapl.Return"/>
+    <x2:body>
+        <x2:include-component type="ANY" />
+    </x2:body>
+
+    <x2:example type="description">
+      Below is a code snippet showing the use of return in x2.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="returnTask" description="_">
+        <xapl:return>
+          <!-- This is an undefined element.  Undefined elements are converted into JDOM objects. -->
+          <TASKS>
+            <TASK name="Address Book" url="addr_book/index.jsp"/>
+            <TASK name="Create Order" url="worksheet/index.jsp"/>
+            <TASK name="Saved Transactions" url="saved_trans/index.jsp"/>
+          </TASKS>
+        </xapl:return> 
+      </x2:command>
+    </x2:example>
+
+  </x2:component>
+	
+	<x2:component name="error" 
+                description="Throws an 'exception' within the xapl script.  As the x2 engine rollback the commands, any xapl:on-error elements that were previously defined will be executed.  Components that are on the stack will also have their onError() methods executed.">
+		<x2:class value="com.i2.x2.components.xapl.Error"/>
+		<x2:body>
+			<x2:include-component type="ANY" minOccur="1"/>
+		</x2:body>
+	</x2:component>
+	
+	<x2:component name="on-error" 
+                description="Script that is executed if an error condition happens within the enclosing x2:command.">
+		<x2:class value="com.i2.x2.components.xapl.OnError"/>
+		<x2:body>
+			<x2:include-component type="ANY" minOccur="1"/>
+		</x2:body>
+	</x2:component>	
+	
+	<x2:component name="value-of" 
+                description="Calculates the value of an XPath expression, converts that value to a string, and returns the result.">
+		<x2:class value="com.i2.x2.components.xapl.ValueOf"/>
+		<x2:input name="select" description="An XPath expression that is evaluated." />
+
+    <x2:example type="description">
+      Below is a code snippet showing how to retrieve values in x2.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="printHello" description="_">
+        <xapl:variable name="user">
+          <USER>
+            <FIRST_NAME Value="John"/>
+            <LAST_NAME Value="Doe"/>
+          </USER>
+        </xapl:variable>
+        <xapl:print> 
+          Hello, 
+          <xapl:value-of select="$name/FIRST_NAME/@Value"/>  
+          !      
+        </xapl:print>
+      </x2:command>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results:
+    </x2:example>
+    <x2:example type="code">
+      Hello, John!
+    </x2:example>
+
+	</x2:component>
+	
+	<!-- list-based tags -->
+	<x2:component name="for-each" 
+                description="Iterates through a list of elements specified in the select attribute.">
+		<x2:class value="com.i2.x2.components.xapl.ForEach"/>
+		<x2:input name="select" description="An XPath expression that selects nodes within a variable." />
+		<x2:input name="varName" description="Name of the value that will be set during iteration." />
+		<x2:body>
+			<x2:include-component type="ANY" />
+		</x2:body>
+
+    <x2:example type="description">
+      Below is a code snippet showing how to loop through an list of elements.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="doForEach" description="_">
+        <xapl:variable name="doc">
+          <ROOT>
+            <CHILD id="1">
+              <NODE name="AA"/>
+            </CHILD>
+            <CHILD id="2">
+              <NODE name="BB"/>
+            </CHILD>
+            <CHILD id="3">
+              <NODE name="AA"/>
+            </CHILD>
+            <CHILD id="4">
+              <NODE name="BB"/>
+            </CHILD>
+          </ROOT>
+        </xapl:variable>
+        <xapl:for-each select="$doc/CHILD" varName="child">
+          <xapl:print select="$child/@id"/> 
+        </xapl:for-each>
+      </x2:command>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results:
+    </x2:example>
+    <x2:example type="code">
+      1
+    </x2:example>
+    <x2:example type="code">
+      2
+    </x2:example>
+    <x2:example type="code">
+      3
+    </x2:example>
+    <x2:example type="code">
+      4
+    </x2:example>
+
+	</x2:component>
+	
+	<x2:component name="get-index" 
+                description="Returns the element at the specified indices.  This should be deprecated in favor of using a XPath predicate within a xapl:value-of element.">
+		<x2:class value="com.i2.x2.components.xapl.GetIndex"/>
+		<x2:input name="select" description="An XPath expression that defines the element." />
+		<x2:input name="index" description="Integer that represents the order within the parent to retrieve." />
+
+    <x2:example type="description">
+      Below is a code snippet showing a way to retrieve a specifed element in x2.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="getElement" description="_">
+        <xapl:variable name="doc">
+          <ROOT>
+            <CHILD id="1">
+              <NODE name="AA"/>
+            </CHILD>
+            <CHILD id="2">
+              <NODE name="BB"/>
+            </CHILD>
+            <CHILD id="3">
+              <NODE name="AA"/>
+            </CHILD>
+            <CHILD id="4">
+              <NODE name="BB"/>
+            </CHILD>
+          </ROOT>
+        </xapl:variable>
+        <xapl:print>
+          <xapl:get-index select="$doc/CHILD" index="2"/>
+        </xapl:print> 
+      </x2:command>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results:
+    </x2:example>
+    <x2:example type="code">
+      <CHILD id="2">
+        <NODE name="BB"/>
+      </CHILD>
+    </x2:example>
+
+	</x2:component>
+	
+	<x2:component name="list-size" 
+                description="Returns the number of children specified by the select attribute.">
+		<x2:class value="com.i2.x2.components.xapl.ListSize"/>
+		<x2:input name="select" description="An XPath expression that defines the element(s) to be counted." />
+
+    <x2:example type="description">
+      Below is a code snippet showing a way to retrieve the number of matching elements.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="getElement" description="_">
+        <xapl:variable name="doc">
+          <ROOT>
+            <CHILD id="1">
+              <NODE name="AA"/>
+            </CHILD>
+            <CHILD id="2">
+              <NODE name="BB"/>
+            </CHILD>
+            <CHILD id="3">
+              <NODE name="AA"/>
+            </CHILD>
+            <CHILD id="4">
+              <NODE name="BB"/>
+            </CHILD>
+          </ROOT>
+        </xapl:variable>
+        <xapl:print>
+          Number of children:
+          <xapl:list-size select="$doc/CHILD"/>
+        </xapl:print> 
+      </x2:command>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results:
+    </x2:example>
+    <x2:example type="code">
+      Number of children: 4
+    </x2:example>
+
+	</x2:component>
+	
+	<!-- conditional / looping tags -->
+	<x2:component name="choose" 
+                description="Contains a list of conditionals that determines an associated set of actions.  Xapl version of the Java switch statement.">
+		<x2:class value="com.i2.x2.components.xapl.Choose"/>
+		<x2:body>
+			<x2:include-component name="xapl:when" minOccur="1"/>
+			<x2:include-component name="xapl:otherwise" maxOccur="1"/>
+		</x2:body>
+
+    <x2:example type="description">
+      Below is a code snippet showing a way to use a choose/when in x2.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="showChooseWhen" description="_">
+        <xapl:choose>
+          <xapl:when test="true()">
+            <xapl:print>
+              true() is true
+            </xapl:print>
+          </xapl:when>
+          <xapl:when test="true">
+            <xapl:print>
+              never called since choose/when is like if/then/else
+            </xapl:print>
+          </xapl:when>
+          <xapl:otherwise>
+            <xapl:print>
+              called only when all else fails
+            </xapl:print>
+          </xapl:otherwise>
+        </xapl:choose>
+      </x2:command>
+    </x2:example>
+
+	</x2:component>
+	
+	<x2:component name="when" 
+                description="Defines one branch of an xapl:choose element.  It is equivalent to the Java case statement.">
+		<x2:class value="com.i2.x2.components.xapl.When"/>
+		<x2:input name="test" description="Contains a boolean expression that is evaluated.  If the expression is true, the contents of the xapl:when element are processed; otherwise, the contents of the xapl:when are ignored." />
+		<x2:body>
+			<x2:include-component type="ANY"/>
+		</x2:body>
+
+    <x2:example type="description">
+      Below is a code snippet showing a way to use a choose/when in x2.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="showChooseWhen" description="_">
+        <xapl:choose>
+          <xapl:when test="true()">
+            <xapl:print>
+              true() is true
+            </xapl:print>
+          </xapl:when>
+          <xapl:when test="true">
+            <xapl:print>
+              never called since choose/when is like if/then/else
+            </xapl:print>
+          </xapl:when>
+          <xapl:otherwise>
+            <xapl:print>
+              called only when all else fails
+            </xapl:print>
+          </xapl:otherwise>
+        </xapl:choose>
+      </x2:command>
+    </x2:example>
+
+	</x2:component>
+	
+	<x2:component name="otherwise" 
+                description="Defines the else or default case in an xapl:choose element.">
+		<x2:class value="com.i2.x2.components.xapl.Otherwise"/>
+		<x2:body>
+			<x2:include-component type="ANY"/>
+		</x2:body>
+
+    <x2:example type="description">
+      Below is a code snippet showing a way to use a choose/when in x2.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="showChooseWhen" description="_">
+        <xapl:choose>
+          <xapl:when test="true()">
+            <xapl:print>
+              true() is true
+            </xapl:print>
+          </xapl:when>
+          <xapl:when test="true">
+            <xapl:print>
+              never called since choose/when is like if/then/else
+            </xapl:print>
+          </xapl:when>
+          <xapl:otherwise>
+            <xapl:print>
+              called only when all else fails
+            </xapl:print>
+          </xapl:otherwise>
+        </xapl:choose>
+      </x2:command>
+    </x2:example>
+
+	</x2:component>
+	
+	<x2:component name="if" 
+                description="Defines a simple conditional.  If you need a if-then-else statement, use the xapl:choose element with a single xapl:when and a single xapl:otherwise.">
+		<x2:class value="com.i2.x2.components.xapl.If"/>
+		<x2:input name="test" description="Contains a boolean expression that is evaluated.  If the expression is true, the contents of the xapl:if element are processed." />
+		<x2:body>
+			<x2:include-component type="ANY"/>
+		</x2:body>
+
+    <x2:example type="description">
+      Below is a code snippet showing a way to use if in x2.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="showIf" description="_">
+        <xapl:if test="count($foo) > 0">
+          <xapl:print>
+            Only printed if a variable named $foo exists
+          </xapl:print>
+        </xapl:if>
+      </x2:command>
+    </x2:example>
+
+	</x2:component>
+	
+	<x2:component name="iterate" 
+                description="Iterates a specified number of times over its contents.">
+		<x2:class value="com.i2.x2.components.xapl.Iterate"/>
+		<x2:input name="numTimes" description="Number of times to iterate." />
+		<x2:input name="indexVarName" description="Variable that is incremented to current iteration." />
+		<x2:body>
+			<x2:include-component type="ANY" />
+		</x2:body>
+
+    <x2:example type="description">
+      Below is a code snippet showing a way to use iterate in x2.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="iterate" description="_">
+        <xapl:iterate numTimes="3" indexVarName="index">
+          <xapl:print>
+            Index
+            <xapl:value-of select="$index"/>
+          </xapl:print>
+        </xapl:iterate>
+      </x2:command>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results:
+    </x2:example>
+    <x2:example type="code">
+      Index 0
+    </x2:example>
+    <x2:example type="code">
+      Index 1
+    </x2:example>
+    <x2:example type="code">
+      Index 2
+    </x2:example>
+
+	</x2:component>
+  
+	<x2:component name="clone" 
+                description="Makes a recursive copy of the referenced element including its children.">
+		<x2:class value="com.i2.x2.components.xapl.Clone"/>
+		<x2:input name="select" description="An XPath expression that determines to element to copy." />
+
+    <x2:example type="description">
+      Below is a code snippet showing a way to clone an element.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="getElement" description="_">
+        <xapl:variable name="doc">
+          <ROOT>
+            <CHILD id="1">
+              <NODE name="AA"/>
+            </CHILD>
+            <CHILD id="2">
+              <NODE name="BB"/>
+            </CHILD>
+          </ROOT>
+        </xapl:variable>
+        <xapl:variable name="cloneDoc">
+          <xapl:clone select="$doc"/>
+        </xapl:variable>
+        <docutil:remove select="$cloneDoc/CHILD[@id='1']"/>
+        <xapl:print>
+          Original doc:
+          <xapl:value-of select="$doc"/>
+        </xapl:print> 
+        <xapl:print>
+          Cloned doc:
+          <xapl:value-of select="$cloneDoc"/>
+        </xapl:print> 
+      </x2:command>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results:
+    </x2:example>
+    <x2:example type="code">
+      Original doc:
+        <ROOT>
+          <CHILD id="1">
+            <NODE name="AA"/>
+          </CHILD>
+          <CHILD id="2">
+            <NODE name="BB"/>
+          </CHILD>
+        </ROOT>
+    </x2:example>
+    <x2:example type="code">
+      Cloned doc:
+        <ROOT>
+          <CHILD id="2">
+            <NODE name="BB"/>
+          </CHILD>
+        </ROOT>
+    </x2:example>
+
+	</x2:component>
+
+  <x2:component name="set-value" description="Sets an attribute value to the request object.">
+    <x2:class value="com.i2.x2.components.xapl.SetValue"/>
+    <x2:input name="name" description="Name of the attribute to be set." />
+    <x2:input name="resolver" description="Execution Context resolver to use." />
+    <x2:body>
+      <x2:include-component type="ANY"/>
+    </x2:body>
+  </x2:component>
+
+  <x2:component name="create-array" description="Creates a list of integers.">
+    <x2:class value="com.i2.x2.components.xapl.CreateArray"/>
+    <x2:input name="name" description="Name of the list to be allocated." />
+    <x2:input name="size" description="Size of list to create." />
+    <x2:input name="initial" description="Initial value of the integers." />
+  </x2:component>
+  
+	<x2:component name="while" description="Executes children while test is true.">
+		<x2:class value="com.i2.x2.components.xapl.While"/>
+		<x2:input name="test" description="Contains a boolean expression that is evaluated." />
+		<x2:body>
+			<x2:include-component type="ANY"/>
+		</x2:body>
+	</x2:component> 
+
+  <x2:component name="variable" description="Declares a variable handle and sets the value if a select statement or body is supplied.  If the global attribute is not set true, the scope of the variable is only within the declaring element.  The variable is not passed to other commands except through the use of the x2:with-param.">
+    <x2:class value="com.i2.x2.components.xapl.Variable"/>
+	
+  	<x2:input name="name" description="Name of the variable." required="true"/>
+  	<x2:input name="resolver" description="_" required="false"/>
+  	<x2:input name="enforceList" description="_" required="false"/>	
+  	<x2:input name="global" description="Set true if variable should not ever go out of scope." required="false"/>		
+  	<x2:input name="select" description="An XPath expression that defines the initial value of the variable." required="false"/>		
+  	<x2:body>
+  	  <x2:include-component type="ANY" minOccur="0"/>
+  	</x2:body>	
+    
+    <x2:example type="description">
+      Below is a code snippet showing how to declare variables in x2.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="variables" description="_">
+        <xapl:variable name="doc">
+          <x2:execute name="examples:getDocument"/>
+        </xapl:variable>
+        <xapl:if test="count($doc/CHILD) > 0">
+          <xapl:variable name="childIds" select="$doc/CHILD/@id"/>
+          <xapl:print select="$childIds"/> 
+          <!-- In scope -->
+        </xapl:if>
+        <xapl:print select="$childIds"/> 
+        <!-- Out of scope -->
+      </x2:command>
+    </x2:example>
+
+  </x2:component>
+  
+  <x2:component name="set-variable" description="Sets a value on a previously declared variable.">
+    <x2:class value="com.i2.x2.components.xapl.SetVariable"/>	
+  	<x2:input name="name" description="Name of the variable." required="true"/>
+  	<x2:input name="select" description="An XPath expression that defines the new value of the variable." required="false"/>		
+  	<x2:body>
+  	  <x2:include-component type="ANY" minOccur="0"/>
+  	</x2:body>	
+
+    <x2:example type="description">
+      Below is a code snippet showing how to set a variable in x2.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="variables" description="_">
+        <xapl:variable name="temp" select="Hello, World!"/>        
+        <xapl:print> 
+          Initial setting of temp: 
+          <xapl:value-of select="$temp"/>        
+        </xapl:print>
+        <xapl:set-variable name="temp">
+          Hello, John Doe!
+        </xapl:set-variable>
+        <xapl:print> 
+          New setting of temp: 
+          <xapl:value-of select="$temp"/>        
+        </xapl:print>
+      </x2:command>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results:
+    </x2:example>
+    <x2:example type="code">
+      Initial setting of temp:
+    </x2:example>
+    <x2:example type="code">
+      Hello, World!
+    </x2:example>
+    <x2:example type="code">
+      New setting of temp:
+    </x2:example>
+    <x2:example type="code">
+      Hello, John Doe!
+    </x2:example>
+
+  </x2:component>
+
+  <x2:component name="remove-variable" description="Removes a variable and its value.">
+    <x2:class value="com.i2.x2.components.xapl.RemoveVariable"/>	
+	  <x2:input name="name" description="Name of the variable." required="true"/>
+
+    <x2:example type="description">
+      Below is a code snippet showing how to remove a variable in x2.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="variables" description="_">
+        <xapl:variable name="doc">
+          <x2:execute name="examples:getDocument"/>
+        </xapl:variable>
+        <xapl:print select="$doc"/> 
+        <!-- In scope -->
+        <xapl:remove-variable name="doc"/>  
+        <xapl:print select="$doc"/> 
+        <!-- Out of scope -->
+      </x2:command>
+    </x2:example>
+  </x2:component>
+  
+  <x2:component name="print" description="Displays message to either the console, the log file or both depending on the log setting.  The default level setting is debug.">
+  	<x2:class value="com.i2.x2.components.xapl.Print"/>
+  	<x2:input name="select" description="An XPath expression that defines the value to print." required="false"/>				
+  	<x2:input name="level" description="Sets the level of the message.  Possible values include: error, warn, info, debug" required="false"/>						
+  	<x2:input name="theme" description="Sets the theme that the message should be associated with." required="false"/>						
+  	<x2:body>
+  		<x2:include-component type="ANY"/>
+  	</x2:body>
+
+    <x2:example type="description">
+      Below is a code snippet showing two ways to print in x2.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="printHello" description="_">
+        <xapl:print select="'Hello, World!'"/> 
+        <xapl:variable name="name">
+          John Doe
+        </xapl:variable>
+        <xapl:print> 
+          Hello, 
+          <xapl:value-of select="$name"/>  
+          !      
+        </xapl:print>
+      </x2:command>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results:
+    </x2:example>
+    <x2:example type="code">
+      Hello, World!
+    </x2:example>
+    <x2:example type="code">
+      Hello, John Doe!
+    </x2:example>
+
+  </x2:component>  
+
+</x2:components>
+

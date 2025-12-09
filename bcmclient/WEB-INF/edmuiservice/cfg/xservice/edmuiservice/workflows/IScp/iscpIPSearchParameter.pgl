@@ -1,0 +1,62 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="uiWfIPSegParamSearchParameter.pgl" title="Select Parameter">
+  <ui:container id="top" displayText="Select Parameter" collapsable="true">
+    <ui:step id="topStep">
+      <ui:search id="srchContainer" displayText="Search Parameter" collapsable="false" exportSearch="false" saveSearch="false">
+        <ui:field-group id="srch" columns="2">
+          <ui:entry-field id="ParameterMnemonicValue" name="ParameterMnemonicValue" displayText="Parameter Name" />
+          <ui:entry-field id="ParameterDescription" name="ParameterDescription" displayText="Parameter Description" />
+          <ui:hidden-field name="FIELD_NAME" value="{$root/FIELD_NAME/@Value}" />
+          <ui:hidden-field name="PREV_SEL" id="PREV_SEL" />
+        </ui:field-group>
+      </ui:search>
+      <ui:table rememberSelections="true" id="bottomTable" collapsable="false" displayText="Parameter Search Results" rowSrc="$root/ROW_DATA" totalRowCount="$root/TotalRowCount/@Value" maxRows="10" rowId="PARAMETER_NAME" selectable="All" postRowIdAs="SELECTED_ITEM">
+        <ui:field-group id="tableColumns" width="100%">
+          <ui:display-field name="PARAMETER_NAME" id="PARAMETER_NAME" displayText="Parameter Name" sortable="true" />
+          <ui:display-field name="PARAMETER_DESC" id="PARAMETER_DESC" displayText="Parameter Description" />
+          <ui:display-field name="PARAMETER_UOM" id="PARAMETER_UOM" displayText="Parameter UOM" />
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button displayText="Cancel" id="cancel" name="cancel" onClick="javascript:window.close();" />
+          <ui:button id="select" name="select" displayText="Select" emphasized="true" enabledBySelections="true" onClick="javascript:selectItem();" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>function selectItem()
+    {
+		  var selectedIds =document.getElementsByName( 'SELECTED_ITEM' );
+		  var prevSelections =document.form.PREV_SEL.value;
+
+		  var length = selectedIds.length;
+      var items = null;
+      var categoryCodes = null;
+      for(i=0; i &lt; length; i++)
+			{
+        var t = selectedIds[ i ];
+        if ( t.checked )
+        {
+          if( items )
+            items += ',' + t.value;
+          else
+            items = t.value;
+        }
+      }
+		  if(prevSelections.length &gt; 0)
+	    {
+		      items= prevSelections+','+items;
+	         }
+      if ( document.form.FIELD_NAME.value.length &gt; 0)
+        {
+		          var fieldName = document.form.FIELD_NAME.value;
+          eval("parent.opener.form." + fieldName + ".value = items;");
+      }
+      window.close();    
+      }
+		function onSearch()
+      {
+
+		 document.form.BUTTON_ID.value="search_button";
+                document.form.submit();
+		}</ui:script>
+</ui:page-group>
+

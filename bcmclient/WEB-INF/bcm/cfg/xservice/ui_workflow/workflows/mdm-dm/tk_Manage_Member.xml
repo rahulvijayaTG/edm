@@ -1,0 +1,1698 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="1358" ShowInBreadCrumbs="true" Version="1.0" Name="tk_Manage_Member" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="CONDITION" Type="string" Comment="Capture the USING Field from the 1st page"/>
+    <variable Name="Current_dimension_id" Type="string" Comment="Captures Current Dimension_Id"/>
+    <variable Name="Current_dimension_name" Type="string" Comment="Captures Current Dimension Name"/>
+    <variable Name="Current_level_id" Type="string" Comment=""/>
+    <variable Name="Current_level_name" Type="string" Comment=""/>
+    <variable Name="Current_member_id" Type="string" Comment=""/>
+    <variable Name="Current_member_name" Type="string" Comment="Capture Member Name"/>
+    <variable Name="MetaData" Type="xml" Comment="Captures Dimension Level Tree"/>
+    <variable Name="MoveData" Type="xml" Comment="Capture Move Data HierarchyId/ParentLevelId/ParenMemberId"/>
+    <variable Name="Result_Set" Type="xml" Comment="Captures Query Results"/>
+    <variable Name="Search_string" Type="string" Comment=""/>
+    <variable Name="USING" Type="string" Comment="Capture the USING Field from the 1st page"/>
+    <variable Name="UserAction" Type="string" Comment="capture the user actions"/>
+    <variable Name="data" Type="xml" Comment="Capture search results [member manage]"/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+      </actions>
+      <next_nodes>
+        <next_node Name="set_MetaData" Description=""/>
+      </next_nodes>
+    </start>
+    <task Name="set_MetaData">
+      <actions>
+        <action>
+          <REQUEST Name="MetaDataLoad" AssignToVar="temp">
+          </REQUEST>
+          <TO_DOCVAR AssignToVar="MetaData">
+            <DIMENSIONAL_DATA/>
+          </TO_DOCVAR>
+          <SET Var="D_COUNT" FromValue="0"/>
+          <SET Var="L_COUNT" FromValue="0"/>
+          <FOR_EACH SelectList="$temp/DIMENSION" CurrentElement="dim">
+            <TO_DOCVAR AssignToVar="rec">
+              <TO_XML SelectList="$dim"/>
+              <IF_TEST Test="$D_COUNT = '0'">
+                <THEN>
+                  <SET Var="Current_dimension_id" FromValue="{$dim/DIMENSION_ID/@Value}"/>
+                  <SET Var="Current_dimension_name" FromValue="{$dim/DIMENSION_CODE/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <FOR_EACH SelectList="$dim/LEVELS/LEVEL_INFO" CurrentElement="lvl">
+                <IF_TEST Test="$L_COUNT = '0'">
+                  <THEN>
+                    <SET Var="Current_level_id" FromValue="{$lvl/LEVEL_ID/@Value}"/>
+                    <SET Var="Current_level_name" FromValue="{$lvl/LEVEL_CODE/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+                <SET Var="L_COUNT" FromValue="{$L_COUNT+1}"/>
+              </FOR_EACH>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="MetaData" FromValue="{$rec}"/>
+            <SET Var="D_COUNT" FromValue="{$D_COUNT+1}"/>
+          </FOR_EACH>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{outXml,xml}">
+        <next_node Name="Home" Description=""/>
+      </next_nodes>
+    </task>
+    <done Name="done16">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Details" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="SHOW" Template="tk_member_details.pgl" InputVar="{nodeinput,xml}">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$userAction='assign'">
+            <THEN>
+              <REQUEST Name="ValidParMem_Assign" AssignToVar="Result_Assign">
+                <TO_XML SelectList="$thisParam/*"/>
+                <Current_dimension_name Value="{$Current_dimension_name}"/>
+                <Current_dimension_id Value="{$Current_dimension_id}"/>
+                <Current_member_name Value="{$Current_member_name}"/>
+                <Current_level_id Value="{$Current_level_id}"/>
+                <Current_level_name Value="{$Current_level_name}"/>
+                <Current_member_id Value="{$Current_member_id}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='move'">
+            <THEN>
+              <!-- Assigning Default Values to the six variables just to check the move Operation	-->
+              <!--<SET Var="Current_dimension_id" FromValue="1"/>
+              <SET Var="Current_dimension_name" FromValue="Geography"/>
+              <SET Var="Current_level_id" FromValue="3"/>
+              <SET Var="Current_level_name" FromValue="Region "/>
+              <SET Var="Current_member_id" FromValue="15"/>
+              <SET Var="Current_member_name" FromValue="Dubai"/>-->
+              <REQUEST Name="ValidParMem_Move" AssignToVar="Result_Move">
+                <TO_XML SelectList="$thisParam/*"/>
+                <TO_XML SelectList="$MoveData/*"/>
+                <Current_dimension_name Value="{$Current_dimension_name}"/>
+                <Current_dimension_id Value="{$Current_dimension_id}"/>
+                <Current_member_name Value="{$Current_member_name}"/>
+                <Current_level_id Value="{$Current_level_id}"/>
+                <Current_level_name Value="{$Current_level_name}"/>
+                <Current_member_id Value="{$Current_member_id}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <!-- <IF_TEST Test="$userAction = 'LOOP_BACK' or $userAction = 'LOOP_DIMENSION'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="TEMP_DIM">
+                <DIMENSION/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$MetaData/DIMENSION" CurrentElement="dim_info">
+                <TO_DOCVAR AssignToVar="Temp">
+                  <OPTION Id="{$dim_info/DIMENSION_ID/@Value}" Value="{$dim_info/DIMENSION_CODE/@Value}"/>
+                </TO_DOCVAR>
+                <ADD_CHILDREN DocVar="TEMP_DIM" FromValue="{$Temp}"/>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="TEMP_LVL">
+                <LEVEL/>
+              </TO_DOCVAR>
+              <SET Var="LVL_COUNT" FromValue="0"/>
+              <FOR_EACH SelectList="$MetaData/DIMENSION" CurrentElement="dimension_info">
+                <IF_TEST Test="$dimension_info/DIMENSION_ID/@Value = $Current_dimension_id">
+                  <THEN>
+                    <FOR_EACH SelectList="$dimension_info/LEVELS/LEVEL_INFO" CurrentElement="level_info">
+                      <IF_TEST Test="$LVL_COUNT = '0'">
+                        <THEN> -->
+          <!--   <SET Var="Current_level_id" FromValue="{$level_info/LEVEL_ID/@Value}"/>-->
+          <!-- </THEN>
+                      </IF_TEST>
+                      <TO_DOCVAR AssignToVar="TempLevels">
+                        <OPTION Id="{$level_info/LEVEL_ID/@Value}" Value="{$level_info/LEVEL_CODE/@Value}"/>
+                      </TO_DOCVAR>
+                      <ADD_CHILDREN DocVar="TEMP_LVL" FromValue="{$TempLevels}"/>
+                      <SET Var="LVL_COUNT" FromValue="{$LVL_COUNT+1}"/>
+                    </FOR_EACH>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <root>
+                  <TO_XML SelectList="$TEMP_DIM/*"/>
+                  <TO_XML SelectList="$TEMP_LVL/*"/>
+                </root>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST> -->
+          <!-- Setting Pipeline Parameters -->
+          <REQUEST Name="Set_Parameters" AssignToVar="Param_data">
+            <TO_XML SelectList="$MetaData/*"/>
+            <DIM_ID Value="{$Current_dimension_id/@Value}"/>
+            <LEVEL_ID Value="{$Current_level_id/@Value}"/>
+          </REQUEST>
+          <SET Var="Current_dimension_name" FromValue="{$Param_data/DIM_NAME/@Value}"/>
+          <SET Var="Current_level_name" FromValue="{$Param_data/LEVEL_NAME/@Value}"/>
+          <SET Var="Current_dimension_id" FromValue="{$Param_data/DIM_ID/@Value}"/>
+          <SET Var="Current_level_id" FromValue="{$Param_data/LEVEL_ID/@Value}"/>
+          <!-- Setting Pipeline Parameters -->
+          <!-- [ show parents -->
+          <IF_TEST Test="$userAction='show_parents' or $thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <REQUEST Name="showmem1" AssignToVar="temp">
+                <Current_dimension_name Value="{$Current_dimension_name}"/>
+                <Current_dimension_id Value="{$Current_dimension_id}"/>
+                <Current_member_name Value="{$Current_member_name}"/>
+                <Current_level_id Value="{$Current_level_id}"/>
+                <Current_level_name Value="{$Current_level_name}"/>
+                <Current_member_id Value="{$Current_member_id}"/>
+              </REQUEST>
+              <TO_DOCVAR AssignToVar="selectedRow">
+                <SELECTED_PARENT>
+                  <HIERARCHY Name="{trim($thisParam/hierarchy_name1/@Value)}"/>
+                  <LEVEL Value="{trim($thisParam/parent_level_id1/@Value)}" Name="{trim($thisParam/parent_level_name1/@Value)}"/>
+                </SELECTED_PARENT>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="moveinfo">
+                <MOVE>
+                  <LEVEL Value="{trim($thisParam/parent_level_id1/@Value)}" Name="{trim($thisParam/parent_level_name1/@Value)}">
+                    <MEMBER Value="{trim($thisParam/parent_member_id1/@Value)}" Name="{trim($thisParam/parent_member_name1/@Value)}"/>
+                  </LEVEL>
+                </MOVE>
+              </TO_DOCVAR>
+              <REQUEST Name="generateHierarchyGraph" AssignToVar="hierGraph">
+                <DIM_ID Value="{$Current_dimension_id}"/>
+                <DIM_NAME Value="{$Current_dimension_name}"/>
+                <TO_XML SelectList="$MetaData/*"/>
+                <TO_XML SelectList="$selectedRow"/>
+                <TO_XML SelectList="$moveinfo"/>
+                <TO_XML SelectList="$temp/*"/>
+                <Current_member_name Value="{$Current_member_name}"/>
+                <Current_level_id Value="{$Current_level_id}"/>
+                <Current_level_name Value="{$Current_level_name}"/>
+                <Current_member_id Value="{$Current_member_id}"/>
+                <Start_Count Value="{$thisParam/tab1_START_COUNT/@Value}"/>
+                <Context_Member Value="{trim($thisParam/parent_member_id1/@Value)}"/>
+                <Batch Value="FALSE"/>
+                <mem_Stat Value="0"/>
+              </REQUEST>
+              <IF_TEST Test="strlen($hierGraph/Error/@Value) = 0">
+                <THEN>
+                  <REQUEST Name="VPM_Table_Query" AssignToVar="VPM" MaxRows="$Max_Rows" ReturnRowCount="Yes">
+                    <TO_XML SelectList="$hierGraph/*"/>
+                    <EXISTING_PARENT_ID Value="{$thisParam/parent_member_id1/@Value}"/>
+                    <EXISTING_PARENT_LEVEL_ID Value="{$thisParam/parent_level_id1/@Value}"/>
+                    <EXISTING_PARENT_NAME Value="{$thisParam/parent_member_name1/@Value}"/>
+                    <CURRENT_MEMBER_ID Value="{$Current_member_id}"/>
+                    <StartCount Value="{$thisParam/tab1_START_COUNT/@Value}"/>
+                  </REQUEST>
+                  <TO_DOCVAR AssignToVar="Assign">
+                    <!--<MEMBERPARENTDETAIL TotalRowCount="{$VPM/Count/@Value}"/>-->
+                    <MEMBERPARENTDETAIL TotalRowCount="{$hierGraph/ @TotalRowCount}"/>
+                  </TO_DOCVAR>
+                  <FOR_EACH SelectList="$VPM/LINE" CurrentElement="cur_rec">
+                    <ADD_CHILDREN DocVar="Assign" FromSelect="$cur_rec"/>
+                  </FOR_EACH>
+                  <TO_DOCVAR AssignToVar="MoveData">
+                    <MOVE_PARENT_DATA>
+                      <HIERARCHY_ID Value="{$thisParam/hierarchy_id1/@Value}"/>
+                      <HIERARCHY_NAME Value="{$thisParam/hierarchy_name1/@Value}"/>
+                      <PARENT_LEVEL_ID Value="{$thisParam/parent_level_id1/@Value}"/>
+                      <PARENT_LEVEL_NAME Value="{$thisParam/parent_level_name1/@Value}"/>
+                      <PARENT_MEMBER_ID Value="{$thisParam/parent_member_id1/@Value}"/>
+                      <PARENT_MEMBER_NAME Value="{$thisParam/parent_member_name1/@Value}"/>
+                    </MOVE_PARENT_DATA>
+                  </TO_DOCVAR>
+                  <!--
+                  <SET Var="asd" FromSelect="$qssign/MEMBERPARENTDETAIL"/>
+                  <FOR_EACH SelectList="$hierGraph/SQL_RESULT" CurrentElement="reply1">
+                    <TO_DOCVAR AssignToVar="assigned">
+                      <LINE>
+                        <memcode Value="{$reply1/MEMBER_ID/@Value}"/>
+                        <membdescription Value="{$reply1/MEMBER_ID/@Value}"/>
+                        <membstatus Value="xxxx"/>
+                        <haschild Value="xxxx"/>
+                      </LINE>
+                    </TO_DOCVAR>
+                    <ADD_CHILDREN DocVar="Assign" FromSelect="$assigned"/>
+                  </FOR_EACH> -->
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="Assign">
+                    <Error/>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="Assign" FromSelect="$hierGraph/*"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <!-- ] show parents -->
+          <!-- arun -->
+          <REQUEST Name="getData" AssignToVar="temp">
+            <TO_XML SelectList="$MetaData"/>
+            <Current_dimension_name Value="{$Current_dimension_name}"/>
+            <Current_dimension_id Value="{$Current_dimension_id}"/>
+            <Current_member_name Value="{$Current_member_name}"/>
+            <Current_level_id Value="{$Current_level_id}"/>
+            <Current_level_name Value="{$Current_level_name}"/>
+            <Current_member_id Value="{$Current_member_id}"/>
+            <userAction Value="{$userAction}"/>
+            <operation Value="{$thisParam/operation/@Value}"/>
+            <TO_XML SelectList="$Assign"/>
+          </REQUEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <TO_XML SelectList="$temp"/>
+          </TO_DOCVAR>
+          <SET DocVar="pglFormInput" Property="Dimension" FromValue="{$Current_dimension_id/@Value}"/>
+          <SET DocVar="pglFormInput" Property="Success_flag" FromValue="{$thisParam/Success_flag/@Value}"/>
+          <SET DocVar="pglFormInput" Property="Level" FromValue="{$Current_level_id/@Value}"/>
+          <SET DocVar="pglFormInput" Property="member_name" FromValue="{$Current_member_name/@Value}"/>
+          <SET DocVar="pglFormInput" Property="member_description" FromValue="{$thisParam/member_description/@Value}"/>
+          <IF_TEST Test="(($userAction/@Value ='Duplicate')  or ($userAction/@Value = 'New'))">
+            <THEN>
+              <SET DocVar="pglFormInput" Property="operation" FromValue="{$userAction/@Value}"/>
+              <TO_DOCVAR AssignToVar="Middletable_Null">
+                <MEMBERSDETAIL/>
+              </TO_DOCVAR>
+              <ADD_CHILDREN FromDocVar="Middletable_Null" DocVar="pglFormInput"/>
+              <TO_DOCVAR AssignToVar="Bottomtable_Null">
+                <MEMBERPARENTDETAIL/>
+              </TO_DOCVAR>
+              <ADD_CHILDREN FromDocVar="Bottomtable_Null" DocVar="pglFormInput"/>
+            </THEN>
+            <ELSE>
+              <!-- capture the user action in manage member screen -->
+              <SET Var="operationcode" FromValue="{$thisParam/operation/@Value}"/>
+              <SET DocVar="pglFormInput" Property="operation" FromValue="{$operationcode/@Value}"/>
+            </ELSE>
+          </IF_TEST>
+          <!--ASSIGNING DEFAULT VALUES TO THE VALID PARENT MEMBERS TABLE  amit G-->
+          <!--   <IF_TEST Test="($userAction ='show_parents')or($userAction ='move')or($userAction ='assign')">
+            <THEN>
+              <REQUEST Name="VPM_Table_Query" AssignToVar="vpm_doc">
+                <TO_XML SelectList="$thisParam/*"/>
+              </REQUEST>
+              <TO_DOCVAR AssignToVar="Final_VPM_doc">
+                <MEMBERPARENTDETAIL/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$vpm_doc/*" CurrentElement="temp">
+                <ADD_CHILDREN DocVar="Final_VPM_doc" FromDocVar="temp"/>
+              </FOR_EACH>
+              <ADD_CHILDREN FromDocVar="Final_VPM_doc" DocVar="pglFormInput"/>
+            </THEN>
+                </IF_TEST>-->
+          <SET DocVar="pglFormInput" Property="MAX_Rows" FromValue="{$Max_Rows/@Value}"/>
+          <SET DocVar="pglFormInput" Property="Current_member_id" FromValue="{$Current_member_id}"/>
+          <IF_TEST Test="$userAction='save'">
+            <THEN>
+              <SET DocVar="pglFormInput" Property="member_name" FromValue="{$nodeinput/member_name/@Value}"/>
+              <SET DocVar="pglFormInput" Property="member_description" FromValue="{$nodeinput/member_description/@Value}"/>
+              <TO_DOCVAR AssignToVar="Middletable_Null">
+                <MEMBERSDETAIL/>
+              </TO_DOCVAR>
+              <ADD_CHILDREN FromDocVar="Middletable_Null" DocVar="pglFormInput"/>
+              <TO_DOCVAR AssignToVar="Bottomtable_Null">
+                <MEMBERPARENTDETAIL/>
+              </TO_DOCVAR>
+              <ADD_CHILDREN FromDocVar="Bottomtable_Null" DocVar="pglFormInput"/>
+              <SET Var="ERR_TAG" FromSelect="$nodeinput/REQUEST/member_name"/>
+              <!-- <TO_DOCVAR AssignToVar="MemberTag">
+                <member_name Value="{$nodeinput/member_name/@Value}">
+                  <TO_XML SelectList="$ERR_TAG"/>
+                </member_name>
+              </TO_DOCVAR>-->
+              <SET_CHILD Value="{$pglFormInput}" FromValue="{$ERR_TAG}"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOOP_DIMENSION'">
+            <THEN>
+              <SET Var="Current_dimension_id" FromValue="{$thisParam/Dimension/@Value}"/>
+              <SET Var="LVL_COUNT" FromValue="0"/>
+              <FOR_EACH SelectList="$MetaData/DIMENSION" CurrentElement="dimension_info">
+                <IF_TEST Test="$dimension_info/DIMENSION_ID/@Value = $Current_dimension_id">
+                  <THEN>
+                    <FOR_EACH SelectList="$dimension_info/LEVELS/LEVEL_INFO" CurrentElement="level_info">
+                      <IF_TEST Test="$LVL_COUNT = '0'">
+                        <THEN>
+                          <SET Var="Current_level_id" FromValue="{$level_info/LEVEL_ID/@Value}"/>
+                        </THEN>
+                      </IF_TEST>
+                      <SET Var="LVL_COUNT" FromValue="{$LVL_COUNT+1}"/>
+                    </FOR_EACH>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <SET Var="userAction" FromValue="LOOP_BACK"/>
+              <SET Var="Current_member_id" FromValue=""/>
+              <SET Var="Current_member_name" FromValue=""/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOOP_LEVEL'">
+            <THEN>
+              <SET Var="Current_level_id" FromValue="{$thisParam/Level/@Value}"/>
+              <SET Var="userAction" FromValue="LOOP_BACK"/>
+              <SET Var="Current_member_id" FromValue=""/>
+              <SET Var="Current_member_name" FromValue=""/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='assign'">
+            <THEN>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='show_parents'">
+            <THEN>
+              <!--Resetting the Start Count-->
+              <SET Var="thisParam" Property="tab1_START_COUNT" FromValue="0"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='save'">
+            <THEN>
+              <!-- Validation for code-width -->
+              <REQUEST Name="CodewidthValidation" AssignToVar="Result">
+                <member_name Value="{$thisParam/member_name/@Value}"/>
+                <Level Value="{$Current_level_id/@Value}"/>
+              </REQUEST>
+              <IF_TEST Test="$Result/_RESULT/@Value!='ERROR'">
+                <THEN>
+                  <REQUEST Name="MemberCodeUniquenessValidation" AssignToVar="Result2">
+                    <member_name Value="{$thisParam/member_name/@Value}"/>
+                    <Level Value="{$Current_level_id/@Value}"/>
+                  </REQUEST>
+                  <IF_TEST Test="$Result2/_RESULT/@Value!='ERROR'">
+                    <THEN>
+                      <IF_TEST Test="$thisParam/memberDesc/@Value = ''">
+                        <THEN>
+                          <SET DocVar="thisParam" Property="memberDesc" FromValue="{$thisParam/member_name/@Value}"/>
+                        </THEN>
+                      </IF_TEST>
+                      <REQUEST Name="saveOperation" AssignToVar="req1">
+                        <CREATED_BY Value="{$UserId}"/>
+                        <Current_dimension_id Value="{$Current_dimension_id}"/>
+                        <Current_dimension_name Value="{$Current_dimension_name}"/>
+                        <Current_member_name Value="{$Current_member_name}"/>
+                        <Current_level_id Value="{$Current_level_id}"/>
+                        <Current_level_name Value="{$Current_level_name}"/>
+                        <Current_member_id Value="{$Current_member_id}"/>
+                        <userAction Value="{$userAction}"/>
+                        <operation Value="{$thisParam/operation/@Value}"/>
+                        <memberCode Value="{$thisParam/memberCode/@Value}"/>
+                        <hasCodeChanged Value="{$thisParam/hasCodeChanged/@Value}"/>
+                        <hasDescChanged Value="{$thisParam/hasDescChanged/@Value}"/>
+                        <memberDesc Value="{$thisParam/memberDesc/@Value}"/>
+                        <memberStat Value="{$thisParam/memberStat/@Value}"/>
+                      </REQUEST>
+                      <IF_TEST Test="$req1/Append_Status/@Value='SUCCESS'">
+                        <THEN>
+                          <SET DocVar="thisParam" Property="Success_flag" FromValue="true"/>
+                          <SET DocVar="thisParam" Property="mem_name" FromValue="{$req1/Current_member_name/@Value}"/>
+                        </THEN>
+                      </IF_TEST>
+                      <SET Var="Current_member_id" FromValue="{$req1/Current_member_id/@Value}"/>
+                      <SET Var="Current_member_name" FromValue="{$req1/Current_member_name/@Value}"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="userAction" FromValue="ERROR"/>
+                      <APPEND_CHILDREN DocVar="pglFormOutput" FromDocVar="Result2"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="userAction" FromValue="ERROR"/>
+                  <APPEND_CHILDREN DocVar="pglFormOutput" FromDocVar="Result"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction='merge'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Merge" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction='cancel'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Home" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='save'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Home" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='show_parents'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='move'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='assign'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='LOOP_BACK'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='ERROR'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Merge" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="SHOW" Template="tk_merge_member.pgl">
+      <pre_actions>
+        <action>
+          <SET Var="thisParam" Property="SearchCriteria" FromValue="false"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <SAMPLE_XML/>
+          </TO_DOCVAR>
+          <IF_TEST Test="($userAction='merge')">
+            <THEN>
+              <TO_DOCVAR AssignToVar="forMerge">
+                <INPUT>
+                  <MEMBER ID="{$Current_member_id}" Name="{$Current_member_name}">
+                    <CODE Value="{$Current_member_name}"/>
+                    <DIMENSION Value="{$Current_dimension_name}" Id="{$Current_dimension_id}"/>
+                    <LEVEL Value="{$Current_level_name}" Id="{$Current_level_id}"/>
+                  </MEMBER>
+                </INPUT>
+              </TO_DOCVAR>
+              <REQUEST Name="Level_Hierarchy_Formation" AssignToVar="LVL_HRCHY"/>
+              <REQUEST Name="doMergeOperation" AssignToVar="validResponse">
+                <TO_XML SelectList="$LVL_HRCHY"/>
+                <TO_XML SelectList="$forMerge/*"/>
+                <TO_XML SelectList="$MetaData/*"/>
+                <StartCount Value="{$thisParam/START_COUNT/@Value}"/>
+                <Search_Criteria Value="{$thisParam/SearchCriteria/@Value}"/>
+                <USING Value=""/>
+                <SEARCH_STRING Value=""/>
+                <OPERATION Value="MERGE"/>
+              </REQUEST>
+              <IF_TEST Test="strlen($validResponse/Error/@Value) = 0">
+                <THEN>
+                  <SET DocVar="Assign" FromDocVar="validResponse"/>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="Assign">
+                    <Error/>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="Assign" FromSelect="$validResponse/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelect="$Assign"/>
+                  <SET Var="userAction" FromValue="cancel"/>
+                </ELSE>
+              </IF_TEST>
+              <!-- ]arun -->
+              <TO_DOCVAR AssignToVar="TableData">
+                <MEMBERMERGE TotalRowCount="{$validResponse/@TotalRowCount}"/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$Assign/SQL_RESULT" CurrentElement="temp">
+                <REQUEST Name="getMemberDetails" AssignToVar="mem_details">
+                  <MEMBER_ID Value="{$temp/MEMBER_ID/@Value}"/>
+                </REQUEST>
+                <REQUEST Name="getsmemberrelations" AssignToVar="haschildcount">
+                  <hasparentid Value="{$mem_details/Member/Id/@Value}"/>
+                </REQUEST>
+                <!--		 <SET Var="TEST" FromValue="{$haschildcount/@TotalRowCount}"/>-->
+                <IF_TEST Test="($haschildcount/@TotalRowCount!='0')">
+                  <!--Issue (S3 Defect) 556740  -->
+                  <THEN>
+                    <SET Var="denoteschild" FromValue="Y"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="denoteschild" FromValue="N"/>
+                  </ELSE>
+                </IF_TEST>
+                <TO_DOCVAR AssignToVar="sample">
+                  <LINE>
+                    <member_name_table Value="{$mem_details/Member/Name/@Value}"/>
+                    <member_description Value="{$mem_details/Member/Description/@Value}"/>
+                    <member_status Value="{$mem_details/Member/memberStat/@Value}"/>
+                    <member_id Value="{$mem_details/Member/Id/@Value}"/>
+                    <has_child Value="{$denoteschild/@Value}"/>
+                  </LINE>
+                </TO_DOCVAR>
+                <IF_TEST Test="($sample/member_status/@Value='0')">
+                  <THEN>
+                    <SET DocVar="sample" Property="member_status" FromValue="ASSIGNED"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="($sample/member_status/@Value='2')">
+                  <THEN>
+                    <SET DocVar="sample" Property="member_status" FromValue="UNASSIGNED"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="($sample/member_status/@Value='1')">
+                  <THEN>
+                    <SET DocVar="sample" Property="member_status" FromValue="PARTIALLY ASSIGNED"/>
+                  </THEN>
+                </IF_TEST>
+                <ADD_CHILDREN DocVar="TableData" FromDocVar="sample"/>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="temp_pglFormInput">
+                <SAMPLE_XML>
+                  <TO_XML SelectList="$TableData"/>
+                </SAMPLE_XML>
+              </TO_DOCVAR>
+              <IF_TEST Test="strlen($validResponse/Error/@Value) = 0">
+                <THEN>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelect="$temp_pglFormInput/*"/>
+                </THEN>
+              </IF_TEST>
+              <SET DocVar="pglFormInput" Property="test" FromValue="{$thisParam/test/@Value}"/>
+              <SET DocVar="pglFormInput" Property="condition" FromValue="{$thisParam/condition/@Value}"/>
+              <SET DocVar="pglFormInput" Property="search_string_value" FromValue="{$thisParam/search_string_value/@Value}"/>
+              <SET DocVar="pglFormInput" Property="dimension_value" FromValue="{$Current_dimension_name}"/>
+              <SET DocVar="pglFormInput" Property="member_level_value" FromValue="{$Current_level_name}"/>
+              <SET DocVar="pglFormInput" Property="member_name_value" FromValue="{$Current_member_name}"/>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="Parent_tree">
+            <MEMBERMERGE/>
+          </TO_DOCVAR>
+          <IF_TEST Test="($userAction='search')or($thisParam/BUTTON_ID/@Value='SYS_RELOAD')">
+            <THEN>
+              <SET Var="thisParam" Property="SearchCriteria" FromValue="true"/>
+              <TO_DOCVAR AssignToVar="forMerge">
+                <INPUT>
+                  <MEMBER ID="{$Current_member_id}" Name="{$Current_member_name}">
+                    <CODE Value="{$Current_member_name}"/>
+                    <DIMENSION Value="{$Current_dimension_name}" Id="{$Current_dimension_id}"/>
+                    <LEVEL Value="{$Current_level_name}" Id="{$Current_level_id}"/>
+                  </MEMBER>
+                </INPUT>
+              </TO_DOCVAR>
+              <REQUEST Name="Level_Hierarchy_Formation" AssignToVar="LVL_HRCHY"/>
+              <REQUEST Name="doMergeOperation" AssignToVar="validResponse">
+                <TO_XML SelectList="$LVL_HRCHY"/>
+                <TO_XML SelectList="$forMerge/*"/>
+                <TO_XML SelectList="$MetaData/*"/>
+                <StartCount Value="{$thisParam/START_COUNT/@Value}"/>
+                <Search_Criteria Value="{$thisParam/SearchCriteria/@Value}"/>
+                <USING Value="{$thisParam/test/@Value}"/>
+                <SEARCH_STRING Value="{$thisParam/search_string_value/@Value}"/>
+                <OPERATION Value="MERGE"/>
+              </REQUEST>
+              <IF_TEST Test="strlen($validResponse/Error/@Value) = 0">
+                <THEN>
+                  <SET DocVar="Assign" FromDocVar="validResponse"/>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="Assign">
+                    <Error/>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="Assign" FromSelect="$validResponse/*"/>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="TableData">
+                <MEMBERMERGE TotalRowCount="{$validResponse/@TotalRowCount}"/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$Assign/SQL_RESULT" CurrentElement="temp">
+                <REQUEST Name="getMemberDetails" AssignToVar="mem_details">
+                  <MEMBER_ID Value="{$temp/MEMBER_ID/@Value}"/>
+                </REQUEST>
+                <IF_TEST Test="$mem_details/@TotalRowCount !='0'">
+                  <THEN>
+                    <REQUEST Name="getsmemberrelations" AssignToVar="haschildcount">
+                      <hasparentid Value="{$mem_details/Member/Id/@Value}"/>
+                    </REQUEST>
+                    <IF_TEST Test="($haschildcount/@TotalRowCount != '0')">
+                      <!--Issue (S3 Defect) 556740  -->
+                      <THEN>
+                        <SET Var="denoteschild" FromValue="Y"/>
+                      </THEN>
+                      <ELSE>
+                        <SET Var="denoteschild" FromValue="N"/>
+                      </ELSE>
+                    </IF_TEST>
+                    <TO_DOCVAR AssignToVar="sample">
+                      <LINE>
+                        <member_name_table Value="{$mem_details/Member/Name/@Value}"/>
+                        <member_description Value="{$mem_details/Member/Description/@Value}"/>
+                        <member_status Value="{$mem_details/Member/memberStat/@Value}"/>
+                        <member_id Value="{$mem_details/Member/Id/@Value}"/>
+                        <has_child Value="{$denoteschild/@Value}"/>
+                      </LINE>
+                    </TO_DOCVAR>
+                    <IF_TEST Test="($sample/member_status/@Value='0')">
+                      <THEN>
+                        <SET DocVar="sample" Property="member_status" FromValue="ASSIGNED"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="($sample/member_status/@Value='2')">
+                      <THEN>
+                        <SET DocVar="sample" Property="member_status" FromValue="UNASSIGNED"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="($sample/member_status/@Value='1')">
+                      <THEN>
+                        <SET DocVar="sample" Property="member_status" FromValue="PARTIALLY ASSIGNED"/>
+                      </THEN>
+                    </IF_TEST>
+                    <ADD_CHILDREN DocVar="TableData" FromDocVar="sample"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <SAMPLE_XML>
+                  <TO_XML SelectList="$TableData"/>
+                </SAMPLE_XML>
+              </TO_DOCVAR>
+              <SET DocVar="pglFormInput" Property="test" FromValue="{$thisParam/test/@Value}"/>
+              <SET DocVar="pglFormInput" Property="condition" FromValue="{$thisParam/condition/@Value}"/>
+              <SET DocVar="pglFormInput" Property="search_string_value" FromValue="{$thisParam/search_string_value/@Value}"/>
+              <SET DocVar="pglFormInput" Property="dimension_value" FromValue="{$Current_dimension_name}"/>
+              <SET DocVar="pglFormInput" Property="member_level_value" FromValue="{$Current_level_name}"/>
+              <SET DocVar="pglFormInput" Property="member_name_value" FromValue="{$Current_member_name}"/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="check" FromValue="{count($pglFormInput/MEMBERMERGE/*)}"/>
+          <IF_TEST Test="count($pglFormInput/MEMBERMERGE/*)=0">
+            <THEN>
+              <TO_DOCVAR AssignToVar="MergeTable">
+                <MEMBERMERGE/>
+              </TO_DOCVAR>
+              <ADD_CHILDREN FromDocVar="MergeTable" DocVar="pglFormInput"/>
+            </THEN>
+          </IF_TEST>
+          <SET DocVar="pglFormInput" Property="MAX_Rows" FromValue="{$Max_Rows/@Value}"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='search'">
+            <THEN>
+              <SET Var="thisParam" Property="START_COUNT" FromValue="0"/>
+              <SET Var="thisParam" Property="SearchCriteria" FromValue="true"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='save'">
+            <THEN>
+              <PRINT Value=""/>
+              <REQUEST Name="Do_Merge">
+                <target_member_name Value="{$pglFormOutput/mergeToMemberName/@Value}"/>
+                <source_member_name Value="{$Current_member_name/@Value}"/>
+                <source_member_id Value="{$Current_member_id/@Value}"/>
+                <merge_dimension_name Value="{$Current_dimension_name/@Value}"/>
+                <merge_dimension_id Value="{$Current_dimension_id/@Value}"/>
+                <merge_level_name Value="{$Current_level_name/@Value}"/>
+                <merge_level_id Value="{$Current_level_id/@Value}"/>
+                <target_member_id Value="{$pglFormOutput/mergeToMemberID/@Value}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction='cancel'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Details" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction='save'">
+        <next_nodes OutputVar="{ouXml,xml}">
+          <next_node Name="Home" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='search'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Merge" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="ManageLifecyle" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="SHOW" Template="tk_manage_lifecycle.pgl" InputVar="{nodeinput,xml}">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="TEMP_DIM">
+            <DIMENSION/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$MetaData/DIMENSION" CurrentElement="dim_info">
+            <TO_DOCVAR AssignToVar="Temp">
+              <OPTION Id="{$dim_info/DIMENSION_ID/@Value}" Value="{$dim_info/DIMENSION_CODE/@Value}"/>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="TEMP_DIM" FromValue="{$Temp}"/>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="TEMP_LVL">
+            <LEVEL/>
+          </TO_DOCVAR>
+          <SET Var="LVL_COUNT" FromValue="0"/>
+          <FOR_EACH SelectList="$MetaData/DIMENSION" CurrentElement="dimension_info">
+            <IF_TEST Test="$dimension_info/DIMENSION_ID/@Value = $Current_dimension_id">
+              <THEN>
+                <FOR_EACH SelectList="$dimension_info/LEVELS/LEVEL_INFO" CurrentElement="level_info">
+                  <IF_TEST Test="$LVL_COUNT = '0'">
+                    <THEN>
+                      <!--<SET Var="Current_level_id" FromValue="{$level_info/LEVEL_ID/@Value}"/>-->
+                    </THEN>
+                  </IF_TEST>
+                  <TO_DOCVAR AssignToVar="TempLevels">
+                    <OPTION Id="{$level_info/LEVEL_ID/@Value}" Value="{$level_info/LEVEL_CODE/@Value}"/>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="TEMP_LVL" FromValue="{$TempLevels}"/>
+                  <SET Var="LVL_COUNT" FromValue="{$LVL_COUNT+1}"/>
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="member_data_onLoad">
+            <MEMBERS/>
+          </TO_DOCVAR>
+          <!-- for pagination START_COUNT reset	-->
+          <IF>
+            <COND>
+              <OR>
+                <IS_TRUE Value="{$userAction = 'manageLifecycle'}"/>
+                <IS_TRUE Value="{$userAction = null}"/>
+                <IS_TRUE Value="{$userAction = 'LOOP'}"/>
+                <IS_TRUE Value="{$thisParam/OPTN/@Value !=null}"/>
+              </OR>
+            </COND>
+            <THEN>
+              <IF_TEST Test="(count($thisParam/*)=0)">
+                <THEN>
+                  <SET Var="startcount" FromValue="0"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="startcount" FromValue="{$thisParam/START_COUNT/@Value}">
+                  </SET>
+                </ELSE>
+              </IF_TEST>
+              <!-- setting default operation to 'DE-ACTIVATE'-->
+              <IF_TEST Test="$thisParam/OPTN/@Value =null">
+                <THEN>
+                  <SET Var="operation" FromValue="DE-ACTIVATE"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="operation" FromValue="{$thisParam/OPTN/@Value}">
+                  </SET>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/OPTN/@Value ='0'">
+                <THEN>
+                  <SET Var="operation" FromValue="{$thisParam/OP_ID/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <!--      -->
+              <!--  <GET_DOCUMENT AssignToVar="sql_data" Name="Member" ReturnRowCount="true" MaxRows="2" StartAtRow="{$startcount}">
+                <AND>
+                  <dimensionID Value="{$Current_dimension_id/@Value}" MatchBy="EQUAL"/>
+                  <LevelId Value="{$Current_level_id/@Value}" MatchBy="EQUAL"/>
+                </AND>
+              </GET_DOCUMENT>-->
+              <REQUEST Name="mem_lifecycle_sortdoc_formation" AssignToVar="sort_criteria">
+                <TO_XML SelectList="$thisParam/*"/>
+              </REQUEST>
+              <REQUEST Name="loadInitialMembers" AssignToVar="sql_data">
+                <dimensionID Value="{$Current_dimension_id/@Value}"/>
+                <LevelId Value="{$Current_level_id/@Value}"/>
+                <startcount Value="{$startcount/@Value}"/>
+                <TO_XML SelectList="$sort_criteria/*"/>
+                <operation Value="{$operation/@Value}"/>
+              </REQUEST>
+              <SET Var="totalrowcount" FromValue="{$sql_data/@TotalRowCount}"/>
+              <FOR_EACH SelectList="$sql_data/Member" CurrentElement="mem_rec">
+                <TO_DOCVAR AssignToVar="temp">
+                  <LINE>
+                    <Name Value="{$mem_rec/Name/@Value}"/>
+                    <Description Value="{$mem_rec/Description/@Value}"/>
+                    <Status Value="{$mem_rec/memberStat/@Value}"/>
+                    <State Value="{$mem_rec/ENTITY_STATE/@Value}"/>
+                  </LINE>
+                </TO_DOCVAR>
+                <IF_TEST Test="($temp/Status/@Value='0')">
+                  <THEN>
+                    <SET DocVar="temp" Property="Status" FromValue="ASSIGNED"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="($temp/Status/@Value='1')">
+                  <THEN>
+                    <SET DocVar="temp" Property="Status" FromValue="PARTIALLY ASSIGNED"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="($temp/Status/@Value='2')">
+                  <THEN>
+                    <SET DocVar="temp" Property="Status" FromValue="UNASSIGNED"/>
+                  </THEN>
+                </IF_TEST>
+                <ADD_CHILDREN DocVar="member_data_onLoad" FromDocVar="temp"/>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <SAMPLE_XML>
+                  <TO_XML SelectList="$TEMP_DIM"/>
+                  <TO_XML SelectList="$TEMP_LVL"/>
+                  <MEMBERS TotalRowCount="{$totalrowcount}">
+                    <TO_XML SelectList="$member_data_onLoad/*"/>
+                  </MEMBERS>
+                  <OP_ID Value="{$operation/@Value}"/>
+                  <SHOW_OPT Value="FALSE"/>
+                </SAMPLE_XML>
+              </TO_DOCVAR>
+              <SET DocVar="pglFormInput" Property="dimension" FromValue="{$Current_dimension_id/@Value}"/>
+              <SET DocVar="pglFormInput" Property="Level" FromValue="{$Current_level_id/@Value}"/>
+              <SET DocVar="pglFormInput" Property="USING" FromValue="NAME"/>
+              <SET DocVar="pglFormInput" Property="MAX_Rows" FromValue="{$Max_Rows/@Value}"/>
+              <SET DocVar="pglFormInput" Property="OPTN" FromValue="{$operation/@Value}"/>
+            </THEN>
+          </IF>
+          <!--ON_Search-->
+          <IF>
+            <COND>
+              <OR>
+                <IS_TRUE Value="{$userAction = 'SEARCH' and $thisParam/OPTN/@Value !=''}"/>
+                <IS_TRUE Value="{isValidValue($thisParam/OPTN/@Value,'DELETE','DE-ACTIVATE','PURGE','ACTIVATE')}"/>
+              </OR>
+            </COND>
+            <THEN>
+              <SET Var="Current_level_id" FromValue="{$thisParam/Level/@Value}"/>
+              <!-- API Call -->
+              <REQUEST Name="MemberSearch" AssignToVar="mem_data">
+                <TO_XML SelectList="$thisParam/*"/>
+              </REQUEST>
+              <TO_DOCVAR AssignToVar="member_data">
+                <MEMBERS/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$mem_data/Member" CurrentElement="mem_rec">
+                <TO_DOCVAR AssignToVar="temp">
+                  <LINE>
+                    <Name Value="{$mem_rec/Name/@Value}"/>
+                    <Description Value="{$mem_rec/Description/@Value}"/>
+                    <Status Value="{$mem_rec/memberStat/@Value}"/>
+                    <State Value="{$mem_rec/ENTITY_STATE/@Value}"/>
+                  </LINE>
+                </TO_DOCVAR>
+                <IF_TEST Test="($temp/Status/@Value='0')">
+                  <THEN>
+                    <SET DocVar="temp" Property="Status" FromValue="ASSIGNED"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="($temp/Status/@Value='1')">
+                  <THEN>
+                    <SET DocVar="temp" Property="Status" FromValue="PARTIALLY ASSIGNED"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="($temp/Status/@Value='2')">
+                  <THEN>
+                    <SET DocVar="temp" Property="Status" FromValue="UNASSIGNED"/>
+                  </THEN>
+                </IF_TEST>
+                <ADD_CHILDREN DocVar="member_data" FromDocVar="temp"/>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="Result_Set">
+                <TO_XML SelectList="$member_data"/>
+              </TO_DOCVAR>
+              <!-- Forming pglFormInput -->
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <SAMPLE_XML>
+                  <TO_XML SelectList="$TEMP_DIM"/>
+                  <TO_XML SelectList="$TEMP_LVL"/>
+                  <MEMBERS TotalRowCount="{$mem_data/@TotalRowCount}">
+                    <TO_XML SelectList="$Result_Set/*"/>
+                  </MEMBERS>
+                  <!--  <TO_XML SelectList="$Result_Set"/>-->
+                  <SHOW_OPT Value="FALSE"/>
+                  <OP_ID Value="{$thisParam/OPTN/@Value}"/>
+                </SAMPLE_XML>
+              </TO_DOCVAR>
+              <SET DocVar="pglFormInput" Property="OPTN" FromValue="{$thisParam/OPTN/@Value}"/>
+              <SET DocVar="pglFormInput" Property="USING" FromValue="{$thisParam/USING/@Value}"/>
+              <SET DocVar="pglFormInput" Property="CONDITION" FromValue="{$thisParam/CONDITION/@Value}"/>
+              <SET DocVar="pglFormInput" Property="SEARCH_STRING" FromValue="{$thisParam/SEARCH_STRING/@Value}"/>
+              <SET DocVar="pglFormInput" Property="MAX_Rows" FromValue="{$Max_Rows/@Value}"/>
+            </THEN>
+          </IF>
+          <!--ON_Search-->
+          <SET DocVar="pglFormInput" Property="dimension" FromValue="{$Current_dimension_id/@Value}"/>
+          <SET DocVar="pglFormInput" Property="Level" FromValue="{$Current_level_id/@Value}"/>
+          <!-- Setting Pipeline Parameters -->
+          <REQUEST Name="Set_Parameters" AssignToVar="Param_data">
+            <TO_XML SelectList="$MetaData/*"/>
+            <DIM_ID Value="{$Current_dimension_id/@Value}"/>
+            <LEVEL_ID Value="{$Current_level_id/@Value}"/>
+          </REQUEST>
+          <SET Var="Current_dimension_name" FromValue="{$Param_data/DIM_NAME/@Value}"/>
+          <SET Var="Current_level_name" FromValue="{$Param_data/LEVEL_NAME/@Value}"/>
+          <SET Var="Current_dimension_id" FromValue="{$Param_data/DIM_ID/@Value}"/>
+          <SET Var="Current_level_id" FromValue="{$Param_data/LEVEL_ID/@Value}"/>
+          <!-- Setting Pipeline Parameters -->
+          <SET DocVar="pglFormInput" Property="MAX_Rows" FromValue="{$Max_Rows/@Value}"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <!-- PURGE CALL  this adds record in HTL and remove records from MST tables for the given member and the subtree-->
+          <IF_TEST Test="$userAction='PURGE'">
+            <THEN>
+              <FOR_EACH SelectList="$pglFormOutput/Name" CurrentElement="Current_member">
+                <!--  <GET_DOCUMENT AssignToVar="mem_id" Name="Member">
+                  <AND>
+                    <dimensionID Value="{$Current_dimension_id/@Value}" MatchBy="EQUAL"/>
+                    <LevelId Value="{$Current_level_id/@Value}" MatchBy="EQUAL"/>
+                    <Name Value="{$Current_member/@Value}" MatchBy="EQUAL"/>
+                  </AND>
+                  <SELECT>
+                    <Id/>
+                  </SELECT>
+                </GET_DOCUMENT>-->
+                <REQUEST Name="getMemberId" AssignToVar="Param_mem_data">
+                  <DIMENSION_ID Value="{$Current_dimension_id/@Value}"/>
+                  <LEVEL_ID Value="{$Current_level_id/@Value}"/>
+                  <MEMBER_NAME Value="{$Current_member/@Value}"/>
+                </REQUEST>
+                <REQUEST Name="Do_Purge" AssignToVar="Param_data">
+                  <DIMENSION_NAME Value="{$Current_dimension_name/@Value}"/>
+                  <LEVEL_ID Value="{$Current_level_id/@Value}"/>
+                  <MEMBER_ID Value="{$Param_mem_data/Member/Id/@Value}"/>
+                </REQUEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <!-- PURGE CALL -->
+          <!-- DE-ACTIVATE CALL  this adds record in HTL and  updates ENTITY_STATE in MST_MEMBER table for the given member and subtree-->
+          <IF_TEST Test="$userAction='DEACTIVATE'">
+            <THEN>
+              <FOR_EACH SelectList="$pglFormOutput/Name" CurrentElement="Current_member">
+                <!--  <GET_DOCUMENT AssignToVar="mem_id" Name="Member">
+                  <AND>
+                    <dimensionID Value="{$Current_dimension_id/@Value}" MatchBy="EQUAL"/>
+                    <LevelId Value="{$Current_level_id/@Value}" MatchBy="EQUAL"/>
+                    <Name Value="{$Current_member/@Value}" MatchBy="EQUAL"/>
+                  </AND>
+                  <SELECT>
+                    <Id/>
+                  </SELECT>
+                </GET_DOCUMENT>-->
+                <REQUEST Name="getMemberId" AssignToVar="Param_mem_data">
+                  <DIMENSION_ID Value="{$Current_dimension_id/@Value}"/>
+                  <LEVEL_ID Value="{$Current_level_id/@Value}"/>
+                  <MEMBER_NAME Value="{$Current_member/@Value}"/>
+                </REQUEST>
+                <REQUEST Name="Do_De-Activate" AssignToVar="Param_data">
+                  <DIMENSION_NAME Value="{$Current_dimension_name/@Value}"/>
+                  <LEVEL_ID Value="{$Current_level_id/@Value}"/>
+                  <MEMBER_ID Value="{$Param_mem_data/Member/Id/@Value}"/>
+                </REQUEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <!-- DE-ACTIVATE CALL -->
+          <!-- DELETE CALL  this adds record in HTL and  updates ENTITY_STATE in MST_MEMBER table for the given member and subtree-->
+          <IF_TEST Test="$userAction='DELETE'">
+            <THEN>
+              <FOR_EACH SelectList="$pglFormOutput/Name" CurrentElement="Current_member">
+                <!--<GET_DOCUMENT AssignToVar="mem_id" Name="Member">
+                  <AND>
+                    <dimensionID Value="{$Current_dimension_id/@Value}" MatchBy="EQUAL"/>
+                    <LevelId Value="{$Current_level_id/@Value}" MatchBy="EQUAL"/>
+                    <Name Value="{$Current_member/@Value}" MatchBy="EQUAL"/>
+                  </AND>
+                  <SELECT>
+                    <Id/>
+                  </SELECT>
+                </GET_DOCUMENT>-->
+                <REQUEST Name="getMemberId" AssignToVar="Param_mem_data">
+                  <DIMENSION_ID Value="{$Current_dimension_id/@Value}"/>
+                  <LEVEL_ID Value="{$Current_level_id/@Value}"/>
+                  <MEMBER_NAME Value="{$Current_member/@Value}"/>
+                </REQUEST>
+                <REQUEST Name="Do_Delete" AssignToVar="Param_data">
+                  <DIMENSION_NAME Value="{$Current_dimension_name/@Value}"/>
+                  <LEVEL_ID Value="{$Current_level_id/@Value}"/>
+                  <MEMBER_ID Value="{$Param_mem_data/Member/Id/@Value}"/>
+                </REQUEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <!-- DELETE CALL -->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOOP'">
+            <THEN>
+              <SET Var="Current_dimension_id" FromValue="{$thisParam/dimension/@Value}"/>
+              <SET Var="LVL_COUNT" FromValue="0"/>
+              <FOR_EACH SelectList="$MetaData/DIMENSION" CurrentElement="dimension_info">
+                <IF_TEST Test="$dimension_info/DIMENSION_ID/@Value = $Current_dimension_id">
+                  <THEN>
+                    <FOR_EACH SelectList="$dimension_info/LEVELS/LEVEL_INFO" CurrentElement="level_info">
+                      <IF_TEST Test="$LVL_COUNT = '0'">
+                        <THEN>
+                          <SET Var="Current_level_id" FromValue="{$level_info/LEVEL_ID/@Value}"/>
+                        </THEN>
+                      </IF_TEST>
+                      <SET Var="LVL_COUNT" FromValue="{$LVL_COUNT+1}"/>
+                    </FOR_EACH>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <SET Var="userAction" FromValue="LOOP_BACK"/>
+              <SET Var="thisParam" Property="START_COUNT" FromValue="0"/>
+              <SET Var="thisParam" Property="OPTN" FromValue="0"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOOP_LEVEL'">
+            <THEN>
+              <SET Var="Current_level_id" FromValue="{$thisParam/Level/@Value}"/>
+              <SET Var="userAction" FromValue="LOOP_BACK"/>
+              <SET Var="thisParam" Property="START_COUNT" FromValue="0"/>
+              <SET Var="thisParam" Property="OPTN" FromValue="0"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='CANCEL'">
+            <THEN>
+              <REQUEST Name="Set_Parameters" AssignToVar="Param_data">
+                <TO_XML SelectList="$MetaData/*"/>
+                <DIM_ID Value="{$Current_dimension_id/@Value}"/>
+                <LEVEL_ID Value="{$Current_level_id/@Value}"/>
+              </REQUEST>
+              <SET Var="Current_dimension_name" FromValue="{$Param_data/DIM_NAME/@Value}"/>
+              <SET Var="Current_level_name" FromValue="{$Param_data/LEVEL_NAME/@Value}"/>
+              <SET Var="Current_dimension_id" FromValue="{$Param_data/DIM_ID/@Value}"/>
+              <SET Var="Current_level_id" FromValue="{$Param_data/LEVEL_ID/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction=null">
+            <THEN>
+              <SET Var="Current_member_name" FromValue="{$pglFormOutput/MEM_NAME/@Value}"/>
+              <!-- <GET_DOCUMENT AssignToVar="mem_data" Name="Member">
+        <AND>
+          <dimensionID Value="{$Current_dimension_id/@Value}" MatchBy="EQUAL"/>
+          <LevelId Value="{$Current_level_id/@Value}" MatchBy="EQUAL"/>
+          <Name Value="{$Current_member_name/@Value}" MatchBy="EQUAL"/>
+        </AND>
+        <SELECT>
+          <Id/>
+        </SELECT>
+      </GET_DOCUMENT>-->
+              <REQUEST Name="getMemberId" AssignToVar="Param_mem_data">
+                <DIMENSION_ID Value="{$Current_dimension_id/@Value}"/>
+                <LEVEL_ID Value="{$Current_level_id/@Value}"/>
+                <MEMBER_NAME Value="{$Current_member_name/@Value}"/>
+              </REQUEST>
+              <SET Var="Current_member_id" FromValue="{$Param_mem_data/Member/Id/@Value}"/>
+              <!-- Setting Pipeline Parameters -->
+              <REQUEST Name="Set_Parameters" AssignToVar="Param_data">
+                <TO_XML SelectList="$MetaData/*"/>
+                <DIM_ID Value="{$Current_dimension_id/@Value}"/>
+                <LEVEL_ID Value="{$Current_level_id/@Value}"/>
+              </REQUEST>
+              <SET Var="Current_dimension_name" FromValue="{$Param_data/DIM_NAME/@Value}"/>
+              <SET Var="Current_level_name" FromValue="{$Param_data/LEVEL_NAME/@Value}"/>
+              <SET Var="Current_dimension_id" FromValue="{$Param_data/DIM_ID/@Value}"/>
+              <SET Var="Current_level_id" FromValue="{$Param_data/LEVEL_ID/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="member_data">
+            <MEMBERS/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='SEARCH'">
+            <THEN>
+              <SET Var="thisParam" Property="START_COUNT" FromValue="0"/>
+              <!--<REQUEST Name="MemberSearch" AssignToVar="mem_data">
+                <TO_XML SelectList="$pglFormOutput/*"/>
+              </REQUEST>-->
+            </THEN>
+          </IF_TEST>
+          <!--<FOR_EACH SelectList="$mem_data/Member" CurrentElement="mem_rec">
+            <TO_DOCVAR AssignToVar="temp">
+              <LINE>
+                <Name Value="{$mem_rec/Name/@Value}"/>
+                <Description Value="{$mem_rec/Description/@Value}"/>
+                <member_status Value="{$mem_rec/ENTITY_STATE/@Value}"/>
+              </LINE>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="member_data" FromDocVar="temp"/>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="Result_Set">
+            <TO_XML SelectList="$member_data"/>
+          </TO_DOCVAR>
+          <PRINTLN Value="$Result_Set"/>-->
+          <!-- <SET Var="pglFormOutput" FromValue="{$mem_data}"/>
+          <PRINT Value="{$pglFormOutput}"/>-->
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction='CANCEL'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Home" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction='DEACTIVATE' or $userAction='PURGE' or $userAction='DELETE'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="ManageLifecyle" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='LOOP_BACK'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="ManageLifecyle" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='SEARCH'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="ManageLifecyle" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DELETE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='PURGE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DEACTIVATE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='OPERATION'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Home" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="SHOW" Template="tk_manage_members.pgl" InputVar="{nodeinput,xml}">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="Parent_tree">
+            <MEMBERS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="TEMP_DIM">
+            <DIMENSION/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$MetaData/DIMENSION" CurrentElement="dim_info">
+            <TO_DOCVAR AssignToVar="Temp">
+              <OPTION Id="{$dim_info/DIMENSION_ID/@Value}" Value="{$dim_info/DIMENSION_CODE/@Value}"/>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="TEMP_DIM" FromValue="{$Temp}"/>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="TEMP_LVL">
+            <LEVEL/>
+          </TO_DOCVAR>
+          <SET Var="LVL_COUNT" FromValue="0"/>
+          <FOR_EACH SelectList="$MetaData/DIMENSION" CurrentElement="dimension_info">
+            <IF_TEST Test="$dimension_info/DIMENSION_ID/@Value = $Current_dimension_id">
+              <THEN>
+                <FOR_EACH SelectList="$dimension_info/LEVELS/LEVEL_INFO" CurrentElement="level_info">
+                  <IF_TEST Test="$LVL_COUNT = '0'">
+                    <THEN>
+                      <!--<SET Var="Current_level_id" FromValue="{$level_info/LEVEL_ID/@Value}"/>-->
+                    </THEN>
+                  </IF_TEST>
+                  <TO_DOCVAR AssignToVar="TempLevels">
+                    <OPTION Id="{$level_info/LEVEL_ID/@Value}" Value="{$level_info/LEVEL_CODE/@Value}"/>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="TEMP_LVL" FromValue="{$TempLevels}"/>
+                  <SET Var="LVL_COUNT" FromValue="{$LVL_COUNT+1}"/>
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="Parent_tree">
+            <MEMBERS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="Parent_tree1">
+            <MEMBERS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="sort_doc">
+            <temp/>
+          </TO_DOCVAR>
+          <IF_TEST Test="(count($thisParam/*)=0)or($userAction='Search')">
+            <THEN>
+              <SET Var="var2" FromValue="0"/>
+            </THEN>
+            <ELSE>
+              <SET Var="var2" FromValue="{$thisParam/START_COUNT/@Value}">
+              </SET>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="(count($thisParam/*)=0) or (count($nodeinput/*)!=0)">
+            <THEN>
+              <TO_DOCVAR AssignToVar="sort_doc">
+                <temp>
+                  <sort_doc>
+                    <Name Sort="Ascending"/>
+                  </sort_doc>
+                </temp>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <!--SORTING CHECKS STARTS-->
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='SYS_RELOAD') or ($thisParam/BUTTON_ID/@Value='cancel')">
+            <THEN>
+              <REQUEST Name="Mem_sortdoc_formation" AssignToVar="sort_doc">
+                <TO_XML SelectList="$thisParam/*"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <!--SORTING CHECKS ENDS HERE-->
+          <REQUEST Name="initialmembers" AssignToVar="has_initial_members">
+            <hascount Value="{$var2/@Value}"/>
+            <hasdim Value="{$Current_dimension_id/@Value}"/>
+            <haslev Value="{$Current_level_id/@Value}"/>
+            <Search_String Value="{$Search_string/@Value}"/>
+            <TO_XML SelectList="$sort_doc/*"/>
+          </REQUEST>
+          <IF_TEST Test="($userAction='save')">
+            <THEN>
+              <IF_TEST Test="($USING='NAME')">
+                <THEN>
+                  <REQUEST Name="Mem_sortdoc_formation" AssignToVar="sort_doc">
+                    <TO_XML SelectList="$thisParam/*"/>
+                  </REQUEST>
+                  <GET_DOCUMENT AssignToVar="has_initial_members" Name="Member" MaxRows="{$Max_Rows/@Value}" ReturnRowCount="yes" StartAtRow="{$thisParam/hascount/@Value}" ServiceName="BCM_MASTER">
+                    <dimensionID Value="{$Current_dimension_id/@Value}" MatchBy="EQUAL"/>
+                    <LevelId Value="{$Current_level_id/@Value}" MatchBy="EQUAL"/>
+                    <Name Value="{$Search_string/@Value}" MatchBy="{$CONDITION/@Value}"/>
+                    <ORDER_BY>
+                      <TO_XML SelectList="$sort_doc/sort_doc/*"/>
+                    </ORDER_BY>
+                  </GET_DOCUMENT>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="($USING='DESCRIPTION')">
+                <THEN>
+                  <GET_DOCUMENT AssignToVar="has_initial_members" Name="Member" MaxRows="{$Max_Rows/@Value}" ReturnRowCount="yes" StartAtRow="{$thisParam/hascount/@Value}" ServiceName="BCM_MASTER">
+                    <dimensionID Value="{$Current_dimension_id/@Value}" MatchBy="EQUAL"/>
+                    <LevelId Value="{$Current_level_id/@Value}" MatchBy="EQUAL"/>
+                    <Description Value="{$Search_string/@Value}" MatchBy="{$CONDITION/@Value}"/>
+                    <ORDER_BY>
+                      <TO_XML SelectList="$sort_doc/sort_doc/*"/>
+                    </ORDER_BY>
+                  </GET_DOCUMENT>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <SET Var="USING" FromValue="{$thisParam/using/@Value}"/>
+              <SET Var="CONDITION" FromValue="{$thisParam/condition/@Value}"/>
+              <SET Var="Search_string" FromValue="{$thisParam/search_string/@Value}"/>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="variable1" FromValue="{$has_initial_members/@TotalRowCount}"/>
+          <FOR_EACH SelectList="$has_initial_members/Member" CurrentElement="temp">
+            <TO_DOCVAR AssignToVar="sample">
+              <LINE>
+                <name Value="{$temp/Name/@Value}"/>
+                <member_description Value="{$temp/Description/@Value}"/>
+                <member_status Value="{$temp/memberStat/@Value}"/>
+                <member_state Value="{$temp/ENTITY_STATE/@Value}"/>
+                <member_id Value="{$temp/Id/@Value}"/>
+              </LINE>
+            </TO_DOCVAR>
+            <IF_TEST Test="($sample/member_status/@Value='0')">
+              <THEN>
+                <SET DocVar="sample" Property="member_status" FromValue="ASSIGNED"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="($sample/member_status/@Value='2')">
+              <THEN>
+                <SET DocVar="sample" Property="member_status" FromValue="UNASSIGNED"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="($sample/member_status/@Value='1')">
+              <THEN>
+                <SET DocVar="sample" Property="member_status" FromValue="PARTIALLY ASSIGNED"/>
+              </THEN>
+            </IF_TEST>
+            <ADD_CHILDREN DocVar="Parent_tree" FromDocVar="sample"/>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <SAMPLE_XML>
+              <TO_XML SelectList="$TEMP_DIM"/>
+              <TO_XML SelectList="$TEMP_LVL"/>
+              <PARAMETER Value="0"/>
+              <MEMBERS TotalRowCount="{$variable1}">
+                <TO_XML SelectList="$Parent_tree/*"/>
+              </MEMBERS>
+            </SAMPLE_XML>
+          </TO_DOCVAR>
+          <SET DocVar="pglFormInput" Property="dimension_name" FromValue="{$Current_dimension_id/@Value}"/>
+          <SET DocVar="pglFormInput" Property="level_name" FromValue="{$Current_level_id/@Value}"/>
+          <SET DocVar="pglFormInput" Property="member_status" FromValue="Any"/>
+          <SET DocVar="pglFormInput" Property="member_state" FromValue="Any"/>
+          <SET DocVar="pglFormInput" Property="using" FromValue="NAME"/>
+          <SET DocVar="pglFormInput" Property="condition" FromValue="Contains"/>
+          <SET DocVar="pglFormInput" Property="search_string" FromValue=""/>
+          <IF_TEST Test="($userAction='Search')or($thisParam/BUTTON_ID/@Value='SYS_RELOAD')or($nodeinput/PARAMETER/@Value='1')">
+            <THEN>
+              <SET Var="Search_string" FromValue="{$thisParam/search_string/@Value}"/>
+              <SET Var="Current_level_id" FromValue="{$thisParam/level_name/@Value}"/>
+              <REQUEST Name="getmembers" AssignToVar="final_query">
+                <TO_XML SelectList="$thisParam/*"/>
+              </REQUEST>
+              <FOR_EACH SelectList="$final_query/Member" CurrentElement="temp">
+                <TO_DOCVAR AssignToVar="file1">
+                  <LINE>
+                    <name Value="{$temp/Name/@Value}"/>
+                    <member_description Value="{$temp/Description/@Value}"/>
+                    <member_status Value="{$temp/memberStat/@Value}"/>
+                    <member_state Value="{$temp/ENTITY_STATE/@Value}"/>
+                    <member_id Value="{$temp/Id/@Value}"/>
+                  </LINE>
+                </TO_DOCVAR>
+                <IF_TEST Test="($file1/member_status/@Value='0')">
+                  <THEN>
+                    <SET DocVar="file1" Property="member_status" FromValue="ASSIGNED"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="($file1/member_status/@Value='2')">
+                  <THEN>
+                    <SET DocVar="file1" Property="member_status" FromValue="UNASSIGNED"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="($file1/member_status/@Value='1')">
+                  <THEN>
+                    <SET DocVar="file1" Property="member_status" FromValue="PARTIALLY ASSIGNED"/>
+                  </THEN>
+                </IF_TEST>
+                <ADD_CHILDREN DocVar="Parent_tree1" FromDocVar="file1"/>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <SAMPLE_XML>
+                  <TO_XML SelectList="$TEMP_DIM"/>
+                  <TO_XML SelectList="$TEMP_LVL"/>
+                  <MEMBERS TotalRowCount="{$final_query/@TotalRowCount}">
+                    <TO_XML SelectList="$Parent_tree1/*"/>
+                  </MEMBERS>
+                </SAMPLE_XML>
+              </TO_DOCVAR>
+              <SET DocVar="pglFormInput" Property="dimension_name" FromValue="{$thisParam/dimension_name/@Value}"/>
+              <SET DocVar="pglFormInput" Property="level_name" FromValue="{$thisParam/level_name/@Value}"/>
+              <SET DocVar="pglFormInput" Property="member_status" FromValue="{$thisParam/member_status/@Value}"/>
+              <SET DocVar="pglFormInput" Property="member_state" FromValue="{$thisParam/member_state/@Value}"/>
+              <SET DocVar="pglFormInput" Property="using" FromValue="{$thisParam/using/@Value}"/>
+              <SET DocVar="pglFormInput" Property="condition" FromValue="{$thisParam/condition/@Value}"/>
+              <SET DocVar="pglFormInput" Property="search_string" FromValue="{$thisParam/search_string/@Value}"/>
+              <SET Var="Search_string" FromValue="{$thisParam/search_string/@Value}"/>
+              <SET DocVar="thisParam" Property="Success_flag" FromValue="false"/>
+            </THEN>
+          </IF_TEST>
+          <REQUEST Name="Set_Parameters" AssignToVar="Param_data">
+            <TO_XML SelectList="$MetaData/*"/>
+            <DIM_ID Value="{$Current_dimension_id/@Value}"/>
+            <LEVEL_ID Value="{$Current_level_id/@Value}"/>
+          </REQUEST>
+          <SET Var="Current_dimension_name" FromValue="{$Param_data/DIM_NAME/@Value}"/>
+          <SET Var="Current_level_name" FromValue="{$Param_data/LEVEL_NAME/@Value}"/>
+          <SET Var="Current_dimension_id" FromValue="{$Param_data/DIM_ID/@Value}"/>
+          <SET Var="Current_level_id" FromValue="{$Param_data/LEVEL_ID/@Value}"/>
+          <SET DocVar="pglFormInput" Property="dimension_name" FromValue="{$Current_dimension_id/@Value}"/>
+          <SET DocVar="pglFormInput" Property="level_name" FromValue="{$Current_level_id/@Value}"/>
+          <SET DocVar="pglFormInput" Property="MAX_Rows" FromValue="{$Max_Rows/@Value}"/>
+          <SET DocVar="pglFormInput" Property="Success_flag" FromValue="{$thisParam/Success_flag/@Value}"/>
+          <SET Var="mem_name" FromValue="{$thisParam/mem_name/@Value}"/>
+          <SET Var="Success_message" FromValue="{concat('Member ',$mem_name/@Value,' saved successfully.')}"/>
+          <SET DocVar="pglFormInput" Property="Success_flag" FromValue="{$thisParam/Success_flag/@Value}"/>
+          <SET DocVar="pglFormInput" Property="Success_message" FromValue="{$Success_message/@Value}"/>
+          <SET DocVar="pglFormInput" Property="search_string" FromValue="{$Search_string/@Value}"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOOP'">
+            <THEN>
+              <SET Var="Current_dimension_id" FromValue="{$thisParam/dimension_name/@Value}"/>
+              <SET Var="LVL_COUNT" FromValue="0"/>
+              <FOR_EACH SelectList="$MetaData/DIMENSION" CurrentElement="dimension_info">
+                <IF_TEST Test="$dimension_info/DIMENSION_ID/@Value = $Current_dimension_id">
+                  <THEN>
+                    <FOR_EACH SelectList="$dimension_info/LEVELS/LEVEL_INFO" CurrentElement="level_info">
+                      <IF_TEST Test="$LVL_COUNT = '0'">
+                        <THEN>
+                          <SET Var="Current_level_id" FromValue="{$level_info/LEVEL_ID/@Value}"/>
+                        </THEN>
+                      </IF_TEST>
+                      <SET Var="LVL_COUNT" FromValue="{$LVL_COUNT+1}"/>
+                    </FOR_EACH>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <SET Var="userAction" FromValue="LOOP_BACK"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOOP_LEVEL'">
+            <THEN>
+              <SET Var="Current_level_id" FromValue="{$thisParam/level_name/@Value}"/>
+              <SET Var="userAction" FromValue="LOOP_BACK"/>
+              <SET Var="thisParam" Property="START_COUNT" FromValue="0"/>
+              <SET Var="Search_string" FromValue=""/>
+              <SET Var="thisParam" Property="search_string" FromValue=""/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction=null">
+            <THEN>
+              <SET Var="Current_member_name" FromValue="{$pglFormOutput/member_name/@Value}"/>
+              <REQUEST Name="getMemberId" AssignToVar="Param_mem_data">
+                <DIMENSION_ID Value="{$Current_dimension_id/@Value}"/>
+                <LEVEL_ID Value="{$Current_level_id/@Value}"/>
+                <MEMBER_NAME Value="{$Current_member_name/@Value}"/>
+              </REQUEST>
+              <SET Var="Current_member_id" FromValue="{$Param_mem_data/Member/Id/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <PRINTLN Value="$Current_member_name"/>
+          <IF_TEST Test="$userAction='Duplicate'">
+            <THEN>
+              <SET Var="Current_member_name" FromValue="{$pglFormOutput/name/@Value}"/>
+              <REQUEST Name="getMemberId" AssignToVar="Param_mem_data">
+                <DIMENSION_ID Value="{$Current_dimension_id/@Value}"/>
+                <LEVEL_ID Value="{$Current_level_id/@Value}"/>
+                <MEMBER_NAME Value="{$Current_member_name/@Value}"/>
+              </REQUEST>
+              <SET Var="Current_member_id" FromValue="{$Param_mem_data/Member/Id/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='New'">
+            <THEN>
+              <SET Var="Current_member_id" FromValue=""/>
+              <SET Var="Current_member_name" FromValue=""/>
+            </THEN>
+          </IF_TEST>
+          <!--  <IF_TEST Test="$userAction='Search'">
+    <THEN>
+      <REQUEST Name="getdata" AssignToVar="hasmembers">
+        <TO_XML SelectList="$thisParam/*"/>
+      </REQUEST>
+      <PRINTLN Value="$thisParam"/>
+    </THEN>
+  </IF_TEST>
+  <FOR_EACH SelectList="$hasmembers/Member" CurrentElement="temp">
+    <TO_DOCVAR AssignToVar="file1">
+      <LINE>
+        <name Value="{$temp/Name/@Value}"/>
+        <member_description Value="{$temp/Description/@Value}"/>
+        <member_status Value="{$temp/memberStat/@Value}"/>
+        <member_state Value="{$temp/ENTITY_STATE/@Value}"/>
+      </LINE>
+    </TO_DOCVAR>
+    <IF_TEST Test="($file1/member_status/@Value='0')">
+      <THEN>
+        <SET DocVar="file1" Property="member_status" FromValue="ASSIGNED"/>
+      </THEN>
+    </IF_TEST>
+    <IF_TEST Test="($file1/member_status/@Value='1')">
+      <THEN>
+        <SET DocVar="file1" Property="member_status" FromValue="UNASSIGNED"/>
+      </THEN>
+    </IF_TEST>
+    <IF_TEST Test="($file1/member_status/@Value='2')">
+      <THEN>
+        <SET DocVar="file1" Property="member_status" FromValue="PARTIALLY ASSIGNED"/>
+      </THEN>
+    </IF_TEST>
+    <ADD_CHILDREN DocVar="Parent_tree" FromDocVar="file1"/>
+  </FOR_EACH>
+  <TO_DOCVAR AssignToVar="data">
+    <SAMPLE_XML>
+      <TO_XML SelectList="$Parent_tree"/>
+    </SAMPLE_XML>
+  </TO_DOCVAR>
+  <PRINTLN Value="$data"/>-->
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction='Duplicate'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Details" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction='New'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='Search'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Home" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='manageLifecycle'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="ManageLifecyle" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='LOOP_BACK'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Home" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="done16" Description=""/>
+          <next_node Name="Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="6,203" font="Tahoma,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Tahoma,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <set_MetaData location="111,203" font="Tahoma,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="set_MetaData" font="Tahoma,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+      </set_MetaData>
+      <done16 location="227,4" font="Tahoma,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done16" font="Tahoma,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done16>
+      <Details location="211,421" font="Tahoma,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Details" font="Tahoma,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </Details>
+      <Merge location="615,374" font="Tahoma,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Merge" font="Tahoma,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </Merge>
+      <ManageLifecyle location="693,94" font="Tahoma,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="ManageLifecyle" font="Tahoma,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </ManageLifecyle>
+      <Home location="221,203" font="Tahoma,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Home" font="Tahoma,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </Home>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Tahoma,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="38,225" endpoint="111,226" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="90,223,4,4" ctrlRect2="54,224,4,4"/>
+      </start2>
+      <set_MetaData>
+        <nextNodeView font="Tahoma,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="143,226" endpoint="221,225" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="199,224,4,4" ctrlRect2="160,223,4,4"/>
+      </set_MetaData>
+      <Details>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="243,443" endpoint="615,397" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="520,441,4,4" ctrlRect2="334,395,4,4" textRect="387,416,85,9">
+          <textProps text="[$userAction='merge']" font="Times New Roman,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="227,421" endpoint="253,225" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="361,284,4,4" ctrlRect2="332,289,4,4" textRect="296,274,91,9">
+          <textProps text="[$userAction='cancel']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="227,421" endpoint="253,225" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="392,285,4,4" ctrlRect2="481,220,4,4" textRect="387,248,86,9">
+          <textProps text="[$userAction='save']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="243,443" endpoint="243,443" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="316,441,4,4" ctrlRect2="552,632,4,4" textRect="378,529,123,9">
+          <textProps text="[$userAction='show_parents']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="227,421" endpoint="227,421" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="225,344,4,4" ctrlRect2="265,379,4,4" textRect="202,359,90,9">
+          <textProps text="[$userAction='move']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="227,466" endpoint="227,466" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="225,539,4,4" ctrlRect2="298,607,4,4" textRect="186,514,91,9">
+          <textProps text="[$userAction='assign']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="243,443" endpoint="243,443" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="316,441,4,4" ctrlRect2="593,304,4,4" textRect="396,370,120,9">
+          <textProps text="[$userAction='LOOP_BACK']" font="Times New Roman,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="211,443" endpoint="211,443" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="134,441,4,4" ctrlRect2="-14,516,4,4" textRect="15,476,94,9">
+          <textProps text="[$userAction='ERROR']" font="Times New Roman,0,9"/>
+        </nextNodeView>
+      </Details>
+      <Merge>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="615,397" endpoint="243,443" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="334,395,4,4" ctrlRect2="697,581,4,4" textRect="583,425,91,9">
+          <textProps text="[$userAction='cancel']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="631,374" endpoint="253,225" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="630,180,4,4" ctrlRect2="837,430,4,4" textRect="583,324,86,9">
+          <textProps text="[$userAction='save']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="647,397" endpoint="647,397" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="720,395,4,4" ctrlRect2="836,314,4,4" textRect="734,352,92,9">
+          <textProps text="[$userAction='search']" font="Tahoma,0,9"/>
+        </nextNodeView>
+      </Merge>
+      <ManageLifecyle>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="693,117" endpoint="253,225" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="606,45,4,4" ctrlRect2="581,223,4,4" textRect="543,132,104,9">
+          <textProps text="[$userAction='CANCEL']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="693,117" endpoint="693,117" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="616,115,4,4" ctrlRect2="494,-25,4,4" textRect="397,63,327,9">
+          <textProps text="[$userAction='DEACTIVATE' or $userAction='PURGE' or $userAction='DELETE']" font="Times New Roman,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="709,94" endpoint="709,94" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="707,17,4,4" ctrlRect2="782,-13,4,4" textRect="688,32,123,9">
+          <textProps text="[$userAction='LOOP_BACK']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="725,117" endpoint="725,117" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="798,115,4,4" ctrlRect2="883,222,4,4" textRect="790,166,105,9">
+          <textProps text="[$userAction='SEARCH']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="693,117" endpoint="227,421" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="342,115,4,4" ctrlRect2="480,231,4,4" textRect="668,234,27,9">
+          <textProps text="[true()]" font="Times New Roman,0,9"/>
+        </nextNodeView>
+      </ManageLifecyle>
+      <Home>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="237,248" endpoint="227,421" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="235,375,4,4" ctrlRect2="99,209,4,4" textRect="138,305,104,9">
+          <textProps text="[$userAction='Duplicate']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="237,248" endpoint="227,421" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="235,375,4,4" ctrlRect2="332,346,4,4" textRect="238,326,86,9">
+          <textProps text="[$userAction='New']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="253,225" endpoint="253,225" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="326,223,4,4" ctrlRect2="542,75,4,4" textRect="311,182,94,9">
+          <textProps text="[$userAction='Search']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="253,225" endpoint="709,140" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="593,223,4,4" ctrlRect2="655,186,4,4" textRect="508,189,134,9">
+          <textProps text="[$userAction='manageLifecycle']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="237,203" endpoint="237,203" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="235,126,4,4" ctrlRect2="373,70,4,4" textRect="269,132,123,9">
+          <textProps text="[$userAction='LOOP_BACK']" font="Tahoma,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Tahoma,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="237,203" endpoint="243,49" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="235,86,4,4" ctrlRect2="236,55,4,4"/>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="237,248" endpoint="243,443" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="235,391,4,4" ctrlRect2="549,210,4,4"/>
+      </Home>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="2,4" font="Tahoma,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="11" textAttrsKey0="CONDITION : string" textAttrsKey1="Current_dimension_id : string" textAttrsKey2="Current_dimension_name : string" textAttrsKey3="Current_level_id : string" textAttrsKey4="Current_level_name : string" textAttrsKey5="Current_member_id : string" textAttrsKey6="Current_member_name : string" textAttrsKey7="MetaData : xml" textAttrsKey8="MoveData : xml" textAttrsKey9="Result_Set : xml" textAttrsKey10="... and 4 more">
+      <textProps text="Pipeline" font="Tahoma,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="CONDITION" Type="string" Comment="Capture the USING Field from the 1st page"/>
+        <variable Name="Current_dimension_id" Type="string" Comment="Captures Current Dimension_Id"/>
+        <variable Name="Current_dimension_name" Type="string" Comment="Captures Current Dimension Name"/>
+        <variable Name="Current_level_id" Type="string" Comment=""/>
+        <variable Name="Current_level_name" Type="string" Comment=""/>
+        <variable Name="Current_member_id" Type="string" Comment=""/>
+        <variable Name="Current_member_name" Type="string" Comment="Capture Member Name"/>
+        <variable Name="MetaData" Type="xml" Comment="Captures Dimension Level Tree"/>
+        <variable Name="MoveData" Type="xml" Comment="Capture Move Data HierarchyId/ParentLevelId/ParenMemberId"/>
+        <variable Name="Result_Set" Type="xml" Comment="Captures Query Results"/>
+        <variable Name="Search_string" Type="string" Comment=""/>
+        <variable Name="USING" Type="string" Comment="Capture the USING Field from the 1st page"/>
+        <variable Name="UserAction" Type="string" Comment="capture the user actions"/>
+        <variable Name="data" Type="xml" Comment="Capture search results [member manage]"/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

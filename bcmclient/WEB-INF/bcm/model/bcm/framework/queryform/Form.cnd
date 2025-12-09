@@ -1,0 +1,1091 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="init">
+    <xapl:variable name="currentForm" resolver="session" global="true"/>
+    <xapl:variable name="pkForm" resolver="session" global="true"/>
+    <xapl:variable name="currentFormsData" resolver="session" global="true"/>
+    <xapl:variable name="currentFormsOptionData" resolver="session" global="true"/>
+    <xapl:variable name="filtersApplied" resolver="session" global="true"/>
+    <xapl:variable name="currentFormsFormat" resolver="session" global="true"/>
+    <xapl:variable name="currentFormsDataSource" resolver="session" global="true"/>
+    <xapl:variable name="currentThis" resolver="session" global="true"/>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="clear">
+    <xapl:set-variable name="currentForm"/>
+  </x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getCurrentForm">
+    <xapl:return>
+      <xapl:value-of select="$currentForm"/>
+    </xapl:return>
+  </x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="create">
+    <x2:param name="pFormName" select="$pFormName"/>
+    <x2:param name="pServiceName" select="$pServiceName"/>
+    <xapl:print>
+         @@@@@@@@@@@@@@@@@@@@@@  FORM NAME =
+         <xapl:value-of select="$pFormName"/>
+         @@@@@@@@@@@@@@@@@@@@@@  SERVICE NAME =
+         <xapl:value-of select="$pServiceName"/>
+    </xapl:print>
+    <!-- Set Columns and table Name -->
+    <xapl:set-variable name="currentForm">
+      <xapl:value-of select="{$metaDataForms/SERVICE[@Name=$pServiceName]/QUERY_FORMS/QUERY_FORM[@Name= $pFormName]}"/>
+    </xapl:set-variable>
+    <!-- set the service name used in UI -->
+    <docutil:set select="$currentForm/@ServiceName">
+      <xapl:value-of select="$pServiceName"/>
+    </docutil:set>
+    <xapl:set-variable name="pkForm">
+      <KEYS/>
+    </xapl:set-variable>
+    <!--sorting properties by sequence -->
+    <docutil:sort select="$currentForm/RESULT_PROPERTIES" sort-element="RESULT_PROPERTY" sort-by="PRESENTATION/SEQUENCE/@Value" data-type="number" order="ascending"/>
+    <!-- add all the columns name (No PK for forms) ... -->
+    <xapl:for-each varName="column" select="$currentForm/RESULT_PROPERTIES/RESULT_PROPERTY">
+      <docutil:add select="$pkForm">
+        <NAME Document="{$column/@Document}" Value="{concat($column/@Document, '.' , $column/@Property)}"/>
+      </docutil:add>
+    </xapl:for-each>
+    <xapl:print>
+          ###############################################################
+          NEW FORM CREATED IN SESSION:::<xapl:value-of select="$currentForm/@Name"/>
+          #####################
+          PK OF FORM CREATED IN SESSION:::<xapl:value-of select="$pkForm"/>
+          ###############################################################
+          $$$$ Current Form ::: <xapl:value-of select="$currentForm"/>
+    </xapl:print>
+  </x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="resetPKByProperty">
+    <xapl:set-variable name="pkForm">
+      <KEYS/>
+    </xapl:set-variable>
+    <!-- add all the columns name (No PK for forms) ... -->
+    <xapl:for-each varName="column" select="$currentForm/RESULT_PROPERTIES/RESULT_PROPERTY">
+      <docutil:add select="$pkForm">
+        <NAME Document="{$column/@Document}" Value="{$column/@Property}"/>
+      </docutil:add>
+    </xapl:for-each>
+    <xapl:print>
+        RESETTING OF PK DONE::::
+        <xapl:value-of select="$pkForm"/>
+    </xapl:print>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="addRow">
+    <x2:param name="pFormName"/>
+    <x2:param name="pRow"/>
+    <xapl:variable name="row">
+      <xapl:value-of select="$pRow"/>
+    </xapl:variable>
+    <docutil:add select="$currentForm/RESULT_PROPERTIES/ROWS">
+      <ROW>
+        <xapl:value-of select="$row"/>
+      </ROW>
+    </docutil:add>
+  </x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormContainer">
+    <x2:param name="this" select="$this"/>
+    <x2:param name="pFormName" select="{$pFormName}"/>
+    <x2:param name="pSearchParam" select="{$searchParam}"/>
+    <x2:param name="pServiceName" select="{$pServiceName}"/>
+    <x2:param name="pSearchFormConfigSource" select="{$pSearchFormConfigSource}"/>
+    <x2:param name="pSearchReportConfigSource" select="{$pSearchReportConfigSource}"/>
+    <x2:param name="pReportDataSource" select="{$pReportDataSource}"/>
+    <!-- remove form and service names from this -->
+    <docutil:remove select="$this/FORM_NAME"/>
+    <docutil:remove select="$this/SERVICE"/>
+    <xapl:print>
+        $$$$$$$$$$$$$$$$$$$$$ FORM NAME =
+        <xapl:value-of select="$pFormName"/>
+        $$$$$$$$$$$$$$$$$$$$$ SERVICE NAME =
+        <xapl:value-of select="$pServiceName"/>
+    </xapl:print>
+    <xapl:print>*******this********</xapl:print>
+    <xapl:print select="$this"/>
+    <!-- set in this the service name and form name -->
+    <docutil:add select="$this">
+      <FORM_NAME Value="{$pFormName}"/>
+      <SERVICE Value="{$pServiceName}"/>
+    </docutil:add>
+    <xapl:choose>
+      <xapl:when test="$this/USE_OLD_FILTER/@Value = 'TRUE'">
+        <xapl:choose>
+          <xapl:when test="string-length($this/FAV_ID/@Value) > 0">
+            <x2:execute command="bcm.framework.user_preferences.controller:updateAndApplyUserPreferencesForForms">
+              <x2:with-param name="this" select="{$this}"/>
+            </x2:execute>
+          </xapl:when>
+          <xapl:otherwise>
+            <!-- apply old user preferences -->
+            <docutil:set select="$this">
+              <xapl:value-of select="$currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/FILTERS/*"/>
+            </docutil:set>
+            <xapl:if test="string-length($currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/FROZEN_SEQUENCES/FROZEN_SEQUENCE/@Value) != -999 ">
+              <docutil:set select="$this">
+                <FROZEN_SEQUENCE Value="{$currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/FROZEN_SEQUENCES/FROZEN_SEQUENCE/@Value}"/>
+              </docutil:set>
+            </xapl:if>
+          </xapl:otherwise>
+        </xapl:choose>
+      </xapl:when>
+      <xapl:otherwise>
+        <!-- update user preferences -->
+        <x2:execute command="bcm.framework.user_preferences.controller:updateAndApplyUserPreferencesForForms">
+          <x2:with-param name="this" select="{$this}"/>
+        </x2:execute>
+      </xapl:otherwise>
+    </xapl:choose>
+    <!-- COLUMN FREEZE -->
+    <xapl:if test="string-length($currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/FROZEN_SEQUENCES/FROZEN_SEQUENCE/@Value) > -1">
+      <docutil:set select="$this">
+        <FROZEN_SEQUENCE Value="{$currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/FROZEN_SEQUENCES/FROZEN_SEQUENCE/@Value}"/>
+      </docutil:set>
+      <xapl:print> INSIDE IF $this= <xapl:value-of select="$this"/>
+      </xapl:print>
+    </xapl:if>
+    <!--xapl:print> $this =<xapl:value-of select="$this"/> </xapl:print-->
+    <!-- COLUMN FREEZE -->
+    <!-- re-create the currentForm in session if its not there -->
+    <xapl:choose>
+      <xapl:when test="($currentForm/@Name = $this/FORM_NAME[1]/@Value and $currentForm/@ServiceName = $this/SERVICE[1]/@Value)"/>
+      <xapl:otherwise>
+        <!-- create form in session -->
+        <x2:execute command="bcm.framework.queryform.Form:create">
+          <x2:with-param name="pFormName" select="$this/FORM_NAME[1]/@Value"/>
+          <x2:with-param name="pServiceName" select="$this/SERVICE[1]/@Value"/>
+        </x2:execute>
+      </xapl:otherwise>
+    </xapl:choose>
+    <!-- TODO for efficiecy-->
+    <!-- set default sorting by pk  -->
+    <xapl:if test="{((count($this/SORT_BY[1]) = 0) or (string-length($this/SORT_BY/@Value) = 0))}">
+      <docutil:set select="{$this}">
+        <SORT_BY Value="{concat($currentForm/RESULT_PROPERTIES/RESULT_PROPERTY[1]/@Document, '.' , $currentForm/RESULT_PROPERTIES/RESULT_PROPERTY[1]/@Property)}"/>
+      </docutil:set>
+    </xapl:if>
+    <!--xapl:print>
+     $$$$$$$$$$$$$$$$$ GET FORMS $$$$$$$$$$$$
+    <xapl:print select="$currentForm"/>
+    <xapl:print select="$pkForm"/>
+    </xapl:print-->
+    <!-- set default sorting order -->
+    <xapl:choose>
+      <xapl:when test="{count($this/SORT_ORDER[1]) = 0}">
+        <docutil:add select="{$this}">
+          <SORT_ORDER Value="Ascending"/>
+        </docutil:add>
+      </xapl:when>
+      <xapl:when test="{string-length($this/SORT_ORDER/@Value) = 0}">
+        <docutil:set select="{$this/SORT_ORDER/@Value}">Ascending</docutil:set>
+      </xapl:when>
+    </xapl:choose>
+    <!--xapl:choose>
+         <xapl:when test="count($currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/ORDER_BY) = 1">
+         <docutil:add select="$this">
+         <MUTI_SORT_ENABLED  Value='yes'/>
+         </docutil:add>
+         </xapl:when>
+         <xapl:otherwise>
+          <docutil:add select="$this">
+          <MUTI_SORT_ENABLED  Value='no'/>
+          </docutil:add>
+         </xapl:otherwise>
+    </xapl:choose-->
+    <xapl:return>
+      <x2:execute command="bcm.framework.queryform.searchformfilter.searchformfilter:getSearch">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="pSearchParam" select="{$searchParam}"/>
+        <x2:with-param name="pSearchFormConfigSource" select="{$pSearchFormConfigSource}"/>
+        <x2:with-param name="pSearchReportConfigSource" select="{$pSearchReportConfigSource}"/>
+        <x2:with-param name="pReportDataSource" select="{$pReportDataSource}"/>
+      </x2:execute>
+    </xapl:return>
+  </x2:command>
+  <!--**********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormReportFields">
+    <x2:param name="this" select="$this"/>
+    <xapl:print>
+    form in form.cnd 
+    <xapl:value-of select="$currentForm"/>
+    </xapl:print>
+    <xapl:variable name="fields">
+      <FIELDS>
+        <!-- Process over result properties of forms-->
+        <OVERRIDDEN Value="no"/>
+        <xapl:variable name="seq" select="0"/>
+        <xapl:for-each varName="column" select="$currentForm/RESULT_PROPERTIES/RESULT_PROPERTY ">
+          <xapl:variable name="fieldName">{concat($column/@Document , '.' , $column/@Property)}</xapl:variable>
+            <!-- give the types for combobox and editable fields too -->
+            <xapl:print>
+            displaycust working properly
+            <xapl:value-of select="$column"/>
+            </xapl:print>
+            <xapl:variable name="type">
+              <xapl:choose>
+                <xapl:when test="$column/PRESENTATION/TYPE/@Value = 'dropdown' ">Select</xapl:when>
+                <xapl:when test="starts-with($column/@Type , 'string')">Text</xapl:when>
+                <xapl:when test="starts-with($column/@Type , 'datetime')">DateTime</xapl:when>
+                <xapl:when test="starts-with($column/@Type , 'date')">Date</xapl:when>
+                <xapl:when test="$column/@Type = 'int' or $column/@Type = 'float' or $column/@Type = 'double'">Number</xapl:when>
+                <!--
+               <xapl:when test="$column/PRESENTATION/TYPE/@Value = 'checkbox' ">CheckBox</xapl:when>
+               <xapl:when test="$column/PRESENTATION/TYPE/@Value = 'radio' ">Radio</xapl:when>
+               -->
+                <xapl:otherwise>Text</xapl:otherwise>
+              </xapl:choose>
+            </xapl:variable>
+            <!-- decimals-->
+            <xapl:variable name="decimals">
+              <xapl:if test="$column/@Type = 'float' or $column/@Type = 'double'">
+                <xapl:choose>
+                  <xapl:when test="string-length($column/PRESENTATION/DECIMALS/@Value) > 0">
+                    <xapl:value-of select="$column/PRESENTATION/DECIMALS/@Value"/>
+                  </xapl:when>
+                  <xapl:otherwise>
+                    <xapl:value-of select="'2'"/>
+                  </xapl:otherwise>
+                </xapl:choose>
+              </xapl:if>
+            </xapl:variable>
+            <xapl:variable name="displayName">
+              <xapl:choose>
+                <xapl:when test="string-length($column/@DisplayName) > 0 ">
+                  <xapl:value-of select="$column/@DisplayName"/>
+                </xapl:when>
+                <xapl:otherwise>
+                  <xapl:value-of select="$column/PRESENTATION/DISPLAY_NAME/@Value"/>
+                </xapl:otherwise>
+              </xapl:choose>
+            </xapl:variable>
+            <!-- for report data config -->
+            <xapl:variable name="dataSourceType"/>
+            <xapl:variable name="dataSourceName"/>
+            <xapl:variable name="selectAll"/>
+            <xapl:variable name="onChange"/>
+            <!-- onChange is NOT DONE -->
+            <xapl:variable name="editable"/>
+            <xapl:variable name="url"/>
+            <xapl:if test="$column/PRESENTATION/EDITABLE/@Value = 'yes'">
+              <xapl:set-variable name="editable" select="'yes'"/>
+            </xapl:if>
+            <xapl:if test="$type = 'Select'">
+              <xapl:set-variable name="dataSourceType" select="'Command'"/>
+              <xapl:set-variable name="dataSourceName" select="'bcm.framework.queryform.Form:getOptionTypes'"/>
+              <xapl:set-variable name="selectAll" select="'No'"/>
+              <xapl:set-variable name="onChange" select="'javascript:onTypeNameChange()'"/>
+            </xapl:if>
+            <!-- for filter  columns type config-->
+            <xapl:variable name="filter_type"/>
+            <xapl:variable name="filter_dataSourceType"/>
+            <xapl:variable name="filter_dataSourceName"/>
+            <xapl:variable name="filter_selectAll"/>
+            <xapl:variable name="filter_onChange"/>
+            <xapl:variable name="filter_disabled"/>
+            <xapl:if test="count($column/DATASOURCE) > 0 or $column/PRESENTATION/SEARCH_BY/@Value = 'dropdown' ">
+              <xapl:print>
+               ****** dropdown TYPE IN SEARCH FOUND ******
+               **<xapl:value-of select="$column/@Document"/>
+               **<xapl:value-of select="$column/@Property"/>
+              </xapl:print>
+              <xapl:set-variable name="filter_type" select="'dropdown'"/>
+              <xapl:set-variable name="filter_dataSourceType" select="'Command'"/>
+              <xapl:set-variable name="filter_dataSourceName" select="'bcm.framework.queryform.Form:getOptionTypes'"/>
+              <xapl:set-variable name="filter_selectAll" select="Yes"/>
+              <!--xapl:set-variable name="filter_onChange" select="'javascript:onChangeFilter()'"/-->
+              <xapl:if test="$this/DISABLE_FILTERS/*/@Value = concat( 'F_' , $column/@Document , '.' , $column/@Property)">
+                <xapl:print>
+                  !!!!! DISABLE THIS FILTER !!!!!!
+              </xapl:print>
+                <xapl:set-variable name="filter_disabled" select="'yes'"/>
+              </xapl:if>
+            </xapl:if>
+            <xapl:if test="$column/PRESENTATION/URL">
+              <xapl:set-variable name="url">
+                <web:get-page name="{$column/PRESENTATION/URL/@Value}"/>
+              </xapl:set-variable>
+            </xapl:if>
+            <FIELD I18Nize="{$column/PRESENTATION/I18NIZE/@Value}" Sequence="{$seq}" Editable="{$editable}" Name="{$fieldName}" Document="{$column/@Document}" Property="{$column/@Property}" Filter="{$column/PRESENTATION/SEARCHABLE/@Value}" Primarykey="{$column/@PrimaryKey}" DisplayText="{$displayName}" DisplayType="{$type}" DisplayNoWrap="{$column/PRESENTATION/NO_WRAP/@Value}" Sortable="{$column/PRESENTATION/SORTABLE/@Value}" Hidden="{$column/PRESENTATION/HIDDEN/@Value}" Required="{$column/@Required}" Url="{$url}" UrlParam="{$column/PRESENTATION/URLPARAM/@Value}" DataSourceType="{$dataSourceType}" DataSourceName="{$dataSourceName}" SelectAll="{$selectAll}" OnClick="{$column/PRESENTATION/ONCLICK/@Value}" OnClickParam="{$column/PRESENTATION/ONCLICKPARAM/@Value}" Filter_type="{$filter_type}" Filter_dataSourceType="{$filter_dataSourceType}" Filter_dataSourceName="{$filter_dataSourceName}" Filter_selectAll="{$filter_selectAll}" Filter_onChange="{$filter_onChange}" Filter_disabled="{$filter_disabled}" MaxLength="{$column/PRESENTATION/MAXLENGTH/@Value}" Decimals="{$decimals}"/>
+            <xapl:if test="$column/PRESENTATION/HIDDEN/@Value != 'yes' and count($currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/DISPLAY_CUST) = 0 or ( count($currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/DISPLAY_CUST) != 0 and $currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/DISPLAY_CUST/*/@Document = $column/@Document  and $currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/DISPLAY_CUST/*/@Name = $column/@Property )">                
+                <xapl:set-variable name="seq" select="$seq + 1"/>
+            </xapl:if>          
+        </xapl:for-each>
+      </FIELDS>
+    </xapl:variable>
+    <!--xapl:print>^fields^
+    <xapl:value-of select="$fields/*"/>
+   </xapl:print-->
+    <xapl:return>
+      <xapl:value-of select="$fields/*"/>
+    </xapl:return>
+  </x2:command>
+  <!--**********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormReportFieldsWithoutURL">
+    <x2:param name="this" select="$this"/>
+    <xapl:variable name="fields">
+      <FIELDS>
+        <!-- Process Input Staging/Master tables-->
+        <xapl:variable name="seq" select="0"/>
+        <xapl:for-each varName="column" select="$currentForm/RESULT_PROPERTIES/RESULT_PROPERTY ">
+          <xapl:variable name="fieldName">{concat($column/@Document , '.' , $column/@Property)}</xapl:variable>
+          <xapl:if test="not($currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/HIDDEN_COLUMNS/*/@Value = $fieldName) ">
+            <!-- give the types for combobox and editable fields too -->
+            <xapl:variable name="type">
+              <xapl:choose>
+                <xapl:when test="$column/PRESENTATION/TYPE/@Value = 'dropdown' ">Select</xapl:when>
+                <xapl:when test="starts-with($column/@Type , 'string')">Text</xapl:when>
+                <xapl:when test="starts-with($column/@Type , 'date')">Date</xapl:when>
+                <xapl:when test="$column/@Type = 'int'  or $column/@Type = 'float' or $column/@Type = 'double'">Number</xapl:when>
+                <!--
+               <xapl:when test="$column/PRESENTATION/TYPE/@Value = 'checkbox' ">CheckBox</xapl:when>
+               <xapl:when test="$column/PRESENTATION/TYPE/@Value = 'radio' ">Radio</xapl:when>
+               -->
+                <xapl:otherwise>Text</xapl:otherwise>
+              </xapl:choose>
+            </xapl:variable>
+            <xapl:variable name="displayName">
+              <xapl:choose>
+                <xapl:when test="string-length($column/@DisplayName) > 0 ">
+                  <xapl:value-of select="$column/@DisplayName"/>
+                </xapl:when>
+                <xapl:otherwise>
+                  <xapl:value-of select="$column/PRESENTATION/DISPLAY_NAME/@Value"/>
+                </xapl:otherwise>
+              </xapl:choose>
+            </xapl:variable>
+            <xapl:variable name="dataSourceType"/>
+            <xapl:variable name="dataSourceName"/>
+            <xapl:variable name="selectAll"/>
+            <xapl:variable name="onChange"/>
+            <!-- onChange is NOT DONE -->
+            <xapl:variable name="editable"/>
+            <xapl:if test="$column/PRESENTATION/EDITABLE/@Value = 'yes'">
+              <xapl:set-variable name="editable" select="'yes'"/>
+            </xapl:if>
+            <xapl:if test="$type = 'Select'">
+              <xapl:set-variable name="dataSourceType" select="'Command'"/>
+              <xapl:set-variable name="dataSourceName" select="'bcm.framework.queryform.Form:getOptionTypes'"/>
+              <xapl:set-variable name="selectAll" select="'No'"/>
+              <xapl:set-variable name="onChange" select="'javascript:onTypeNameChange()'"/>
+            </xapl:if>
+            <FIELD I18Nize="{$column/PRESENTATION/I18NIZE/@Value}" Sequence="{$seq}" Editable="{$editable}" Name="{$fieldName}" Filter="{$column/PRESENTATION/SEARCHABLE/@Value}" Primarykey="{$column/@PrimaryKey}" DisplayText="{$displayName}" DisplayType="{$type}" DisplayNoWrap="{$column/PRESENTATION/NO_WRAP/@Value}" Sortable="{$column/PRESENTATION/SORTABLE/@Value}" Hidden="{$column/PRESENTATION/HIDDEN/@Value}" Required="{$column/@Required}" DataSourceType="{$dataSourceType}" DataSourceName="{$dataSourceName}" SelectAll="{$selectAll}"/>
+          </xapl:if>
+          <xapl:set-variable name="seq" select="$seq + 1"/>
+        </xapl:for-each>
+      </FIELDS>
+    </xapl:variable>
+    <!--xapl:print>
+    <xapl:value-of select="$fields/*"/>
+   </xapl:print-->
+    <xapl:return>
+      <xapl:value-of select="$fields/*"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getDefaultPresentation">
+    <xapl:variable name="request"/>
+    <xapl:set-variable name="request" select="{concat('//' , $this/SERVICE/@Value, '/getDefaultPresentation')}"/>
+    <xapl:print select="$request"/>
+    <xapl:variable name="default"/>
+    <xapl:set-variable name="default">
+      <xcore:execute-method name="{$request}" entireResponse="true"/>
+    </xapl:set-variable>
+    <xapl:print>
+      <xapl:value-of select="$default"/>
+    </xapl:print>
+    <xapl:return>
+      <xapl:value-of select="$default"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getOptionTypes">
+    <xapl:variable name="request"/>
+    <xapl:set-variable name="request" select="{concat('//' , $this/SERVICE/@Value, '/getValidValues')}"/>
+    <xapl:print select="$request"/>
+    <!-- init forms data -->
+    <xapl:if test="count($currentFormsOptionData/*) = 0">
+      <xapl:set-variable name="currentFormsOptionData">
+        <FORMS_DATA>
+          <SERVICE Name="{$this/SERVICE/@Value}"/>
+        </FORMS_DATA>
+      </xapl:set-variable>
+    </xapl:if>
+    <xapl:if test="count($currentFormsOptionData/SERVICE[@Name = $this/SERVICE[1]/@Value]/FORM[@Name = $currentForm/@Id]/OPTION_TYPES/*) = 0 ">
+      <xapl:print>
+        INSIDE IT :::::::::
+     </xapl:print>
+      <docutil:add select="$currentFormsOptionData/SERVICE[@Name = $this/SERVICE[1]/@Value]">
+        <FORM Name="{$currentForm/@Id}">
+          <OPTION_TYPES>
+            <xcore:execute-method name="{$request}" entireResponse="false">
+              <QUERY_FORM>
+                <ID Value="{$currentForm/@Id}"/>
+              </QUERY_FORM>
+            </xcore:execute-method>
+          </OPTION_TYPES>
+        </FORM>
+      </docutil:add>
+      <xapl:print>
+        <xapl:value-of select="$currentFormsOptionData"/>
+      </xapl:print>
+    </xapl:if>
+    <xapl:return>
+      <xapl:value-of select="$currentFormsOptionData/SERVICE[@Name = $this/SERVICE[1]/@Value]/FORM[@Name = $currentForm/@Id]/OPTION_TYPES"/>
+    </xapl:return>
+  </x2:command>
+  <!--**********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormReportHiddenFields">
+    <x2:param name="this" select="$this"/>
+    <xapl:variable name="hiddenfields">
+      <FIELDS>
+        <FIELD Name="DO_SEARCH" DisplayType="Hidden" Value="{$this/DO_SEARCH[position() = 1]/@Value}"/>
+        <FIELD Name="DIRECTORY" DisplayType="Hidden" Value="{$this/DIRECTORY[position() = 1]/@Value}"/>
+        <FIELD Name="FILE" DisplayType="Hidden" Value="{$this/FILE[position() = 1]/@Value}"/>
+        <FIELD Name="SORT_BY" DisplayType="Hidden" Value="{$this/SORT_BY[position() = 1]/@Value}"/>
+        <FIELD Name="SORT_ORDER" DisplayType="Hidden" Value="{$this/SORT_ORDER[position() = 1]/@Value}"/>
+        <FIELD Name="FORM_NAME" DisplayType="Hidden" Value="{$this/FORM_NAME[position() = 1]/@Value}"/>
+        <FIELD Name="SERVICE" DisplayType="Hidden" Value="{$this/SERVICE[position() = 1]/@Value}"/>
+        <FIELD Name="SELECTED_AUTH_SCOPE" DisplayType="Hidden" Value="{$this/SELECTED_AUTH_SCOPE[position() = 1]/@Value}"/>
+        <!-- used by filters -->
+        <FIELD Name="PAGE" DisplayType="Hidden" Value="{$this/PAGE[position() = 1]/@Value}"/>
+        <FIELD Name="FILTER_TEXT" DisplayType="Hidden" Value="{$this/FILTER_TEXT[position() = 1]/@Value}"/>
+        <FIELD Name="FILTER_SCOPE" DisplayType="Hidden" Value="{$this/FILTER_SCOPE/@Value}"/>
+        <FIELD Name="FILTER_ID" DisplayType="Hidden" Value="{$this/FILTER_ID[position() = 1]/@Value}"/>
+        <FIELD Name="FILTER_MODE" DisplayType="Hidden" Value="{$this/FILTER_MODE[position() = 1]/@Value}"/>
+        <FIELD Name="FILTER_NAME" DisplayType="Hidden" Value="{$this/FILTER_NAME[position() = 1]/@Value}"/>
+        <FIELD Name="PAGE_HEADING" DisplayType="Hidden"/>
+        <!--for  update/edit any form-->
+        <FIELD DisplayType="Hidden" Name="UPDATE_ACTION" Value="formController/updateFormProperties.cmd"/>
+        <FIELD DisplayType="Hidden" Name="FORM_ID" Value="{$currentForm/ID/@Value}"/>
+        <FIELD DisplayType="Hidden" Name="UPDATE_MODE"/>
+        <FIELD DisplayType="Hidden" Name="FROZEN_COLUMN" Value="{$this/FROZEN_COLUMN[position() = 1]/@Value}"/>
+        <FIELD DisplayType="Hidden" Name="FROZEN_SEQUENCE" Value="{$this/FROZEN_SEQUENCE[position() = 1]/@Value}"/>
+        <FIELD DisplayType="Hidden" Name="COLUMN_SEQUENCE" Value="{$this/COLUMN_SEQUENCE[position() = 1]/@Value}"/>
+        <FIELD DisplayType="Hidden" Name="SELECTED_COLUMN" Value="{$this/SELECTED_COLUMN[position() = 1]/@Value}"/>
+        <FIELD DisplayType="Hidden" Name="COLUMN_COUNT" Value="{$this/COLUMN_COUNT[position() = 1]/@Value}"/>
+        <FIELD Name="HIDDEN_COLUMN" DisplayType="Hidden" Value=""/>
+        <FIELD Name="EXPORT_ALL" DisplayType="Hidden"/>
+        <FIELD Name="USE_OLD_FILTER" DisplayType="Hidden" Value="NO"/>
+        <FIELD Name="ACTIVITY_ID" DisplayType="Hidden" Value="{$this/ACTIVITY_ID/@Value}"/>
+        <FIELD Name="EXPORT_ALL" DisplayType="Hidden"/>
+        <FIELD Name="DISPLAY_COUNT" DisplayType="Hidden" Value=""/>
+      </FIELDS>
+    </xapl:variable>
+    <!--xapl:print>
+    <xapl:value-of select="$hiddenfields"/>
+   </xapl:print-->
+    <xapl:return>
+      <xapl:value-of select="$hiddenfields/*"/>
+    </xapl:return>
+  </x2:command>
+  <!--**********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormReportData">
+    <x2:param name="this" select="$this"/>
+    <x2:param name="fromProperty" select="'RESULT_PROPERTY'"/>
+    <x2:param name="delimeter" select="'.'"/>
+    <xapl:print>
+        getFormReportData:::::::::::::::::::::::
+        $fromProperty=<xapl:value-of select="$fromProperty"/>
+        $delimeter=<xapl:value-of select="$delimeter"/>
+        FORM=<xapl:value-of select="$this/FORM_NAME/@Value"/>
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+    <xapl:variable name="apiName"/>
+    <xapl:set-variable name="apiName">
+      <xapl:choose>
+        <xapl:when test="string-length($this/API_NAME/@Value) &gt; 0">
+          <xapl:value-of select="$this/API_NAME/@Value"/>
+        </xapl:when>
+        <xapl:otherwise>getFormData</xapl:otherwise>
+      </xapl:choose>
+    </xapl:set-variable>
+    <xapl:variable name="request"/>
+    <xapl:set-variable name="request" select="{concat('//' , $this/SERVICE[1]/@Value, '/', $apiName)}"/>
+    <xapl:print select="$request"/>
+    <xapl:variable name="currentData"/>
+    <xapl:choose>
+      <xapl:when test="$this/DO_SEARCH[1]/@Value = 'Yes' or $this/DO_SEARCH[1]/@Value = 'yes' ">
+        <xapl:set-variable name="filtersApplied">
+          <xapl:for-each varName="column" select="$currentForm/*/*[name() = $fromProperty ] ">
+            <xapl:variable name="propName" select="$column/@Property"/>
+            <xapl:variable name="docName" select="$column/@Document"/>
+            <!-- get the type from x-doc-->
+            <xapl:variable name="type"/>
+            <xapl:choose>
+              <xapl:when test="$fromProperty = 'RESULT_PROPERTY'">
+                <xapl:set-variable name="type" select="$column/@Type "/>
+              </xapl:when>
+              <xapl:otherwise>
+                <xapl:set-variable name="type" select="$column/@DataType "/>
+                <!--xapl:set-variable name="type" select="$metaData/SERVICE[@Name=$this/SERVICE[1]/@Value]/DOCUMENTS/DOCUMENT[ @Name =$column/@Document ]/PROPERTY[@Name = $column/@Property]/@Type "/-->
+              </xapl:otherwise>
+            </xapl:choose>
+            <xapl:print>
+						      <xapl:value-of select="$type"/>
+    				</xapl:print>
+            <!-- construct the filter name -->
+            <xapl:variable name="filterName" select="concat('F_',$column/@Document , $delimeter , $column/@Property)"/>
+            <xapl:variable name="filterNameForDate" select="concat('F_',$column/@Document , '_', $column/@Property)"/>
+            <xapl:if test="{string-length($this/*[name() = $filterName]/@Value) != 0 and ($type = 'string' or $type = 'LongString') }">
+              <FILTER Name="{$propName}" Document="{$docName}">
+                <xcore:search-by property="{$propName}" value="{$this/*[name() = $filterName]/@Value}"/>
+              </FILTER>
+            </xapl:if>
+            <xapl:if test="{string-length($this/*[name() = $filterName]/@Value) != 0  and ($type = 'int' or $type = 'float' or $type='double')}">
+              <FILTER Name="{$propName}" Document="{$docName}">
+                <xcore:search-by property="{$propName}" value="{$this/*[name() = $filterName]/@Value}" matchby="{$this/*[name() = concat($filterName , '_OPERATOR')]/@Value}"/>
+              </FILTER>
+            </xapl:if>
+           <xapl:if test="{string-length($this/*[name() = $filterName]/@Value) != 0 and ($type = 'boolean') }">
+								 <FILTER Name="{$propName}" Document="{$docName}">
+									 <xcore:search-by property="{$propName}" value="{$this/*[name() = $filterName]/@Value}"/>
+								 </FILTER>
+            </xapl:if>
+            <xapl:if test="{$type = 'date' or $type = 'datetime'}">
+              <xapl:if test="string-length($this/*[name() = concat($filterNameForDate , '_DS')]/@Value) > 0 ">
+                <xapl:print select="$this/*[name() = concat($filterNameForDate, '_DS')]/@Value"/>
+                <FILTER Name="{$propName}" Document="{$docName}">
+                  <xcore:search-by property="{$propName}" value="{$this/*[name() = concat($filterNameForDate, '_DS')]/@Value}" matchby="GREATER_EQUAL"/>
+                </FILTER>
+              </xapl:if>
+              <xapl:if test="string-length($this/*[name() = concat($filterNameForDate , '_DE')]/@Value) > 0 ">
+                <xapl:variable name="toDate">
+                  <xapl:value-of select="concat($this/*[name() = concat($filterNameForDate, '_DE')]/@Value,' 23:59:59')"/>
+                </xapl:variable>
+                <xapl:print select="$toDate"/>
+                <FILTER Name="{$propName}" Document="{$docName}">
+                  <xcore:search-by property="{$propName}" value="{$toDate}" matchby="LESS_EQUAL"/>
+                </FILTER>
+              </xapl:if>
+            </xapl:if>
+          </xapl:for-each>
+        </xapl:set-variable>
+        <xapl:set-variable name="currentData">
+          <xcore:execute-method name="{$request}" StartAtRow="{$this/*[name() = 'START_COUNT']/@Value}" MaxRows="{$this/*[name() = 'MAX_ROWS']/@Value}" ReturnRowCount="yes" entireResponse="true">
+            <ID Value="{$currentForm/@Id}"/>
+            <xapl:value-of select="$filtersApplied"/>
+            <xapl:print>
+                EXPRESSION FILTERS::
+                <xapl:value-of select="$currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/FILTERS/FILTER_DETAILS"/>
+            </xapl:print>
+            <xapl:if test="count($currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/FILTERS/FILTER_DETAILS) > 0">
+              <FILTER_DETAILS>
+                <xapl:value-of select="$currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/FILTERS/FILTER_DETAILS/LOGICAL"/>
+              </FILTER_DETAILS>
+            </xapl:if>
+            <xapl:choose>
+              <xapl:when test=" count($currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/ORDER_BY) = 1">
+                <xapl:value-of select="{$currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/ORDER_BY}"/>
+              </xapl:when>
+              <xapl:otherwise>
+                <xapl:if test="string-length($this/*[name() = 'SORT_BY']/@Value) > 0
+             and $currentForm/RESULT_PROPERTIES/RESULT_PROPERTY
+             [@Property = substring-after( ($this/*[name() = 'SORT_BY']/@Value) , '.' )]
+              and $currentForm/RESULT_PROPERTIES/RESULT_PROPERTY
+              [@Document = substring-before( ($this/*[name() = 'SORT_BY']/@Value) , '.' )]
+              ">
+                  <ORDER_BY>
+                    <docutil:element name="{$this/*[name() = 'SORT_BY']/@Value}" Document="{substring-before($this/*[name() = 'SORT_BY']/@Value, '.' )}" Sort="{$this/*[name() = 'SORT_ORDER']/@Value}"/>
+                  </ORDER_BY>
+                </xapl:if>
+              </xapl:otherwise>
+            </xapl:choose>
+          </xcore:execute-method>
+        </xapl:set-variable>
+        <!-- Add the total record count  -->
+        <docutil:set select="$currentData/RESPONSE">
+          <TOTAL_RECORD_COUNT Value="{$currentData/RESPONSE/@TotalRowCount}"/>
+          <START_AT_ROW Value="{$this/START_COUNT[position() = 1 ] /@Value}"/>
+        </docutil:set>
+      </xapl:when>
+      <xapl:otherwise/>
+    </xapl:choose>
+    <!-- TODO Do this dynamically only if timingStats are on. -->
+    <docutil:remove select="$currentData/TIMING_STATS"/>
+    <docutil:remove select="$currentData/RESPONSE/TIMING_STATS"/>
+    <xapl:set-variable name="currentFormsData">
+      <xapl:value-of select="{$currentData}"/>
+    </xapl:set-variable>
+    <!--xapl:print>
+   @@@@@@@@@@@@@@@@@@@@@@@@@@@ CURRENT FORM DATA IS
+    <xapl:value-of select="{$currentData}"/>
+  </xapl:print-->
+    <!--after filtered search, check boxes should be unchecked in the UI-->
+    <docutil:remove select="$this/SELECTED_ID"/>
+    <xapl:return>
+      <xapl:value-of select="$currentData/RESPONSE"/>
+    </xapl:return>
+  </x2:command>
+  <!--**********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getValueFromSelectedId">
+    <x2:param name="selectedId"/>
+    <x2:param name="key"/>
+    <xapl:variable name="value" select="{substring-before( substring-after($selectedId , concat($key,'=') ) , '#')}"/>
+    <xapl:print>VALUE ::::  <xapl:value-of select="$value"/>
+    </xapl:print>
+    <xapl:return>
+      <xapl:value-of select="$value"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getRows">
+    <x2:param name="pFormName" select="{$this/FORM_NAME/@Value}"/>
+    <x2:param name="this"/>
+    <xapl:print select="$this"/>
+    <xapl:variable name="request"/>
+    <xapl:choose>
+      <xapl:when test="$this/SERVICE/@Value = 'BCMINService' ">
+        <xapl:set-variable name="request" select="{concat('//BCMINService/', $this/FORM_NAME[1]/@Value)}"/>
+      </xapl:when>
+      <xapl:when test="$this/SERVICE/@Value = 'BCMMasterService' ">
+        <xapl:set-variable name="request" select="{concat('//BCMMasterService/', $this/FORM_NAME[1]/@Value)}"/>
+      </xapl:when>
+    </xapl:choose>
+    <xapl:variable name="response"/>
+    <xapl:variable name="rows">
+      <xapl:for-each varName="selectedId" select="$this/SELECTED_ID">
+        <xapl:variable name="ids" select="{ $selectedId/@Value }"/>
+        <xapl:set-variable name="response">
+          <ROW/>
+        </xapl:set-variable>
+        <xapl:print select="$response"/>
+        <xapl:print select="$pkForm"/>
+        <!--xcore:get-document name="{$request}" outputResponse="true"-->
+        <xapl:for-each select="$pkForm/NAME" varName="idName">
+          <xapl:variable name="id" select="{substring-before( substring-after($ids , '#') , '#') }"/>
+          <docutil:add select="$response">
+            <xapl:for-each varName="var" select="$currentForm/RESULT_PROPERTIES/ROWS/*">
+              <xapl:if test="$var/*[name() = $idName/@Value]/@Value = $id ">
+                <xapl:print select="$var"/>
+                <xapl:value-of select="$var/*"/>
+              </xapl:if>
+            </xapl:for-each>
+          </docutil:add>
+          <xapl:set-variable name="ids">
+            <xapl:value-of select="{substring-after( $ids , $id ) }"/>
+          </xapl:set-variable>
+        </xapl:for-each>
+        <!--/xcore:get-document-->
+        <!--/xapl:variable-->
+        <xapl:print select="$response"/>
+        <x2:execute command="bcm.framework.queryform.Form:getEmptyRow">
+          <x2:with-param name="this" select="{$this}"/>
+          <x2:with-param name="pFormName" select="{$this/FORM_NAME[1]/@Value}"/>
+          <x2:with-param name="currentRow" select="{$response}"/>
+        </x2:execute>
+      </xapl:for-each>
+    </xapl:variable>
+    <xapl:print select="$rows"/>
+    <xapl:return>
+      <!-- Row -->
+      <xapl:value-of select="{$rows}"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getEmptyRow">
+    <x2:param name="pFormName" select="{$this/FORM_NAME/@Value}"/>
+    <x2:param name="currentRow"/>
+    <x2:param name="this"/>
+    <xapl:print>
+     ************************ current form data
+      <xapl:value-of select="$currentRow"/>
+    </xapl:print>
+    <!-- select any row -->
+    <xapl:variable name="row"/>
+    <xapl:set-variable name="row">
+      <ROW>
+        <xapl:variable name="seq" select="0"/>
+        <xapl:for-each varName="column" select="$currentForm/RESULT_PROPERTIES/RESULT_PROPERTY">
+          <xapl:variable name="columnName" select="$column/@Property"/>
+          <FIELD Sequence="{$seq}" Name="{$column/@Property}" Filter="{$column/PRESENTATION/SEARCHABLE/@Value}" Primarykey="{$column/@PrimaryKey}" DisplayText="{$column/PRESENTATION/DISPLAY_NAME/@Value}" DisplayType="Text" DisplayNoWrap="{$column/PRESENTATION/NO_WRAP/@Value}" Sortable="{$column/PRESENTATION/SORTABLE/@Value}" Hidden="{$column/PRESENTATION/HIDDEN/@Value}" Required="{$column/@Required}" Value="{$currentRow/*[name() = $columnName] /@Value}"/>
+          <xapl:set-variable name="seq" select="$seq + 1"/>
+        </xapl:for-each>
+      </ROW>
+    </xapl:set-variable>
+    <xapl:return>
+      <!-- Row -->
+      <xapl:value-of select="{$row}"/>
+    </xapl:return>
+  </x2:command>
+  <!--**********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormReportFieldsByProperty">
+    <x2:param name="this" select="$this"/>
+    <!-- reset the PK for # -->
+    <x2:execute command="bcm.framework.queryform.Form:resetPKByProperty"/>
+    <xapl:variable name="fields">
+      <FIELDS>
+        <!-- Process Input Staging/Master tables-->
+        <xapl:variable name="seq" select="0"/>
+        <xapl:for-each varName="column" select="$currentForm/RESULT_PROPERTIES/RESULT_PROPERTY ">
+          <xapl:variable name="fieldName">
+            <xapl:value-of select="{$column/@Property}"/>
+          </xapl:variable>
+          <xapl:if test="not($currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/HIDDEN_COLUMNS/*/@Value = $fieldName) ">
+            <!-- give the types for combobox and editable fields too -->
+            <xapl:variable name="type">
+              <xapl:choose>
+                <xapl:when test="$column/PRESENTATION/TYPE/@Value = 'dropdown' ">Select</xapl:when>
+                <xapl:when test="starts-with($column/@Type , 'string')">Text</xapl:when>
+                <xapl:when test="starts-with($column/@Type , 'date')">Date</xapl:when>
+                <xapl:when test="$column/@Type = 'int'  or $column/@Type = 'float' or $column/@Type = 'double'">Number</xapl:when>
+                <!--
+               <xapl:when test="$column/PRESENTATION/TYPE/@Value = 'checkbox' ">CheckBox</xapl:when>
+               <xapl:when test="$column/PRESENTATION/TYPE/@Value = 'radio' ">Radio</xapl:when>
+               -->
+                <xapl:otherwise>Text</xapl:otherwise>
+              </xapl:choose>
+            </xapl:variable>
+            <!-- decimals-->
+            <xapl:variable name="decimals">
+              <xapl:if test="$column/@Type = 'float' or $column/@Type = 'double'">
+                <xapl:choose>
+                  <xapl:when test="string-length($column/PRESENTATION/DECIMALS/@Value) > 0">
+                    <xapl:value-of select="$column/PRESENTATION/DECIMALS/@Value"/>
+                  </xapl:when>
+                  <xapl:otherwise>
+                    <xapl:value-of select="'2'"/>
+                  </xapl:otherwise>
+                </xapl:choose>
+              </xapl:if>
+            </xapl:variable>
+            <xapl:variable name="displayName">
+              <xapl:choose>
+                <xapl:when test="string-length($column/@DisplayName) > 0 ">
+                  <xapl:value-of select="$column/@DisplayName"/>
+                </xapl:when>
+                <xapl:otherwise>
+                  <xapl:value-of select="$column/PRESENTATION/DISPLAY_NAME/@Value"/>
+                </xapl:otherwise>
+              </xapl:choose>
+            </xapl:variable>
+            <xapl:variable name="dataSourceType"/>
+            <xapl:variable name="dataSourceName"/>
+            <xapl:variable name="selectAll"/>
+            <xapl:variable name="onChange"/>
+            <!-- onChange is NOT DONE -->
+            <xapl:variable name="editable"/>
+            <xapl:variable name="url"/>
+            <xapl:if test="$column/PRESENTATION/EDITABLE/@Value = 'yes'">
+              <xapl:set-variable name="editable" select="'yes'"/>
+            </xapl:if>
+            <xapl:if test="$type = 'Select'">
+              <xapl:set-variable name="dataSourceType" select="'Command'"/>
+              <xapl:set-variable name="dataSourceName" select="'bcm.framework.queryform.Form:getOptionTypes'"/>
+              <xapl:set-variable name="selectAll" select="'No'"/>
+              <xapl:set-variable name="onChange" select="'javascript:onTypeNameChange()'"/>
+            </xapl:if>
+            <xapl:if test="$column/PRESENTATION/URL">
+              <xapl:set-variable name="url">
+                <web:get-page name="{$column/PRESENTATION/URL/@Value}"/>
+              </xapl:set-variable>
+            </xapl:if>
+            <FIELD I18Nize="{$column/PRESENTATION/I18NIZE/@Value}" Sequence="{$seq}" Editable="{$editable}" Name="{$column/@Property}" Filter="{$column/PRESENTATION/SEARCHABLE/@Value}" Primarykey="{$column/@PrimaryKey}" DisplayText="{$displayName}" DisplayType="{$type}" DisplayNoWrap="{$column/PRESENTATION/NO_WRAP/@Value}" Sortable="{$column/PRESENTATION/SORTABLE/@Value}" Hidden="{$column/PRESENTATION/HIDDEN/@Value}" Required="{$column/@Required}" Url="{$url}" UrlParam="{$column/PRESENTATION/URLPARAM/@Value}" DataSourceType="{$dataSourceType}" DataSourceName="{$dataSourceName}" SelectAll="{$selectAll}" OnClick="{$column/PRESENTATION/ONCLICK/@Value}" OnClickParam="{$column/PRESENTATION/ONCLICKPARAM/@Value}" MaxLength="{$column/PRESENTATION/MAXLENGTH/@Value}" Decimals="{$decimals}"/>
+          </xapl:if>
+          <xapl:set-variable name="seq" select="$seq + 1"/>
+        </xapl:for-each>
+      </FIELDS>
+    </xapl:variable>
+    <!--xapl:print>
+    <xapl:value-of select="$fields/*"/>
+   </xapl:print-->
+    <xapl:return>
+      <xapl:value-of select="$fields/*"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormSearchHiddenFields">
+    <xapl:return>
+      <!-- Always Put hidden at the end -->
+      <FIELD Name="FORM_NAME" Type="Hidden" Value="{$this/FORM_NAME[position() = 1]/@Value}"/>
+      <FIELD Name="SERVICE" Type="Hidden" Value="{$this/SERVICE[position() = 1]/@Value}"/>
+      <FIELD Type="Hidden" Name="DIRECTORY" Value="{$this/DIRECTORY[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="FILE" Value="{$this/FILE[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="DO_SEARCH" Value="{$this/DO_SEARCH[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="SEARCH_TYPE" Value="{$this/SEARCH_TYPE[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="SORT_BY" Value="{$this/SORT_BY[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="SORT_ORDER" Value="{$this/SORT_ORDER[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="START_COUNT" Value="{$this/START_COUNT[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="MAX_ROWS" Value="{$this/MAX_ROWS[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="DOC_TYPE" Value="{$this/DOC_TYPE[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="PAGE" Value="{$this/PAGE[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="OBJECT_TYPE" Value="{$this/OBJECT_TYPE[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="JSCRIPT" Value="{$this/JSCRIPT[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="SHOW_HEADER" Value="{$this/SHOW_HEADER[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="RET_PAGE" Value="{$this/RET_PAGE[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="FROZEN_COLUMN" Value="{$this/FROZEN_COLUMN[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="FROZEN_SEQUENCE" Value="{$this/FROZEN_SEQUENCE[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="COLUMN_SEQUENCE" Value="{$this/COLUMN_SEQUENCE[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="SELECTED_COLUMN" Value="{$this/SELECTED_COLUMN[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="COLUMN_COUNT" Value="{$this/COLUMN_COUNT[position() = 1]/@Value}" Visibility="Simple"/>
+      <FIELD Type="Hidden" Name="HIDDEN_COLUMN" Value=""/>
+      <FIELD Type="Hidden" Name="EXPORT_ALL"/>
+      <!-- used by filters -->
+      <FIELD Name="FILTER_TEXT" Type="Hidden" Value="{$this/FILTER_TEXT[position() = 1]/@Value}"/>
+      <FIELD Name="FILTER_SCOPE" Type="Hidden" Value="{$this/FILTER_SCOPE/@Value}"/>
+      <FIELD Name="FILTER_ID" Type="Hidden" Value="{$this/FILTER_ID[position() = 1]/@Value}"/>
+      <FIELD Name="FILTER_MODE" Type="Hidden" Value="{$this/FILTER_MODE[position() = 1]/@Value}"/>
+      <FIELD Name="FILTER_NAME" Type="Hidden" Value="{$this/FILTER_NAME[position() = 1]/@Value}"/>
+      <FIELD Name="PAGE_HEADING" Type="Hidden"/>
+      <FIELD Name="ACTIVITY_ID" Type="Hidden" Value="{$this/ACTIVITY_ID[position() = 1]/@Value}"/>
+     <FIELD Name="DISPLAY_COUNT" DisplayType="Hidden" Value=""/>
+    </xapl:return>
+  </x2:command>
+  <!--**********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormSearchFields">
+    <x2:param name="this" select="$this"/>
+    <xapl:variable name="fields">
+      <FIELDS>
+        <OVERRIDDEN Value="no"/>
+        <!-- Process over search properties of forms-->
+        <xapl:for-each varName="column" select="$currentForm/SEARCH_PROPERTIES/SEARCH_PROPERTY[@Type != 'hidden']">
+          <xapl:variable name="dataSourceType"/>
+          <xapl:variable name="dataSourceName"/>
+          <xapl:variable name="selectAll"/>
+          <xapl:variable name="onChange"/>
+          <xapl:variable name="type">
+            <xapl:choose>
+              <xapl:when test="$column/@Property = 'text' ">Text</xapl:when>
+              <xapl:when test="starts-with($column/@Type , 'date')">DateRange</xapl:when>
+              <xapl:when test="$column/@Type = 'dropdown' ">
+                <xapl:value-of select="'Select'"/>
+                <xapl:set-variable name="dataSourceType" select="'Command'"/>
+                <xapl:set-variable name="dataSourceName" select="$column/@DataSourceName"/>
+                <xapl:choose>
+                  <xapl:when test="string-length($column/@SelectAll) &gt; 0">
+                    <xapl:set-variable name="selectAll" select="$column/@SelectAll"/>
+                  </xapl:when>
+                  <xapl:otherwise>
+                    <xapl:set-variable name="selectAll" select="'No'"/>
+                  </xapl:otherwise>
+                </xapl:choose>
+                <xapl:choose>
+                  <xapl:when test="string-length($column/@OnChange) &gt; 0">
+                    <xapl:set-variable name="onChange" select="$column/@OnChange"/>
+                  </xapl:when>
+                  <xapl:otherwise>
+                    <xapl:set-variable name="onChange" select="'javascript:onTypeNameChange()'"/>
+                  </xapl:otherwise>
+                </xapl:choose>
+              </xapl:when>
+              <xapl:when test="$column/@Type = 'int' or $column/@Type = 'float' or $column/@Type = 'double'">Number</xapl:when>
+              <xapl:when test="$column/@Type = 'checkbox' ">CheckBox</xapl:when>
+              <xapl:otherwise>Text</xapl:otherwise>
+            </xapl:choose>
+          </xapl:variable>
+          
+          <!-- eq:554167 -->
+          <xapl:choose>
+            <xapl:when test="$type = 'DateRange'">
+              <FIELD Type="{$type}" DisplayText="{$column/@DisplayName}" Name="{concat('F_',$column/@Document , '_' , $column/@Property)}" Value1="{$this/  *    [name    () = concat('F_',$column/@Document , '_' , $column/@Property,'_DS')]/@Value}" Value2="{$this/  *    [name    () = concat('F_',$column/@Document , '_' , $column/@Property,'_DE')]/@Value}" DataSourceType="{$dataSourceType}" DataSourceName="{$dataSourceName}" SelectAll="{$selectAll}" Visibility="{$column/@Visibility}"/>
+            </xapl:when>
+            <xapl:otherwise>
+             <FIELD Type="{$type}" DisplayText="{$column/@DisplayName}" Name="{concat('F_',$column/@Document , '_' , $column/@Property)}" Value="{$this/  *    [name    () = concat('F_',$column/@Document , '_' , $column/@Property)]/@Value}" DataSourceType="{$dataSourceType}" DataSourceName="{$dataSourceName}" SelectAll="{$selectAll}" Visibility="{$column/@Visibility}"/>
+            </xapl:otherwise>
+          </xapl:choose>
+          
+        </xapl:for-each>
+      </FIELDS>
+    </xapl:variable>
+    <xapl:print>
+      <xapl:value-of select="$fields/*"/>
+    </xapl:print>
+    <xapl:return>
+      <xapl:value-of select="$fields/*"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="getFiltersForXserver" public="yes" description="Can be used for any form">
+    <x2:param name="delimeter"/>
+    <xapl:print>
+      delimeter = <xapl:value-of select="$delimeter"/>
+    </xapl:print>
+    <xapl:return>
+      <xapl:variable name="columnFilters" select="$currentPref/SERVICE/FORM[@Name=$currentForm/@Name]/FILTERS"/>
+      <xapl:print>
+      columnFilters = <xapl:value-of select="$columnFilters"/>
+      </xapl:print>
+      <xapl:for-each varName="column" select="$currentForm/RESULT_PROPERTIES/RESULT_PROPERTY">
+        <xapl:variable name="propName" select="$column/@Property"/>
+        <xapl:variable name="docName" select="$column/@Document"/>
+        <xapl:variable name="type" select="$column/@Type"/>
+        <xapl:variable name="filterName"/>
+        <xapl:choose>
+          <xapl:when test="{string-length($delimeter) != 0 }">
+            <xapl:set-variable name="filterName" select="concat('F_',$column/@Document , $delimeter, $column/@Property)"/>
+          </xapl:when>
+          <xapl:otherwise>
+            <xapl:set-variable name="filterName" select="concat('F_',$column/@Document , '.', $column/@Property)"/>
+          </xapl:otherwise>
+        </xapl:choose>
+        <xapl:print>
+          filterName = <xapl:value-of select="$filterName"/>
+        </xapl:print>
+        <xapl:if test="$columnFilters/*[name() = $filterName]/@Value != '*'">
+          <xapl:variable name="filterNameForDate" select="concat('F_',$column/@Document , '_', $column/@Property)"/>
+          <xapl:if test="{string-length($columnFilters/*[name() = $filterName]/@Value) != 0 and ($type = 'string' or $type = 'LongString') }">
+            <FILTER Name="{$propName}" Document="{$docName}">
+              <xcore:search-by property="{$propName}" value="{$columnFilters/*[name() = $filterName]/@Value}"/>
+            </FILTER>
+          </xapl:if>
+          <xapl:if test="{string-length($columnFilters/*[name() = $filterName]/@Value) != 0  and ($type = 'int' or $type = 'float' or $type='double')}">
+            <FILTER Name="{$propName}" Document="{$docName}">
+              <xcore:search-by property="{$propName}" value="{$columnFilters/*[name() = $filterName]/@Value}" matchby="{$columnFilters/*[name() = concat($filterName , '_OPERATOR')]/@Value}"/>
+            </FILTER>
+          </xapl:if>
+          <xapl:if test="{$type = 'date' or $type = 'datetime'}">
+            <xapl:if test="string-length($columnFilters/*[name() = concat($filterNameForDate , '_DS')]/@Value) > 0 ">
+              <FILTER Name="{$propName}" Document="{$docName}">
+                <xcore:search-by property="{$propName}" value="{$columnFilters/*[name() = concat($filterNameForDate, '_DS')]/@Value}" matchby="GREATER_EQUAL"/>
+              </FILTER>
+            </xapl:if>
+            <xapl:if test="string-length($columnFilters/*[name() = concat($filterNameForDate , '_DE')]/@Value) > 0 ">
+              <xapl:variable name="toDate">
+                <xapl:value-of select="concat($columnFilters/*[name() = concat($filterNameForDate, '_DE')]/@Value,' 23:59:59')"/>
+              </xapl:variable>
+              <FILTER Name="{$propName}" Document="{$docName}">
+                <xcore:search-by property="{$propName}" value="{$toDate}" matchby="LESS_EQUAL"/>
+              </FILTER>
+            </xapl:if>
+          </xapl:if>
+        </xapl:if>
+      </xapl:for-each>
+      <xapl:if test="count($currentPref/SERVICE/FORM[@Name=$currentForm/@Name]/FILTERS/FILTER_DETAILS/*) > 0">
+        <FILTER_DETAILS>
+          <xapl:value-of select="$currentPref/SERVICE/FORM[@Name=$currentForm/@Name]/FILTERS/FILTER_DETAILS/LOGICAL"/>
+        </FILTER_DETAILS>
+      </xapl:if>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="getUpdatableProperties" public="yes" description="Updatable properties-table wise">
+    <xapl:return>
+      <TABLES>
+        <xapl:for-each select="$currentForm/UPDATE_DOCUMENTS/DOCUMENT" varName="document">
+          <TABLE Name="{$document/@Name}">
+            <xapl:for-each select="$currentForm/RESULT_PROPERTIES/RESULT_PROPERTY[@Document = $document/@Name]" varName="column">
+              <xapl:if test="$column/PRESENTATION/GROUP_EDITABLE/@Value = 'yes'">
+                <PROPERTY Name="{$column/@Property}" Type="{$column/@Type}"/>
+              </xapl:if>
+            </xapl:for-each>
+          </TABLE>
+        </xapl:for-each>
+      </TABLES>
+    </xapl:return>
+  </x2:command>
+  <!--**********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFiltersForRequest">
+    <x2:param name="this" select="$this"/>
+    <x2:param name="fromProperty" select="'RESULT_PROPERTY'"/>
+    <x2:param name="delimeter" select="'.'"/>
+    <xapl:print>
+        getFiltersForRequest:::::::::::::::::::::::
+        $fromProperty=<xapl:value-of select="$fromProperty"/>
+        $delimeter=<xapl:value-of select="$delimeter"/>
+        FORM=<xapl:value-of select="$this/FORM_NAME/@Value"/>
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+    <xapl:choose>
+      <xapl:when test="$this/DO_SEARCH[1]/@Value = 'Yes' or $this/DO_SEARCH[1]/@Value = 'yes' ">
+        <xapl:set-variable name="filtersApplied">
+          <xapl:for-each varName="column" select="$currentForm/*/*[name() = $fromProperty ] ">
+            <xapl:variable name="propName" select="$column/@Property"/>
+            <xapl:variable name="docName" select="$column/@Document"/>
+            <!-- get the type from x-doc-->
+            <xapl:variable name="type"/>
+            <xapl:choose>
+              <xapl:when test="$fromProperty = 'RESULT_PROPERTY'">
+                <xapl:set-variable name="type" select="$column/@Type "/>
+              </xapl:when>
+              <xapl:otherwise>
+                <xapl:set-variable name="type" select="$column/@DataType "/>
+              </xapl:otherwise>
+            </xapl:choose>
+            <!-- construct the filter name -->
+            <xapl:variable name="filterName" select="concat('F_',$column/@Document , $delimeter , $column/@Property)"/>
+            <xapl:variable name="filterNameForDate" select="concat('F_',$column/@Document , '_', $column/@Property)"/>
+            <xapl:if test="{string-length($this/*[name() = $filterName]/@Value) != 0 and ($type = 'string' or $type = 'LongString')}">
+              <FILTER Name="{$propName}" Document="{$docName}">
+                <xcore:search-by property="{$propName}" value="{$this/*[name() = $filterName]/@Value}" matchby="{$this/*[name() = concat($filterName , '_OPERATOR')]/@Value}"/>
+              </FILTER>
+            </xapl:if>
+            <xapl:if test="{string-length($this/*[name() = $filterName]/@Value) != 0  and ($type = 'int' or $type = 'float' or $type='double')}">
+              <FILTER Name="{$propName}" Document="{$docName}">
+                <xcore:search-by property="{$propName}" value="{$this/*[name() = $filterName]/@Value}" matchby="{$this/*[name() = concat($filterName , '_OPERATOR')]/@Value}"/>
+              </FILTER>
+            </xapl:if>
+            <xapl:if test="{$type = 'date' or $type = 'datetime'}">
+              <xapl:if test="string-length($this/*[name() = concat($filterNameForDate , '_DS')]/@Value) > 0 ">
+                <xapl:print select="$this/*[name() = concat($filterNameForDate, '_DS')]/@Value"/>
+                <FILTER Name="{$propName}" Document="{$docName}">
+                  <xcore:search-by property="{$propName}" value="{$this/*[name() = concat($filterNameForDate, '_DS')]/@Value}" matchby="GREATER_EQUAL"/>
+                </FILTER>
+              </xapl:if>
+              <xapl:if test="string-length($this/*[name() = concat($filterNameForDate , '_DE')]/@Value) > 0 ">
+                <xapl:variable name="toDate">
+                  <xapl:value-of select="concat($this/*[name() = concat($filterNameForDate, '_DE')]/@Value,' 23:59:59')"/>
+                </xapl:variable>
+                <xapl:print select="$toDate"/>
+                <FILTER Name="{$propName}" Document="{$docName}">
+                  <xcore:search-by property="{$propName}" value="{$toDate}" matchby="LESS_EQUAL"/>
+                </FILTER>
+              </xapl:if>
+            </xapl:if>
+          </xapl:for-each>
+          <xapl:if test="count($currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/FILTERS/FILTER_DETAILS) > 0">
+            <FILTER_DETAILS>
+              <xapl:value-of select="$currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/FILTERS/FILTER_DETAILS/LOGICAL"/>
+            </FILTER_DETAILS>
+          </xapl:if>
+          <xapl:choose>
+            <xapl:when test=" count($currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/ORDER_BY) = 1">
+              <xapl:value-of select="{$currentPref/SERVICE[@Name= $this/SERVICE[1]/@Value]/FORM[@Name= $this/FORM_NAME[1]/@Value]/ORDER_BY}"/>
+            </xapl:when>
+            <xapl:otherwise>
+              <xapl:if test="string-length($this/*[name() = 'SORT_BY']/@Value) > 0
+             and $currentForm/RESULT_PROPERTIES/RESULT_PROPERTY
+             [@Property = substring-after( ($this/*[name() = 'SORT_BY']/@Value) , '.' )]
+              and $currentForm/RESULT_PROPERTIES/RESULT_PROPERTY
+              [@Document = substring-before( ($this/*[name() = 'SORT_BY']/@Value) , '.' )]
+              ">
+                <ORDER_BY>
+                  <docutil:element name="{$this/*[name() = 'SORT_BY']/@Value}" Document="{substring-before($this/*[name() = 'SORT_BY']/@Value, '.' )}" Sort="{$this/*[name() = 'SORT_ORDER']/@Value}"/>
+                </ORDER_BY>
+              </xapl:if>
+            </xapl:otherwise>
+          </xapl:choose>
+        </xapl:set-variable>
+      </xapl:when>
+      <xapl:otherwise/>
+    </xapl:choose>
+    <xapl:return>
+      <xapl:value-of select="$filtersApplied"/>
+    </xapl:return>
+  </x2:command>
+</x2:commands>

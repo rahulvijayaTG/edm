@@ -1,0 +1,331 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:search displayText="IP Item Location Exceptions Search" saveSearch="false" collapsable="true" exportSearch="false">
+    <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" anyFieldIsRequired="false" />
+    <ui:field-group columns="2" select="$root/SEARCH_FIELDS">
+      <ui:field-group>
+        <ui:dropdown id="PartyIdentificationValue" preferredWidth="10" name="PartyIdentificationValue" size="2" displayText="Segment" selectAll="true" selectOne="false" optionSrc="$root/Segments/*" />
+        <ui:entry-field displayText="Location Description" name="LocationIdentificationValueDescription" id="LocationIdentificationValueDescription" />
+        <ui:dropdown id="LocationClassMnemonicValue" name="LocationClassMnemonicValue" displayText="Location Type" selectAll="true" optionSrc="$root/LocTypes/*" />
+        <ui:entry-field displayText="Location Number" name="LocationIdentificationValue" id="LocationIdentificationValue">
+          <ui:links>
+            <ui:link displayText="Select Locations" onClick="javascript:selectlocation()">
+              <ui:image src="pop_up_window.gif" />
+              <!-- <ui:url page="view.x2ps">
+                <FIELD_NAME select="'LocationIdentificationValue'"/>
+                <SELECTABLE select="'All'"/>
+                <BUTTON_ID select="'selectLocation'"/>
+              </ui:url>-->
+            </ui:link>
+          </ui:links>
+        </ui:entry-field>
+        <ui:checkbox displayText="Display overrides only" id="chkDisplayOverride" name="chkDisplayOverride" />
+      </ui:field-group>
+      <ui:field-group>
+        <ui:entry-field displayText="Item Description" name="ItemIdentificationValueDescription" id="ItemIdentificationValueDescription" />
+        <ui:entry-field displayText="Item Number" name="ItemIdentificationValue" id="ItemIdentificationValue">
+          <ui:links>
+            <ui:link displayText="Select Item" onClick="javascript:selectItem()">
+              <ui:image src="pop_up_window.gif" />
+              <!--  <ui:url page="view.x2ps">
+                <FIELD_NAME select="'ItemIdentificationValue'"/>
+                <SELECTABLE select="'All'"/>
+                <BUTTON_ID select="'selectItem'"/>
+              </ui:url>-->
+            </ui:link>
+          </ui:links>
+        </ui:entry-field>
+        <ui:entry-field align="left" displayText="GTIN #" name="UniformCodeCouncilNumberValue" id="UniformCodeCouncilNumberValue" required="false" dataType="String">
+          <ui:links>
+            <ui:link displayText="Select GTIN" onClick="javascript:selectGTIN()">
+              <ui:image src="pop_up_window.gif" />
+              <!--   <ui:url page="view.x2ps">
+                <FIELD_NAME select="'UniformCodeCouncilNumberValue'"/>
+           
+                <SELECTABLE select="'All'"/>
+                <BUTTON_ID select="'SelectGTIN'"/>
+              </ui:url>-->
+            </ui:link>
+          </ui:links>
+        </ui:entry-field>
+        <ui:dropdown id="ItemType" name="ItemType" displayText="Material Type" selectAll="true" optionSrc="$root/ItemTypes/*" />
+        <ui:hidden-field name="pgRowCount" id="pgRowCount" value="{$root/pgRowCount/@Value}" />
+      </ui:field-group>
+    </ui:field-group>
+  </ui:search>
+  <!--			      <ui:table displayText="IP Segment Parameters" rowSrc="$root/SEGMENT_LISTS/SEGMENT_DETAILS" rowSubTreeSrc="PARAMETER_LISTS/ PARAMETER_DETAILS" collapsable="true" totalRowCount="$root/ROWCNT/@Value" startAtRow="$root/SEGMENT_LISTS/@startRowCount" maxRows="2" selectable="All" rowId="SegmentIdentification" exportable="true" configurable="true" postRowIdAs="SelectedSegment" doPaging="true">-->
+  <ui:table rememberSelections="true" displayText="IP Item Location Exceptions Search Results" rowSrc="$root/ITEM_LOC_PARM" collapsable="true" totalRowCount="$root/ROWCNT/@Value" startAtRow="$root/StartAtRowVal/@Value" maxRows="10" selectable="All" rowId="ItemLoc" exportable="true" postRowIdAs="SelectedItemLocation" doPaging="true">
+    <ui:field-group>
+      <ui:entry-field editable="false" displayText="Item Number" name="ItemIdentification" id="ItemIdentification" />
+      <ui:display-field name="ItemDesc" id="ItemDesc" displayText="Item Description" sortable="false" />
+      <ui:display-field name="GTIN" id="GTIN" displayText="GTIN #" sortable="false" dataType="String" unFormat="true" />
+      <!-- CR:107148 & CR:114447 12/08/2007 Lakshmi Anasapurapu Code Starts-->
+      <!--      <ui:display-field name="ItemTypeDescription" id="ItemTypeDescription" displayText="Material Type" sortable="false"/>-->
+      <ui:display-field name="ItemTypeName" id="ItemTypeName" displayText="Material Type" sortable="false" />
+      <GET_DOCUMENT Name="P_ItemType" AssignToVar="res1" ReturnRowCount="True">
+        <SELECT>
+          <ItemTypeName />
+        </SELECT>
+        <AND>
+          <ItemType Value="{$cur/ItemType/@Value}" />
+        </AND>
+      </GET_DOCUMENT>
+      <ItemTypeName Value="{$res1/P_ItemType/ItemTypeName/@Value}" />
+      <!-- CR:Number Code Ends -->
+      <ui:display-field sortable="false" name="SegmentIdentification" id="SegmentIdentification" displayText="Segment Number" />
+      <ui:entry-field editable="false" name="LocationIdentification" id="LocationIdentification" displayText="Location Number" sortable="false" />
+      <ui:display-field name="LocationDesc" id="LocationDesc" displayText="Location Description" sortable="false" />
+      <!-- CR:112367 12/11/2007 Lakshmi Anasapurapu Code Starts-->
+      <ui:display-field name="LocationClassMnemonicValue" id="LocationClassMnemonicValue" displayText="Location Type" sortable="false" />
+      <!-- CR:Number Code Ends -->
+      <ui:hidden-field name="ItemLoc" id="ItemLoc" />
+      <ui:hidden-field name="ItemUOMValue" id="ItemUOMValue" />
+      <ui:choose-field name="OverrideForecastErrorPercent" id="OverrideForecastErrorPercent" displayText="Override Percent Error">
+        <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+          <ui:entry-field name="OverrideForecastErrorPercent" dataType="Number" id="OverrideForecastErrorPercent" displayText="Override Percent Error" />
+        </ui:when>
+        <ui:otherwise>
+          <ui:entry-field editable="false" name="OverrideForecastErrorPercent" dataType="Number" id="OverrideForecastErrorPercent" displayText="Override Percent Error" />
+        </ui:otherwise>
+      </ui:choose-field>
+      <ui:choose-field name="OverrideProductionRiskPeriodValue" id="OverrideProductionRiskPeriodValue" displayText="Override Production Risk Period">
+        <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+          <ui:entry-field name="OverrideProductionRiskPeriodValue" dataType="Number" id="OverrideProductionRiskPeriodValue" displayText="Override Production Risk Period" />
+        </ui:when>
+        <ui:otherwise>
+          <ui:entry-field editable="false" name="OverrideProductionRiskPeriodValue" dataType="Number" id="OverrideProductionRiskPeriodValue" displayText="Override Production Risk Period" />
+        </ui:otherwise>
+      </ui:choose-field>
+      <ui:choose-field name="OverrideReplenishmentOrderQuantity" id="OverrideReplenishmentOrderQuantity" displayText="Override Reorder Quantity">
+        <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+          <ui:entry-field name="OverrideReplenishmentOrderQuantity" dataType="Number" id="OverrideReplenishmentOrderQuantity" displayText="Override Reorder Quantity" />
+        </ui:when>
+        <ui:otherwise>
+          <ui:entry-field editable="false" name="OverrideReplenishmentOrderQuantity" dataType="Number" id="OverrideReplenishmentOrderQuantity" displayText="Override Reorder Quantity" />
+        </ui:otherwise>
+      </ui:choose-field>
+      <ui:choose-field name="OverrideKeepInventoryIndicator" id="OverrideKeepInventoryIndicator" displayText="Override Keep Inventory Flag">
+        <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+          <ui:dropdown name="OverrideKeepInventoryIndicator" id="OverrideKeepInventoryIndicator" displayText="Override Keep Inventory Flag" selectOne="true">
+            <ui:option id="N" value="N" />
+            <ui:option id="U" value="U" />
+            <ui:option id="Y" value="Y" />
+          </ui:dropdown>
+        </ui:when>
+        <ui:otherwise>
+          <ui:entry-field id="OverrideKeepInventoryIndicator" name="OverrideKeepInventoryIndicator" displayText="Override Keep Inventory Flag" editable="false" />
+        </ui:otherwise>
+      </ui:choose-field>
+      <ui:choose-field name="Comments" id="Comments" displayText="Comments">
+        <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+          <ui:textarea name="Comments" id="Comments" displayText="Comments" />
+        </ui:when>
+        <ui:otherwise>
+          <ui:textarea editable="false" name="Comments" id="Comments" displayText="Comments" />
+        </ui:otherwise>
+      </ui:choose-field>
+      <ui:hidden-field id="Comments_hidden" name="Comments_hidden" />
+      <ui:hidden-field id="OverrideForecastErrorPercent_hidden" name="OverrideForecastErrorPercent_hidden" />
+      <ui:hidden-field id="OverrideProductionRiskPeriodValue_hidden" name="OverrideProductionRiskPeriodValue_hidden" />
+      <ui:hidden-field id="OverrideReplenishmentOrderQuantity_hidden" name="OverrideReplenishmentOrderQuantity_hidden" />
+      <ui:hidden-field id="OverrideKeepInventoryIndicator_hidden" name="OverrideKeepInventoryIndicator_hidden" />
+      <!-- added by vamshi for multi user edit-->
+      <ui:hidden-field id="LAST_MODIFIED_DATE" name="LAST_MODIFIED_DATE" />
+    </ui:field-group>
+    <ui:buttons id="tableButtons">
+      <ui:button displayText="Mass Update" id="MassUpdate" name="MassUpdate" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'Update')}" />
+      <ui:divider />
+      <ui:button displayText="Save" id="Save" name="Save" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'Update')}" />
+    </ui:buttons>
+  </ui:table>
+  <!--    </ui:step>
+  </ui:container>-->
+  <ui:script>
+    function selectlocation(){
+		var LocationIdentificationValue=document.form.LocationIdentificationValue.value;
+		var locdesc= document.form.LocationIdentificationValueDescription.value;
+		var loctype = document.form.LocationClassMnemonicValue.value;
+		var Item = document.form.ItemIdentificationValue.value;
+		//alert(LocationIdentificationValue);
+	//	alert(loctype);
+		var a = document.getElementById('PartyIdentificationValue');
+		var segment = '';
+		//alert(a.length);
+ 		for( k=0; k &lt;a.length;k++)
+		{
+if(a[k].selected)
+		{
+		if(segment != '')
+		{
+		segment = segment + ',';
+		}
+		segment = segment + a[k].value;
+		
+		}
+		}
+		//alert(segment);
+			window.open('view.x2ps?SERVICE_NAME=edmuiservice&amp;START_WORKFLOW=wfTLSelectLocation&amp;SOURCE=IPItemLocation&amp;FIELD_NAME=LocationIdentificationValue&amp;SELECTABLE=All&amp;POPUP=true&amp;SRCH_LOC_ID='+LocationIdentificationValue+'&amp;SRCH_SGMNT_ID='+segment+'&amp;SRCH_LOC_TYPE='+loctype+'&amp;SRCH_LOC_DESC='+locdesc+'&amp;SRCH_ITEM_ID='+Item,null,'height=480,width=740,screenX=400,screenY=400,top=200,left=250,toolbar=yes,menubar=no');
+    <!--	window.open('view.x2ps?SERVICE_NAME=edmuiservice&amp;START_WORKFLOW=wfPiSelecLocation&amp;FIELD_NAME=LocationIdentification&amp;SELECTABLE=All&amp;POPUP=true&amp;GroupIdentifier='+groupidentifier+'&amp;GroupLineInfo='+linenumbers,null,'height=480,width=740,screenX=400,screenY=400,top=200,left=250,toolbar=yes,menubar=no');-->
+    }
+		
+		function selectGTIN(){
+		var LocationIdentificationValue=document.form.LocationIdentificationValue.value;
+		var Item = document.form.ItemIdentificationValue.value;
+		var GTIN = document.form.UniformCodeCouncilNumberValue.value;
+		//alert(LocationIdentificationValue);
+	//	alert(loctype);
+		var a = document.getElementById('PartyIdentificationValue');
+		var segment = '';
+		//alert(a.length);
+ 		for( k=0; k &lt;a.length;k++)
+		{
+if(a[k].selected)
+		{
+		if(segment != '')
+		{
+		segment = segment + ',';
+		}
+		segment = segment + a[k].value;
+		
+		}
+		}
+		//alert(segment);
+			window.open('view.x2ps?SERVICE_NAME=edmuiservice&amp;START_WORKFLOW=wfIPSerachGTIN&amp;FIELD_NAME=UniformCodeCouncilNumberValue&amp;SELECTABLE=All&amp;POPUP=true&amp;UniformCodeCouncilNumberValue='+GTIN+'&amp;SRCH_LOC_ID='+LocationIdentificationValue+'&amp;SRCH_SGMNT_ID='+segment+'&amp;SRCH_ITEM_ID='+Item,null,'height=480,width=740,screenX=400,screenY=400,top=200,left=250,toolbar=yes,menubar=no');
+    <!--	window.open('view.x2ps?SERVICE_NAME=edmuiservice&amp;START_WORKFLOW=wfPiSelecLocation&amp;FIELD_NAME=LocationIdentification&amp;SELECTABLE=All&amp;POPUP=true&amp;GroupIdentifier='+groupidentifier+'&amp;GroupLineInfo='+linenumbers,null,'height=480,width=740,screenX=400,screenY=400,top=200,left=250,toolbar=yes,menubar=no');-->
+    }
+		
+		
+		function selectItem(){
+		var LocationIdentificationValue=document.form.LocationIdentificationValue.value;
+		var Itemdesc= document.form.ItemIdentificationValueDescription.value;
+		var gtin = document.form.UniformCodeCouncilNumberValue.value;
+		var Item = document.form.ItemIdentificationValue.value;
+		var ItemType = document.form.ItemType.value;
+		var a = document.getElementById('PartyIdentificationValue');
+		var segment = '';
+ 		for( k=0; k &lt;a.length;k++)
+		{
+if(a[k].selected)
+		{
+		if(segment != '')
+		{
+		segment = segment + ',';
+		}
+		segment = segment + a[k].value;
+		
+		}
+		}
+			window.open('view.x2ps?SERVICE_NAME=edmuiservice&amp;START_WORKFLOW=wfTLSelectItem&amp;FIELD_NAME=ItemIdentificationValue&amp;SOURCE=IPItemLocation&amp;SELECTABLE=All&amp;POPUP=true&amp;SRCH_LOC_ID='+LocationIdentificationValue+'&amp;SRCH_SGMNT_ID='+segment+'&amp;SRCH_ITEM_TYPE='+ItemType+'&amp;SRCH_ITEM_NAME='+Itemdesc+'&amp;SRCH_ITEM_ID='+Item+'&amp;SRCH_GTIN_ID='+gtin,null,'height=480,width=740,screenX=400,screenY=400,top=200,left=250,toolbar=yes,menubar=no');
+    <!--	window.open('view.x2ps?SERVICE_NAME=edmuiservice&amp;START_WORKFLOW=wfPiSelecLocation&amp;FIELD_NAME=LocationIdentification&amp;SELECTABLE=All&amp;POPUP=true&amp;GroupIdentifier='+groupidentifier+'&amp;GroupLineInfo='+linenumbers,null,'height=480,width=740,screenX=400,screenY=400,top=200,left=250,toolbar=yes,menubar=no');-->
+    }
+		
+		function on_MassUpdate(){
+		var selectedIds = document.getElementsByName('SelectedItemLocation');
+		var maxrows = document.form.pgRowCount.value;
+		var lenSelIds = selectedIds.length;
+		var count =lenSelIds - maxrows ;
+		var count1=0; //added for select all
+      for(i=0; i &lt; selectedIds.length; i++)
+			{
+        var t = selectedIds[ i ];
+        if ( t.checked )
+        {
+          count += 1;
+		count1+=1; //added for select all
+        }
+      }		
+		if(count1==10)
+		{
+		  var decision=core_confirm("Do you want to update all records satisfying the current search criteria?");
+		if(decision=='yes')
+		{
+		//alert('selected all records');
+			  	document.form.BUTTON_ID.value = 'MassUpdateAll'; 
+							document.form.action = 'view.x2ps';
+							document.form.submit();  	
+		}
+		else
+		{
+			if(count &lt;= 1){
+		            core_alert('Please select at least two records for mass update!');
+								return;
+		}
+		else{
+		  	document.form.BUTTON_ID.value = 'MassUpdate'; 
+							document.form.action = 'view.x2ps';
+							document.form.submit();  	
+		}
+		}
+
+}
+				//added for select all start
+	else
+		{
+			if(count &lt;= 1){
+		            core_alert('Please select at least two records for mass update!');
+								return;
+		}
+		else{
+		  	document.form.BUTTON_ID.value = 'MassUpdate'; 
+							document.form.action = 'view.x2ps';
+							document.form.submit();  	
+		}
+				}
+		}
+			function onSearch(){
+    
+	var LocationIdentificationValue=document.form.LocationIdentificationValue.value;
+	var locdesc= document.form.LocationIdentificationValueDescription.value;
+	var loctype = document.form.LocationClassMnemonicValue.value;
+	
+	var Itemdesc= document.form.ItemIdentificationValueDescription.value;
+	var Item = document.form.ItemIdentificationValue.value;
+	var ItemType = document.form.ItemType.value;
+	var gtin= document.form.UniformCodeCouncilNumberValue.value;
+	var chkDisplayOverride= document.form.chkDisplayOverride.checked;
+	   
+    var a = document.getElementById('PartyIdentificationValue');
+    var segment = '';
+     		for( k=0; k &lt;a.length;k++)
+    		{
+    if(a[k].selected)
+    		{
+    		if(segment != '')
+    		{
+    		segment = segment + ',';
+    		}
+    		segment = segment + a[k].value;
+    		
+    		}
+		}
+		/*
+alert("locidn"+LocationIdentificationValue);
+alert("locdesc"+locdesc);
+alert("loctype"+loctype);
+alert("Itemdesc"+Itemdesc);
+alert("Item"+Item);
+alert("ItemType"+ItemType);
+alert("GTIN"+gtin);
+alert("segment"+segment+"HI");
+		alert("chkDisplayOverride"+chkDisplayOverride+"HI");*/
+	
+
+						var	canSubmit = 'true';
+		if (LocationIdentificationValue=='' 	&amp;&amp; locdesc=='' 		&amp;&amp; loctype=='' 		&amp;&amp; Itemdesc=='' 		&amp;&amp; Item=='' 		&amp;&amp; ItemType=='' 		&amp;&amp; gtin=='' 		&amp;&amp; segment=='' &amp;&amp; chkDisplayOverride=='' ){
+		var response = core_confirm('No search criteria entered, the search might take a long time. Would you still like to continue with the search?');
+					if ( response == 'no' ) {
+						canSubmit = 'false';
+					} else {
+						canSubmit = 'true';
+					}
+		}
+		
+		if(canSubmit == 'true'){
+			document.form.BUTTON_ID.value = 'search_button'; 
+				
+							document.form.submit();  
+		}
+	
+    }
+  </ui:script>
+</ui:page-group>
+

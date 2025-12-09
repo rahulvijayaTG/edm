@@ -1,0 +1,1739 @@
+<DOCUMENTS>
+  <DEFINE_METHOD Name="CheckExistence">
+    <RULE>
+      <ACTION>
+        <SET Var="inputXml" FromSelect="$thisParam"/>
+        <GET_DOCUMENT Name="Dimension" AssignToVar="myDim" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+          <Name Value="{$thisParam/DIMENSION_NAME/@Value}" MatchBy="EQUAL"/>
+        </GET_DOCUMENT>
+        <IF_TEST Test="count($myDim/Dimension) = 0">
+          <THEN>
+            <TO_DOCVAR AssignToVar="myResult">
+              <RESULT>
+                <MYTEXT Value="Dimension does not Exist"/>
+              </RESULT>
+            </TO_DOCVAR>
+          </THEN>
+          <ELSE>
+            <TO_DOCVAR AssignToVar="myResult">
+              <RESULT>
+                <MYTEXT Value="Dimension Already Exists"/>
+              </RESULT>
+            </TO_DOCVAR>
+          </ELSE>
+        </IF_TEST>
+        <SET Var="thisReturn" FromSelect="$myResult"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="MetaDataLoad">
+    <!-- 
+				This API provides for the initial Data caching for Dimension and Level (MetaData) 
+				INPUT = NIL
+				OUTPUT = DocVar Structure for Dimensional Data
+				e.g. : 
+				-->
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="DIM_DATA">
+          <DIMENSIONAL_DATA/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="LVL_DATA">
+          <LEVELS/>
+        </TO_DOCVAR>
+        <SET Var="test" FromValue=""/>
+        <SET Var="myinput" FromValue="Simple Add Document Example"/>
+        <GET_DOCUMENT AssignToVar="myoutput" Name="Dimension" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+          <Type Value="BASE" MatchBy="EQUAL"/>					
+				<SELECT>
+            <Id/>
+            <Name/>
+          </SELECT>
+          <FETCH_DOCUMENT_LINK Name="FK_LEVEL_DIMENSION">
+            <SELECT>
+              <Id/>
+              <Name/>
+            </SELECT>
+          </FETCH_DOCUMENT_LINK>
+          <SET Var="DIM_COUNT" FromValue="0"/>
+          <SET Var="LVL_COUNT" FromValue="0"/>
+        </GET_DOCUMENT>
+        <FOR_EACH SelectList="$myoutput/Dimension" CurrentElement="currentElement">
+          <TO_DOCVAR AssignToVar="lineDocVar">
+            <DIMENSION>
+              <IF_TEST Test="$DIM_COUNT = '0'">
+                <THEN>
+                  <SET Var="Current_Dimension" FromValue="{$currentElement/Id/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <DIMENSION_ID Value="{$currentElement/Id/@Value}"/>
+              <DIMENSION_CODE Value="{$currentElement/Name/@Value}"/>
+              <FOR_EACH SelectList="$currentElement/FK_LEVEL_DIMENSION/Level" CurrentElement="cur_dim">
+                <TO_DOCVAR AssignToVar="templevel">
+                  <LEVEL_INFO>
+                    <IF_TEST Test="$LVL_COUNT = '0'">
+                      <THEN>
+                        <SET Var="Current_Level" FromValue="{$cur_dim/Id/@Value}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <LEVEL_ID Value="{$cur_dim/Id/@Value}"/>
+                    <LEVEL_CODE Value="{$cur_dim/Name/@Value}"/>
+                  </LEVEL_INFO>
+                </TO_DOCVAR>
+                <ADD_CHILDREN DocVar="LVL_DATA" FromValue="{$templevel}"/>
+                <SET Var="LVL_COUNT" FromValue="{$LVL_COUNT+1}"/>
+              </FOR_EACH>
+              <TO_XML SelectList="$LVL_DATA"/>
+            </DIMENSION>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="DIM_DATA" FromValue="{$lineDocVar}"/>
+          <SET Var="DIM_COUNT" FromValue="{$DIM_COUNT+1}"/>
+          <TO_DOCVAR AssignToVar="LVL_DATA_CLEAN">
+            <LEVELS/>
+          </TO_DOCVAR>
+          <SET DocVar="LVL_DATA" FromVar="LVL_DATA_CLEAN"/>
+        </FOR_EACH>
+        <SET DocVar="MetaData" FromDocVar="DIM_DATA"/>
+        <SET Var="thisReturn" FromSelect="$DIM_DATA"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="MemberSearch">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="QUERY_COLS">
+          <AND/>
+        </TO_DOCVAR>
+        <SET Var="inputXml" FromSelect="$thisParam"/>
+        <PRINTLN Value="$inputXml"/>
+        <!-- for pagination START_COUNT reset	-->
+        <IF_TEST Test="(count($thisParam/*)=0)">
+          <THEN>
+            <SET Var="startcount" FromValue="0"/>
+          </THEN>
+          <ELSE>
+            <SET Var="startcount" FromValue="{$thisParam/START_COUNT/@Value}">
+            </SET>
+          </ELSE>
+        </IF_TEST>
+        <!--      -->
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$inputXml/USING/@Value = 'NAME'}"/>
+              <IS_TRUE Value="{isValidValue($inputXml/OPTN/@Value,'DELETE','DE-ACTIVATE')}"/>
+            </AND>
+          </COND>
+          <THEN>
+            <!--	<GET_DOCUMENT AssignToVar="sql_data" Name="Member" MaxRows="2" ReturnRowCount="true" StartAtRow="{$startcount}">
+													<AND>
+													<dimensionID Value="{$inputXml/dimension/@Value}" MatchBy="EQUAL"/>
+													<LevelId Value="{$inputXml/Level/@Value}" MatchBy="EQUAL"/>
+													<Name Value="{$inputXml/SEARCH_STRING/@Value}" MatchBy="{$inputXml/CONDITION/@Value}"/>
+													<SYS_ENT_STATE Value="Active" MatchBy="EQUAL"/>
+													<memberStat Value="0" MatchBy="EQUAL"/>
+													</AND>
+											</GET_DOCUMENT>-->
+            <TO_DOCVAR AssignToVar="QUERY_COLS">
+              <AND>
+                <dimensionID Value="{$inputXml/dimension/@Value}" MatchBy="EQUAL"/>
+                <LevelId Value="{$inputXml/Level/@Value}" MatchBy="EQUAL"/>
+                <Name Value="{$inputXml/SEARCH_STRING/@Value}" MatchBy="{$inputXml/CONDITION/@Value}"/>
+                <ENTITY_STATE Value="ACTIVE" MatchBy="EQUAL"/>
+                <memberStat Value="0" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$inputXml/USING/@Value = 'NAME'}"/>
+              <IS_TRUE Value="{isValidValue($inputXml/OPTN/@Value,'PURGE','ACTIVATE')}"/>
+            </AND>
+          </COND>
+          <THEN>
+            <!--<GET_DOCUMENT AssignToVar="sql_data" Name="Member" MaxRows="2" ReturnRowCount="true" StartAtRow="{$startcount}">
+													<AND>
+													<dimensionID Value="{$inputXml/dimension/@Value}" MatchBy="EQUAL"/>
+													<LevelId Value="{$inputXml/Level/@Value}" MatchBy="EQUAL"/>
+													<Name Value="{$inputXml/SEARCH_STRING/@Value}" MatchBy="{$inputXml/CONDITION/@Value}"/>
+													<ENTITY_STATE Value="Inactive" MatchBy="EQUAL"/>
+													<memberStat Value="0" MatchBy="EQUAL"/>
+													</AND>
+											</GET_DOCUMENT>-->
+            <TO_DOCVAR AssignToVar="QUERY_COLS">
+              <AND>
+                <dimensionID Value="{$inputXml/dimension/@Value}" MatchBy="EQUAL"/>
+                <LevelId Value="{$inputXml/Level/@Value}" MatchBy="EQUAL"/>
+                <Name Value="{$inputXml/SEARCH_STRING/@Value}" MatchBy="{$inputXml/CONDITION/@Value}"/>
+                <ENTITY_STATE Value="INACTIVE" MatchBy="EQUAL"/>
+                <memberStat Value="0" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$inputXml/USING/@Value = 'DESCRIPTION'}"/>
+              <IS_TRUE Value="{isValidValue($inputXml/OPTN/@Value,'PURGE','ACTIVATE')}"/>
+            </AND>
+          </COND>
+          <THEN>
+            <!--<GET_DOCUMENT AssignToVar="sql_data" Name="Member" MaxRows="2" ReturnRowCount="true" StartAtRow="{$startcount}">
+													<AND>
+													<dimensionID Value="{$inputXml/dimension/@Value}" MatchBy="EQUAL"/>
+													<LevelId Value="{$inputXml/Level/@Value}" MatchBy="EQUAL"/>
+													<Description Value="{$inputXml/SEARCH_STRING/@Value}" MatchBy="{$inputXml/CONDITION/@Value}"/>
+													<ENTITY_STATE Value="Inactive" MatchBy="EQUAL"/>
+													<memberStat Value="0" MatchBy="EQUAL"/>
+													</AND>
+													</GET_DOCUMENT>-->
+            <TO_DOCVAR AssignToVar="QUERY_COLS">
+              <AND>
+                <dimensionID Value="{$inputXml/dimension/@Value}" MatchBy="EQUAL"/>
+                <LevelId Value="{$inputXml/Level/@Value}" MatchBy="EQUAL"/>
+                <Description Value="{$inputXml/SEARCH_STRING/@Value}" MatchBy="{$inputXml/CONDITION/@Value}"/>
+                <SYS_ENT_STATE Value="INACTIVE" MatchBy="EQUAL"/>
+                <memberStat Value="0" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$inputXml/USING/@Value = 'DESCRIPTION'}"/>
+              <IS_TRUE Value="{isValidValue($inputXml/OPTN/@Value,'DELETE','DE-ACTIVATE')}"/>
+            </AND>
+          </COND>
+          <THEN>
+            <!--<GET_DOCUMENT AssignToVar="sql_data" Name="Member" MaxRows="2" ReturnRowCount="true" StartAtRow="{$startcount}">
+													<AND>
+													<dimensionID Value="{$inputXml/dimension/@Value}" MatchBy="EQUAL"/>
+													<LevelId Value="{$inputXml/Level/@Value}" MatchBy="EQUAL"/>
+													<Description Value="{$inputXml/SEARCH_STRING/@Value}" MatchBy="{$inputXml/CONDITION/@Value}"/>
+													<ENTITY_STATE Value="Active" MatchBy="EQUAL"/>
+													<memberStat Value="0" MatchBy="EQUAL"/>
+													</AND>
+													</GET_DOCUMENT>-->
+            <TO_DOCVAR AssignToVar="QUERY_COLS">
+              <AND>
+                <dimensionID Value="{$inputXml/dimension/@Value}" MatchBy="EQUAL"/>
+                <LevelId Value="{$inputXml/Level/@Value}" MatchBy="EQUAL"/>
+                <Description Value="{$inputXml/SEARCH_STRING/@Value}" MatchBy="{$inputXml/CONDITION/@Value}"/>
+                <ENTITY_STATE Value="ACTIVE" MatchBy="EQUAL"/>
+                <memberStat Value="0" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+				
+				<REQUEST Name="mem_lifecycle_sortdoc_formation" AssignToVar="sort_criteria">
+				  <TO_XML SelectList="$thisParam/*"/>
+				</REQUEST>
+				
+        <GET_DOCUMENT AssignToVar="sql_data" Name="Member" MaxRows="{$Max_Rows/@Value}" ReturnRowCount="yes" StartAtRow="{$startcount}" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$QUERY_COLS"/>
+					 <ORDER_BY>
+            <TO_XML SelectList="$sort_criteria/sort_doc/*"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <SET Var="thisReturn" FromSelect="$sql_data"/>
+        <SET Var="COUNT" FromValue="{$sql_data/@TotalRowCount}"/>
+        <PRINT Value="$COUNT"/>
+        <PRINT Value="$thisReturn"/>
+        <PRINT Value="$QUERY_COLS"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="Set_Parameters">
+    <RULE>
+      <ACTION>
+        <SET Var="Dim_Tree" FromVar="{$thisParam}"/>
+        <FOR_EACH SelectList="$Dim_Tree/DIMENSION" CurrentElement="dimension_info">
+          <IF_TEST Test="$dimension_info/DIMENSION_ID/@Value = $thisParam/DIM_ID/@Value">
+            <THEN>
+              <SET Var="Current_Dim" FromValue="{$dimension_info/DIMENSION_CODE/@Value}"/>
+              <FOR_EACH SelectList="$dimension_info/LEVELS/LEVEL_INFO" CurrentElement="level_info">
+                <IF_TEST Test="$level_info/LEVEL_ID/@Value = $thisParam/LEVEL_ID/@Value">
+                  <THEN>
+                    <SET Var="Current_Lvl" FromValue="{$level_info/LEVEL_CODE/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="Return">
+          <PIPELINE_VARS>
+            <DIM_ID Value="{$thisParam/DIM_ID/@Value}"/>
+            <DIM_NAME Value="{$Current_Dim/@Value}"/>
+            <LEVEL_ID Value="{$thisParam/LEVEL_ID/@Value}"/>
+            <LEVEL_NAME Value="{$Current_Lvl/@Value}"/>
+          </PIPELINE_VARS>
+        </TO_DOCVAR>
+        <SET Var="thisReturn" FromSelect="$Return"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="Do_Purge">
+    <RULE>
+      <ACTION>
+        <SET Var="Params" FromVar="{$thisParam}"/>
+        <PRINT Value="$Params"/>
+        <TO_DOCVAR AssignToVar="Context_member">
+          <RESPONSE>
+            <SQL_RESULT>
+              <MEMBER_ID Value="{$Params/MEMBER_ID/@Value}"/>
+              <LEVEL_ID Value="{$Params/LEVEL_ID/@Value}"/>
+            </SQL_RESULT>
+          </RESPONSE>
+        </TO_DOCVAR>
+        <!--	Call to get All Descendants -->
+        <REQUEST Name="getDescendents" ServiceName="BCM_MASTER" AssignToVar="Sub_Tree">
+          <MEMBER_ID Value="{$Params/MEMBER_ID/@Value}"/>
+        </REQUEST>
+          
+        <!--APPENDING CONTEXT_MEMBER BLOCK-->
+        <APPEND_CHILDREN DocVar="Sub_Tree" FromDocVar="Context_member"/>
+				
+        <FOR_EACH SelectList="$Sub_Tree/SQL_RESULT" CurrentElement="node_info">
+          <REQUEST Name="getMemberName" AssignToVar="member_name">
+            <MEMBER_ID Value="{$node_info/MEMBER_ID/@Value}"/>
+          </REQUEST>
+          <SET Var="MemberName" FromValue="{$member_name/Member/Name/@Value}"/>
+          <REQUEST Name="getLevelName" AssignToVar="level_name">
+            <LEVEL_ID Value="{$node_info/LEVEL_ID/@Value}"/>
+          </REQUEST>
+          <SET Var="LevelName" FromValue="{$level_name/Level/Name/@Value}"/>
+					<REQUEST Name="getUniqueId" AssignToVar="htl_id" ServiceName="BCM_MASTER">
+          <DOCUMENT_NAME Value="HierarchyTransactionLog"/>
+      	  </REQUEST>
+								
+          <ADD_DOCUMENT Name="HierarchyTransactionLog" ServiceName="BCM_MASTER">
+            <Id Value="{$htl_id/UNIQUE_ID/@Value}"/>
+            <fromMemberName Value="{$member_name/Member/Name/@Value}"/>
+            <levelName Value="{$level_name/Level/Name/@Value}"/>
+            <operation Value="PR"/>
+            <dimensionName Value="{$Params/DIMENSION_NAME/@Value}"/>
+						<CREATION_DATE Value="{date()}"/>
+					<CREATED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_DATE Value="{date()}"/>
+					<ENTITY_STATE Value="ACTIVE"/>
+					<SOURCE Value="UI"/>
+          </ADD_DOCUMENT>
+					
+				  <REMOVE_DOCUMENT Name="MemberRelations" ServiceName="BCM_MASTER">
+				    <memberID Value ="{$node_info/MEMBER_ID/@Value}" MatchBy="EQUAL"/>
+						<levelID Value ="{$node_info/LEVEL_ID/@Value}" MatchBy="EQUAL"/>
+				  </REMOVE_DOCUMENT>
+					
+      <REMOVE_DOCUMENT Name="Member" ServiceName="BCM_MASTER">
+				    <Id Value ="{$node_info/MEMBER_ID/@Value}" MatchBy="EQUAL"/>
+						<LevelId Value ="{$node_info/LEVEL_ID/@Value}" MatchBy="EQUAL"/>
+				  </REMOVE_DOCUMENT>
+     
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="Do_De-Activate">
+    <RULE>
+      <ACTION>
+        <SET Var="Params" FromVar="{$thisParam}"/>
+        <PRINT Value="$Params"/>
+        <TO_DOCVAR AssignToVar="Context_member">
+          <RESPONSE>
+            <SQL_RESULT>
+              <MEMBER_ID Value="{$Params/MEMBER_ID/@Value}"/>
+              <LEVEL_ID Value="{$Params/LEVEL_ID/@Value}"/>
+            </SQL_RESULT>
+          </RESPONSE>
+        </TO_DOCVAR>
+        <!--	Call to get All Descendants -->
+        <REQUEST Name="getDescendents" ServiceName="BCM_MASTER" AssignToVar="Sub_Tree">
+          <MEMBER_ID Value="{$Params/MEMBER_ID/@Value}"/>
+        </REQUEST>
+				
+        <!--APPENDING CONTEXT_MEMBER BLOCK-->
+        	<APPEND_CHILDREN DocVar="Sub_Tree" FromDocVar="Context_member"/>
+				
+        <FOR_EACH SelectList="$Sub_Tree/SQL_RESULT" CurrentElement="node_info">
+          <REQUEST Name="getMemberName" AssignToVar="member_name">
+            <MEMBER_ID Value="{$node_info/MEMBER_ID/@Value}"/>
+          </REQUEST>
+          <SET Var="MemberName" FromValue="{$member_name/Member/Name/@Value}"/>
+          <REQUEST Name="getLevelName" AssignToVar="level_name">
+            <LEVEL_ID Value="{$node_info/LEVEL_ID/@Value}"/>
+          </REQUEST>
+          <SET Var="LevelName" FromValue="{$level_name/Level/Name/@Value}"/>
+          <REQUEST Name="getUniqueId" AssignToVar="htl_id" ServiceName="BCM_MASTER">
+            <DOCUMENT_NAME Value="HierarchyTransactionLog"/>
+          </REQUEST>
+          <PRINT Value="{$htl_id/@Value}"/>
+          <ADD_DOCUMENT Name="HierarchyTransactionLog" ServiceName="BCM_MASTER">
+            <Id Value="{$htl_id/UNIQUE_ID/@Value}"/>
+            <fromMemberName Value="{$member_name/Member/Name/@Value}"/>
+            <levelName Value="{$level_name/Level/Name/@Value}"/>
+            <operation Value="DA"/>
+            <dimensionName Value="{$Params/DIMENSION_NAME/@Value}"/>
+						<CREATION_DATE Value="{date()}"/>
+					<CREATED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_DATE Value="{date()}"/>
+					<ENTITY_STATE Value="ACTIVE"/>
+					<SOURCE Value="UI"/>
+          </ADD_DOCUMENT>
+          <MODIFY_DOCUMENT Name="Member" ServiceName="BCM_MASTER">
+            <DOCUMENT_CONTEXT>
+              <Id Value="{$node_info/MEMBER_ID/@Value}" MatchBy="EQUAL"/>
+            </DOCUMENT_CONTEXT>
+            <UPDATE_PROPERTIES>
+              <ENTITY_STATE Value="INACTIVE"/>
+								<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+								<LAST_MODIFIED_DATE Value="{date()}"/>
+            </UPDATE_PROPERTIES>
+          </MODIFY_DOCUMENT>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="Do_Delete">
+    <RULE>
+      <ACTION>
+        <SET Var="Params" FromVar="{$thisParam}"/>
+        <PRINT Value="$Params"/>
+        <TO_DOCVAR AssignToVar="Context_member">
+          <RESPONSE>
+            <SQL_RESULT>
+              <MEMBER_ID Value="{$Params/MEMBER_ID/@Value}"/>
+              <LEVEL_ID Value="{$Params/LEVEL_ID/@Value}"/>
+            </SQL_RESULT>
+          </RESPONSE>
+        </TO_DOCVAR>
+        <!--	Call to get All Descendants -->
+        <REQUEST Name="getDescendents" ServiceName="BCM_MASTER" AssignToVar="Sub_Tree">
+          <MEMBER_ID Value="{$Params/MEMBER_ID/@Value}"/>
+        </REQUEST>
+        <!--APPENDING CONTEXT_MEMBER BLOCK-->
+     	<APPEND_CHILDREN DocVar="Sub_Tree" FromDocVar="Context_member"/>
+       
+				 <FOR_EACH SelectList="$Sub_Tree/SQL_RESULT" CurrentElement="node_info">
+          <MODIFY_DOCUMENT Name="Member" ServiceName="BCM_MASTER">
+            <DOCUMENT_CONTEXT>
+              <Id Value="{$node_info/MEMBER_ID/@Value}" MatchBy="EQUAL"/>
+            </DOCUMENT_CONTEXT>
+            <UPDATE_PROPERTIES>
+              <ENTITY_STATE Value="DELETED"/>
+						<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_DATE Value="{date()}"/>
+            </UPDATE_PROPERTIES>
+          </MODIFY_DOCUMENT>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getMemberName">
+    <RULE>
+      <ACTION>
+        <SET Var="Params" FromVar="{$thisParam}"/>
+        <PRINT Value="$Params"/>
+        <GET_DOCUMENT AssignToVar="memberName" Name="Member" ServiceName="BCM_MASTER">
+          <Id Value="{$Params/MEMBER_ID/@Value}" MatchBy="EQUAL"/>
+          <SELECT>
+            <Name/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <SET Var="thisReturn" FromSelect="$memberName"/>
+        <PRINT Value="$thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+	
+	 <DEFINE_METHOD Name="getMemberDetails">
+    <RULE>
+      <ACTION>
+        <SET Var="Params" FromVar="{$thisParam}"/>
+        <PRINT Value="$Params"/>
+        <GET_DOCUMENT AssignToVar="memberName" Name="Member" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+          <Id Value="{$Params/MEMBER_ID/@Value}" MatchBy="EQUAL"/>
+					
+         </GET_DOCUMENT>
+        <SET Var="thisReturn" FromSelect="$memberName"/>
+        <PRINT Value="$thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+	
+	 <DEFINE_METHOD Name="getMemberDetails_refined">
+    <RULE>
+      <ACTION>
+        <SET Var="Params" FromVar="{$thisParam}"/>
+        <PRINT Value="$Params"/>
+        <IF>
+          <COND>
+            <EQUAL Value="{$Params/USING/@Value}" ToValue="1"/>
+          </COND>
+          <THEN>
+           <GET_DOCUMENT AssignToVar="memberList" Name="Member" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+          <Id Value="{$Params/MEMBER_ID/@Value}" MatchBy="EQUAL"/>
+					<Name Value="{$Params/SEARCH_STRING/@Value}" MatchBy="CONTAINS"/>
+					<!--<memberStat Value="0" MatchBy="EQUAL"/>-->
+          
+         </GET_DOCUMENT>
+          </THEN>
+        </IF>
+        <!--DESCRIPTION -->
+        <IF>
+          <COND>
+            <EQUAL Value="{$Params/USING/@Value}" ToValue="2"/>
+          </COND>
+          <THEN>
+            <GET_DOCUMENT AssignToVar="memberList" Name="Member" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+          <Id Value="{$Params/MEMBER_ID/@Value}" MatchBy="EQUAL"/>
+					<Description Value="{$Params/SEARCH_STRING/@Value}" MatchBy="CONTAINS"/>
+					<memberStat Value="0" MatchBy="EQUAL"/>
+         </GET_DOCUMENT>
+          </THEN>
+        </IF>
+				
+				 <SET Var="thisReturn" FromSelect="$memberList"/>
+        <PRINT Value="$thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+	
+	
+ <!-- <DEFINE_METHOD Name="loadInitialMembers">
+    <RULE>
+      <ACTION>
+        <SET Var="Params" FromVar="{$thisParam}"/>
+        <PRINT Value="$Params"/>
+				  <GET_DOCUMENT AssignToVar="sql_mem_data" Name="Member" ReturnRowCount="yes" MaxRows="{$Max_Rows/@Value}" StartAtRow="{$thisParam/startcount/@Value}" ServiceName="BCM_MASTER">
+          <AND>
+            <dimensionID Value="{$thisParam/dimensionID/@Value}" MatchBy="EQUAL"/>
+            <LevelId Value="{$thisParam/LevelId/@Value}" MatchBy="EQUAL"/>
+						 <memberStat Value="0" MatchBy="EQUAL"/>
+          </AND>
+					 <ORDER_BY>
+            <TO_XML SelectList="$thisParam/sort_doc/*"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <SET Var="thisReturn" FromSelect="$sql_mem_data"/>
+        <PRINT Value="$thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD> -->
+
+
+<DEFINE_METHOD Name="loadInitialMembers">
+    <RULE>
+      <ACTION>
+        <SET Var="Params" FromVar="{$thisParam}"/>
+        <PRINT Value="$Params"/>
+			  <IF>
+          <COND>
+              <IS_TRUE Value="{isValidValue($thisParam/operation/@Value,'DELETE','DE-ACTIVATE')}"/>
+           </COND>
+          <THEN>
+				  <GET_DOCUMENT AssignToVar="sql_mem_data" Name="Member" ReturnRowCount="yes" MaxRows="{$Max_Rows/@Value}" StartAtRow="{$thisParam/startcount/@Value}" ServiceName="BCM_MASTER">
+          <AND>
+            <dimensionID Value="{$thisParam/dimensionID/@Value}" MatchBy="EQUAL"/>
+            <LevelId Value="{$thisParam/LevelId/@Value}" MatchBy="EQUAL"/>
+						 <memberStat Value="0" MatchBy="EQUAL"/>
+						 <ENTITY_STATE Value="ACTIVE" MatchBy="EQUAL"/>
+          </AND>
+					 <ORDER_BY>
+            <TO_XML SelectList="$thisParam/sort_doc/*"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+					</THEN>
+				</IF>
+				
+				<IF>
+          <COND>
+              <IS_TRUE Value="{isValidValue($thisParam/operation/@Value,'PURGE')}"/>
+           </COND>
+          <THEN>
+				  <GET_DOCUMENT AssignToVar="sql_mem_data" Name="Member" ReturnRowCount="yes" MaxRows="{$Max_Rows/@Value}" StartAtRow="{$thisParam/startcount/@Value}" ServiceName="BCM_MASTER">
+          <AND>
+            <dimensionID Value="{$thisParam/dimensionID/@Value}" MatchBy="EQUAL"/>
+            <LevelId Value="{$thisParam/LevelId/@Value}" MatchBy="EQUAL"/>
+						 <memberStat Value="0" MatchBy="EQUAL"/>
+						 <ENTITY_STATE Value="INACTIVE" MatchBy="EQUAL"/>
+          </AND>
+					 <ORDER_BY>
+            <TO_XML SelectList="$thisParam/sort_doc/*"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+					</THEN>
+				</IF>
+				
+        <SET Var="thisReturn" FromSelect="$sql_mem_data"/>
+        <PRINT Value="$thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+
+
+
+
+
+  <DEFINE_METHOD Name="getMemberId">
+    <RULE>
+      <ACTION>
+        <SET Var="Params" FromVar="{$thisParam}"/>
+        <PRINT Value="$Params"/>
+        <GET_DOCUMENT AssignToVar="member_id" Name="Member" ServiceName="BCM_MASTER">
+          <AND>
+            <dimensionID Value="{$Params/DIMENSION_ID/@Value}" MatchBy="EQUAL"/>
+            <LevelId Value="{$Params/LEVEL_ID/@Value}" MatchBy="EQUAL"/>
+            <Name Value="{$Params/MEMBER_NAME/@Value}" MatchBy="EQUAL"/>
+          </AND>
+          <SELECT>
+            <Id/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <SET Var="thisReturn" FromSelect="$member_id"/>
+        <PRINT Value="$thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+	
+	
+	
+  <DEFINE_METHOD Name="getLevelName">
+    <RULE>
+      <ACTION>
+        <SET Var="Params" FromVar="{$thisParam}"/>
+        <PRINT Value="$Params"/>
+        <GET_DOCUMENT AssignToVar="levelName" Name="Level" ServiceName="BCM_MASTER">
+          <Id Value="{$Params/LEVEL_ID/@Value}" MatchBy="EQUAL"/>
+          <SELECT>
+            <Name/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <SET Var="thisReturn" FromSelect="$levelName"/>
+        <PRINT Value="$thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!-- VINAY's METHODS -->
+  <DEFINE_METHOD Name="getmembers">
+    <RULE>
+      <ACTION>
+        <SET Var="outputXml" FromSelect="$thisParam"/>
+        <SET Var="thisParam" Property="PARAMETER" FromValue="1"/>
+        <IF_TEST Test="($userAction='Search')">
+          <THEN>
+            <SET Var="outputXml" Property="START_COUNT" FromValue="0"/>
+            <SET Var="outputXml" Property="SORT_BY" FromValue="Name"/>
+            <SET Var="outputXml" Property="SORT_ORDER" FromValue="Ascending"/>
+          </THEN>
+        </IF_TEST>
+        <!--	FORMING OF QUERY CRITERIA STARTS HERE-->
+        <TO_DOCVAR AssignToVar="query_criteria">
+          <TEMP/>
+        </TO_DOCVAR>
+        <!-- BOTH ANY    starts   NAME field  -->
+        <IF>
+          <COND>
+            <AND>
+              <EQUAL Value="{$outputXml/member_status/@Value}" ToValue="3"/>
+              <EQUAL Value="{$outputXml/member_state/@Value}" ToValue="ANY"/>
+              <EQUAL Value="{$outputXml/using/@Value}" ToValue="NAME"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <AND>
+                <dimensionID Value="{$outputXml/dimension_name/@Value}" MatchBy="EQUAL"/>
+                <LevelId Value="{$outputXml/level_name/@Value}" MatchBy="EQUAL"/>
+                <Name Value="{$outputXml/search_string/@Value}" MatchBy="{$outputXml/condition/@Value}"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!--DESCRIPTION -->
+        <IF>
+          <COND>
+            <AND>
+              <EQUAL Value="{$outputXml/member_status/@Value}" ToValue="3"/>
+              <EQUAL Value="{$outputXml/member_state/@Value}" ToValue="ANY"/>
+              <EQUAL Value="{$outputXml/using/@Value}" ToValue="DESCRIPTION"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <AND>
+                <dimensionID Value="{$outputXml/dimension_name/@Value}" MatchBy="EQUAL"/>
+                <LevelId Value="{$outputXml/level_name/@Value}" MatchBy="EQUAL"/>
+                <Description Value="{$outputXml/search_string/@Value}" MatchBy="{$outputXml/condition/@Value}"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!--		ONE ANY  TYPE  is any   NAME-->
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$outputXml/member_state/@Value != 'ANY'}"/>
+              <EQUAL Value="{$outputXml/member_status/@Value}" ToValue="3"/>
+              <EQUAL Value="{$outputXml/using/@Value}" ToValue="NAME"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <AND>
+                <dimensionID Value="{$outputXml/dimension_name/@Value}" MatchBy="EQUAL"/>
+                <LevelId Value="{$outputXml/level_name/@Value}" MatchBy="EQUAL"/>
+                <Name Value="{$outputXml/search_string/@Value}" MatchBy="{$outputXml/condition/@Value}"/>
+                <ENTITY_STATE Value="{$outputXml/member_state/@Value}" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!--DESCRIPTION	-->
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$outputXml/member_state/@Value != 'ANY'}"/>
+              <EQUAL Value="{$outputXml/member_status/@Value}" ToValue="3"/>
+              <EQUAL Value="{$outputXml/using/@Value}" ToValue="DESCRIPTION"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <AND>
+                <dimensionID Value="{$outputXml/dimension_name/@Value}" MatchBy="EQUAL"/>
+                <LevelId Value="{$outputXml/level_name/@Value}" MatchBy="EQUAL"/>
+                <Description Value="{$outputXml/search_string/@Value}" MatchBy="{$outputXml/condition/@Value}"/>
+                <ENTITY_STATE Value="{$outputXml/member_state/@Value}" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!--		ONE ANY  DB_TYPE  is any   NAME -->
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$outputXml/member_status/@Value != '3'}"/>
+              <EQUAL Value="{$outputXml/member_state/@Value}" ToValue="ANY"/>
+              <EQUAL Value="{$outputXml/using/@Value}" ToValue="NAME"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <AND>
+                <dimensionID Value="{$outputXml/dimension_name/@Value}" MatchBy="EQUAL"/>
+                <LevelId Value="{$outputXml/level_name/@Value}" MatchBy="EQUAL"/>
+                <Name Value="{$outputXml/search_string/@Value}" MatchBy="{$outputXml/condition/@Value}"/>
+                <memberStat Value="{$outputXml/member_status/@Value}" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!--	DESCRIPTION-->
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$outputXml/member_status/@Value != '3'}"/>
+              <EQUAL Value="{$outputXml/member_state/@Value}" ToValue="ANY"/>
+              <EQUAL Value="{$outputXml/using/@Value}" ToValue="DESCRIPTION"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <AND>
+                <dimensionID Value="{$outputXml/dimension_name/@Value}" MatchBy="EQUAL"/>
+                <LevelId Value="{$outputXml/level_name/@Value}" MatchBy="EQUAL"/>
+                <Description Value="{$outputXml/search_string/@Value}" MatchBy="{$outputXml/condition/@Value}"/>
+                <memberStat Value="{$outputXml/member_status/@Value}" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!--	No option is any     NAME-->
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$outputXml/member_status/@Value != '3'}"/>
+              <IS_TRUE Value="{$outputXml/member_state/@Value != 'ANY'}"/>
+              <EQUAL Value="{$outputXml/using/@Value}" ToValue="NAME"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <AND>
+                <dimensionID Value="{$outputXml/dimension_name/@Value}" MatchBy="EQUAL"/>
+                <LevelId Value="{$outputXml/level_name/@Value}" MatchBy="EQUAL"/>
+                <Name Value="{$outputXml/search_string/@Value}" MatchBy="{$outputXml/condition/@Value}"/>
+                <memberStat Value="{$outputXml/member_status/@Value}" MatchBy="EQUAL"/>
+                <ENTITY_STATE Value="{$outputXml/member_state/@Value}" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!-- DESCRIPTION	-->
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$outputXml/member_status/@Value != '3'}"/>
+              <IS_TRUE Value="{$outputXml/member_state/@Value != 'ANY'}"/>
+              <EQUAL Value="{$outputXml/using/@Value}" ToValue="DESCRIPTION"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <AND>
+                <dimensionID Value="{$outputXml/dimension_name/@Value}" MatchBy="EQUAL"/>
+                <LevelId Value="{$outputXml/level_name/@Value}" MatchBy="EQUAL"/>
+                <Description Value="{$outputXml/search_string/@Value}" MatchBy="{$outputXml/condition/@Value}"/>
+                <memberStat Value="{$outputXml/member_status/@Value}" MatchBy="EQUAL"/>
+                <ENTITY_STATE Value="{$outputXml/member_state/@Value}" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!--	FORMING OF QUERY CRITERIA ENDS HERE-->
+        <!-- Declaration for the sort_doc-->
+        <REQUEST Name="Mem_sortdoc_formation" AssignToVar="sort_doc">
+          <TO_XML SelectList="$outputXml/*"/>
+        </REQUEST>
+        <!--SORTING CHECKS ENDS-->
+        <GET_DOCUMENT AssignToVar="query1" Name="Member" MaxRows="{$Max_Rows/@Value}" ReturnRowCount="yes" StartAtRow="{$outputXml/START_COUNT/@Value}" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$query_criteria"/>
+          <ORDER_BY>
+            <TO_XML SelectList="$sort_doc/sort_doc/*"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <SET Var="thisReturn" FromSelect="$query1"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="initialmembers">
+    <RULE>
+      <ACTION>
+        <SET Var="Sort_doc" FromSelect="$thisParam"/>
+        <GET_DOCUMENT AssignToVar="myoutput" Name="Member" MaxRows="{$Max_Rows/@Value}" ReturnRowCount="yes" StartAtRow="{$thisParam/hascount/@Value}" ServiceName="BCM_MASTER">
+          <dimensionID Value="{$thisParam/hasdim/@Value}" MatchBy="EQUAL"/>
+          <LevelId Value="{$thisParam/haslev/@Value}" MatchBy="EQUAL"/>
+          <ORDER_BY>
+            <TO_XML SelectList="$Sort_doc/sort_doc/*"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <SET Var="thisReturn" FromSelect="$myoutput"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="Do_Merge">
+    <RULE>
+      <ACTION>
+				 <REQUEST Name="getUniqueId" AssignToVar="htl_id" ServiceName="BCM_MASTER">
+            <DOCUMENT_NAME Value="HierarchyTransactionLog"/>
+          </REQUEST>
+				
+				<GET_DOCUMENT Name="MemberRelations" AssignToVar="parent_lvl" ServiceName="BCM_MASTER">
+					<dimensionID Value="{$thisParam/merge_dimension_id/@Value}"/>
+					<levelID Value="{$thisParam/merge_level_id/@Value}"/>
+					<memberID Value="{$thisParam/source_member_id/@Value}"/>
+				</GET_DOCUMENT>
+				
+				<GET_DOCUMENT Name="MemberRelations" AssignToVar="tgt_parent_lvl" ServiceName="BCM_MASTER">
+					<dimensionID Value="{$thisParam/merge_dimension_id/@Value}"/>
+					<levelID Value="{$thisParam/merge_level_id/@Value}"/>
+					<memberID Value="{$thisParam/target_member_id/@Value}"/>
+					<parentLevelID Value="{$parent_lvl/MemberRelations/parentLevelID/@Value}"/>
+				</GET_DOCUMENT>
+				
+				<REQUEST Name="getMemberName" AssignToVar="tgt_prnt_member_name">
+            <MEMBER_ID Value="{$tgt_parent_lvl/MemberRelations/parentMemberID/@Value}"/>
+          </REQUEST>
+				
+				
+     <ADD_DOCUMENT Name="HierarchyTransactionLog" ServiceName="BCM_MASTER">
+          <Id Value="{$htl_id/UNIQUE_ID/@Value}"/>
+          <operation Value="MR"/>
+          <fromMemberName Value="{$thisParam/source_member_name/@Value}"/>
+          <toMemberName Value="{$thisParam/target_member_name/@Value}"/>
+          <levelName Value="{$thisParam/merge_level_name/@Value}"/>
+          <dimensionName Value="{$thisParam/merge_dimension_name/@Value}"/>
+					<toParentMemberName Value="{$tgt_prnt_member_name/Member/Name/@Value}"/>-->
+					<CREATION_DATE Value="{date()}"/>
+					<CREATED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_DATE Value="{date()}"/>
+					<ENTITY_STATE Value="ACTIVE"/>
+					<SOURCE Value="UI"/>
+        </ADD_DOCUMENT>
+        <MODIFY_DOCUMENT Name="MemberRelations" ServiceName="BCM_MASTER">
+	        <DOCUMENT_CONTEXT>
+	          <parentMemberID Value="{$thisParam/source_member_id/@Value}" MatchBy="EQUAL"/>
+	        </DOCUMENT_CONTEXT>
+	        <UPDATE_PROPERTIES>
+	          <parentMemberID Value="{$thisParam/target_member_id/@Value}"/>
+							<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_DATE Value="{date()}"/>
+	        </UPDATE_PROPERTIES>
+	      </MODIFY_DOCUMENT>
+				
+				 <REMOVE_DOCUMENT Name="MemberRelations" ServiceName="BCM_MASTER" AssignToVar="Delresult">
+				    <memberID Value ="{$thisParam/source_member_id/@Value}" MatchBy="EQUAL"/>
+				  </REMOVE_DOCUMENT>
+				
+        <REMOVE_DOCUMENT Name="Member" ServiceName="BCM_MASTER" AssignToVar="result">
+	       <Id Value="{$thisParam/source_member_id/@Value}"  MatchBy="EQUAL"/>
+				  </REMOVE_DOCUMENT>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getsmemberrelations">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="MemberRelations" ReturnRowCount="yes" ServiceName="BCM_MASTER" AssignToVar="parentData">
+          <parentMemberID Value="{$thisParam/hasparentid/@Value}"/>
+        </GET_DOCUMENT>
+        <SET Var="thisReturn" FromSelect="$parentData"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+
+  
+  <DEFINE_METHOD Name="Mem_sortdoc_formation">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="sort_doc">
+          <temp/>
+        </TO_DOCVAR>
+        <SET Var="THISPARAM" FromSelect="$thisParam"/>
+        <TO_DOCVAR AssignToVar="sort_doc">
+          <temp>
+						 <sort_doc>
+            <Name Sort="Ascending"/>
+						 </sort_doc>
+          </temp>
+        </TO_DOCVAR>
+        <IF_TEST Test="($THISPARAM/SORT_BY/@Value='name')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="sort_doc">
+              <temp>
+								 <sort_doc>
+                <Name Sort="{$THISPARAM/SORT_ORDER/@Value}"/>
+									 </sort_doc>
+              </temp>
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="($THISPARAM/SORT_BY/@Value='member_status')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="sort_doc">
+              <temp>
+								 <sort_doc>
+                <memberStat Sort="{$THISPARAM/SORT_ORDER/@Value}"/>
+									 </sort_doc>
+              </temp>
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+        <SET Var="thisReturn" FromSelect="$sort_doc"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!-- VINAY's METHODS -->
+  <!-- ARUN's METHODS -->
+ <!-- <DEFINE_METHOD Name="getData">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="TEMP_DIM">
+          <DIMENSION/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$thisParam/DIMENSIONAL_DATA/DIMENSION" CurrentElement="dim_info">
+          <TO_DOCVAR AssignToVar="Temp">
+            <OPTION Id="{$dim_info/DIMENSION_ID/@Value}" Value="{$dim_info/DIMENSION_CODE/@Value}"/>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="TEMP_DIM" FromValue="{$Temp}"/>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="TEMP_LVL">
+          <LEVEL/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$thisParam/DIMENSIONAL_DATA/DIMENSION" CurrentElement="dimension_info">
+          <SET Var="abc" FromSelect="$dimension_info/DIMENSION_CODE/@Value"/>
+          <SET Var="efg" FromSelect="$thisParam/Current_Dimension/@Value"/>
+          <IF_TEST Test="$dimension_info/DIMENSION_ID/@Value = $thisParam/Current_dimension_id/@Value">
+            <THEN>
+              <FOR_EACH SelectList="$dimension_info/LEVELS/LEVEL_INFO" CurrentElement="level_info">
+                <TO_DOCVAR AssignToVar="TempLevels">
+                  <OPTION Id="{$level_info/LEVEL_ID/@Value}" Value="{$level_info/LEVEL_CODE/@Value}"/>
+                </TO_DOCVAR>
+                <ADD_CHILDREN DocVar="TEMP_LVL" FromValue="{$TempLevels}"/>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        //<GET_DOCUMENT Name="Member" AssignToVar="dimdesc" ServiceName="BCM_MASTER">
+					<dimensionID Value="{$thisParam/Current_dimension_id/@Value}" MatchBy="EQUAL"/>
+				</GET_DOCUMENT>//
+        <GET_DOCUMENT Name="Member" AssignToVar="memdesc" ServiceName="BCM_MASTER">
+          <Id Value="{$thisParam/Current_member_id/@Value}" MatchBy="EQUAL"/>
+        </GET_DOCUMENT>
+        <REQUEST Name="showmem" AssignToVar="temp1">
+          <TO_XML SelectList="$thisParam"/>
+        </REQUEST>
+        <TO_DOCVAR AssignToVar="memdetail">
+          <MEMBERSDETAIL/>
+        </TO_DOCVAR>
+        <SET Var="myPointer" FromSelect="$memdetail/MEMBERSDETAIL"/>
+        <FOR_EACH SelectList="$temp1/MemberRelations" CurrentElement="md">
+          <TO_DOCVAR AssignToVar="rowData">
+            <LINE>
+              <Hiename Value="{trim($md/FK_PARENT_LEVEL/Level/FK_PARENT_LEVEL_LEVEL_HIERARCHY/LevelHierarchy/FK_LEVEL_HIERARCHY_HIERARCHY/Hierarchy/Name/@Value)}"/>
+              <Parlevname Value="{trim($md/FK_PARENT_LEVEL/Level/Name/@Value)}"/>
+              <parmemname Value="{trim($md/FK_PARENT_MEMBER/Member/Name/@Value)}"/>
+              <Parmemdesc Value="{trim($md/FK_PARENT_MEMBER/Member/Description/@Value)}"/>
+            </LINE>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="memdetail" FromSelect="$rowData"/>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="inXml">
+          <SAMPLE_XML>
+            <TO_XML SelectList="$TEMP_DIM"/>
+            <TO_XML SelectList="$TEMP_LVL"/>
+            <member_name Value="{$thisParam/Current_member_name/@Value}"/>
+            <member_description Value="{$memdesc/Member/Description/@Value}"/>
+            <member_status Value="{$memdesc/Member/memberStat/@Value}"/>
+          //< MEMBERSDETAIL>
+				    	<LINE>
+					      <Hiename Value="{$temp1/MemRel/FK_PARENT_LEVEL/Level/FK_PARENT_LEVEL_LEVEL_HIERARCHY/LevelHierarchy/FK_LEVEL_HIERARCHY_HIERARCHY/Hierarchy/Name/@Value}"/>
+					      <Parlevname Value="{$temp1/MemRel/FK_PARENT_LEVEL/Level/Name/@Value}"/>
+					      <parmemname Value="{$temp1/MemRel/FK_PARENT_MEMBER/Member/Name/@Value}"/>
+					      <Parmemdesc Value="{$temp1/MemRel/FK_PARENT_MEMBER/Member/Description/@Value}"/>
+				    </LINE>   
+  					</MEMBERSDETAIL> //
+            <TO_XML SelectList="$memdetail"/>
+            <operation Value=""/>
+          </SAMPLE_XML>
+        </TO_DOCVAR>
+        <IF_TEST Test="($inXml/member_status/@Value='0')">
+          <THEN>
+            <SET DocVar="inXml" Property="member_status" FromValue="ASSIGNED"/>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="($inXml/member_status/@Value='2')"> // Changed from '1' to '2'//
+          <THEN>
+            <SET DocVar="inXml" Property="member_status" FromValue="UNASSIGNED"/>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="($inXml/member_status/@Value='1')">
+          <THEN>
+            <SET DocVar="inXml" Property="member_status" FromValue="PARTIALLY ASSIGNED"/> // Changed from '2' to '1' //
+          </THEN>
+        </IF_TEST>
+        <SET Var="thisReturn" FromSelect="$inXml"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD> -->
+  <DEFINE_METHOD Name="showmem">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT AssignToVar="show" Name="MemberRelations" ServiceName="BCM_MASTER">
+          <dimensionID Value="{$thisParam/REQUEST/Current_dimension_id/@Value}" MatchBy="EQUAL"/>
+          <levelID Value="{$thisParam/REQUEST/Current_level_id/@Value}" MatchBy="EQUAL"/>
+          <memberID Value="{$thisParam/REQUEST/Current_member_id/@Value}" MatchBy="EQUAL"/>
+          <!--<memberID Value="15" MatchBy="EQUAL"/>-->
+          <FETCH_DOCUMENT_LINK Name="FK_PARENT_LEVEL">
+            <!-- level -->
+            <DimensionId Value="{$thisParam/REQUEST/Current_dimension_id/@Value}" MatchBy="EQUAL"/>
+            <SELECT>
+              <Name/>
+            </SELECT>
+            <FETCH_DOCUMENT_LINK Name="FK_PARENT_LEVEL_LEVEL_HIERARCHY">
+              <!-- level hierarchy -->
+              <LevelId Value="{$thisParam/REQUEST/Current_level_id/@Value}" MatchBy="EQUAL"/>
+              <SELECT/>
+              <FETCH_DOCUMENT_LINK Name="FK_LEVEL_HIERARCHY_HIERARCHY">
+                <!-- hierarchy -->
+                <DimensionId Value="{$thisParam/REQUEST/Current_dimension_id/@Value}" MatchBy="EQUAL"/>
+                <SELECT>
+                  <Name/>
+                </SELECT>
+              </FETCH_DOCUMENT_LINK>
+            </FETCH_DOCUMENT_LINK>
+					-<FETCH_DOCUMENT_LINK Name="FK_MEMBER_LEVEL">
+              <!--FK_LEVEL_MEMBER changed to FK_MEMBER_LEVEL -->
+              <!-- member -->
+              <SELECT/>
+            </FETCH_DOCUMENT_LINK>
+          </FETCH_DOCUMENT_LINK>
+          <FETCH_DOCUMENT_LINK Name="FK_PARENT_MEMBER">
+            <!-- member -->
+            <dimensionID Value="{$thisParam/REQUEST/Current_dimension_id/@Value}" MatchBy="EQUAL"/>
+            <SELECT>
+              <Name/>
+              <Description/>
+            </SELECT>
+          </FETCH_DOCUMENT_LINK>
+        </GET_DOCUMENT>
+        <SET Var="thisReturn" FromSelect="$show"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!-- ARUN's METHODS END-->
+  <!-- AMIT GUPTA -->
+ <DEFINE_METHOD Name="VPM_Table_Query">
+		<RULE>
+		<ACTION>
+				
+				
+							
+				     			
+      <TO_DOCVAR AssignToVar="ValidParMemDoc">
+        <MEMBERPARENTDETAIL/>
+      </TO_DOCVAR>
+      <FOR_EACH SelectList="$thisParam/SQL_RESULT" CurrentElement="temp_element">
+					<IF_TEST Test="$thisParam/EXISTING_PARENT_ID/@Value=''">
+					<THEN>
+        <GET_DOCUMENT Name="Member" AssignToVar="VPM_query" MaxRows="{$Max_Rows/@Value}" ReturnRowCount="Yes" ServiceName="BCM_MASTER">
+          <Id Value="{$temp_element/MEMBER_ID/@Value}" MatchBy="EQUAL"/>
+          <LevelId Value="{$thisParam/EXISTING_PARENT_LEVEL_ID/@Value}" MatchBy="EQUAL"/>
+					<memberStat Value="0"/>
+        </GET_DOCUMENT>
+						</THEN>
+						</IF_TEST>
+					<IF_TEST Test="$thisParam/EXISTING_PARENT_ID/@Value !='' ">
+					<THEN>
+        <GET_DOCUMENT Name="Member" AssignToVar="VPM_query" MaxRows="{$Max_Rows/@Value}" ReturnRowCount="Yes" ServiceName="BCM_MASTER">
+          <Id Value="{$temp_element/MEMBER_ID/@Value}" MatchBy="EQUAL"/>
+         <LevelId Value="{$thisParam/EXISTING_PARENT_LEVEL_ID/@Value}" MatchBy="EQUAL"/>
+					<memberStat Value="0"/>
+        </GET_DOCUMENT>
+						</THEN>
+						</IF_TEST>
+				
+        <ADD_CHILDREN DocVar="ValidParMemDoc" FromValue="{$VPM_query/*}"/>
+      </FOR_EACH>
+    
+     
+      <TO_DOCVAR AssignToVar="VPM_doc">
+        <MEMBERPARENTDETAIL/>
+      </TO_DOCVAR>
+				<SET Var="Count" FromValue="0"/>
+      <FOR_EACH SelectList="$ValidParMemDoc/*" CurrentElement="temp">
+					
+					 <GET_DOCUMENT Name="MemberRelations" AssignToVar="haschild" ReturnRowCount="yes" ServiceName="BCM_MASTER">
+						<AND>
+       				 <parentMemberID Value="{$temp/Member/Id/@Value}" MatchBy="EQUAL"/>
+							<dimensionID Value="{$temp/Member/dimensionID/@Value}" MatchBy="EQUAL"/>
+							<levelID Value="{$temp/Member/LevelId/@Value}" MatchBy="EQUAL"/>
+						</AND>
+      </GET_DOCUMENT>
+     
+					
+        <TO_DOCVAR AssignToVar="tempVPM_doc">
+          <LINE>
+            <membdescription Value="{$temp/Description/@Value}"/>
+            <!--<memcode Value="{$temp/memberCode/@Value}"/>-->
+			<memcode Value="{$temp/Name/@Value}"/>
+            <membstatus Value="{$temp/memberStat/@Value}"/>
+						<memid Value="{$temp/Id/@Value}"/>
+            <haschild/>
+          </LINE>
+        </TO_DOCVAR>
+					
+        <IF_TEST Test="($haschild/@TotalRowCount!=0)">
+          <THEN>
+            <SET DocVar="tempVPM_doc" Property="haschild" FromValue="Y"/>
+          </THEN>
+          <ELSE>
+            <SET DocVar="tempVPM_doc" Property="haschild" FromValue="N"/>
+          </ELSE>
+        </IF_TEST>
+        <IF_TEST Test="($tempVPM_doc/membstatus/@Value='0')">
+          <THEN>
+            <SET DocVar="tempVPM_doc" Property="membstatus" FromValue="Assigned"/>
+          </THEN>
+        </IF_TEST>
+        <ADD_CHILDREN  DocVar="VPM_doc" FromDocVar="tempVPM_doc"/>
+      
+					<SET Var="Count" FromValue="{$Count+1}"/>
+				</FOR_EACH>
+      <!--<ADD_CHILDREN FromDocVar="VPM_doc" DocVar="inXml"/>-->
+
+						<SET DocVar="VPM_doc"	 Property="Count"   FromValue="{$Count/@Value}"/>
+								<SET Var="thisReturn" FromSelect="$VPM_doc"/>
+			</ACTION>	
+		</RULE>
+	</DEFINE_METHOD>
+  <DEFINE_METHOD Name="ValidParMem_Assign">
+    <RULE>
+      <ACTION>
+        <SET Var="Params" FromSelect="$thisParam"/>
+        <GET_DOCUMENT AssignToVar="new_par_info" Name="Member" ServiceName="BCM_MASTER">
+          <Id Value="{$Params/memcode/@Value}" MatchBy="EQUAL"/>
+        </GET_DOCUMENT>
+				
+			
+				
+				<REQUEST Name="getUniqueId" AssignToVar="mem_rel_id" ServiceName="BCM_MASTER">
+            <DOCUMENT_NAME Value="MemberRelations"/>
+          </REQUEST>
+				
+        <ADD_DOCUMENT Name="MemberRelations" ServiceName="BCM_MASTER">
+          <dimensionID Value="{$thisParam/Current_dimension_id/@Value}"/>
+          <levelID Value="{$thisParam/Current_level_id/@Value}"/>
+          <memberID Value="{$thisParam/Current_member_id/@Value}"/>
+         	<memberRelationshipID Value="{$mem_rel_id/UNIQUE_ID/@Value}"/>
+          <parentLevelID Value="{$new_par_info/Member/LevelId/@Value}"/>
+          <parentMemberID Value="{$new_par_info/Member/Id/@Value}"/>
+						<CREATION_DATE Value="{date()}"/>
+					<CREATED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_DATE Value="{date()}"/>
+					<ENTITY_STATE Value="ACTIVE"/>
+					<SOURCE Value="UI"/>
+        </ADD_DOCUMENT>
+				
+				
+				
+				  <REQUEST Name="showtable2" AssignToVar="Heirarchy_data" ReturnRowCount="yes">
+					    <TO_XML SelectList="$thisParam/*"/>
+						  <Current_dimension_id Value="{$thisParam/Current_dimension_id/@Value}"/>					   
+					    <Current_level_id Value="{$thisParam/Current_level_id/@Value}"/>					    
+					    <Current_member_id Value="{$thisParam/Current_member_id/@Value}"/>
+					</REQUEST>
+				
+				<SET Var="Count" FromValue="0"/>
+				
+			<FOR_EACH SelectList="$Heirarchy_data/SQL_RESULT" CurrentElement="temp">
+					
+				<IF_TEST Test="strlen($temp/PARENTMEMNAME/@Value) != 0">	
+						<THEN>
+							  <SET Var="Count" FromValue="{$Count+1}"/>
+						</THEN>	
+						</IF_TEST>
+					</FOR_EACH>
+				<PRINT Value="$Count/@Value"/>
+				<IF_TEST Test="$Count/@Value &lt; $Heirarchy_data/@TotalRowCount">
+					<THEN>
+						<MODIFY_DOCUMENT Name="Member" ServiceName="BCM_MASTER">
+							<DOCUMENT_CONTEXT>
+							<Id Value="{$thisParam/Current_member_id/@Value}"/>
+							</DOCUMENT_CONTEXT>
+								<UPDATE_PROPERTIES>
+									<memberStat Value="1"/>
+									<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+									<LAST_MODIFIED_DATE Value="{date()}"/>
+								</UPDATE_PROPERTIES>
+						</MODIFY_DOCUMENT>
+					</THEN>
+					</IF_TEST>
+					
+					<IF_TEST Test="$Count/@Value = $Heirarchy_data/@TotalRowCount">
+					<THEN>
+						<MODIFY_DOCUMENT Name="Member" ServiceName="BCM_MASTER">
+							<DOCUMENT_CONTEXT>
+							<Id Value="{$thisParam/Current_member_id/@Value}"/>
+							</DOCUMENT_CONTEXT>
+								<UPDATE_PROPERTIES>
+									<memberStat Value="0"/>
+								<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+									<LAST_MODIFIED_DATE Value="{date()}"/>
+								</UPDATE_PROPERTIES>
+						</MODIFY_DOCUMENT>
+					</THEN>
+					</IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="ValidParMem_Move">
+    <RULE>
+      <ACTION>
+        <SET Var="Params" FromSelect="$thisParam"/>
+				
+				  <!-- VALID PARENT MEMBER INFORMATION -->
+        <GET_DOCUMENT AssignToVar="Valid_par_info" Name="Member" ServiceName="BCM_MASTER">
+          <Id Value="{$Params/memcode/@Value}" MatchBy="EQUAL"/>
+        </GET_DOCUMENT>
+				
+				<!-- HTL Entry -->
+				
+				<REQUEST Name="getUniqueId" AssignToVar="htl_id" ServiceName="BCM_MASTER">
+            <DOCUMENT_NAME Value="HierarchyTransactionLog"/>
+          </REQUEST>
+          <PRINT Value="{$htl_id/@Value}"/>
+      <ADD_DOCUMENT Name="HierarchyTransactionLog" ServiceName="BCM_MASTER">
+            <Id Value="{$htl_id/UNIQUE_ID/@Value}"/>
+            <fromMemberName Value="{$thisParam/Current_member_name/@Value}"/>
+            <levelName Value="{$thisParam/Current_level_name/@Value}"/>
+            <operation Value="MV"/>
+            <dimensionName Value="{$thisParam/Current_dimension_name/@Value}"/>
+					<fromParentMemberName Value="{$thisParam/PARENT_MEMBER_NAME/@Value}"/>
+					 <!--<toParentMemberName Value="{$Valid_par_info/Member/memberCode/@Value}"/>-->
+					 <toParentMemberName Value="{$Valid_par_info/Member/Name/@Value}"/>
+					 <parentLevelName Value="{$thisParam/PARENT_LEVEL_NAME/@Value}"/>
+						<CREATION_DATE Value="{date()}"/>
+					<CREATED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_DATE Value="{date()}"/>
+					<ENTITY_STATE Value="ACTIVE"/>
+					<SOURCE Value="UI"/>
+			</ADD_DOCUMENT>
+		
+				
+				
+					<!-- Update MEMBER_RELATIONS -->
+      
+				
+ 			 <MODIFY_DOCUMENT Name="MemberRelations" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <memberID Value="{$Params/Current_member_id/@Value}" MatchBy="EQUAL"/>
+						<levelID Value="{$Params/Current_level_id/@Value}" MatchBy="EQUAL"/>
+						<parentLevelID Value="{$Valid_par_info/Member/LevelId/@Value}" MatchBy="EQUAL"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <parentMemberID Value="{$Valid_par_info/Member/Id/@Value}"/>
+						<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+									<LAST_MODIFIED_DATE Value="{date()}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOCUMENT>
+       
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+
+ <DEFINE_METHOD Name="Delete_Measure">
+    <RULE>
+      <ACTION>
+   
+        <GET_DOCUMENT Name="DMMeasureMaster" AssignToVar="record" ServiceName="BCM_MASTER">
+          <name Value="{$thisParam/Name/@Value}" MatchBy="EQUAL"/>
+        </GET_DOCUMENT>
+      
+			<!--Issue (S2 Defect) 566978   Measure Delete in the MDM UI does not update SYS_LAST_MODIFIED_STATE	-->
+				
+        <MODIFY_DOCUMENT Name="DMMeasureMaster" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <measureID Value="{$record/DMMeasureMaster/measureID/@Value}" MatchBy="EQUAL"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <ENTITY_STATE Value="DELETED"/>
+						<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+						<LAST_MODIFIED_DATE Value="{date()}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOCUMENT>
+      </ACTION>
+    </RULE>
+	
+	  </DEFINE_METHOD>
+
+  <DEFINE_METHOD Name="SearchQueryFormation">
+    <RULE>
+      <ACTION>
+        <SET Var="THISPARAM" FromSelect="$thisParam"/>
+        <SET Var="thisParam" Property="PARAMETER" FromValue="1"/>
+        <IF_TEST Test="($userAction='SEARCH')">
+          <THEN>
+            <SET Var="THISPARAM" Property="START_COUNT" FromValue="0"/>
+            <SET Var="THISPARAM" Property="SORT_BY" FromValue="Name"/>
+            <SET Var="THISPARAM" Property="SORT_ORDER" FromValue="Ascending"/>
+          </THEN>
+        </IF_TEST>
+        <!--	FORMING OF QUERY CRITERIA STARTS HERE-->
+        <TO_DOCVAR AssignToVar="query_criteria">
+          <TEMP/>
+        </TO_DOCVAR>
+        <!-- BOTH ANY    starts   NAME feild  -->
+        <IF>
+          <COND>
+            <AND>
+              <EQUAL Value="{$THISPARAM/TYPE/@Value}" ToValue="ANY"/>
+              <EQUAL Value="{$THISPARAM/DB_TYPE/@Value}" ToValue="ANY"/>
+              <EQUAL Value="{$THISPARAM/USING/@Value}" ToValue="NAME"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <name Value="{$THISPARAM/SEARCH_STRING/@Value}" MatchBy="{$THISPARAM/CONDITION/@Value}"/>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!--DESCRIPTION -->
+        <IF>
+          <COND>
+            <AND>
+              <EQUAL Value="{$THISPARAM/TYPE/@Value}" ToValue="ANY"/>
+              <EQUAL Value="{$THISPARAM/DB_TYPE/@Value}" ToValue="ANY"/>
+              <EQUAL Value="{$THISPARAM/USING/@Value}" ToValue="DESCRIPTION"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <description Value="{$THISPARAM/SEARCH_STRING/@Value}" MatchBy="{$THISPARAM/CONDITION/@Value}"/>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!--		ONE ANY  TYPE  is any   NAME-->
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$THISPARAM/DB_TYPE/@Value != 'ANY'}"/>
+              <EQUAL Value="{$THISPARAM/TYPE/@Value}" ToValue="ANY"/>
+              <EQUAL Value="{$THISPARAM/USING/@Value}" ToValue="NAME"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <AND>
+                <name Value="{$THISPARAM/SEARCH_STRING/@Value}" MatchBy="{$THISPARAM/CONDITION/@Value}"/>
+                <measureDBType Value="{$THISPARAM/DB_TYPE/@Value}" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!--DESCRIPTION	-->
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$THISPARAM/DB_TYPE/@Value != 'ANY'}"/>
+              <EQUAL Value="{$THISPARAM/TYPE/@Value}" ToValue="ANY"/>
+              <EQUAL Value="{$THISPARAM/USING/@Value}" ToValue="DESCRIPTION"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <AND>
+                <description Value="{$THISPARAM/SEARCH_STRING/@Value}" MatchBy="{$THISPARAM/CONDITION/@Value}"/>
+                <measureDBType Value="{$THISPARAM/DB_TYPE/@Value}" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!--		ONE ANY  DB_TYPE  is any   NAME -->
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$THISPARAM/TYPE/@Value != 'ANY'}"/>
+              <EQUAL Value="{$THISPARAM/DB_TYPE/@Value}" ToValue="ANY"/>
+              <EQUAL Value="{$THISPARAM/USING/@Value}" ToValue="NAME"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <AND>
+                <name Value="{$THISPARAM/SEARCH_STRING/@Value}" MatchBy="{$THISPARAM/CONDITION/@Value}"/>
+                <type Value="{$THISPARAM/TYPE/@Value}" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!--	DESCRIPTION-->
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$THISPARAM/TYPE/@Value != 'ANY'}"/>
+              <EQUAL Value="{$THISPARAM/DB_TYPE/@Value}" ToValue="ANY"/>
+              <EQUAL Value="{$THISPARAM/USING/@Value}" ToValue="DESCRIPTION"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <AND>
+                <name Value="{$THISPARAM/SEARCH_STRING/@Value}" MatchBy="{$THISPARAM/CONDITION/@Value}"/>
+                <type Value="{$THISPARAM/TYPE/@Value}" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!--	No option is any     NAME-->
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$THISPARAM/DB_TYPE/@Value != 'ANY'}"/>
+              <IS_TRUE Value="{$THISPARAM/TYPE/@Value != 'ANY'}"/>
+              <EQUAL Value="{$THISPARAM/USING/@Value}" ToValue="NAME"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <AND>
+                <name Value="{$THISPARAM/SEARCH_STRING/@Value}" MatchBy="{$THISPARAM/CONDITION/@Value}"/>
+                <measureDBType Value="{$THISPARAM/DB_TYPE/@Value}" MatchBy="EQUAL"/>
+                <type Value="{$THISPARAM/TYPE/@Value}" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!-- DESCRIPTION	-->
+        <IF>
+          <COND>
+            <AND>
+              <IS_TRUE Value="{$THISPARAM/DB_TYPE/@Value != 'ANY'}"/>
+              <IS_TRUE Value="{$THISPARAM/TYPE/@Value != 'ANY'}"/>
+              <EQUAL Value="{$THISPARAM/USING/@Value}" ToValue="DESCRIPTION"/>
+            </AND>
+          </COND>
+          <THEN>
+            <TO_DOCVAR AssignToVar="query_criteria">
+              <AND>
+                <description Value="{$THISPARAM/SEARCH_STRING/@Value}" MatchBy="{$THISPARAM/CONDITION/@Value}"/>
+                <type Value="{$THISPARAM/TYPE/@Value}" MatchBy="EQUAL"/>
+                <measureDBType Value="{$THISPARAM/DB_TYPE/@Value}" MatchBy="EQUAL"/>
+              </AND>
+            </TO_DOCVAR>
+          </THEN>
+        </IF>
+        <!--	FORMING OF QUERY CRITERIA ENDS HERE-->
+        <REQUEST Name="MSR_sortdoc_formation" AssignToVar="sort_doc">
+          <TO_XML SelectList="$THISPARAM/*"/>
+        </REQUEST>
+        <GET_DOCUMENT AssignToVar="query1" Name="DMMeasureMaster" MaxRows="{$Max_Rows/@Value}" ReturnRowCount="yes" StartAtRow="{$THISPARAM/var2/@Value}" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$query_criteria"/>
+					<ENTITY_STATE Value="ACTIVE"/>
+          <ORDER_BY>
+            <TO_XML SelectList="$sort_doc/sort_doc/*"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <SET Var="thisReturn" FromSelect="$query1"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="TEST">
+    <RULE>
+      <ACTION>
+        <SET Var="Params" FromVar="{$thisParam}"/>
+        <PRINT Value="$Params"/>
+        <GET_DOCUMENT AssignToVar="myoutput" Name="Dimension" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+        </GET_DOCUMENT>
+        <SET Var="thisReturn" FromSelect="$myoutput"/>
+        <PRINT Value="$thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="Initial_Msr_Query_formation">
+    <RULE>
+      <ACTION>
+        <SET Var="Sort_doc" FromSelect="$thisParam"/>
+        <GET_DOCUMENT AssignToVar="myoutput" Name="DMMeasureMaster" MaxRows="{$Max_Rows/@Value}" ReturnRowCount="yes" StartAtRow="{$Sort_doc/var2/@Value}" ServiceName="BCM_MASTER">
+         <ENTITY_STATE Value="ACTIVE"/>
+					 <ORDER_BY>
+            <TO_XML SelectList="$Sort_doc/sort_doc/*"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <SET Var="thisReturn" FromSelect="$myoutput"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="MSR_sortdoc_formation">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="sort_doc">
+          <temp/>
+        </TO_DOCVAR>
+        <SET Var="THISPARAM" FromSelect="$thisParam"/>
+        <IF_TEST Test="($THISPARAM/SORT_BY/@Value='ID')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="sort_doc">
+              <temp>
+                <sort_doc>
+                  <name Sort="Ascending"/>
+                </sort_doc>
+              </temp>
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="($THISPARAM/SORT_BY/@Value='Name')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="sort_doc">
+              <temp>
+                <sort_doc>
+                  <name Sort="{$THISPARAM/SORT_ORDER/@Value}"/>
+                </sort_doc>
+              </temp>
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="($THISPARAM/SORT_BY/@Value='Type')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="sort_doc">
+              <temp>
+                <sort_doc>
+                  <type Sort="{$THISPARAM/SORT_ORDER/@Value}"/>
+                </sort_doc>
+              </temp>
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="($THISPARAM/SORT_BY/@Value='DB_datatype')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="sort_doc">
+              <temp>
+                <sort_doc>
+                  <measureDBType Sort="{$THISPARAM/SORT_ORDER/@Value}"/>
+                </sort_doc>
+              </temp>
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="($THISPARAM/SORT_BY/@Value='Sign')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="sort_doc">
+              <temp>
+                <sort_doc>
+                  <sign Sort="{$THISPARAM/SORT_ORDER/@Value}"/>
+                </sort_doc>
+              </temp>
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+        <SET Var="thisReturn" FromSelect="$sort_doc"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+	
+	
+	<DEFINE_METHOD Name="mem_lifecycle_sortdoc_formation">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="sort_doc">
+          <temp/>
+        </TO_DOCVAR>
+        <SET Var="THISPARAM" FromSelect="$thisParam"/>
+        <IF_TEST Test="($THISPARAM/SORT_BY/@Value='ID')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="sort_doc">
+              <temp>
+                <sort_doc>
+                  <Name Sort="Ascending"/>
+                </sort_doc>
+              </temp>
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="($THISPARAM/SORT_BY/@Value='Name')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="sort_doc">
+              <temp>
+                <sort_doc>
+                  <Name Sort="{$THISPARAM/SORT_ORDER/@Value}"/>
+                </sort_doc>
+              </temp>
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="($THISPARAM/SORT_BY/@Value='Status')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="sort_doc">
+              <temp>
+                <sort_doc>
+                  <memberStat Sort="{$THISPARAM/SORT_ORDER/@Value}"/>
+                </sort_doc>
+              </temp>
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+       
+        <SET Var="thisReturn" FromSelect="$sort_doc"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+	
+	<DEFINE_METHOD Name="CodewidthValidation">
+		<RULE>
+			<ACTION>
+				<PRINTLN Value="{$thisParam}"/>
+				<REQUEST Name="validate" ServiceName="VALIDATION" AssignToVar="result">
+					<SERVICE_NAME Value="BCM_MASTER"/>
+					<API_NAME Value="validateCodeWidth"/>
+					<DOC_TO_BE_VALIDATED>
+						<TO_XML Select="$thisParam"/>
+					</DOC_TO_BE_VALIDATED>
+				</REQUEST>
+				<IF_TEST Test="$result/_RESULT/@Value != 'SUCCESS'">
+					<THEN>
+						<APPEND_CHILDREN DocVar="thisReturn" FromDocVar="result"/>
+						<EXIT/>
+					</THEN>
+					<ELSE>
+						<APPEND_CHILDREN DocVar="thisReturn" FromDocVar="result"/>
+					</ELSE>
+				</IF_TEST>
+			</ACTION>
+		</RULE>
+	</DEFINE_METHOD>
+	
+	
+		<DEFINE_METHOD Name="validateMapsetCodeWidth_call">
+		<RULE>
+			<ACTION>
+				<PRINTLN Value="{$thisParam}"/>
+				<REQUEST Name="validate" ServiceName="VALIDATION" AssignToVar="result">
+					<SERVICE_NAME Value="BCM_MASTER"/>
+					<API_NAME Value="validateMapsetCodeWidth"/>
+					<DOC_TO_BE_VALIDATED>
+						<TO_XML Select="$thisParam"/>
+					</DOC_TO_BE_VALIDATED>
+				</REQUEST>
+				<IF_TEST Test="$result/_RESULT/@Value != 'SUCCESS'">
+					<THEN>
+						<APPEND_CHILDREN DocVar="thisReturn" FromDocVar="result"/>
+						<EXIT/>
+					</THEN>
+					<ELSE>
+						<APPEND_CHILDREN DocVar="thisReturn" FromDocVar="result"/>
+					</ELSE>
+				</IF_TEST>
+			</ACTION>
+		</RULE>
+	</DEFINE_METHOD>
+	
+	<DEFINE_METHOD Name="MemberCodeUniquenessValidation">
+		<RULE>
+			<ACTION>
+				<PRINTLN Value="{$thisParam}"/>
+				<REQUEST Name="validate" ServiceName="VALIDATION" AssignToVar="result">
+					<SERVICE_NAME Value="BCM_MASTER"/>
+					<API_NAME Value="ValidateUniqueness"/>
+					<DOC_TO_BE_VALIDATED>
+						<TO_XML Select="$thisParam"/>
+					</DOC_TO_BE_VALIDATED>
+				</REQUEST>
+				<IF_TEST Test="$result/_RESULT/@Value != 'SUCCESS'">
+					<THEN>
+						<APPEND_CHILDREN DocVar="thisReturn" FromDocVar="result"/>
+						<EXIT/>
+					</THEN>
+					<ELSE>
+						<APPEND_CHILDREN DocVar="thisReturn" FromDocVar="result"/>
+					</ELSE>
+				</IF_TEST>
+			</ACTION>
+		</RULE>
+	</DEFINE_METHOD>
+	
+	<DEFINE_METHOD Name="MapsetCodeValidateUniqueness_call">
+		<RULE>
+			<ACTION>
+				<PRINTLN Value="{$thisParam}"/>
+				<REQUEST Name="validate" ServiceName="VALIDATION" AssignToVar="result">
+					<SERVICE_NAME Value="BCM_MASTER"/>
+					<API_NAME Value="MapsetCodeValidateUniqueness"/>
+					<DOC_TO_BE_VALIDATED>
+						<TO_XML Select="$thisParam"/>
+					</DOC_TO_BE_VALIDATED>
+				</REQUEST>
+				<IF_TEST Test="$result/_RESULT/@Value != 'SUCCESS'">
+					<THEN>
+						<APPEND_CHILDREN DocVar="thisReturn" FromDocVar="result"/>
+						<EXIT/>
+					</THEN>
+					<ELSE>
+						<APPEND_CHILDREN DocVar="thisReturn" FromDocVar="result"/>
+					</ELSE>
+				</IF_TEST>
+			</ACTION>
+		</RULE>
+	</DEFINE_METHOD>
+	
+</DOCUMENTS>

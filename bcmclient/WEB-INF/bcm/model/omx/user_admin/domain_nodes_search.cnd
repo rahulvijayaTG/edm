@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands
+    xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core"
+    xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db"
+    xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web"
+    xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util"
+    xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability"
+    xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx"
+    xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="loadSearch">
+    <xapl:print select="$this"/>
+    <x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+      <x2:with-param name="display" select="'UserSecurity.Domain_Node_Search'"/>
+      <x2:with-param name="page" select="'domain_nodes'"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+
+    <xapl:return>
+      <x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>
+      <x2:execute command="omx.user_admin.domain_nodes_search:getSearchContainer">
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+      <x2:execute command="omx.user_admin.domain_nodes_search:getFilledSearchForm">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+      <xapl:value-of select="$this/*[string-length(@Value) &gt; 0]"/>
+    </xapl:return>
+  </x2:command>
+
+ <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getSearchContainer">
+    <x2:param name="pPage"/>
+    <xapl:return>
+      <CONTAINER Scrollable="no">
+        <HELP Url="../../bcm/help/domain_node_search_help.htm"/>
+        <STEP Name="ViewForm" DisplayText="Node Search" OnClick="{$pages:domain_nodes_search}" Selected="true"/>
+        <BUTTONS>
+            <BUTTON Id="Search" Name="Search" DisplayText="Search" OnClick="javascript:onSearch()" DisableOnClick="true"/>
+        </BUTTONS>
+      </CONTAINER>
+    </xapl:return>
+  </x2:command>
+
+ <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFilledSearchForm">
+    <x2:param name="this"/>
+    <xapl:variable name="nodeSearchForm">
+        <NODE_SEARCH_FORM/>
+    </xapl:variable>
+
+    <xapl:choose>
+        <xapl:when test="$this/ACTION/@Value = 'GET_DIMENSION' ">
+            <xapl:variable name="response">
+                <xcore:execute-method name="//BCMMasterService/getDimension" entireResponse="true"/>
+            </xapl:variable>
+            <docutil:add select="$nodeSearchForm">
+                <Dimensions>
+                    <xapl:value-of select="$response/RESPONSE/*"/>
+                </Dimensions>
+            </docutil:add>
+        </xapl:when>
+
+        <xapl:when test="$this/ACTION/@Value = 'GET_HIERARCHY' ">
+            <xapl:variable name="response">
+                <xcore:execute-method name="//BCMMasterService/getDimension" entireResponse="true"/>
+            </xapl:variable>
+            <docutil:add select="$nodeSearchForm">
+                <Dimensions>
+                    <xapl:value-of select="$response/RESPONSE/*"/>
+                </Dimensions>
+            </docutil:add>
+
+            <xapl:set-variable name="response">
+               <xcore:execute-method name="//BCMMasterService/getHierarchy" entireResponse="true">
+                   <DimensionId Value="{$this/DIMENSION_ID/@Value}"/>
+               </xcore:execute-method>
+            </xapl:set-variable>
+            <docutil:add select="$nodeSearchForm">
+                <Hierarchies>
+                    <xapl:value-of select="$response/RESPONSE/*"/>
+                </Hierarchies>
+            </docutil:add>
+        </xapl:when>
+
+        <xapl:when test="$this/ACTION/@Value = 'GET_LEVEL' ">
+            <xapl:variable name="response">
+                <xcore:execute-method name="//BCMMasterService/getDimension" entireResponse="true"/>
+            </xapl:variable>
+            <docutil:add select="$nodeSearchForm">
+                <Dimensions>
+                    <xapl:value-of select="$response/RESPONSE/*"/>
+                </Dimensions>
+            </docutil:add>
+
+            <xapl:set-variable name="response">
+               <xcore:execute-method name="//BCMMasterService/getHierarchy" entireResponse="true">
+                   <DimensionId Value="{$this/DIMENSION_ID/@Value}"/>
+               </xcore:execute-method>
+            </xapl:set-variable>
+            <docutil:add select="$nodeSearchForm">
+                <Hierarchies>
+                    <xapl:value-of select="$response/RESPONSE/*"/>
+                </Hierarchies>
+            </docutil:add>
+
+            <xapl:set-variable name="response">
+               <xcore:execute-method name="//BCMMasterService/getLevelHierarchyForUI" entireResponse="true">
+                   <HierarchyId Value="{$this/HIERARCHY_ID/@Value}"/>
+               </xcore:execute-method>
+            </xapl:set-variable>
+            <docutil:add select="$nodeSearchForm">
+                <Levels>
+                    <xapl:value-of select="$response/RESPONSE/*"/>
+                </Levels>
+            </docutil:add>
+        </xapl:when>
+    </xapl:choose>
+
+    <docutil:add select="$nodeSearchForm">
+        <CurrentValues>
+            <DIMENSION_ID Value="{$this/DIMENSION_ID/@Value}"/>
+            <HIERARCHY_ID Value="{$this/HIERARCHY_ID/@Value}"/>
+            <LEVEL_ID Value="{$this/LEVEL_ID/@Value}"/>
+        </CurrentValues>
+    </docutil:add>
+
+    <xapl:print select="$nodeSearchForm"/>
+    <xapl:return>
+        <xapl:value-of select="$nodeSearchForm"/>
+    </xapl:return>
+  </x2:command>
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="loadResult">
+    <xapl:print select="$this"/>
+
+    <docutil:set select="$this">
+      <FORM_NAME Value="DOMAIN_NODES_SEARCH_FORM"/>
+      <SERVICE Value="BCMMasterService"/>     
+    </docutil:set>
+
+    <xapl:variable name="nodeResultForm">
+        <NODE_RESULT_FORM>
+            <x2:execute command="bcm.framework.queryform.Form:getFormContainer">
+              <x2:with-param name="this" select="$this"/>
+              <x2:with-param name="pSearchParam" select="$searchParam"/>
+              <x2:with-param name="pFormName" select="'DOMAIN_NODES_SEARCH_FORM'"/>
+              <x2:with-param name="pServiceName" select="'BCMMasterService'"/>
+              <x2:with-param name="pSearchReportConfigSource" select="'omx.user_admin.domain_nodes_search:getReportConfig'"/>
+              <x2:with-param name="pReportDataSource" select="'omx.user_admin.domain_nodes_search:getReportData'"/>
+            </x2:execute>
+        </NODE_RESULT_FORM>
+    </xapl:variable>
+
+    <xapl:return>
+      <x2:execute command="omx.user_admin.domain_nodes_search:getResultContainer">
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+      <xapl:value-of select="$nodeResultForm"/>
+      <xapl:value-of select="$this/*[string-length(@Value) &gt; 0]"/>
+    </xapl:return>
+  </x2:command>
+
+ <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getResultContainer">
+    <x2:param name="pPage"/>
+    <xapl:return>
+      <CONTAINER Scrollable="no">
+        <STEP Name="ViewForm" DisplayText="UserSecurity.Node_Search_Results" OnClick="{$pages:domain_nodes_result}" Selected="true"/>
+        <BUTTONS>
+            <BUTTON Id="Cancel" Name="Cancel" DisplayText="Cancel" OnClick="javascript:onCancel()" DisableOnClick="true"/>
+            <DIVIDER/>
+            <BUTTON Id="SelectAndReturn" Name="SelectAndReturn" DisplayText="Select and Return" OnClick="javascript:onSelectAndReturn()" Disabled="report" DisableOnClick="true"/>
+        </BUTTONS>
+      </CONTAINER>
+    </xapl:return>
+  </x2:command>
+
+ <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportConfig">
+    <x2:param name="this" select="$this"/>
+    <xapl:return>
+      <REPORT Title="UserSecurity.Available_Nodes" Action="{$pages:domain_nodes_result}" Scrollable="yes"  Selectable="All" ScrollableContainer="no" Id="#" SelectedId="SELECTED_NODE_ID" PagingTitle="yes">
+        <FIELDS>
+          <!--EQ:550569 Overridden falg is added to remove the favorites and customization icons-->
+          <OVERRIDDEN Value="yes"/>  
+          <FIELD Name="ACTION" DisplayType="Hidden" Value="{$this/ACTION/@Value}"/>
+          <FIELD Name="DIMENSION_ID" DisplayType="Hidden" Value="{$this/DIMENSION_ID/@Value}"/>
+          <FIELD Name="HIERARCHY_ID" DisplayType="Hidden" Value="{$this/HIERARCHY_ID/@Value}"/>
+          <FIELD Name="LEVEL_ID" DisplayType="Hidden" Value="{$this/LEVEL_ID/@Value}"/>
+          <FIELD Name="SELECTED_TAB" DisplayType="Hidden" Value="{$this/SELECTED_TAB/@Value}"/>
+          <!-- get form report fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+          <!-- get form hidden fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportHiddenFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+        </FIELDS>
+        <PAGINATION/>
+      </REPORT>
+    </xapl:return>
+  </x2:command>
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportData">
+    <x2:param name="this"/>
+    <x2:param name="pForm"/>
+
+    
+   <xapl:print>TESTING......</xapl:print>
+   <xapl:print><xapl:value-of select="$this"/></xapl:print>
+    <xapl:variable name="response">
+      <xapl:choose>
+        <xapl:when test="$this/DO_SEARCH/@Value = 'Yes' or $this/DO_SEARCH/@Value = 'yes' ">
+          <xcore:execute-method
+                        name="{concat('//' , $this/SERVICE/@Value, '/getNodesForDomain')}"
+                        StartAtRow="{$this/START_COUNT/@Value}"
+                        MaxRows="{$this/MAX_ROWS/@Value}"
+                        ReturnRowCount="yes" entireResponse="true">
+            <ID Value="{$currentForm/@Id}"/>
+            <DIMENSION_ID Value="{$this/DIMENSION_ID/@Value}"/>
+            <HIERARCHY_ID Value="{$this/HIERARCHY_ID/@Value}"/>
+            <LEVEL_ID Value="{$this/LEVEL_ID/@Value}"/>
+          </xcore:execute-method>
+        </xapl:when>
+        <xapl:otherwise/>
+      </xapl:choose>
+    </xapl:variable>
+
+    <docutil:add select="$response/RESPONSE">
+          <TOTAL_RECORD_COUNT Value="{$response/RESPONSE/@TotalRowCount}"/>
+          <START_AT_ROW Value ="{$this/START_COUNT[1] /@Value}"/>
+    </docutil:add>
+    <!-- Add the total record count  -->
+        <!-- TODO Do this dynamically only if timingStats are on. -->
+        <docutil:remove select="$response/TIMING_STATS"/>
+        <docutil:remove select="$response/RESPONSE/TIMING_STATS"/>
+    <xapl:return>
+          <xapl:value-of select="{$response/RESPONSE}"/>
+    </xapl:return>
+  </x2:command>
+
+  <!--************************************************************************
+    ************************************************************************-->
+  <x2:command public="yes" description="_" name="goToPage">
+    <xapl:print select="$this"/>
+    <xapl:variable name="whereToGo" select="{$this/WHERE[1]/@Value}"/>
+
+    <xapl:choose>
+      <xapl:when test=" 'ASSIGN_DOMAIN' = $whereToGo ">
+        <web:display-page>
+          <web:get-page name="user_group_domain">
+            <SELECTED_TAB Value="{$this/SELECTED_TAB/@Value}"/>
+            <WHERE Value="{$this/WHERE/@Value}"/>
+          </web:get-page>
+        </web:display-page>
+      </xapl:when>
+    </xapl:choose>
+  </x2:command>
+
+ <!--**********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="addDomainNodes">
+    <xapl:print select="$this"/>
+
+    <xapl:variable name="requestNodes">
+        <NODE_LIST/>
+    </xapl:variable>
+    <xapl:for-each varName="selectedID" select="$this/SELECTED_NODE_ID">
+        <xapl:variable name="memID">
+            <x2:execute command="bcm.framework.queryform.Form:getValueFromSelectedId">
+                <x2:with-param name="selectedId" select="{$selectedID/@Value}"/>
+                <x2:with-param name="key" select="'MemberRelations.memberID'"/>
+            </x2:execute>
+        </xapl:variable>
+        <xapl:print select="$memID"/>
+        <docutil:add select="$requestNodes">
+            <NodeId Value="{concat($this/HIERARCHY_ID/@Value , ':' ,$this/LEVEL_ID/@Value ,':',  $memID) }"/>
+        </docutil:add>
+    </xapl:for-each>
+
+    <xapl:variable name="response">
+       <xcore:execute-method name="//BCMMasterService/getNodeDetails" entireResponse="true">
+           <xapl:value-of select="$requestNodes"/>
+       </xcore:execute-method>
+    </xapl:variable>
+
+    <xapl:variable name="nodesNotAdded">
+        <NODES_NOT_ADDED>
+            <INCLUDE_NOT_ADDED Value=""/>
+            <EXCLUDE_NOT_ADDED Value=""/>
+        </NODES_NOT_ADDED>
+    </xapl:variable>
+
+    <xapl:for-each varName="nodeVar" select="$response/RESPONSE/NODE_DETAILS/NODE_INFO">
+        <xapl:choose>
+            <xapl:when test="count($userGroupDomainData/*[name() = $this/SELECTED_TAB/@Value]/Node[(@Action = 'ADD' or @Action = 'MODIFY') and (NodeId/@Value = $nodeVar/@NodeId)]) = 0 ">
+                <!-- node is not available in the selected domain -->
+                <xapl:choose>
+                    <xapl:when test="count($userGroupDomainData/*[name() != $this/SELECTED_TAB/@Value]/Node[(@Action = 'ADD' or @Action = 'MODIFY') and (NodeId/@Value = $nodeVar/@NodeId)]) = 0 ">
+                          <!-- node is not available in the other domain -->
+                          <docutil:add select="$userGroupDomainData/*[name() = $this/SELECTED_TAB/@Value]">
+                              <Node Action="ADD">
+                                  <Dimension.Id Value="{$nodeVar/Dimension/Id/@Value}"/>
+                                  <Dimension.Name Value="{$nodeVar/Dimension/Name/@Value}"/>
+                                  <Hierarchy.Id Value="{$nodeVar/Hierarchy/Id/@Value}"/>
+                                  <Hierarchy.Name Value="{$nodeVar/Hierarchy/Name/@Value}"/>
+                                  <Level.Id Value="{$nodeVar/Level/Id/@Value}"/>
+                                  <Level.Name Value="{$nodeVar/Level/Name/@Value}"/>
+                                  <Member.Id Value="{$nodeVar/Member/Id/@Value}"/>
+                                  <Member.Name Value="{$nodeVar/Member/Name/@Value}"/>
+                                  <NodeId Value="{$nodeVar/@NodeId}"/>
+                              </Node>
+                          </docutil:add>
+                    </xapl:when>
+                    <xapl:otherwise>
+                        <docutil:set select="$nodesNotAdded/*[substring-before(name(), '_') != $this/SELECTED_TAB/@Value]/@Value">
+                            <xapl:if test="string-length($nodesNotAdded/*[substring-before(name(), '_') != $this/SELECTED_TAB/@Value]/@Value) = 0">
+                                <xapl:value-of select="$nodeVar/@NodeId"/>
+                            </xapl:if>
+                            <xapl:if test="string-length($nodesNotAdded/*[substring-before(name(), '_') != $this/SELECTED_TAB/@Value]/@Value) &gt; 0">
+                                <xapl:value-of select="{concat($nodesNotAdded/*[substring-before(name(), '_') != $this/SELECTED_TAB/@Value]/@Value, ',', $nodeVar/@NodeId)}"/>
+                            </xapl:if>
+                        </docutil:set>
+                    </xapl:otherwise>
+                </xapl:choose>
+            </xapl:when>
+            <xapl:otherwise>
+                <docutil:set select="$nodesNotAdded/*[substring-before(name(), '_') = $this/SELECTED_TAB/@Value]/@Value">
+                    <xapl:if test="string-length($nodesNotAdded/*[substring-before(name(), '_') = $this/SELECTED_TAB/@Value]/@Value) = 0">
+                        <xapl:value-of select="$nodeVar/@NodeId"/>
+                    </xapl:if>
+                    <xapl:if test="string-length($nodesNotAdded/*[substring-before(name(), '_') = $this/SELECTED_TAB/@Value]/@Value) &gt; 0">
+                        <xapl:value-of select="{concat($nodesNotAdded/*[substring-before(name(), '_') = $this/SELECTED_TAB/@Value]/@Value, ',', $nodeVar/@NodeId)}"/>
+                    </xapl:if>
+                </docutil:set>
+            </xapl:otherwise>
+        </xapl:choose>
+    </xapl:for-each>
+
+    <xapl:print select="$nodesNotAdded"/>
+
+    <web:display-page>
+      <web:get-page name="user_group_domain">
+        <SELECTED_TAB Value="{$this/SELECTED_TAB/@Value}"/>
+        <xapl:value-of select="$nodesNotAdded/*"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+
+ <!--**********************************************************************
+   ***********************************************************************-->
+</x2:commands>

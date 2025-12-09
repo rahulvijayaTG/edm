@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" description="_">
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="init">
+    <xapl:variable name="authDocSessVariable" resolver="session" global="true"/>
+    <xapl:variable name="docName" resolver="session" global="true"/>
+    <xapl:variable name="tabs" resolver="session" global="true"/>
+  </x2:command>
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+    <x2:param name="this"/>
+    <xapl:print>
+    this in load <xapl:value-of select="$this"/>
+    </xapl:print>
+    <xapl:if test="$this/loadFirst/@Value = 'TRUE'">
+      <xapl:set-variable name="authDocSessVariable"/>
+    </xapl:if>
+    <x2:execute command="bcm.framework.user_admin.assignDomainView:getDynamicTabs"/>
+    <xapl:return>
+      <x2:execute command="bcm.framework.user_admin.assignDomainView:getHeader"/>
+      <x2:execute command="bcm.framework.user_admin.assignDomainView:getContainer">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+      <x2:execute command="bcm.framework.user_admin.assignDomainView:getData">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+    </xapl:return>
+  </x2:command>
+  <!--*************************************************  -->
+  <!--*************************************************  -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="this"/>
+    <xapl:print>
+    tabs = <xapl:value-of select="$tabs"/>
+    this = <xapl:value-of select="$this"/>
+    </xapl:print>
+    <xapl:variable name="counter" select="0"/>
+    <xapl:return>
+      <CONTAINER Scrollable="no">
+        <HELP Url="../../help/rDetailMassupdate_help.htm"/>
+        <xapl:for-each select="$tabs/AUTH_DOC" varName="tabTitle">
+          <xapl:set-variable name="counter">
+            <xapl:value-of select="{$counter + 1}"/>
+          </xapl:set-variable>
+          <xapl:choose>
+            <xapl:when test="($counter = $this/tabIndex/@Value) or ($this/loadFirst/@Value = 'TRUE')">
+              <STEP DisplayText="{$tabTitle/@DisplayName}" OnClick="{concat($pages:assignDomainHome, '?' , 'docName=',$tabTitle/@Name,'&amp;ID=',$this/ID/@Value,'&amp;tabIndex=',$counter)}" Selected="yes"/>
+              <xapl:set-variable name="docName">
+                <xapl:value-of select="{$tabTitle/@Name}"/>
+              </xapl:set-variable>
+              <docutil:set select="$this">
+                <loadFirst Value="FALSE"/>
+              </docutil:set>
+              <docutil:set select="$this">
+                <tabIndex Value="{$counter}"/>
+              </docutil:set>
+              <!--<xapl:set-variable name="tabSelected">FALSE</xapl:set-variable>-->
+            </xapl:when>
+            <xapl:otherwise>
+              <STEP DisplayText="{$tabTitle/@DisplayName}" OnClick="{concat($pages:assignDomainHome, '?' , 'docName=',$tabTitle/@Name,'&amp;ID=',$this/ID/@Value,'&amp;tabIndex=',$counter)}" Selected="no"/>
+            </xapl:otherwise>
+          </xapl:choose>
+        </xapl:for-each>
+        <xapl:print>
+          <xapl:value-of select="$docName"/>
+        </xapl:print>
+        <BUTTONS>
+          <BUTTON Id="Add" DisplayText="Add" OnClick="javascript:onAdd()" DisableOnClick="true" Emphasized="true"/>
+          <BUTTON Id="Remove" DisplayText="Remove" OnClick="javascript:onRemove()" DisableOnClick="true" Disabled="report"/>
+          <BUTTON Id="Save" DisplayText="Save" OnClick="javascript:onSave()" DisableOnClick="true"/>
+        </BUTTONS>
+        <PAGINATION/>
+      </CONTAINER>
+    </xapl:return>
+  </x2:command>
+  <!--*************************************************  -->
+  <!--*************************************************  -->
+  <x2:command name="getData">
+    <x2:param name="this"/>
+    <xapl:print>
+    this = <xapl:value-of select="$this"/>
+    Group id = <xapl:value-of select="{$this/ID/@Value}"/>
+    $authDocSessVariable = <xapl:value-of select="$authDocSessVariable"/>
+    </xapl:print>
+    <xapl:variable name="data"/>
+    <xapl:variable name="authDoc"/>
+    <!-- make the api when the page loads first time -->
+    <xapl:set-variable name="data">
+      <xapl:choose>
+        <xapl:when test="not(string-length($authDocSessVariable/AUTH_DOC/@Name) = 0)">
+          <xapl:print>Step 1</xapl:print>
+          <xapl:value-of select="$authDocSessVariable"/>
+        </xapl:when>
+        <xapl:otherwise>
+          <xapl:print>Step 2</xapl:print>
+          <xcore:execute-method name="//UserSecurity/getUserGroupAuthorization">
+            <USER_GROUP_ID Value="{$this/ID/@Value}"/>
+          </xcore:execute-method>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:set-variable>
+    <xapl:print>
+    data = <xapl:value-of select="$data"/>
+    </xapl:print>
+    <!-- make the api when the page loads first time -->
+    <xapl:if test="string-length($authDocSessVariable/AUTH_DOC/@Name) = 0">
+      <xapl:print>Step 3</xapl:print>
+      <xapl:set-variable name="authDocSessVariable">
+        <docutil:to-xml select="$data//UG_AUTH_FORM/@Value"/>
+      </xapl:set-variable>
+    </xapl:if>
+    <xapl:print>
+      authDoc sess  var = <xapl:value-of select="$authDocSessVariable"/>
+      docName = <xapl:value-of select="$docName"/>
+    </xapl:print>
+    <xapl:set-variable name="authDoc">
+      <xapl:value-of select="$authDocSessVariable/AUTH_DOC[@Name=$docName]"/>
+    </xapl:set-variable>
+    <xapl:print>
+      auth doc = <xapl:value-of select="$authDoc"/>
+    </xapl:print>
+    <xapl:return>
+      <ID Value="{$this/ID/@Value}"/>
+      <docName Value="{$docName}"/>
+      <tabIndex Value="{$this/tabIndex/@Value}"/>
+      <xapl:value-of select="$authDoc"/>
+    </xapl:return>
+  </x2:command>
+  <!-- ***************************************** -->
+  <x2:command name="getDynamicTabs" description="_" public="yes">
+    <xapl:set-variable name="tabs">
+      <ROOT>
+        <xcore:execute-method name="//BCMMasterService/getAuthorizingDocumets"/>
+      </ROOT>
+    </xapl:set-variable>
+  </x2:command>
+  <x2:command public="yes" description="_" name="getHeader">
+    <xapl:return>
+      <HEADER>
+        <APP_NAME Value="MDM"/>
+        <TOGGLE_NAV Value="../"/>
+        <HEADING Value="User Groups"/>
+        <HEADING_LINK Value="{$pages:user_admin_group_search}"/>
+        <HEADING2 Value="User Group Profile"/>
+        <HEADING2_LINK Value="{$pages:user_group_profile_return}"/>
+        <HEADING3 Value="{concat('Assign Domain : ' ,$userGroupXMLData/USER_GRP_PROFILE/GRP_NAME/@Value)}"/>
+        <HOME Value="bcm/framework/home.jsp"/>
+      </HEADER>
+    </xapl:return>
+  </x2:command>
+</x2:commands>

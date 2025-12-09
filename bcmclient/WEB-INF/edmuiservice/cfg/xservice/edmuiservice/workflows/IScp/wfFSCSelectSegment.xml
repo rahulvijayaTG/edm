@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="74" ShowInBreadCrumbs="true" Version="1.0" Name="wfFSCSelectSegment" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="fieldName" Type="string" Comment=""/>
+    <variable Name="select" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+        <action>
+          <SET DocVar="fieldName" FromValue="{$thisParam/FIELD_NAME/@Value}"/>
+          <SET DocVar="select" FromValue="{$thisParam/SELECTABLE/@Value}"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Select Segment" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done3">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Select Segment" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE" Template="iscpFSCSelectSegment.pgl">
+      <pre_actions>
+        <action>
+          <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+          <SET Var="pgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '10', $thisParam/MAX_ROWS/@Value)}"/>
+          <SET DocVar="thisParam" Property="SRCH_STATE" FromValue="ACTIVE"/>
+          <SET Var="sortBy" FromValue="{ifElse((($thisParam/SORT_BY/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID')), 'PartyIdnValue', $thisParam/SORT_BY/@Value)}"/>
+          <SET Var="sortOrder" FromValue="{ifElse((($thisParam/SORT_ORDER/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID')), 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+          <MAKE_INSTANCE_DOCUMENT Name="{$sortBy}" AssignToVar="sortByTag"/>
+          <SET DocVar="sortByTag" Attribute="Sort" FromValue="{$sortOrder}"/>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="segFilters">
+            <SRCH_SEG_ID MultiValued="true"/>
+            <SRCH_SEG_NAME MultiValued="true"/>
+            <SRCH_SEG_DESC MultiValued="true"/>
+            <SRCH_SEG_TYPE MultiValued="true"/>
+            <SRCH_STATE/>
+          </FORM_SEARCH_FILTER>
+          <APPEND_TO_XML DocVar="segFilters">
+            <ORDER_BY>
+              <TO_XML DocVar="sortByTag"/>
+            </ORDER_BY>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="segFilters">
+            <FILTER Name="SRCH_SEG_ID">
+              <PartyIdentificationValue Value="1000" MatchBy="NOT_EQUAL"/>
+              <PartyIdentificationValue Value="Project1Up" MatchBy="NOT_EQUAL"/>
+            </FILTER>
+            <!--<FILTER Name="SRCH_SEG_ID">
+	    <PartyIdentificationValue Value="Project1Up" MatchBy="NOT_EQUAL"/>
+	  </FILTER>-->
+          </APPEND_TO_XML>
+          <REQUEST Name="getSegments" ServiceName="BCM_MASTER" AssignToVar="segSrchResults" ReturnRowCount="yes">
+            <MaxRows Value="{$pgMaxRows}"/>
+            <StartAtRow Value="{$paginateStart}"/>
+            <TO_XML SelectList="$segFilters/*"/>
+          </REQUEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <SEARCH_FIELDS>
+                <TO_XML SelectList="$thisParam/SRCH_SEG_ID"/>
+                <TO_XML SelectList="$thisParam/SRCH_SEG_NAME"/>
+                <TO_XML SelectList="$thisParam/SRCH_SEG_DESC"/>
+                <TO_XML SelectList="$thisParam/SRCH_SEG_TYPE"/>
+                <FIELD_NAME Value="{$fieldName}"/>
+              </SEARCH_FIELDS>
+              <START_AT_ROW Value="{$paginateStart}"/>
+              <TotalRowCount Value="{$segSrchResults/SEG_DETAILS/@TotalRowCount}"/>
+              <TO_XML SelectList="$segSrchResults/*"/>
+              <SELECT Value="{$select}"/>
+              <SEG_TYPES>
+                <OPTION Value="Select All" Id="*"/>
+                <DROP_DOWN_OPTIONS SelectList="$segSrchResults/SEG_TYPES/P_PartyType" Id="PartyType" Value="PRTYTYPE"/>
+              </SEG_TYPES>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select Segment" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='select'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='null'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done3" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="167,119" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <done3 location="400,119" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done3" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done3>
+      <mgcnode Name="Select Segment" location="275,118" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Select Segment" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="199,141" endpoint="275,141" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="254,139,4,4" ctrlRect2="216,139,4,4"/>
+      </start2>
+      <mgcnode Name="Select Segment">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="291,118" endpoint="291,118" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="289,41,4,4" ctrlRect2="330,88,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="307,141" endpoint="400,141" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="374,139,4,4" ctrlRect2="328,139,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="2" textAttrsKey0="fieldName : string" textAttrsKey1="select : string">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="fieldName" Type="string" Comment=""/>
+        <variable Name="select" Type="string" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

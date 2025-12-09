@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands
+  xmlns:cfg="http://www.i2.com/cfg"
+  xmlns:i18n="http://www.i2.com/i18n"
+  xmlns:identity="http://www.i2.com/identity"
+  xmlns:oa="http://www.i2.com/oa"
+  xmlns:omx="http://www.i2.com/omx"
+  xmlns:perm="http://www.i2.com/perm"
+  xmlns:system="http://www.i2.com/system"
+  xmlns:util="http://www.i2.com/util"
+  xmlns:web="http://www.i2.com/web"
+  xmlns:x2="http://www.i2.com/x2"
+  xmlns:xapl="http://www.i2.com/xapl"
+  xmlns:xcore="http://www.i2.com/xcore"
+  xmlns:xcore-db="http://www.i2.com/xcore-db"
+  xmlns:report="http://www.i2.com/report"
+  xmlns:docutil="http://www.i2.com/docutil"
+  xmlns:metadata="http://www.i2.com/metadata">
+
+
+  <!-- **********************************************************************************
+  *********************************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+    <x2:param name="pPage" select="'omx.user_admin.role_field_access'"/>
+
+	 <x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+      <x2:with-param name="display" select="'Field Access Details'"/>
+      <x2:with-param name="page" select="$pPage"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+
+     <xapl:return>
+	   <x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>
+
+       <x2:execute command="omx.user_admin.role_field_access:getData">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+
+
+
+    </xapl:return>
+
+  </x2:command>
+
+  <!-- **********************************************************************************
+  *********************************************************************************** -->
+  <x2:command public="yes" description="_" name="getData">
+
+ <!--
+SERVICE_NAME, DOCUMENT_NAME,ROLE_ID
+ -->
+   <!-- metaData Global Level-->
+   <xapl:variable name="currentDocument">
+         <xapl:clone select="{$metaData/SERVICE[@xName=$this/SERVICE_NAME[1]/@Value]/DOCUMENTS/DOCUMENT[ @Name = $this/DOCUMENT_NAME[1]/@Value ]}"/>
+   </xapl:variable>
+
+   <!-- xml massaging:: add NAME, EDITABLE, VIEW-->
+	 <xapl:for-each select="$currentDocument/PROPERTY" varName="prop">
+	  <docutil:set select="$prop/PRESENTATION">
+		<NAME Value="{$prop/@Name}"/>
+  	    <xapl:choose>
+		   <xapl:when test="$prop/PRESENTATION/EDITABLE/@Value ='yes'">
+			<EDITABLE Value="true"/>
+		   </xapl:when>
+		   <xapl:otherwise>
+			<EDITABLE Value="false"/>
+		   </xapl:otherwise>
+		</xapl:choose>
+		<VIEW Value="true"/>
+	   </docutil:set>
+	 </xapl:for-each>
+
+
+   <!-- metaData Role Level-->
+	 <xapl:variable name="responses">
+      <xcore:execute-method name="//UserSecurity/getFieldLevelAccess" entireResponse="true">
+	   <ROLE_ID Value="{$this/ROLE_ID/@Value}"/>
+	   <SERVICE_NAME Value="{$this/SERVICE_NAME/@Value}"/>
+	   <DOCUMENT_NAME Value="{$this/DOCUMENT_NAME/@Value}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+
+
+  <xapl:if test="count($responses/RESPONSE/PROPERTIES/PROPERTY) > 0">
+	 <xapl:for-each select="$responses/RESPONSE/PROPERTIES/PROPERTY/PRESENTATION" varName="prop">
+		  <xapl:variable name="currDocProp">
+			<xapl:value-of select="$currentDocument/PROPERTY[@Name = $prop/NAME/@Value]/PRESENTATION"/>
+		  </xapl:variable>
+		  <docutil:set select="$currDocProp">
+			<EDITABLE Value="{$prop/EDITABLE/@Value}"/>
+   		    <VIEW Value="{$prop/VIEW/@Value}"/>
+			<test/>
+		  </docutil:set>
+<!--
+		<xapl:if test="$prop/VIEW/@Value='false'">
+		<docutil:remove select="$currentDocument/PROPERTIES/PROPERTY[@Name = $prop/NAME/@Value]"/>
+    	  </xapl:if>
+-->
+
+	 </xapl:for-each>
+  </xapl:if>
+
+   <xapl:return>
+   <DATA>
+    <ROLE_ID Value="{$this/ROLE_ID[1]/@Value}"/>
+    <ROLE_NAME Value="{$this/ROLE_NAME[1]/@Value}"/>
+    <SERVICE_NAME Value="{$this/SERVICE_NAME[1]/@Value}"/>
+    <DOCUMENT_NAME Value="{$this/DOCUMENT_NAME[1]/@Value}"/>
+	<xapl:value-of select="$currentDocument"/>
+	<xapl:value-of select="$this/SUCCESS_MESSAGE"/>
+	<xapl:value-of select="$this/ERROR_MESSAGE"/>
+    </DATA>
+   </xapl:return>
+
+  </x2:command>
+
+
+ <!-- **********************************************************************************
+  *********************************************************************************** -->
+  <x2:command public="yes" description="_" name="submit">
+
+	 <xapl:variable name="properties">
+	  <PROPERTIES>
+		<xapl:value-of select="$this/DATA/DOCUMENT/*"/>
+     </PROPERTIES>
+	 </xapl:variable>
+	 <docutil:remove select="$properties/PRESENTATION/EDITABLE_C"/>
+	 <docutil:remove select="$properties/PRESENTATION/VIEW_H"/>
+	 <docutil:add select="$properties/PRESENTATION[@selected = 'true']">
+		<VIEW Value="true"/>
+	 </docutil:add>
+	 <docutil:add select="$properties/PRESENTATION[string-length(@selected) = 0 ]">
+		<VIEW Value="false"/>
+	 </docutil:add>
+
+	 <xapl:variable name="properties2">
+	 <PROPERTIES>
+	 <xapl:for-each select="$properties/PRESENTATION" varName="presentation">
+	 <PROPERTY>
+		<xapl:value-of select="$presentation"/>
+	 </PROPERTY>
+	 </xapl:for-each>
+	   </PROPERTIES>
+	 </xapl:variable>
+
+	 <xapl:variable name="responses">
+      <xcore:execute-method name="//UserSecurity/setFieldLevelAccess"   entireResponse="true">
+	   <ROLE_ID Value="{$this/DATA/ROLE_ID/@Value}"/>
+	   <SERVICE_NAME Value="{$this/DATA/SERVICE_NAME/@Value}"/>
+	   <DOCUMENT_NAME Value="{$this/DATA/DOCUMENT_NAME/@Value}"/>
+	   <xapl:value-of select="$properties2"/>
+      </xcore:execute-method>
+    </xapl:variable>
+
+
+    <xapl:variable name="status">
+      <x2:execute command="bcm.framework.util:getResponseStatus">
+        <x2:with-param name="response" select="$response"/>
+        <x2:with-param name="successMessage" select=" 'Role_Details_Saved_Successfully' "/>
+      </x2:execute>
+    </xapl:variable>
+
+	<web:display-page >
+	            <web:get-page name="omx.user_admin.role_field_access">
+				   <ROLE_ID Value="{$this/DATA/ROLE_ID/@Value}"/>
+  			       <ROLE_NAME Value="{$this/DATA/ROLE_NAME/@Value}"/>
+				   <SERVICE_NAME Value="{$this/DATA/SERVICE_NAME/@Value}"/>
+				   <DOCUMENT_NAME Value="{$this/DATA/DOCUMENT_NAME/@Value}"/>
+				  <xapl:value-of select="$status"/>
+			  </web:get-page>
+		</web:display-page>
+
+
+	<xapl:return>
+	<data>
+      <xapl:value-of select="$properties2"/>
+	    <xapl:value-of select="$this"/>
+	 </data>
+    </xapl:return>
+
+  </x2:command>
+
+</x2:commands>

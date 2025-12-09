@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:page-group xmlns:ui="http://www.i2.com/ui" displayText="Save Favorite/Search" source="core.search.save:load">
+   <ui:container id="save_search" displayText="Save Favorite/Search" collapsable="false" scrollable="true">
+    <ui:step id="save_search" displayText="Save Search">
+      <ui:validation errorMessage="{$this/ERROR_MESSAGE/@Value}"/>
+      <ui:field-group columns="2">
+        <ui:field-group>
+          <ui:display-field displayText="Category" name="CATEGORY"/>
+          <ui:entry-field displayText="Please specify a name for the Favorite/Search" name="SAVED_SEARCH_NAME" required="true"/>
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="cancel" displayText="Cancel" validate="false" submitTo="javascript:history.back( );" />
+        <ui:button id="save" displayText="Save" submitTo="controller/save.x2c" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+		function onKeyPress( target )
+		{
+			if (target.disablePageKeyTapping == 'true') return;
+
+		  if (target.nodeName == 'INPUT')
+		  {
+				on_save();
+  		}
+  		
+  		return false;
+		}
+  </ui:script>
+</ui:page-group>

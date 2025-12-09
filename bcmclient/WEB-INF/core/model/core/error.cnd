@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:tree="http://www.i2.com/tree" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  
+  
+  <!-- ********************************************************************** 
+  *********************************************************************** -->    
+  <x2:command public="yes" description="Return the error string from the Service call's Response" name="getServerError">
+
+    <x2:param name="pResponse"/>
+
+  <!-- RESPONSE Status attrib is 'Error' or 'Success'                      -->
+  <!-- (i) 'Error'. This case contains also the 'StackTrace' attrib.       -->
+  <!--    _RESULT contains Value attrib (as 'ERROR' or 'SEVERE_ERROR')     -->
+  <!--    and contains _ERROR sub element.                                 -->
+  <!--    _ERROR sub element contains Value, Desc (opt), Severity          -->
+  <!-- (ii) 'Success'                                                      -->
+  <!--    _RESULT 'Value' = 'SUCCESS','ERROR' or 'SEVERE_ERROR'.           -->
+  <!--    In addition, when _RESULT value is 'ERROR' or 'SEVERE_ERROR',    -->
+  <!--    (a) with 'Detail' attrib of _RESULT=false (=> simple result)     -->
+  <!--        _RESULT contains _ERROR with Value, Desc (opt), Severity     -->
+  <!--    (b) with 'Detail' attrib of _RESULT=true (detailed error result) -->
+  <!--        _RESULT contains multiple _ERROR elements, each containing   -->
+  <!--        Value, Desc, Severity; In addition the elements of the       -->
+  <!--        input would follow the _RESULT element, with erroneous input -->
+  <!--        element containing_ERRORS elements which contain _ERROR      -->
+  <!--        elements; _ERROR contains attribs Value, Desc(opt), Severity -->
+
+  <!-- Note!! In case of non-OrderAdmin screens, only the cases (i), (ii)a -->
+  <!-- are expected (and processed).                                       -->
+
+  <!-- Check for errors  -->
+  <xapl:if test="{$pResponse/RESPONSE/_RESULT/@Value='ERROR' or $pResponse/RESPONSE/_RESULT/@Value='SEVERE_ERROR'}">
+    <xapl:return>
+      <!-- In case of Condition (i), print the StackTrace -->
+      <xapl:if test="{$pResponse/RESPONSE/@Status = 'Error'}">
+        <xapl:print>
+          <xapl:value-of select="$pResponse/RESPONSE/@StackTrace"/>
+        </xapl:print>
+      </xapl:if>
+ 
+      <!-- In case of both Conditions (i) & (ii)a, --> 
+      <!-- get the Desc or Value(if Desc is absent) -->
+      <xapl:choose>
+        <xapl:when test="string-length($pResponse/RESPONSE/_RESULT/_ERROR/@Desc) > 0">
+          <xapl:value-of select="$pResponse/RESPONSE/_RESULT_/_ERROR/@Desc"/>
+        </xapl:when>
+        <xapl:when test="string-length($pResponse/RESPONSE/_RESULT/_ERROR/@Value) > 0">
+          <xapl:value-of select="$pResponse/RESPONSE/_RESULT/_ERROR/@Value"/>
+        </xapl:when>
+        <!-- If the param does not contain error string, default to some. -->
+        <xapl:otherwise>Unexplained Error</xapl:otherwise>
+      </xapl:choose>
+    </xapl:return>
+    </xapl:if>
+    <xapl:return/>
+</x2:command>
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->    
+  <x2:command public="yes" description="Return the error string to be displayed" name="load">
+    <x2:param name="pMessage" select="$this/MSG/@Value"/>
+    
+    <xapl:return>
+      <MSG Value="{$pMessage}"/>
+    </xapl:return>
+  </x2:command>
+
+</x2:commands>

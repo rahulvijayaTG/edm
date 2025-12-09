@@ -1,0 +1,210 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+
+<head>
+
+<link rel="STYLESHEET" type="text/css" href="includes/style_sheet_core.css">
+
+<link rel="STYLESHEET" type="text/css" href="includes/style_sheet_doc.css">
+
+</head>
+
+<body>
+
+<h1>Manage PIPO</h1>
+
+<div id="overDiv" style="position:absolute; visibility:hidden; z-index:1000;"></div>
+
+<script language="JavaScript" src="overlib.js"></script>
+
+<a name="top">
+
+<table border="0" cellpadding="0" cellspacing="0">
+
+<tr><td class="largeheadline"><script language="JavaScript" src="titleline.js"></script></td>
+
+</tr>
+
+</table>
+
+<hr>
+
+<!-- Begin Page Layout -->
+
+<p>The phase in/phase out (PIPO) is the overall process of substituting the
+existing stock keeping units (SKU’s) with the new SKU’s. There are two
+indicators that assist in the phase-in/phase-out process. The first indicator is
+the New Product indicator (NPI) and the second is the End of Life indicator (EOL).</p>
+
+<p>The planners identify from which date they want to start forecasting the new
+SKU (phase-in date) and from which date they want to discontinue forecasting for
+the old SKU (phase-out date). These dates are captured in the form of the NPI
+and EOL indicators.
+<br><br></p>
+
+<table class="shadow" cellspacing="0" cellpadding="0"width="100%" border="0">
+
+<tr>
+
+<td class="tableHeader">&nbsp;What you can do
+
+
+
+</td>
+
+</tr>
+
+<tr>
+
+<td>
+
+            <table class="tableBorder" cellspacing="1" cellpadding="0" width="100%" border="0">
+
+            <tr class="tableRow0">
+
+            <td>
+
+                        <p class="Header2">Search for a PIPO Setup</p>
+
+                        <ol>
+                        <li>In the Navigation Pad, you must have clicked on the <b>Manage
+                          PIPO</b> &gt; <b>PIPO Setup</b> link to view the current screen.
+                        <li>The PIPO Setup screen is displayed.&nbsp;
+                        <li>You can perform a search based on the
+                          Name, Description, Level Name, EOL Measure Id, NPI
+                          Measure Id. Search is case sensitive. Currently only
+                          sub-string search is supported.
+                        <li>Enter appropriate values in the required search fields and click on&nbsp;
+                          <b>Search </b> button.</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        </ol>
+
+                        <blockquote>
+                          <blockquote>
+
+                        <b>Note: </b>The value of search string should be
+                            name/description of the member. Wildcard search is
+                            not supported. To narrow your search
+                            list,&nbsp;&nbsp; you can also specify an
+                            appropriate status and/or state.
+                          </blockquote>
+                        </blockquote>
+                        <ol start="5">
+                          <li>All the records that match the search parameters that you specified will be displayed.<a name="top">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                            </li>
+                          </ol>
+
+                        <p class="Header2">Adding a PIPO Setup</p>
+                        <ol>
+                          <li>To add a PIPO Setup, click the <b>Add</b> button.</li>
+                          <li>The Select EOL and EOLLevelID page is displayed.</li>
+                          <li>Select an EOL from the list that is displayed.
+                            Click Next. If you choose not to mention EOL, then
+                            click <b>Skip</b> button. You can skip the
+                            selection, in case this setup will be used only to
+                            define phase-in (PI). This is provided in order to
+                            allow you define phase-ins and copy history from
+                            similar SKU's to initiate the forecasting process.</li>
+                          <li>The Select NPI and NPILevelID page is displayed.
+                            The value that you selected in the previous step is
+                            not displayed now.</li>
+                          <li>Select a NPI from the list and click <b>Next</b>.</li>
+                          <li>Select a dimension from the Select Dimension and
+                            Level ID page that is displayed.</li>
+                          <li>Enter a meaningful Name and Description and click <b>Save
+                            and Return</b> to save the PIPO Setup and return to
+                            the main page. A new PIPO Setup ID is created for
+                            the parameters you have specified.</li>
+                        </ol>
+                        <p class="Header2">Adding Measure Details</p>
+                        <ol>
+                          <li>
+                            <p class="bodyText">From the PIPO Setup page, click
+                            the <b>Add Measure Details</b> button</a>.</li>
+                        <li>
+                          <p class="bodyText">The Select SourceMeasure ID page
+                          is displayed.</li>
+                        <li>
+                          <p class="bodyText">Select a SourceMeasure ID from the
+                          list or search for a SourceMeasure ID by entering one
+                          of the search criteria and click <b>Next</b>.</li>
+                        <li>
+                          <p class="bodyText">Select a TargetMeasure ID from the
+                          list or search for a TargetMeasure ID by entering one
+                          of the search criteria and click <b>Next</b>.</li>
+                        <li>
+                          <p class="bodyText">Select a Source Measure Start Date
+                          and End Date and Target Measure Start Date (optional)
+                          using the Date picker.</li>
+                        <li>
+                          <p class="bodyText">Click <b>Save And Return</b>. The
+                          measure details are saved. You can view the measure
+                          details of a PIPO Setup by clicking the <b>Show
+                          Measure Details</b> button in the PIPO Setup page.</li>
+            </ol>
+                            <p class="bodyText">&nbsp;
+                            <p class="bodyText">&nbsp;
+                        <p>&nbsp;</p>
+                        <p>&nbsp;
+
+            </td>
+
+            </tr>
+
+            </table>
+
+<td>
+
+</tr>
+
+</table>
+
+<!-- End Page Layout -->
+
+<hr>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+
+<tr>
+
+<td class="breadcrumbs"><script language="JavaScript" src="tagline.js"></script></td>
+
+</tr>
+
+</table>
+
+<DIV id="waterMark" style="position:absolute"><a href="javascript:history.back();" onClick="window.scrollTo(0,0)"><img src="includes/top_of_page.gif" border="0" alt="top of page"></a></DIV>
+
+<script language="JavaScript" src="topfloat.js"></script>
+
+</body>
+
+</html>

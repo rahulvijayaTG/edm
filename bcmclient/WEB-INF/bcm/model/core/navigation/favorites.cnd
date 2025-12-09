@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:identity="http://www.i2.com/identity" xmlns:i18n="http://www.i2.com/i18n" description="_">
+    <!-- ********************************************************************** 
+*********************************************************************** -->
+    <x2:command public="yes" description="_" name="getLinks">
+        <x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+        <xapl:print>PRINTING ACTIVITY INSIDE FAVORITES GETLINKS <xapl:value-of select="$selectedActivity"/>
+        </xapl:print>
+        
+        
+        <xapl:print>PRINTING UserFavorites INSIDE FAVORITES GETLINKS 
+            <xapl:value-of select="$userFavorites"/>
+        </xapl:print>
+        <xapl:variable name="absoluteurl">
+            <web:get-absolute-url path="/"/>
+        </xapl:variable>
+        <!--xapl:variable name="appurl">
+            <web:get-absolute-url path="{substring-before($absoluteurl ,  '/bcm/fav_url'  )}"/>
+        </xapl:variable-->
+        
+        
+        <xapl:print>
+            count:::<xapl:value-of select="count($userFavorites//*[name() = 'Folder'])"/>
+        </xapl:print>
+        <xapl:variable name="leftNavUserFavorites">
+            <xapl:clone select="$userFavorites"/>
+        </xapl:variable>    
+        <xapl:variable name="accessibleUserFavorites">
+            <FAV_LIST/>
+        </xapl:variable>    
+        <xapl:for-each select="$leftNavUserFavorites//Favorite" varName="favorite">
+        
+            <xapl:variable name="navaction">
+              <x2:execute command="core.navigation.favorites:getNavParams">
+                    <x2:with-param name="url" select="{$favorite/@URL}"/>
+              </x2:execute>
+            </xapl:variable>
+            <xapl:choose>
+                <xapl:when test="string-length($navaction) > 0">
+                    <xapl:print>
+                        inga varuthu!!
+                    </xapl:print>
+                    <perm:is-allowed document="TASKS" action="{$navaction}">
+                        <xapl:print>
+                            inga varuthaaa!!
+                        </xapl:print>
+                        
+                        <docutil:set select="$favorite/@URL">
+                            <xapl:value-of select="{concat($absoluteurl, $favorite/@URL)}"/>                
+                        </docutil:set>
+                        <!--docutil:add select="$accessibleUserFavorites">
+                            <xapl:value-of select="$favorite"/>
+                        </docutil:add-->
+                    </perm:is-allowed>
+                </xapl:when>
+                <xapl:otherwise>
+                    <!--for now no security check -->
+                    <docutil:set select="$favorite/@URL">
+                        <xapl:value-of select="{concat($absoluteurl, $favorite/@URL)}"/>                
+                    </docutil:set>
+                    <!--docutil:remove select="$leftNavUserFavorites//Favorite[@Id = $favorite/@Id]"/>
+                    <docutil:remove select="$userFavorites//Favorite[@Id = $favorite/@Id]"/-->
+                </xapl:otherwise>
+            </xapl:choose>
+                
+            
+        </xapl:for-each>
+        <xapl:variable name="pad">
+            <PAD Name="favorites" DisplayText="Favorites" Scrollable="yes">
+                <!--PAD_ITEM OnClick="{concat($pages:data_management,'&amp;Auth_Enabled=true')}" DisplayText="Favorites"/-->
+                    <xapl:value-of select="$leftNavUserFavorites/*"/>
+            </PAD>
+        </xapl:variable>
+        <xapl:print>
+                <xapl:value-of select="$pad"/>
+                <xapl:value-of select="$leftNavUserFavorites"/>
+        </xapl:print>
+        <xapl:return>
+            <xapl:if test="count($leftNavUserFavorites/*)  >0">
+                <xapl:value-of select="$pad"/>
+            </xapl:if>
+        </xapl:return>
+    </x2:command>
+    
+    
+    <x2:command public="yes" description="_" name="getNavParams">
+        <x2:param name="url"/>
+        
+        <xapl:print>
+            ithu thaan url <xapl:value-of select="$url"/>
+        </xapl:print>
+        <xapl:variable name="navaction"/>
+        <xapl:variable name="params">
+            <xapl:value-of select="{substring-after($url,'?')}"/>        
+        </xapl:variable>
+        
+        <xapl:print select="$params"/>
+
+        <xapl:variable name="paramXML">
+          <x2:execute command="bcm.framework.util:createXMLFromString">
+            <x2:with-param name="string" select="$params"/>
+            <x2:with-param name="delimeter" select="'&amp;'"> </x2:with-param>
+            <x2:with-param name="tagname" select="'PARAM'"></x2:with-param>
+          </x2:execute>
+        </xapl:variable>
+
+        <xapl:print select="$paramXML"/>
+        <xapl:for-each select="$paramXML/PARAM" varName="currentParam">
+            <xapl:variable name="paramVal">
+                <xapl:value-of select="{substring-before($currentParam/@Value,'=')}"/>
+            </xapl:variable>
+            <xapl:print>
+                <xapl:value-of select="$paramVal"/>
+            </xapl:print>
+            <xapl:if test="$paramVal='ACTIVITY_ID'">
+                <xapl:print>
+                    Got It!!!!!
+                </xapl:print>
+                <xapl:set-variable name="navaction">
+                    <xapl:value-of select="{substring-after($currentParam/@Value,'=')}"/>                    
+                </xapl:set-variable>
+            </xapl:if>
+        </xapl:for-each>
+
+        <xapl:print select="$navaction"/>
+
+        <xapl:return>
+            <xapl:value-of select="$navaction"/>
+        </xapl:return>
+    </x2:command>
+
+    
+    
+    <!-- ********************************************************************** 
+*********************************************************************** -->
+    <x2:command public="yes" description="_" name="getPadItemExtension">
+        <x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+        <!-- left bank so that others/invopt etc can define it -->
+    </x2:command>
+    <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>
+

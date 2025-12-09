@@ -1,0 +1,79 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="2">
+  <ui:container id="topContainer">
+    <ui:step id="c1" displayText="IP Item Location Parameters" editable="true">
+      <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" />
+      <!--        <ui:table displayText="Mass Update Selections" rowSrc="$root/SEGMENTS/SEGMENT_DETAILS" rowSubTreeSrc="PARAMETER_LISTS/ PARAMETER_DETAILS" collapsable="true" totalRowCount="$segmentTableRowCnt" startAtRow="0" maxRows="10" rowId="SegmentIdentification" exportable="false" scrollable="true">-->
+      <ui:table displayText="Mass Update Selections" rowSrc="$root/ITEMLOC_LISTS/ITEMLOC_DETAILS" rowSubTreeSrc="PARAMETER_LISTS/ PARAMETER_DETAILS" collapsable="true" totalRowCount="$root/ROWCNT/@Value" startAtRow="0" maxRows="3" rowId="ItemLocation" exportable="false">
+        <ui:field-group>
+          <ui:treecell displayText="Item" name="ItemIdentification" id="ItemIdentification" noChildren="{count(PARAMETER_LISTS/PARAMETER_DETAILS) = 0}" depth="{count(ancestor::node()[name()='PARAMETER_LISTS'])}" column="0" />
+          <ui:display-field name="ItemDesc" id="ItemDesc" displayText="Item Description" sortable="true" />
+          <ui:display-field name="UniformCodeCouncilNumberIdentifier" id="UniformCodeCouncilNumberIdentifier" displayText="GTIN #" sortable="true" />
+          <ui:display-field name="ItemTypeDescription" id="ItemTypeDescription" displayText="Material Type" sortable="true" />
+          <ui:display-field name="SegmentIdentification" id="SegmentIdentification" displayText="Segment" />
+          <ui:entry-field editable="false" name="LocationIdentification" id="LocationIdentification" displayText="Location" sortable="true" />
+          <ui:display-field name="LocationDesc" id="LocationDesc" displayText="Location Description" sortable="true" />
+          <ui:entry-field name="ParameterName" id="ParameterName" displayText="Parameter Name" editable="false" />
+          <ui:hidden-field name="ItemIdentification_Hidden" />
+          <ui:hidden-field name="LocationIdentification_Hidden" />
+          <ui:hidden-field name="CommentFieldName" />
+          <ui:hidden-field name="SourceSystemMnemonicValue" />
+          <ui:hidden-field name="ItemLocation_Hidden" id="ItemLocation_Hidden" />
+          <!--    <ui:entry-field name="ItemIdentification_Hidden" id="" editable="false"/>-->
+          <ui:display-field name="DefaultParameterValue" id="DefaultParameterValue" displayText="Default Value" />
+          <ui:display-field displayText="Override Parameter Value" name="OverrideParameterValue" />
+          <ui:display-field displayText="Comment" name="OverrideParameterComment" />
+          <!--<ui:display-field name="OPRPD" id="OPRPD" displayText="Override PRP Days"/>-->
+          <!--  <ui:choose-field name="OverrideParameterValue" displayText="Override Value">
+            <ui:when test="BASE_TAG/@Value = 'true'">
+              <ui:display-field displayText="" name="OverrideParameterValue"/>
+            </ui:when>
+            <ui:otherwise>
+              <ui:entry-field name="OverrideParameterValue" id="OverrideParameterValue" displayText="Override Value"/>
+            </ui:otherwise>
+          </ui:choose-field>
+      
+          <ui:choose-field name="OverrideParameterValue" displayText="Override Value">
+            <ui:when test="BASE_TAG/@Value = 'true'">
+              <ui:display-field displayText="" name="OverrideParameterValue"/>
+            </ui:when>
+            <ui:otherwise>
+              <ui:textarea name="OverrideParameterComment" id="OverrideParameterComment" displayText="Override Comment" required="true" rows="2"/>
+            </ui:otherwise>
+          </ui:choose-field>-->
+        </ui:field-group>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:container id="bottomContainer" displayText="Mass Update">
+    <ui:step id="c1" displayText="" editable="true">
+      <ui:field-group columns="4" id="fieldGroups1">
+        <ui:field-group id="leftFields" rows="4">
+          <ui:checkbox name="chkForecastError" id="chkForecastError" />
+          <ui:checkbox name="chkPRP" id="chkPRP" />
+          <ui:checkbox name="chkROQ" id="chkROQ" />
+          <ui:checkbox name="chkKIF" id="chkKIF" />
+        </ui:field-group>
+        <ui:field-group id="middleFields" rows="4">
+          <ui:entry-field displayText="Override FRCT Error %" id="OverrideForecastError" required="false" name="OverrideForecastError" />
+          <ui:entry-field displayText="Override PRP Days" id="OverrideProductionRiskPeriod" name="OverrideProductionRiskPeriod" required="false" />
+          <ui:entry-field displayText="Override ROQ" id="OverrideReorderQuantity" name="OverrideReorderQuantity" required="false" />
+          <ui:dropdown id="OverrideKeepInventoryFlag" name="OverrideKeepInventoryFlag" size="1" displayText="Keep Inventory Flag">
+            <ui:option id="Y" value="Y" />
+            <ui:option id="N" value="N" />
+          </ui:dropdown>
+        </ui:field-group>
+        <ui:field-group id="rightFields" rows="4">
+          <ui:textarea id="OverrideForecastErrorCommentText" name="OverrideForecastErrorCommentText" displayText="Comments" required="true" />
+          <ui:textarea id="OverrideProductionRiskPeriodCommentText" name="OverrideProductionRiskPeriodCommentText" displayText="comments" required="true" />
+          <ui:textarea id="OverrideReorderQuantityCommentText" name="OverrideReorderQuantityCommentText" displayText="comments" required="true" />
+          <ui:textarea id="OverrideKeepInventoryIndicatorCommentText" name="OverrideKeepInventoryIndicatorCommentText" displayText="Comments" required="true" />
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button displayText="Save" id="Save" name="Save" enabledBySelections="true" />
+        <ui:button displayText="Cancel" id="Cancel" name="Cancel" enabledBySelections="false" validate="false" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

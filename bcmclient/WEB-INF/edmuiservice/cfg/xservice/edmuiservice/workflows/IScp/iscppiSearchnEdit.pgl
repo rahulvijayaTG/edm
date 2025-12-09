@@ -1,0 +1,413 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="piSearchnEdit.pgl">
+  <ui:search name="linelocSearchnEdit" displayText="Group Line Location Search And Edit" collapsable="true" exportSearch="false" saveSearch="false" anyFieldIsRequired="false">
+    <ui:validation displayText="dummy" displayCondition="false" />
+    <!--<ui:container id="container1" displayText="Group Line Location Search And Edit" collapsable="true" >
+    <ui:step id="step1">-->
+    <ui:field-group id="fg2" columns="2">
+      <ui:field-group id="fg21">
+        <ui:hidden-field id="numberofrecs" name="numberofrecs" value="{$root/ROOT/selectedgroups/@Value}" displayText="count" />
+        <ui:entry-field displayText="Group ID" id="ItemInterchangeGroupIdentifier" name="ItemInterchangeGroupIdentifier" value="{$root/var/grpid/@Value}">
+          <ui:links>
+            <ui:link displayText="Select Group" targetType="popup" targetName="planPopUp">
+              <ui:image src="pop_up_window.gif" />
+              <ui:url page="view.x2ps">
+                <FIELD_NAME select="'ItemInterchangeGroupIdentifier'" />
+                <ENTITY_NAME select="'ItemInterchangeGroupIdentifier'" />
+                <!--<ROW_ID_NAME select="'ItemInterchangeGroupIdentifier'"/>-->
+                <ROW_ID_VALUE select="'ItemInterchangeGroupIdentifier/@Value'" />
+                <SELECT select="'All'" />
+                <BUTTON_ID select="'SEARCH_GRP_ID'" />
+              </ui:url>
+            </ui:link>
+          </ui:links>
+        </ui:entry-field>
+        <ui:dropdown id="InterchangeGroupStatus" optionSrc="$root/stat/OPTION" name="InterchangeGroupStatus" displayText="Group Status" value="{$root/var/status/@Value}" selectOne="true" />
+        <ui:entry-field id="LocationIdentifier" name="LocationIdentifier" displayText="Location" value="{$root/var/location/@Value}">
+          <ui:links>
+            <ui:link displayText="Select Location" targetType="popup" targetName="planPopUp">
+              <ui:image src="pop_up_window.gif" />
+              <ui:url page="view.x2ps">
+                <FIELD_NAME select="'LocationIdentifier'" />
+                <ENTITY_NAME select="'LocationIdentifier'" />
+                <ROW_ID_NAME select="'LocationIdentifier'" />
+                <ROW_ID_VALUE select="'LocationIdentifier/@Value'" />
+                <SELECTABLE select="'All'" />
+                <BUTTON_ID select="'SEARCH_LOCATION_ID'" />
+              </ui:url>
+            </ui:link>
+          </ui:links>
+        </ui:entry-field>
+        <!--<ui:date-range id="modifieddate" name="modifieddate" displayText="Modified Date Range" fromDate="{$root/var/fromdate/@Value}" toDate="{$root/var/todate/@Value}"/>-->
+      </ui:field-group>
+      <ui:field-group id="rightgrp">
+        <ui:entry-field id="RelatedItemIdentifier" name="RelatedItemIdentifier" displayText="Predecessor Product" value="{$root/var/RelatedItemIdentifier/@Value}">
+          <ui:links>
+            <ui:link displayText="Select Product" targetType="popup" targetName="planPopUp">
+              <ui:image src="pop_up_window.gif" />
+              <ui:url page="view.x2ps">
+                <FIELD_NAME select="'RelatedItemIdentifier'" />
+                <ENTITY_NAME select="'RelatedItemIdentifier'" />
+                <ROW_ID_NAME select="'RelatedItemIdentifier'" />
+                <ROW_ID_VALUE select="'RelatedItemIdentifier/@Value'" />
+                <SELECTABLE select="'All'" />
+                <SOURCE select="'PI'" />
+                <ITEM_TYPE select="'FIN'" />
+                <BUTTON_ID select="'SEARCH_PRD'" />
+              </ui:url>
+            </ui:link>
+          </ui:links>
+        </ui:entry-field>
+        <ui:entry-field id="PrimaryItemIdentifier" name="PrimaryItemIdentifier" displayText="Successor Product" value="{$root/var/primaryitemidentifier/@Value}">
+          <ui:links>
+            <ui:link displayText="Select Product" targetType="popup" targetName="planPopUp">
+              <ui:image src="pop_up_window.gif" />
+              <ui:url page="view.x2ps">
+                <FIELD_NAME select="'PrimaryItemIdentifier'" />
+                <ENTITY_NAME select="'PrimaryItemIdentifier'" />
+                <ROW_ID_NAME select="'PrimaryItemIdentifier'" />
+                <ROW_ID_VALUE select="'PrimaryItemIdentifier/@Value'" />
+                <SELECTABLE select="'All'" />
+                <SOURCE select="'PI'" />
+                <ITEM_TYPE select="'FIN'" />
+                <BUTTON_ID select="'SEARCH_PRD_SUCCSS'" />
+              </ui:url>
+            </ui:link>
+          </ui:links>
+        </ui:entry-field>
+      </ui:field-group>
+    </ui:field-group>
+    <!--<ui:buttons id="buttons">
+        <ui:button id="Search" name="Search" displayText="Search" emphasized="true"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>-->
+  </ui:search>
+  <ui:container id="tablecontainer">
+    <ui:step id="tablecontainer" displayText="Group Line Location Search Results">
+      <ui:validation successMessage="{$root/succssmsg/message/@Value}" />
+      <!--QC:20768, Venkat, 06/24/2008, Start-->
+      <!--<ui:table id="table1" rowId="searchresults" postRowIdAs="selectedlineloc" maxRows="$root/ROOT/MaxRows/@Value" scrollable="true" selectable="All" exportable="true" startAtRow="$root/ROOT/StartAtRow/@Value" rowSrc="$root/ROOT/linelocparams" totalRowCount="$root/ROOT/TotalRowCount/@Value" rememberSelections="true" freeze="2" displayTextNoRecords=" No Records Found" displayText="Group Line Location Search Results">-->
+      <ui:table id="table1" rowId="searchresults" postRowIdAs="selectedlineloc" maxRows="$root/ROOT/MaxRows/@Value" scrollable="true" selectable="All" exportable="true" startAtRow="$root/ROOT/StartAtRow/@Value" rowSrc="$root/ROOT/linelocparams" totalRowCount="$root/ROOT/TotalRowCount/@Value" rememberSelections="true" freeze="2" displayTextNoRecords=" No Records Found" displayText="Group Line Location Search Results" rowSelectorCondition="{Status/@Value = 'IN PROCESS'}">
+        <!--QC:20768, Venkat, 06/24/2008, End-->
+        <ui:field-group id="fg4">
+          <ui:hidden-field id="searchresults" name="searchresults" editable="false" />
+          <ui:entry-field id="INT_GRP_ID" name="INT_GRP_ID" displayText="Group ID" editable="false" sortable="true" />
+          <ui:textarea id="INT_GRP_Desc" name="INT_GRP_Desc" displayText="Group description" sortable="true" displayNoWrap="false" readOnly="true" />
+          <ui:entry-field id="INT_GRP_Line_ID" name="INT_GRP_Line_ID" displayText="Group Line ID" editable="false" />
+          <ui:entry-field id="PRD_PROD" name="PRD_PROD" displayText="Predecessor Product" editable="false" sortable="true" />
+          <ui:entry-field id="PRD_PROD_DESC" name="PRD_PROD_DESC" displayText="Predecessor Product Description" editable="false" />
+          <ui:entry-field id="SUCCSS_PROD" name="SUCCSS_PROD" displayText="Successor Product" editable="false" sortable="true" />
+          <ui:entry-field id="SUCCSS_PROD_DESC" name="SUCCSS_PROD_DESC" displayText="Successor Product Description" editable="false" />
+          <ui:entry-field id="Status" name="Status" displayText="Group Status" editable="false" sortable="true" />
+          <ui:entry-field id="Location" name="Location" displayText="Location" editable="false" sortable="true" />
+          <ui:entry-field id="Location_Description" name="Location_Description" displayText="Location Description" editable="false" sortable="true" />
+          <ui:choose-field name="strategyevent" displayText="Use Up Strategy">
+            <ui:when test="Status/@Value='IN PROCESS'">
+              <ui:dropdown id="Strategy" name="Strategy" displayText="Use Up Strategy" optionSrc="$root/tablestrategy/OPTION" sortable="true" />
+            </ui:when>
+            <ui:when test="Status/@Value != 'IN PROCESS'">
+              <ui:dropdown id="Strategy" name="Strategy" displayText="Use Up Strategy" optionSrc="$root/tablestrategy/OPTION" sortable="true" editable="false" />
+            </ui:when>
+          </ui:choose-field>
+          <ui:choose-field name="DirectionEvent" displayText="Interchangeability Direction">
+            <ui:when test="Status/@Value = 'IN PROCESS'">
+              <ui:dropdown id="Interchange_Direction" name="Interchange_Direction" displayText="Interchangeability Direction" optionSrc="$root/tabledirection/OPTION" sortable="true" />
+            </ui:when>
+            <ui:when test="Status/@Value != 'IN PROCESS'">
+              <ui:dropdown id="Interchange_Direction" name="Interchange_Direction" displayText="Interchangeability Direction" optionSrc="$root/tabledirection/OPTION" sortable="true" editable="false" />
+            </ui:when>
+          </ui:choose-field>
+          <ui:choose-field name="useupdateevent" displayText="Predecessor Product Use Up Date">
+            <ui:when test="Status/@Value='IN PROCESS'">
+              <ui:entry-field id="Inventory_use_up_Date" name="Inventory_use_up_Date" displayText="Inventory use up Date" dataType="Date" />
+            </ui:when>
+            <ui:when test="Status/@Value!='IN PROCESS'">
+              <ui:entry-field id="Inventory_use_up_Date" name="Inventory_use_up_Date" displayText="Inventory use up Date" dataType="Date" editable="false" />
+            </ui:when>
+          </ui:choose-field>
+          <ui:choose-field name="depstrtdtactivity" displayText="Deployment Start Date">
+            <ui:when test="Status/@Value='IN PROCESS'">
+              <ui:entry-field id="Deploy_Start_Date" name="Deploy_Start_Date" displayText="Deploy Start Date" dataType="Date" />
+            </ui:when>
+            <ui:when test="Status/@Value !='IN PROCESS'">
+              <ui:entry-field id="Deploy_Start_Date" name="Deploy_Start_Date" displayText="Deploy Start Date" dataType="Date" editable="false" />
+            </ui:when>
+          </ui:choose-field>
+          <ui:choose-field name="dependdtactivity" displayText="Deployment End Date">
+            <ui:when test="Status/@Value='IN PROCESS'">
+              <ui:entry-field id="Deploy_End_Date" name="Deploy_End_Date" displayText="Deploy End Date" dataType="Date" />
+            </ui:when>
+            <ui:when test="Status/@Value !='IN PROCESS'">
+              <ui:entry-field id="Deploy_End_Date" name="Deploy_End_Date" displayText="Deploy End Date" dataType="Date" editable="false" />
+            </ui:when>
+          </ui:choose-field>
+          <ui:choose-field name="prdnstdtactivity" displayText="Production Start Date">
+            <ui:when test="Status/@Value='IN PROCESS'">
+              <ui:entry-field id="Production_Start_Date" name="Production_Start_Date" displayText="Production Start Date" dataType="Date" />
+            </ui:when>
+            <ui:when test="Status/@Value !='IN PROCESS'">
+              <ui:entry-field id="Production_Start_Date" name="Production_Start_Date" displayText="Production Start Date" dataType="Date" editable="false" />
+            </ui:when>
+          </ui:choose-field>
+          <ui:choose-field name="prdnenddt" displayText="Production End Date">
+            <ui:when test="Status/@Value='IN PROCESS'">
+              <ui:entry-field id="Production_End_Date" name="Production_End_Date" displayText="Production End Date" dataType="Date" />
+            </ui:when>
+            <ui:when test="Status/@Value !='IN PROCESS'">
+              <ui:entry-field id="Production_End_Date" name="Production_End_Date" displayText="Production End Date" dataType="Date" editable="false" />
+            </ui:when>
+          </ui:choose-field>
+          <ui:choose-field name="shipstrtdtactivity" displayText="Customer Shipment Start Date">
+            <ui:when test="Status/@Value='IN PROCESS'">
+              <ui:entry-field id="Ship_Start_Date" name="Ship_Start_Date" displayText="Customer Shipment Start Date" dataType="Date" />
+            </ui:when>
+            <ui:when test="Status/@Value !='IN PROCESS'">
+              <ui:entry-field id="Ship_Start_Date" name="Ship_Start_Date" displayText="Customer Shipment Start Date" dataType="Date" editable="false" />
+            </ui:when>
+          </ui:choose-field>
+          <ui:choose-field name="shipenddtactivity" displayText="Customer Shipment End Date">
+            <ui:when test="Status/@Value='IN PROCESS'">
+              <ui:entry-field id="Ship_End_Date" name="Ship_End_Date" displayText="Customer Shipment End Date" dataType="Date" />
+            </ui:when>
+            <ui:when test="Status/@Value !='IN PROCESS'">
+              <ui:entry-field id="Ship_End_Date" name="Ship_End_Date" displayText="Customer Shipment End Date" dataType="Date" editable="false" />
+            </ui:when>
+          </ui:choose-field>
+          <ui:choose-field name="commentsactivity" displayText="Comments">
+            <ui:when test="Status/@Value='IN PROCESS'">
+              <ui:textarea id="Comments" name="Comments" displayText="Commenst" />
+            </ui:when>
+            <ui:when test="Status/@Value !='IN PROCESS'">
+              <ui:textarea id="Comments" name="Comments" displayText="Comments" readOnly="true" />
+            </ui:when>
+          </ui:choose-field>
+          <ui:hidden-field id="Commentshidden" name="Commentshidden" />
+          <ui:hidden-field id="Date_Modified" name="Date_Modified" displayText="Date Modified" editable="false" sortable="true" />
+          <!-- <ui:entry-field id="Modified_By" name="Modified_By" displayText="Modified By" editable="false" sortable="true"/>-->
+        </ui:field-group>
+        <ui:buttons id="buttns1">
+          <ui:button id="delete" displayText="Delete" enabledBySelections="true" name="delete" displayCondition="{contains($root/AccessLevel/@Value,'Remove')}" onClick="javascript:ondelete()" />
+          <ui:button id="MUpdate" displayText="Mass Update" enabledBySelections="true" onClick="javascript:on_MUpdate()" name="MUpdate" displayCondition="{contains($root/AccessLevel/@Value,'Update')}" />
+          <ui:button id="Save" displayText="Save" enabledBySelections="true" name="Save" displayCondition="{contains($root/AccessLevel/@Value,'Update')}" onClick="javascript:on_Save()" />
+        </ui:buttons>
+      </ui:table>
+      <ui:script id="validate">
+        function on_MUpdate(){
+																				
+						if(!validateselectednumber())
+				    {
+							core_alert("Mass Update is allowed only on multiple records with the same Group ID");	
+							return;
+						}
+						
+					else{
+						
+					document.form.BUTTON_ID.value = 'MUpdate'; 
+					document.form.action = 'view.x2ps';
+					document.form.submit();  
+					
+					
+					onResize();  
+					return; 		                                      
+							}
+				}
+        <!--Zia 1/16/09 RIC 201622 -->
+        function on_Save(){
+																		var id=document.getElementsByName('selectedlineloc');
+																		var commentsnew=document.getElementsByName('Comments');
+																		var commentsold=document.getElementsByName('Commentshidden');
+																		var searchresults=document.getElementsByName('searchresults');
+																		
+																		var length=id.length;
+																		  for(i=0; i&lt;length;i++)
+				                              {							
+																				 if(id[i].checked)																				
+																				 {
+																						var j_length=searchresults.length;
+																						for(j=0; j&lt;j_length;j++)
+																						{
+																							if(searchresults[j].value==id[i].value)
+																							{
+																								if(commentsold[j].value==commentsnew[j].value)
+																								{
+																									core_alert("Please change the Comments and Save");
+																									return;
+																								}
+																							}
+																						}
+        <!--																						if(commentsold[i].value==commentsnew[i].value)
+																						{
+																							core_alert(&quot;Please change the Comments and Save&quot;);
+																							return;
+																						 }-->
+        }
+																			 }
+																			document.form.BUTTON_ID.value = 'Save'; 
+																			document.form.action = 'view.x2ps';
+																			document.form.submit();   
+				                           }
+        <!--Zia 1/16/09 RIC 201622 -->
+        function validateselectednumber(){
+        <!--*************************************************************-->
+        var selectedIds =document.getElementsByName('selectedlineloc');
+				var length = selectedIds.length;
+				var selectedRowIds = document.getElementsByName('searchresults');				
+				if(document.form.numberofrecs.value != '')
+				{						
+						  var prevselectedrecs = document.form.numberofrecs.value;
+							
+							var prevarray=new Array();
+							prevarray=prevselectedrecs.split('|');
+							var prev_length=prevarray.length;
+				      var hiddenselectedIds=new Array();
+        			var m10=0;
+        <!-- checking if any of the recs have been removed and new ones added -->
+        for(m2=0;m2&lt;prev_length;m2++)
+				   {
+						var recRemoved=1;
+				     for(m3=0;m3&lt;length;m3++)
+				     {
+				        if(selectedIds[m3].type != 'hidden')
+								{
+											if(selectedIds[m3].value == prevarray[m2])
+				             {
+													if(selectedIds[m3].checked =='false')
+				                  recRemoved=0;
+													break;
+				             }				              
+								}
+				     }
+						if(recRemoved == 1)
+				    {
+								for(m21=0;m21&lt;selectedRowIds.length;m21++)
+								{									
+										if(selectedRowIds[m21].value == prevarray[m2])
+						    		  {
+													prevarray[m2] ='';
+													break;
+											}
+						    }
+				   }
+				}		 
+					var tempList ='';
+				  for(m5=0; m5&lt;prev_length ; m5++)
+				 {
+						if(prevarray[m5] != '')
+						{
+							  if(tempList =='')
+							   tempList=prevarray[m5];
+							  else
+							  tempList = tempList+'|'+prevarray[m5];  
+						}
+				 }
+						document.form.numberofrecs.value = tempList;
+        <!-- adding new ones from the page-->
+        for (m=0;m&lt;length;m++)
+				     {
+								if(selectedIds[m].type != 'hidden' )
+					      {
+								   var newrectoadd=1;
+						       for(m1=0;m1&lt;prev_length;m1++)
+						       {
+					            if((selectedIds[m].value == prevarray[m1]))
+					              newrectoadd =0;
+											break;					            
+						       }							
+				         if(newrectoadd ==1  &amp;&amp; selectedIds[m].checked)
+				         {
+										if(document.form.numberofrecs.value != '')		
+												document.form.numberofrecs.value = document.form.numberofrecs.value+'|'+selectedIds[m].value;
+										else
+												document.form.numberofrecs.value =selectedIds[m].value;
+									}
+					       }
+				     }
+        <!-- checking if any of the recs have been removed and new ones added -->
+        var prevselectedrecs1=document.form.numberofrecs.value;
+							
+       			  finalarray=prevselectedrecs1.split('|');							
+							if(finalarray.length &lt; 2)
+								return(false);
+							else
+							{
+									for(a=0;a &lt;finalarray.length;a++)
+									{
+									
+										 finalarray_id_for_a = finalarray[a].split(',');
+										 for(b=0;b &lt;finalarray.length;b++)
+										{	
+													finalarray_id_for_b = finalarray[b].split(',');												
+													if(finalarray_id_for_a[0] != finalarray_id_for_b[0])
+													return(false);
+										 }
+									 }
+							}								
+     
+				      return(true);			
+			}																		
+			else
+			{						
+						var selectedcount=0;
+						 var selectedIdentifiers =document.getElementsByName('INT_GRP_ID');
+						 for(i=0; i &lt; length; i++)
+						{
+								 var t1=selectedIds[i];
+								
+		             if(t1.checked)
+		             {	
+												var t=selectedIdentifiers[i];
+												selectedcount++;
+												for(j=0;j &lt; length ; j++)
+				                {
+												  var u1=selectedIds[j];
+									        var u = selectedIdentifiers[j];	
+						
+					                  if(u1.checked)
+					                  {															
+												
+					                   if(i != j){
+																								if( t.value != u.value)
+								 															  {       			
+																										return(false);
+																								}																			
+															        	  }												
+					                  }											
+		  									}
+						    	}			
+					    }
+				if(selectedcount &gt;1)
+									{
+										for(m30=0;m30&lt;length;m30++)
+										{
+												if(selectedIds[m30].checked)
+												{
+														if(document.form.numberofrecs.value == '')
+															document.form.numberofrecs.value = selectedIds[m30].value;
+														else
+															document.form.numberofrecs.value = document.form.numberofrecs.value+'|'+selectedIds[m30].value;
+												}
+										}		
+										 return(true);
+									}
+									else
+									 { 																																				
+												return(false);
+										}
+	}
+}
+				function ondelete(){
+																			var decision=core_confirm("Are you sure you want to delete the selected record(s)?");
+																			if(decision=='yes')
+																				{
+																					document.form.BUTTON_ID.value = 'delete'; 
+																			    document.form.action = 'view.x2ps';
+																			    document.form.submit();   
+																				}
+																			else
+																				return;
+																		}
+      </ui:script>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

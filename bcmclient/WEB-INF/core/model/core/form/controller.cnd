@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:identity="http://www.i2.com/identity" xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" description="_">
+
+  <!-- **********************************************************************
+   *********************************************************************** -->
+   <x2:command public="yes" description="_" name="init">
+     <xapl:variable name="sRecentFields" resolver="session" global="true"/>
+   </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="addToRecent">
+    <x2:param name="pName" select="$field/@Name"/>
+    <x2:param name="pValue" select="$field/@Value"/>
+    <x2:param name="pType" select="$field/@Type"/>
+
+    <xapl:if test="string-length($pValue) = 0 or $pValue='*'"><xapl:return/></xapl:if>
+    <xapl:if test="string-length($pName) = 0"><xapl:return/></xapl:if>
+    <xapl:if test="string-length($pType) = 'Hidden'"><xapl:return/></xapl:if>
+
+    <xapl:if test="count($sRecentFields/*) = 0">
+      <xapl:set-variable name="sRecentFields">
+         <RECENT/>
+      </xapl:set-variable>
+    </xapl:if>
+
+    <xapl:if test="count($sRecentFields/*[name() = $pName]) = 0">
+      <docutil:add select="$sRecentFields">
+          <docutil:element name="{$pName}"/>
+      </docutil:add>
+    </xapl:if>
+
+    <xapl:variable name="recentField"> <xapl:value-of select="$sRecentFields/*[name() = $pName]"/></xapl:variable>
+
+
+      <xapl:if test="count($recentField/OPTION[@Value = $pValue]) = 0">
+        <xapl:if test="count($recentField/OPTION) &gt; 8">
+          <docutil:remove select="$recentField/OPTION[position() = 1]"/>
+        </xapl:if>
+
+    <docutil:add select="$recentField">
+        <OPTION Value="{$pValue}"/>
+      </docutil:add>
+    </xapl:if>
+
+  </x2:command>
+
+
+  <!-- **********************************************************************
+    *********************************************************************** -->
+    <x2:command public="yes" description="_" name="getRecent">
+    <x2:param name="pField"/>
+      <xapl:variable name="pName" select="$pField/@Name"/>
+      <xapl:variable name="pValue" select="$pField/@Value"/>
+      <xapl:variable name="pType" select="$pField/@Type"/>
+
+      <xapl:if test="string-length($pType) = 'Hidden'"><xapl:return/></xapl:if>
+
+      <xapl:variable name="recentField"> <xapl:value-of select="$sRecentFields/*[name() = $pName]"/></xapl:variable>
+
+      <xapl:if test="count($recentField/OPTION) > 0">
+        <docutil:add select="$pField">
+          <xapl:value-of select="$recentField/OPTION"/>
+        </docutil:add>
+      </xapl:if>
+
+    </x2:command>
+
+  <!-- Fills the drop downs options -->
+  <!-- TODO - it will also fill the user entered values -->
+  <!-- TODO- Advanced fields will not be filled -->
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="fill">
+    <x2:param name="pForm"/>
+
+    <xapl:for-each varName="field" select="$pForm/FIELD">
+
+      <xapl:if test="$field/@RecentList = 'true'">
+      <x2:execute command="core.form.controller:addToRecent">
+        <x2:with-param name="pName" select="$field/@Name"/>
+        <x2:with-param name="pValue" select="$field/@Value"/>
+        <x2:with-param name="pType" select="$field/@Type"/>
+      </x2:execute>
+
+      <x2:execute command="core.form.controller:getRecent">
+        <x2:with-param name="pField" select="$field"/>
+      </x2:execute>
+    </xapl:if>
+
+      <xapl:choose>
+        <!-- Date -->
+        <xapl:when test="$field/@Type = 'DateRange'">
+          <!-- Start -->
+          <docutil:set select="$fieldName">
+            <xapl:value-of select="concat(@Name,'_FIRST')"/>
+          </docutil:set>
+          <!-- End -->
+          <docutil:set select="$fieldName">
+            <xapl:value-of select="concat(@Name,'_LAST')"/>
+          </docutil:set>
+
+          <xapl:if test="$field/@Value1 = 'INVALID DATE' or $field/@Value2 = 'INVALID DATE'">
+            <docutil:add select="$field">
+              <_ERRORS>
+                <_ERROR Value="INVALID_DATE"/>
+              </_ERRORS>
+            </docutil:add>
+          </xapl:if>
+
+
+          <xapl:if test="string-length($field/@Value1) > 0 and string-length($field/@Value2) > 0">
+            <xapl:if test="date-compare($field/@Value1, $field/@Value2) > 0">
+              <docutil:add select="$field">
+                <_ERRORS>
+                  <_ERROR Value="INVALID_RANGE"/>
+                </_ERRORS>
+              </docutil:add>
+            </xapl:if>
+
+          </xapl:if>
+        </xapl:when>
+        <!-- Select -->
+        <xapl:when test="$field/@Type = 'Select' or $field/@Type = 'MultiSelect'">
+          <xapl:if test="$field/@DataSourceType = 'Command' or $field/@DataSourceType = 'Method'">
+            <xapl:variable name="data">
+              <xapl:choose>
+                <xapl:when test="$field/@DataSourceType = 'Command'">
+                  <x2:execute command="{$field/@DataSourceName}">
+                    <x2:with-param name="this" select="{$this}"/>
+                  </x2:execute>
+                </xapl:when>
+                <xapl:when test="$field/@DataSourceType = 'Method'">
+                  <xcore:execute-method name="{$field/@DataSourceName}"/>
+                </xapl:when>
+              </xapl:choose>
+            </xapl:variable>
+            <xapl:for-each varName="row" select="{$data/*}">
+              <docutil:add select="$field">
+                <OPTION Id="{$row/VALUE_ID/@Value}" Value="{$row/DESCRIPTION/@Value}"/>
+              </docutil:add>
+            </xapl:for-each>
+
+          </xapl:if>
+        </xapl:when>
+
+      </xapl:choose>
+    </xapl:for-each>
+
+    <xapl:return>
+      <xapl:value-of select="$pForm"/>
+    </xapl:return>
+
+  </x2:command>
+
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="fillErrors">
+    <x2:param name="pForm"/>
+    <x2:param name="pData"/>
+
+    <xapl:for-each varName="errorField" select="$pData/RESPONSE/REQUEST/FILTER/*[_ERRORS] | $pData/FILTER/*[_ERRORS]">
+      <xapl:variable name="errorFieldName" select="(name($errorField))"/>
+      <xapl:variable name="pFormField" select="$pForm/FIELD[@Name = $errorFieldName]"/>
+      <docutil:add select="$pFormField">
+        <xapl:value-of select="$errorField/_ERRORS"/>
+      </docutil:add>
+
+      <xapl:variable name="value"> <xapl:value-of select="$pFormField/@Value"/></xapl:variable>
+      <xapl:variable name="name"> <xapl:value-of select="$pFormField/@Name"/></xapl:variable>
+
+      <xapl:variable name="recentField"> <xapl:value-of select="$sRecentFields/*[name() = $name]"/></xapl:variable>
+      <docutil:remove select="$recentField/OPTION[@Value = $value]"/>
+
+    </xapl:for-each>
+
+    <xapl:return>
+      <xapl:value-of select="$pForm"/>
+    </xapl:return>
+
+  </x2:command>
+
+  <!-- **********************************************************************
+       *********************************************************************** -->
+    <x2:command public="yes" description="_" name="store">
+       <xapl:print>sRecentFields <xapl:value-of select="$sRecentFields"/></xapl:print>
+
+     <x2:execute command="core.form.controller:delete"/>
+
+      <xapl:variable name="responses">
+        <xcore:execute-method name="//BPE_UIService/addSavedSearch" entireResponse="true">
+          <NAME Value="I2_CORE_RECENT"/>
+          <DOC_TYPE Value="I2_CORE_RECENT"/>
+          <VARIABLES>
+          <VARIABLE>
+            <NAME Value="sRecentFields"/>
+            <SCOPE Value="session"/>
+            <VARIABLE_VALUE>
+              <xapl:value-of select="$sRecentFields"/>
+            </VARIABLE_VALUE>
+          </VARIABLE>
+        </VARIABLES>
+        </xcore:execute-method>
+      </xapl:variable>
+
+   </x2:command>
+
+
+  <!-- **********************************************************************
+    *********************************************************************** -->
+    <x2:command public="yes" description="_" name="load">
+
+      <xapl:variable name="responses">
+        <xcore:execute-method name="//BPE_UIService/getSavedSearch" entireResponse="true">
+          <NAME Value="I2_CORE_RECENT"/>
+        </xcore:execute-method>
+      </xapl:variable>
+
+     <xapl:for-each select="$responses/RESPONSE/FAVORITE/VARIABLES/VARIABLE" varName="var">
+        <xapl:set-variable name="{$var/NAME/@Value}">
+          <xapl:value-of select="$var/VARIABLE_VALUE/*"/>
+        </xapl:set-variable>
+      </xapl:for-each>
+    </x2:command>
+
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="delete">
+    <xapl:variable name="userName">
+	    <identity:get-user-name/>
+    </xapl:variable>
+
+     <xcore:execute-method name="//BPE_UIService/deleteSavedSearch">
+        <NAME Value="I2_CORE_RECENT"/>
+      </xcore:execute-method>
+
+<!--
+    <xapl:variable name="data">
+      <xcore:execute-method name="//EMX/deleteSearch" entireResponse="true">
+        <NAME Value="I2_CORE_RECENT" />
+        <USER_ID Value="{$userName}" />
+      </xcore:execute-method>
+    </xapl:variable>
+-->
+
+  </x2:command>
+
+</x2:commands>

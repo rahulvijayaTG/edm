@@ -1,0 +1,850 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="1627" ShowInBreadCrumbs="true" Version="1.0" Name="wfIPSegmentParameter" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="ParameterClassIdentifier" Type="string" Comment=""/>
+    <variable Name="RawSearchResults" Type="xml" Comment=""/>
+    <variable Name="SearchCriteria" Type="xml" Comment=""/>
+    <variable Name="pgntMAXRWS" Type="int" Comment=""/>
+    <variable Name="pgntSTRT" Type="int" Comment=""/>
+    <variable Name="rwCt" Type="xml" Comment=""/>
+    <variable Name="searchErrors" Type="xml" Comment=""/>
+    <variable Name="searchSuccess" Type="xml" Comment=""/>
+    <variable Name="temp" Type="xml" Comment=""/>
+    <variable Name="enteredSearchCriteria" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+      </actions>
+      <next_nodes>
+        <next_node Name="IP Segment Parameter Search" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done4">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="IP Segment Parameter Search" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="iscpIPSegParamSearch.pgl">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <SAMPLE_XML/>
+          </TO_DOCVAR>
+          <REQUEST Name="getAccessLevel" ServiceName="BCM_MASTER" AssignToVar="roleAccessPerm">
+            <ACTIVITY_ID Value="iscpIPSegParams"/>
+            <USER_ID Value="{$userId}"/>
+          </REQUEST>
+          <REQUEST AssignToVar="resSegments" Name="getSegments" ServiceName="PEDM_MASTER">
+          </REQUEST>
+          <TO_DOCVAR AssignToVar="dropDownSegment">
+            <SAMPLE_XML/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$resSegments/P_PartyIdentification" CurrentElement="curELE">
+            <APPEND_TO_XML DocVar="dropDownSegment">
+              <P_PartyIdentification>
+                <PartyIdentificationValue Value="{$curELE/PartyIdentificationValue/@Value}"/>
+                <Description Value="{$curELE/PartyIdentificationValue/@Value}-{$curELE/PartyDescription/@Value}"/>
+              </P_PartyIdentification>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <IF_TEST Test="count($thisParam/*[name()='START_WORKFLOW'])&lt;=0 and $userAction!='Save' and $userAction!='MassUpdate' and $userAction!='ShowHistory'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="temp">
+                <ABC/>
+              </TO_DOCVAR>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'SYS_RELOAD'">
+                <THEN>
+                  <IF_TEST Test="count($thisParam/*[name()='FILTER_ID']) > 0">
+                    <THEN>
+                      <SET Property="START_COUNT" FromValue="0" DocVar="thisParam"/>
+                      <SET Property="MAX_ROWS" FromValue="65536" DocVar="thisParam"/>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                </THEN>
+                <ELSE/>
+              </IF_TEST>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="SelectedSegment"/>
+              <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value=null,'0',$thisParam/START_COUNT/@Value)}"/>
+              <SET Var="pgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value=null,'5',$thisParam/MAX_ROWS/@Value)}"/>
+              <SET Var="pgntSTRT" FromValue="{$paginateStart/@Value}"/>
+              <SET Var="pgntMAXRWS" FromValue="{$pgMaxRows/@Value}"/>
+              <!--   <IF_TEST Test="$thisParam/BUTTON_ID/@Value!='SYS_RELOAD'">
+                <THEN>-->
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="searchParamFilter">
+                <PartyIdentificationValue MultiValued="true"/>
+                <ParameterMnemonicValue MultiValued="true"/>
+                <ENTITYSTATE MultiValued="false"/>
+              </FORM_SEARCH_FILTER>
+              <SET DocVar="SelectedState" FromValue="{$searchParamFilter/FILTER[@Name='ENTITYSTATE']/*}"/>
+              <!--                 <REQUEST AssignToVar="resParameterClass" Name="getParameterClassIdentifier" ServiceName="PEDM_MASTER">
+                    <ParameterClassMnemonicValue Value="IP"/>
+                  </REQUEST>-->
+              <IF_TEST Test="strlen($SelectedState/@Value)=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="SelStates">
+                    <SRCH_STATE_LIST>
+                      <SRCH_STATE>
+                        <ENTITY_STATE Value="NEW" MatchBy="EQUAL"/>
+                      </SRCH_STATE>
+                      <SRCH_STATE>
+                        <ENTITY_STATE Value="ACTIVE" MatchBy="EQUAL"/>
+                      </SRCH_STATE>
+                      <SRCH_STATE>
+                        <ENTITY_STATE Value="INACTIVE" MatchBy="EQUAL"/>
+                      </SRCH_STATE>
+                    </SRCH_STATE_LIST>
+                  </TO_DOCVAR>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="SelStates">
+                    <SRCH_STATE_LIST>
+                      <SRCH_STATE>
+                        <ENTITY_STATE Value="{$SelectedState/@Value}" MatchBy="EQUAL"/>
+                      </SRCH_STATE>
+                    </SRCH_STATE_LIST>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+              <SET DocVar="ParameterClassIdentifier" FromValue="{$resParameterClass/ParameterClassIdentifier/@Value}"/>
+              <!-- Test -->
+              <REQUEST AssignToVar="outputPrty1" Name="readSegParams" ServiceName="PEDM_MASTER" ReturnRowCount="yes">
+                <TO_XML SelectList="$searchParamFilter/*"/>
+                <MaxRows Value="{$pgMaxRows}"/>
+                <StartAtRow Value="{$paginateStart}"/>
+                <FILTER Name="ParameterClassMnemonicValue">
+                  <ParameterClassMnemonicValue Value="IP"/>
+                </FILTER>
+                <FILTER Name="DimensionGroupDescription">
+                  <DimensionGroupDescription Value="PRT"/>
+                </FILTER>
+                <FILTER Name="ENTITY_STATE">
+                  <OR>
+                    <TO_XML SelectList="$SelStates/SRCH_STATE/*"/>
+                  </OR>
+                </FILTER>
+              </REQUEST>
+              <!-- Test -->
+              <!--    <REQUEST AssignToVar="resSearchCriteria" Name="MapIPSegParamsBIFtoPEDM" ServiceName="PEDM_MASTER">
+                    <TO_XML SelectList="$searchParamFilter/*"/>
+                    <ParameterClassIdentifier Value="{$ParameterClassIdentifier}"/>
+                  </REQUEST>
+                  <TO_DOCVAR AssignToVar="SearchCriteria">
+                    <TO_XML DocVar="resSearchCriteria"/>
+                    <SRCH_STATE/>
+                  </TO_DOCVAR>
+                </THEN>
+              </IF_TEST>
+              <SET Var="chkDimGrpNull" FromValue="1"/>
+              <SET Var="chkRecFound" FromValue="1"/>
+              <WHILE Condition="(($chkDimGrpNull/@Value=1) and ($chkRecFound=1) and ($SearchCriteria/P_DimensionXDimensionGroup/DimensionGroupIdentifier/@Value!=null))">
+                <GET_DOCUMENT Name="P_DimensionGroup" AssignToVar="DimGrpList" HandleException="true" ServiceName="PEDM_MASTER" MaxRows="{$pgMaxRows/@Value}" StartAtRow="{$paginateStart/@Value}" ReturnRowCount="yes">
+                  <SELECT>
+                    <DimensionGroupIdentifier/>
+                  </SELECT>
+                  <OR>
+                    <TO_XML SelectList="$SearchCriteria/P_DimensionXDimensionGroup/*"/>
+                  </OR>
+                </GET_DOCUMENT>
+                <IF_TEST Test="$DimGrpList/@TotalRowCount>0">
+                  <THEN>
+                    <IF_TEST Test="(($thisParam/ParameterMnemonicValue/@Value!=null) and ($SearchCriteria/P_Parameter/ParameterIdentifier/@Value!=null))">
+                      <THEN>
+                        <GET_DOCUMENT Name="P_DimensionGroupXParameter" AssignToVar="InvVar" HandleException="true" ServiceName="PEDM_MASTER" ReturnRowCount="yes">
+                          <AND>
+                            <OR>
+                              <TO_XML SelectList="$SearchCriteria/P_Parameter/*"/>
+                            </OR>
+                            <OR>
+                              <TO_XML SelectList="$DimGrpList/P_DimensionGroup/*"/>
+                            </OR>
+                            <OR>
+                              <TO_XML SelectList="$SearchCriteria/SRCH_STATE/*"/>
+                            </OR>
+                          </AND>
+                          <QUERY_DOCUMENT_LINK Name="REL_2442">
+                            <SELECT>
+                              <ParameterMnemonicValue/>
+                              <ParameterDescription/>
+                              <ParameterValueFreeFormIndicator/>
+                            </SELECT>
+                            <QUERY_DOCUMENT_LINK Name="REL_2483">
+                              <SELECT>
+                                <UnitOfMeasureMnemonicValue/>
+                              </SELECT>
+                            </QUERY_DOCUMENT_LINK>
+                          </QUERY_DOCUMENT_LINK>
+                          <ORDER_BY>
+                            <DimensionGroupIdentifier/>
+                            <ParameterMnemonicValue/>
+                          </ORDER_BY>
+                        </GET_DOCUMENT>
+                        <IF_TEST Test="$InvVar/@TotalRowCount>0">
+                          <THEN>
+                            <SET Var="chkRecFound" FromValue="0"/>
+                          </THEN>
+                          <ELSE>
+                            <SET Var="tempx" FromValue="{$thisParam/START_COUNT/@Value}"/>
+                            <SET Var="tempy" FromValue="{$thisParam/MAX_ROWS/@Value}"/>
+                            <SET Var="tempz" FromValue="{($tempx/@Value) + ($tempy/@Value)}"/>
+                            <SET DocVar="thisParam" Property="START_COUNT" FromValue="{substringBefore($tempz/@Value,'.')}"/>
+                            <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value=null,'0',$thisParam/START_COUNT/@Value)}"/>
+                            <SET Var="pgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value=null,'5',$thisParam/MAX_ROWS/@Value)}"/>
+           
+                            <SET Var="pgntSTRT" FromValue="{$paginateStart/@Value}"/>
+                            <SET Var="pgntMAXRWS" FromValue="{$pgMaxRows/@Value}"/>
+                          </ELSE>
+                        </IF_TEST>
+                      </THEN>
+                      <ELSE>
+                        <SET Var="chkRecFound" FromValue="0"/>
+                      </ELSE>
+                    </IF_TEST>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="chkDimGrpNull" FromValue="0"/>
+                  </ELSE>
+              
+                </IF_TEST>
+              </WHILE>
+              <IF_TEST Test="$InvVar/@TotalRowCount>0">
+                <THEN>
+                  <REQUEST AssignToVar="outputPrty1" Name="MapIPSegParamsPEDMtoBIF" ServiceName="PEDM_MASTER">
+                    <TO_XML SelectList="$InvVar/*"/>
+                    <TO_XML SelectList="$DimGrpList/*"/>
+                  </REQUEST>-->
+              <TO_DOCVAR AssignToVar="NewVar">
+                <ROOT/>
+              </TO_DOCVAR>
+              <CLONE_XML DocVar="outputPrty1" AssignToVar="RawSearchResults"/>
+              <GROUP_DOCS SelectList="$outputPrty1/PARAMETER_DETAILS" AssignToVar="NewVar">
+                <PROPERTIES>
+                  <SegmentIdentification_Hidden/>
+                  <SegmentIdentification/>
+                  <SegmentDesc/>
+                </PROPERTIES>
+                <GROUP_NAME Value="SEGMENT_DETAILS"/>
+                <DOCS_NAME Value="PARAMETER_LISTS"/>
+                <ROOT_NAME Value="SEGMENT_LISTS"/>
+              </GROUP_DOCS>
+              <DELETE_ALL_CHILDREN SelectList="$NewVar/SEGMENT_DETAILS/PARAMETER_LISTS/PARAMETER_DETAILS" AssignToVar="delNodes">
+                <SegmentIdentification/>
+                <SegmentDesc/>
+              </DELETE_ALL_CHILDREN>
+              <SORT_DOCS SelectList="$NewVar/SEGMENT_DETAILS" AssignToVar="temp3">
+                <SegmentIdentification/>
+                <SegmentDesc/>
+              </SORT_DOCS>
+              <TO_DOCVAR AssignToVar="NewVar">
+                <SEGMENT_LISTS/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="NewVar">
+                <TO_XML SelectList="$temp3"/>
+              </APPEND_TO_XML>
+              <!--      <FOR_EACH CurrentElement="cur" SelectList="$NewVar/SEGMENT_DETAILS">
+        <SET Var="kk" FromValue="{ count($cur/PARAMETER_LISTS/PARAMETER_DETAILS/SegmentIdentification)}"/>
+        <SET Var="kk" FromValue="{ count($cur/PARAMETER_LISTS/PARAMETER_DETAILS/SegmentIdentification_Hidden)}"/>
+      </FOR_EACH>-->
+              <TO_DOCVAR AssignToVar="NewVar">
+                <ROOT>
+                  <TO_XML DocVar="NewVar"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="rwCt">
+                <ROWCNT Value="{$outputPrty1/TotalRowCount/@Value}"/>
+              </TO_DOCVAR>
+              <SET DocVar="temp" FromDocVar="NewVar"/>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML SelectList="$temp/*"/>
+              </APPEND_TO_XML>
+              <!--           </THEN>
+                  </IF_TEST>-->
+              <!--        </THEN>
+              </IF_TEST>-->
+              <TO_DOCVAR AssignToVar="enteredSearchCriteria">
+                <Criteria>
+                  <ParameterMnemonicValue Value="{$thisParam/ParameterMnemonicValue/@Value}"/>
+                  <ENTITYSTATE Value="{$thisParam/ENTITYSTATE/@Value}"/>
+                  <TO_XML SelectList="$thisParam/PartyIdentificationValue"/>
+                </Criteria>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Save'">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML SelectList="$temp/*"/>
+              </APPEND_TO_XML>
+              <!--    <SET DocVar="pglFormInput" FromDocVar="temp"/>-->
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML Select="$searchErrors"/>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML Select="$searchSuccess"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML Select="$rwCt"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="thisReturn">
+            <TO_XML Select="$enteredSearchCriteria"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$thisReturn/Criteria/*"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <Segments>
+              <DROP_DOWN_OPTIONS SelectList="$dropDownSegment/P_PartyIdentification" Id="PartyIdentificationValue" Value="Description"/>
+            </Segments>
+            <AccessLevel Value="{$roleAccessPerm/SQL_RESULT/ACCESS_LEVEL/@Value}"/>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='Save'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="xyz">
+                <MYDOCUMENT>
+                  <INPUT>
+                    <TO_XML SelectList="$pglFormOutput/*"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="PARAM_DETAILS">
+                    <SegmentIdentification_Hidden/>
+                    <ParameterName/>
+                    <ParameterValue/>
+                    <ParameterValue_Hidden/>
+                    <SUB_TREE/>
+                    <ParameterValueCommentText/>
+                    <ParameterValueCommentText_Hidden/>
+                    <SourceSystemMnemonicValue/>
+                    <ENTITY_STATE_Hidden/>
+                    <ENTITY_STATE/>
+                    <LAST_MODIFIED_DATE/>
+                  </COLLATE_LIST>
+                </MYDOCUMENT>
+              </TO_DOCVAR>
+              <COLLATE_XML DocVar="xyz" AssignToVar="collatedDoc"/>
+              <SET Var="tdate" FromValue="{date()}"/>
+              <TO_DOCVAR AssignToVar="searchErrors">
+                <_ERRORS>
+                </_ERRORS>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="searchSuccess">
+                <SUCCESSMSG>
+                </SUCCESSMSG>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="intsearchresults">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="updatedSearchResults">
+                <ROOT/>
+              </TO_DOCVAR>
+              <SET Var="tp" FromValue="1"/>
+              <SET Var="chkCommNotNull" FromValue="1"/>
+              <SET Var="isAnyChange" FromValue="0"/>
+              <FOR_EACH CurrentElement="cur" SelectList="$collatedDoc/PARAM_DETAILS">
+                <SET Var="trackSuccess" FromValue="0"/>
+                <SET Var="trackValueChange" FromValue="0"/>
+                <IF_TEST Test="($cur/SUB_TREE/@Value='false')">
+                  <THEN>
+                    <FOR_EACH SelectList="$RawSearchResults/PARAMETER_DETAILS" CurrentElement="id1">
+                      <IF_TEST Test="(($cur/SegmentIdentification_Hidden/@Value=$id1/SegmentIdentification/@Value) and ($cur/ParameterName/@Value=$id1/ParameterName/@Value))">
+                        <THEN>
+                          <SET DocVar="intsearchresults" FromDocVar="id1"/>
+                          <FOR_EACH SelectList="$pglFormOutput/SelectedSegment" CurrentElement="cur1">
+                            <IF_TEST Test="($cur/SegmentIdentification_Hidden/@Value=$cur1/@Value)">
+                              <THEN>
+                                <IF_TEST Test="(($id1/ENTITY_STATE/@Value='NEW') and strlen(trim($cur/ParameterValue/@Value))>0)">
+                                  <THEN>
+                                    <IF_TEST Test="strlen(trim($cur/ParameterValueCommentText/@Value))>0">
+                                      <THEN>
+                                        <IF_TEST Test="strlen(trim($cur/ParameterValueCommentText/@Value))&lt;255">
+                                          <THEN>
+                                        <IF_TEST Test="trim($cur/ParameterValueCommentText/@Value)!=trim($cur/ParameterValueCommentText_Hidden/@Value)">
+                                          <THEN>
+                                            <SET Var="trackValueChange" FromValue="1"/>
+                                            <SET Var="isAnyChange" FromValue="1"/>
+                                            <DO_TRANSACTION>
+                                              <REQUEST AssignToVar="thisReturn" Name="updateIPSegParam" ServiceName="BCM_MASTER">
+                                                <DOCUMENT_CONTEXT>
+                                                      <BusinessOrganizationValue Value="{$cur/SegmentIdentification_Hidden/@Value}"/>
+                                                  <ParameterName Value="{$cur/ParameterName/@Value}"/>
+                                                  <!--<SourceSystemMnemonicValue Value="{$cur/SourceSystemMnemonicValue/@Value}"/>-->
+                                                </DOCUMENT_CONTEXT>
+                                                <UPDATE_PROPERTIES>
+                                                  <ParameterValue Value="{trim($cur/ParameterValue/@Value)}"/>
+                                                  <SOURCE Value="UI"/>
+                                                  <SYS_TYPE Value="UPDATE"/>
+                                                  <ENTITY_STATE Value="ACTIVE"/>
+                                                      <ParameterValueCommentText Value="{trim($cur/ParameterValueCommentText/@Value)}"/>
+                                                </UPDATE_PROPERTIES>
+                                                <DOCUMENTNAME Value="E_InventoryPolicySegmentParameter"/>
+                                                <ACTIONTOBDONE Value="UPDATE"/>
+                                                <FromSource Value="UI"/>
+                                                    <LAST_MODIFIED_DATE_FORCHECK Value="{$cur/LAST_MODIFIED_DATE/@Value}"/>
+                                                    <ValidateMultiUserEdit Value="Yes"/>
+                                              </REQUEST>
+                                            </DO_TRANSACTION>
+                                            <IF_TEST Test="($thisReturn/_RESULT/@Value='SEVERE_ERROR')">
+                                              <THEN>
+                                                <SET Var="tp" FromValue="0"/>
+                                                <SET Var="tweakedErrMsg" FromValue="{concat($thisReturn/_RESULT/_ERROR/@Value,' For ',' Segment:  ',$cur/SegmentIdentification_Hidden/@Value,'  and Parameter:  ',$cur/ParameterName/@Value)}"/>
+                                                <TO_DOCVAR AssignToVar="error">
+                                                  <_ERROR Value="{$tweakedErrMsg/@Value}"/>
+                                                </TO_DOCVAR>
+                                                <APPEND_TO_XML DocVar="searchErrors">
+                                                  <TO_XML Select="$error"/>
+                                                </APPEND_TO_XML>
+                                              </THEN>
+                                              <ELSE>
+                                                <SET Var="trackSuccess" FromValue="1"/>
+                                              </ELSE>
+                                            </IF_TEST>
+                                          </THEN>
+                                          <ELSE>
+                                            <SET Var="chkCommNotNull" FromValue="0"/>
+                                            <APPEND_TO_XML DocVar="searchErrors">
+                                              <_ERROR Value="Please enter New comments for Update of Parameter: {$cur/ParameterName/@Value} for Segment: {$cur/SegmentIdentification_Hidden/@Value}"/>
+                                            </APPEND_TO_XML>
+                                          </ELSE>
+                                        </IF_TEST>
+                                      </THEN>
+                                      <ELSE>
+                                        <SET Var="chkCommNotNull" FromValue="0"/>
+                                        <APPEND_TO_XML DocVar="searchErrors">
+                                              <_ERROR Value="Comments should not be greater than 255 characters for {$cur/ParameterName/@Value} and Segment: {$cur/SegmentIdentification_Hidden/@Value}"/>
+                                            </APPEND_TO_XML>
+                                          </ELSE>
+                                        </IF_TEST>
+                                      </THEN>
+                                      <ELSE>
+                                        <SET Var="chkCommNotNull" FromValue="0"/>
+                                        <APPEND_TO_XML DocVar="searchErrors">
+                                          <_ERROR Value="Please enter comments for Update of Parameter: {$cur/ParameterName/@Value} for Segment: {$cur/SegmentIdentification_Hidden/@Value}"/>
+                                        </APPEND_TO_XML>
+                                      </ELSE>
+                                    </IF_TEST>
+                                  </THEN>
+                                </IF_TEST>
+                                <IF_TEST Test="(($cur/ParameterValue/@Value!=$cur/ParameterValue_Hidden/@Value) and (strlen(trim($cur/ParameterValue/@Value))>0) and ($cur/ENTITY_STATE/@Value!='NEW'))">
+                                  <THEN>
+                                    <IF_TEST Test="strlen(trim($cur/ParameterValueCommentText/@Value))>0">
+                                      <THEN>
+                                        <IF_TEST Test="strlen(trim($cur/ParameterValueCommentText/@Value))&lt;255">
+                                          <THEN>
+                                        <IF_TEST Test="trim($cur/ParameterValueCommentText/@Value)!=trim($cur/ParameterValueCommentText_Hidden/@Value)">
+                                          <THEN>
+                                            <SET Var="trackValueChange" FromValue="1"/>
+                                            <SET Var="isAnyChange" FromValue="1"/>
+                                            <DO_TRANSACTION>
+                                              <REQUEST AssignToVar="thisReturn" Name="updateIPSegParam" ServiceName="BCM_MASTER">
+                                                <DOCUMENT_CONTEXT>
+                                                      <BusinessOrganizationValue Value="{$cur/SegmentIdentification_Hidden/@Value}"/>
+                                                  <ParameterName Value="{$cur/ParameterName/@Value}"/>
+                                                  <!--  <SourceSystemMnemonicValue Value="{$cur/SourceSystemMnemonicValue/@Value}"/>-->
+                                                </DOCUMENT_CONTEXT>
+                                                <UPDATE_PROPERTIES>
+                                                  <ParameterValue Value="{trim($cur/ParameterValue/@Value)}"/>
+                                                  <SOURCE Value="UI"/>
+                                                  <SYS_TYPE Value="UPDATE"/>
+                                                  <ENTITY_STATE Value="{$cur/ENTITY_STATE/@Value}"/>
+                                                      <ParameterValueCommentText Value="{trim($cur/ParameterValueCommentText/@Value)}"/>
+                                                </UPDATE_PROPERTIES>
+                                                <DOCUMENTNAME Value="E_InventoryPolicySegmentParameter"/>
+                                                <ACTIONTOBDONE Value="UPDATE"/>
+                                                    <LAST_MODIFIED_DATE_FORCHECK Value="{$cur/LAST_MODIFIED_DATE/@Value}"/>
+                                                    <ValidateMultiUserEdit Value="Yes"/>
+                                              </REQUEST>
+                                            </DO_TRANSACTION>
+                                            <IF_TEST Test="($thisReturn/_RESULT/@Value='SEVERE_ERROR')">
+                                              <THEN>
+                                                <SET Var="tp" FromValue="0"/>
+                                                <SET Var="tweakedErrMsg" FromValue="{concat($thisReturn/_RESULT/_ERROR/@Value,' For ',' Segment:  ',$cur/SegmentIdentification_Hidden/@Value,'  and Parameter:  ',$cur/ParameterName/@Value)}"/>
+                                                <TO_DOCVAR AssignToVar="error">
+                                                  <_ERROR Value="{$tweakedErrMsg/@Value}"/>
+                                                </TO_DOCVAR>
+                                                <APPEND_TO_XML DocVar="searchErrors">
+                                                  <TO_XML Select="$error"/>
+                                                </APPEND_TO_XML>
+                                              </THEN>
+                                              <ELSE>
+                                                <SET Var="trackSuccess" FromValue="1"/>
+                                              </ELSE>
+                                            </IF_TEST>
+                                          </THEN>
+                                          <ELSE>
+                                            <SET Var="chkCommNotNull" FromValue="0"/>
+                                            <APPEND_TO_XML DocVar="searchErrors">
+                                              <_ERROR Value="Please enter New comments for Update of Parameter:{$cur/ParameterName/@Value} for Segment: {$cur/SegmentIdentification_Hidden/@Value}"/>
+                                            </APPEND_TO_XML>
+                                          </ELSE>
+                                        </IF_TEST>
+                                      </THEN>
+                                      <ELSE>
+                                        <SET Var="chkCommNotNull" FromValue="0"/>
+                                        <APPEND_TO_XML DocVar="searchErrors">
+                                              <_ERROR Value="Comments should not be greater than 255 characters for {$cur/ParameterName/@Value} and Segment: {$cur/SegmentIdentification_Hidden/@Value}"/>
+                                            </APPEND_TO_XML>
+                                          </ELSE>
+                                        </IF_TEST>
+                                      </THEN>
+                                      <ELSE>
+                                        <SET Var="chkCommNotNull" FromValue="0"/>
+                                        <APPEND_TO_XML DocVar="searchErrors">
+                                          <_ERROR Value="Please enter comments for Update of Parameter:{$cur/ParameterName/@Value} for Segment: {$cur/SegmentIdentification_Hidden/@Value}"/>
+                                        </APPEND_TO_XML>
+                                      </ELSE>
+                                    </IF_TEST>
+                                  </THEN>
+                                </IF_TEST>
+                                <IF_TEST Test="(($cur/ParameterValue/@Value!=$cur/ParameterValue_Hidden/@Value) and (strlen($cur/ParameterValue_Hidden/@Value)>0) and (strlen(trim($cur/ParameterValue/@Value))=0) and ($cur/ENTITY_STATE/@Value!='NEW')  )">
+                                  <THEN>
+                                    <IF_TEST Test="strlen(trim($cur/ParameterValueCommentText/@Value))>0">
+                                      <THEN>
+                                        <IF_TEST Test="strlen(trim($cur/ParameterValueCommentText/@Value))&lt;255">
+                                          <THEN>
+                                        <IF_TEST Test="trim($cur/ParameterValueCommentText/@Value)!=trim($cur/ParameterValueCommentText_Hidden/@Value)">
+                                          <THEN>
+                                            <SET Var="trackValueChange" FromValue="1"/>
+                                            <SET Var="isAnyChange" FromValue="1"/>
+                                            <DO_TRANSACTION>
+                                              <REQUEST AssignToVar="thisReturn" Name="updateIPSegParam" ServiceName="BCM_MASTER">
+                                                <DOCUMENT_CONTEXT>
+                                                      <BusinessOrganizationValue Value="{$cur/SegmentIdentification_Hidden/@Value}"/>
+                                                  <ParameterName Value="{$cur/ParameterName/@Value}"/>
+                                                  <!--<SourceSystemMnemonicValue Value="{$cur/SourceSystemMnemonicValue/@Value}"/>-->
+                                                </DOCUMENT_CONTEXT>
+                                                <UPDATE_PROPERTIES>
+                                                  <ParameterValue Value="{trim($cur/ParameterValue/@Value)}"/>
+                                                  <SOURCE Value="UI"/>
+                                                  <SYS_TYPE Value="UPDATE"/>
+                                                  <ENTITY_STATE Value="ACTIVE"/>
+                                                      <ParameterValueCommentText Value="{trim($cur/ParameterValueCommentText/@Value)}"/>
+                                                </UPDATE_PROPERTIES>
+                                                <DOCUMENTNAME Value="E_InventoryPolicySegmentParameter"/>
+                                                <ACTIONTOBDONE Value="UPDATE"/>
+                                                <FromSource Value="UI"/>
+                                                    <LAST_MODIFIED_DATE_FORCHECK Value="{$cur/LAST_MODIFIED_DATE/@Value}"/>
+                                                    <ValidateMultiUserEdit Value="Yes"/>
+                                              </REQUEST>
+                                            </DO_TRANSACTION>
+                                            <IF_TEST Test="($thisReturn/_RESULT/@Value='SEVERE_ERROR')">
+                                              <THEN>
+                                                <SET Var="tp" FromValue="0"/>
+                                                <SET Var="tweakedErrMsg" FromValue="{concat($thisReturn/_RESULT/_ERROR/@Value,' For ',' Segment:  ',$cur/SegmentIdentification_Hidden/@Value,'  and Parameter:  ',$cur/ParameterName/@Value)}"/>
+                                                <TO_DOCVAR AssignToVar="error">
+                                                  <_ERROR Value="{$tweakedErrMsg/@Value}"/>
+                                                </TO_DOCVAR>
+                                                <APPEND_TO_XML DocVar="searchErrors">
+                                                  <TO_XML Select="$error"/>
+                                                </APPEND_TO_XML>
+                                              </THEN>
+                                              <ELSE>
+                                                <SET Var="trackSuccess" FromValue="1"/>
+                                              </ELSE>
+                                            </IF_TEST>
+                                          </THEN>
+                                          <ELSE>
+                                            <SET Var="chkCommNotNull" FromValue="0"/>
+                                            <APPEND_TO_XML DocVar="searchErrors">
+                                              <_ERROR Value="Please enter New comments for Update of Parameter: {$cur/ParameterName/@Value} for Segment: {$cur/SegmentIdentification_Hidden/@Value}"/>
+                                                </APPEND_TO_XML>
+                                              </ELSE>
+                                            </IF_TEST>
+                                          </THEN>
+                                          <ELSE>
+                                            <SET Var="chkCommNotNull" FromValue="0"/>
+                                            <APPEND_TO_XML DocVar="searchErrors">
+                                              <_ERROR Value="Comments should not be greater than 255 characters for {$cur/ParameterName/@Value} and Segment: {$cur/SegmentIdentification_Hidden/@Value}"/>
+                                            </APPEND_TO_XML>
+                                          </ELSE>
+                                        </IF_TEST>
+                                      </THEN>
+                                      <ELSE>
+                                        <SET Var="chkCommNotNull" FromValue="0"/>
+                                        <APPEND_TO_XML DocVar="searchErrors">
+                                          <_ERROR Value="Please enter comments for Update of Parameter: {$cur/ParameterName/@Value} for Segment: {$cur/SegmentIdentification_Hidden/@Value}"/>
+                                        </APPEND_TO_XML>
+                                      </ELSE>
+                                    </IF_TEST>
+                                  </THEN>
+                                </IF_TEST>
+                              </THEN>
+                            </IF_TEST>
+                          </FOR_EACH>
+                        </THEN>
+                      </IF_TEST>
+                    </FOR_EACH>
+                    <IF_TEST Test="$trackValueChange/@Value=1 and  $trackSuccess/@Value=1">
+                      <THEN>
+                        <SET_PROPS Select="$intsearchresults">
+                          <ParameterValue Value="{trim($cur/ParameterValue/@Value)}"/>
+                          <ParameterValue_Hidden Value="{trim($cur/ParameterValue/@Value)}"/>
+                          <ParameterValueCommentText Value="{trim($cur/ParameterValueCommentText/@Value)}"/>
+                          <ParameterValueCommentText_Hidden Value="{trim($cur/ParameterValueCommentText/@Value)}"/>
+                          <!--<LAST_MODIFIED_DATE Value="{date()}"/>-->
+                          <ModifiedBy Value="{$userId}"/>
+                          <ENTITY_STATE Value="ACTIVE"/>
+                        </SET_PROPS>
+                        <IF_TEST Test="$thisReturn/_RESULT/@Value!='SEVERE_ERROR'">
+                          <THEN>
+                            <SET_PROPS Select="$intsearchresults">
+                              <LAST_MODIFIED_DATE Value="{$thisReturn/LAST_MODIFIED_DATE_NEW/@Value}"/>
+                            </SET_PROPS>
+                          </THEN>
+                        </IF_TEST>
+                      </THEN>
+                      <ELSE>
+                        <SET_PROPS Select="$intsearchresults">
+                          <ParameterValue Value="{trim($cur/ParameterValue/@Value)}"/>
+                          <ParameterValueCommentText Value="{trim($cur/ParameterValueCommentText/@Value)}"/>
+                        </SET_PROPS>
+                      </ELSE>
+                    </IF_TEST>
+                    <APPEND_TO_XML DocVar="updatedSearchResults">
+                      <PARAMETER_DETAILS>
+                        <TO_XML SelectList="$intsearchresults/*"/>
+                      </PARAMETER_DETAILS>
+                    </APPEND_TO_XML>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <IF_TEST Test="($isAnyChange/@Value=1 and $tp/@Value=1 and $chkCommNotNull/@Value=1)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="searchSuccess">
+                    <MSG Value="Records Successfully Updated"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+              <!--              <GET_DOCUMENT Name="P_DimensionGroup" AssignToVar="DimGrpList" HandleException="true" ServiceName="PEDM_MASTER" MaxRows="{$pgntMAXRWS/@Value}" StartAtRow="{$pgntSTRT/@Value}" ReturnRowCount="yes">
+                    <SELECT>
+                      <DimensionGroupIdentifier/>
+                    </SELECT>
+                    <OR>
+                      <TO_XML SelectList="$SearchCriteria/P_DimensionXDimensionGroup/*"/>
+                    </OR>
+                  </GET_DOCUMENT>
+                  <GET_DOCUMENT Name="P_DimensionGroupXParameter" AssignToVar="InvVar1" HandleException="true" ServiceName="PEDM_MASTER" ReturnRowCount="yes">
+                    <AND>
+                      <OR>
+                        <TO_XML SelectList="$SearchCriteria/P_Parameter/*"/>
+                      </OR>
+                      <OR>
+                        <TO_XML SelectList="$DimGrpList/P_DimensionGroup/*"/>
+                      </OR>
+                      <OR>
+                        <TO_XML SelectList="$SearchCriteria/SRCH_STATE/*"/>
+                      </OR>
+                    </AND>
+                    <QUERY_DOCUMENT_LINK Name="REL_2442">
+                      <SELECT>
+                        <ParameterMnemonicValue/>
+                        <ParameterDescription/>
+                      </SELECT>
+                      <QUERY_DOCUMENT_LINK Name="REL_2483">
+                        <SELECT>
+                          <UnitOfMeasureMnemonicValue/>
+                        </SELECT>
+                      </QUERY_DOCUMENT_LINK>
+                    </QUERY_DOCUMENT_LINK>
+                    <ORDER_BY>
+                      <DimensionGroupIdentifier/>
+                      <ParameterMnemonicValue/>
+                    </ORDER_BY>
+                  </GET_DOCUMENT>
+                  <REQUEST AssignToVar="outputPrty2" Name="MapIPSegParamsPEDMtoBIF" ServiceName="PEDM_MASTER">
+                    <TO_XML SelectList="$InvVar1/*"/>
+                    <TO_XML SelectList="$DimGrpList/*"/>
+                  </REQUEST>-->
+              <SET DocVar="outputPrty2" FromDocVar="updatedSearchResults"/>
+              <CLONE_XML DocVar="outputPrty2" AssignToVar="RawSearchResults"/>
+              <TO_DOCVAR AssignToVar="NewVar1">
+                <ROOT/>
+              </TO_DOCVAR>
+              <GROUP_DOCS SelectList="$outputPrty2/PARAMETER_DETAILS" AssignToVar="NewVar1">
+                <PROPERTIES>
+                  <SegmentIdentification_Hidden/>
+                  <SegmentIdentification/>
+                  <SegmentDesc/>
+                </PROPERTIES>
+                <GROUP_NAME Value="SEGMENT_DETAILS"/>
+                <DOCS_NAME Value="PARAMETER_LISTS"/>
+                <ROOT_NAME Value="SEGMENT_LISTS"/>
+              </GROUP_DOCS>
+              <DELETE_ALL_CHILDREN SelectList="$NewVar1/SEGMENT_DETAILS/PARAMETER_LISTS/PARAMETER_DETAILS" AssignToVar="delNodes">
+                <SegmentIdentification/>
+                <SegmentDesc/>
+              </DELETE_ALL_CHILDREN>
+              <SORT_DOCS SelectList="$NewVar1/SEGMENT_DETAILS" AssignToVar="temp3">
+                <SegmentIdentification/>
+                <SegmentDesc/>
+              </SORT_DOCS>
+              <TO_DOCVAR AssignToVar="NewVar1">
+                <SEGMENT_LISTS/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="NewVar1">
+                <TO_XML SelectList="$temp3"/>
+              </APPEND_TO_XML>
+              <TO_DOCVAR AssignToVar="NewVar1">
+                <ROOT>
+                  <TO_XML DocVar="NewVar1"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <SET DocVar="temp" FromDocVar="NewVar1"/>
+            </THEN>
+          </IF_TEST>
+          <!--  <IF_TEST Test="$userAction='MassUpdate'">
+    <THEN>
+      <PRINTLN Value="COMING INTO MASS UPDATE"/>
+      <SET DocVar="temp3" FromDocVar="pglFormOutput"/>
+      <SET DocVar="temp4" FromDocVar="temp"/>
+      <PRINTLN Value="MASS UPDATE    PGLFORMOUTPUT  IS:::::{$temp3}"/>
+      <TO_DOCVAR AssignToVar="parameterNames">
+        <PARAMETER_NAMES>
+        </PARAMETER_NAMES>
+      </TO_DOCVAR>
+      <TO_DOCVAR AssignToVar="massUpdateSegmentDetails">
+        <SEGMENTS>
+        </SEGMENTS>
+      </TO_DOCVAR>
+      <SET Var="segmentTableRowCnt" FromValue="0"/>
+      <FOR_EACH SelectList="$temp3/SelectedSegment" CurrentElement="id">
+        <PRINTLN Value="item is  {$id}"/>
+        <SET Var="xyz" FromValue="{$id/@Value}"/>
+        <SET DocVar="paramNames" FromSelectList="$temp/SEGMENT_LISTS/*[SegmentIdentification/@Value=$xyz]"/>
+        <PRINTLN Value="paramnames  is  {$paramNames}"/>
+        <SET Var="segmentTableRowCnt" FromValue="{int($segmentTableRowCnt + 1)}"/>
+        <ADD_CHILDREN DocVar="massUpdateSegmentDetails" FromDocVar="paramNames"/>
+      </FOR_EACH>
+      <SET DocVar="paramDetails" FromSelectList="$paramNames/PARAMETER_LISTS/*"/>
+      <FOR_EACH SelectList="$paramNames/PARAMETER_LISTS/PARAMETER_DETAILS" CurrentElement="id">
+        <SET Var="paramTableRowCnt" FromValue="0"/>
+        <PRINTLN Value="item is  {$id}"/>
+        <SET Var="paramTableRowCnt" FromValue="{int($paramTableRowCnt + 1)}"/>
+        <TO_DOCVAR AssignToVar="temp10">
+          <PARAMETER_NAME>
+          </PARAMETER_NAME>
+        </TO_DOCVAR>
+        <ADD_CHILDREN DocVar="temp10" FromSelectList="$id/ParameterName"/>
+        <ADD_CHILDREN DocVar="parameterNames" FromDocVar="temp10"/>
+      </FOR_EACH>
+    </THEN>
+  </IF_TEST>-->
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IP Segment Parameter Search" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='ShowHistory'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ManageParam'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='MassUpdate'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IP Segment Parameter Search" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='selectSegment'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='selectParameter'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select Parameter" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Clear'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done4" Description=""/>
+          <next_node Name="IP Segment Parameter Search" Description=""/>
+          <next_node Name="IP Segment Parameter Search" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <sub_workflow Name="Select Parameter" InputVar="{nodeInXml,xml}" Workflow="wfIPSearchParameter">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutXml,xml}"/>
+      <input>
+        <SET DocVar="thisParam" Property="ParameterClassMnemonicValue" FromValue="IP"/>
+        <TO_XML SelectList="$thisParam/*"/>
+      </input>
+    </sub_workflow>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="195,78" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <done4 location="678,145" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done4" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done4>
+      <mgcnode Name="IP Segment Parameter Search" location="346,166" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="IP Segment Parameter Search" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Select Parameter" location="667,19" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Select Parameter" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="227,100" endpoint="346,189" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="313,98,4,4" ctrlRect2="254,187,4,4"/>
+      </start2>
+      <mgcnode Name="IP Segment Parameter Search">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="362,166" endpoint="362,166" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="360,89,4,4" ctrlRect2="530,52,4,4" textRect="369,68,157,9">
+          <textProps text="[$userAction ='search_button']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="362,166" endpoint="362,166" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="360,89,4,4" ctrlRect2="226,59,4,4" textRect="240,72,110,9">
+          <textProps text="[$userAction ='Save']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="378,189" endpoint="667,41" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="592,187,4,4" ctrlRect2="553,52,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="378,189" endpoint="678,167" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="601,187,4,4" ctrlRect2="451,165,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="378,189" endpoint="378,189" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="451,187,4,4" ctrlRect2="451,187,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="378,189" endpoint="378,189" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="451,187,4,4" ctrlRect2="451,187,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="10" textAttrsKey0="ParameterClassIdentifier : string" textAttrsKey1="RawSearchResults : xml" textAttrsKey2="SearchCriteria : xml" textAttrsKey3="enteredSearchCriteria : xml" textAttrsKey4="pgntMAXRWS : int" textAttrsKey5="pgntSTRT : int" textAttrsKey6="rwCt : xml" textAttrsKey7="searchErrors : xml" textAttrsKey8="searchSuccess : xml" textAttrsKey9="temp : xml">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="ParameterClassIdentifier" Type="string" Comment=""/>
+        <variable Name="RawSearchResults" Type="xml" Comment=""/>
+        <variable Name="SearchCriteria" Type="xml" Comment=""/>
+        <variable Name="pgntMAXRWS" Type="int" Comment=""/>
+        <variable Name="pgntSTRT" Type="int" Comment=""/>
+        <variable Name="rwCt" Type="xml" Comment=""/>
+        <variable Name="searchErrors" Type="xml" Comment=""/>
+        <variable Name="searchSuccess" Type="xml" Comment=""/>
+        <variable Name="temp" Type="xml" Comment=""/>
+        <variable Name="enteredSearchCriteria" Type="xml" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

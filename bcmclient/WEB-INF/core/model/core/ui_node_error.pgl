@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:page-group xmlns:ui="http://www.i2.com/ui" displayText="Error Page" source="core.error:load">
+  <ui:container id="container" scrollable="true" select="$root/RESPONSE">
+    <ui:step id="invalid_page" displayText="Invalid Page" displayCondition="{UI_NODE_XML/@Name = 'ERR_INVALID_PAGE'}">
+      <ui:field-group columns="5">
+        <ui:field-group columns="2">
+          <ui:image-link-field name="a" src="/alert_static.gif" displayText="" />
+          <ui:display-field displayText="" style="font-size:11;" name="ERROR_HEADER" value="The page you are trying to access is no longer valid." />
+          <ui:field-space />
+          <ui:display-field displayText="" style="font-size:11" name="ERROR_HEADER" value="To proceed further, please select a workflow from the left navigation pad." />
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons />
+    </ui:step>
+    <ui:step displayText="Error" id="error" displayCondition="{(string-length(UI_NODE_XML/@Name) = 0) or (UI_NODE_XML/@Name != 'ERR_INVALID_PAGE')}">
+      <ui:field-group>
+        <ui:image src="/alert_static.gif" name="ERROR_IMG"/>
+        <ui:display-field displayText="" name="ERROR_HEADER" value="Unable to process your request."/>
+        <ui:display-field displayText="" name="CHECK_LOGS" value="Please check the logs for more details."/>
+      </ui:field-group>
+      <ui:hr/>
+      <ui:field-group displayCondition="{string-length(UI_NODE_XML/@Name) = 0}">
+        <ui:display-field displayText="" name="ERROR_DESC" value="{@Description}" displayNoWrap="false"/>
+      </ui:field-group>
+      <ui:field-group displayCondition="{string-length(UI_NODE_XML/@Name) > 0}">
+        <ui:display-field displayText="UI Node Name" name="NODE_NAME" value="{UI_NODE_XML/@Name}"/>
+        <ui:textarea displayText="Error" name="ERROR" value="{string(UI_NODE_XML/ERROR_MSG)}" rows="10" columns="100"/>
+        <ui:textarea displayText="Details" name="DETAILS" value="{string(UI_NODE_XML/STACK_TRACE)}" id="DETAILS" rows="10" columns="100"/>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button displayText="Hide Details" id="hide_details" onClick="javascript:hideDetails();" displayCondition="{string-length(UI_NODE_XML/@Name) > 0}"/>
+        <ui:button displayText="Show Details" id="show_details" onClick="javascript:showDetails();" displayCondition="{string-length(UI_NODE_XML/@Name) > 0}"/>
+        <ui:button displayText="Back" id="back" onClick="javascript:history.back();"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container> 
+  <ui:script>
+  var detailsTd = document.getElementById("DETAILS_td");
+  var textAreas = document.getElementsByTagName("textarea");
+  var detailsTextArea = textAreas[1];
+  var showDetailsButton = document.getElementById("show_details");
+  var hideDetailsButton = document.getElementById("hide_details");
+  function onLoad()
+  {
+    onLoadSuper();
+    
+    toggleItemVisibility( detailsTd, 'hide' );
+    toggleItemVisibility( detailsTextArea, 'hide' );
+    toggleItemVisibility( hideDetailsButton, 'hide' );
+    
+    scrollHelper();
+  }
+  function showDetails()
+  {
+    toggleItemVisibility( detailsTd, 'show' );
+    toggleItemVisibility( detailsTextArea, 'show' );
+    toggleItemVisibility( showDetailsButton, 'hide' );
+    toggleItemVisibility( hideDetailsButton, 'show' );
+
+    scrollHelper();
+  }
+  function hideDetails()
+  {
+    toggleItemVisibility( detailsTd, 'hide' );
+    toggleItemVisibility( detailsTextArea, 'hide' );
+    toggleItemVisibility( hideDetailsButton, 'hide' );
+    toggleItemVisibility( showDetailsButton, 'show' );
+    
+    scrollHelper();
+  }
+  
+  </ui:script>
+</ui:page-group>

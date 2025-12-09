@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="35" ShowInBreadCrumbs="true" Version="1.0" Name="wfSrchLocation" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables/>
+  <nodes>
+    <start Name="start2">
+      <actions>
+      </actions>
+      <next_nodes>
+        <next_node Name="Search Location" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Search Location" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE" Template="uiwfIPSearchLocation.pgl">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$userAction='selectLocation'">
+            <THEN>
+              <GET_DOC_SMART Name="P_LocationIdentification" AssignToVar="LocationList" HandleException="true" ServiceName="PEDM_MASTER">
+                <SELECT>
+                  <LocationIdentificationValue/>
+                  <LocationIdentificationValueDescription/>
+                </SELECT>
+                <QUERY_DOCUMENT_LINK Name="REL_863">
+                  <QUERY_DOCUMENT_LINK Name="REL_1025_P_loc_x_loc_clas">
+                    <QUERY_DOCUMENT_LINK Name="REL_1024">
+                      <SELECT>
+                        <LocationClassName/>
+                      </SELECT>
+                    </QUERY_DOCUMENT_LINK>
+                  </QUERY_DOCUMENT_LINK>
+                </QUERY_DOCUMENT_LINK>
+              </GET_DOC_SMART>
+              <TO_DOCVAR AssignToVar="LocationList">
+                <ROOT>
+                  <TO_XML DocVar="LocationList"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <SET DocVar="LocationList" Property="FIELD_NAME" FromValue="{$thisParam/PARAMETERS/FIELD_NAME/@Value}"/>
+              <SET DocVar="LocationList" Property="USER_ID" FromValue="{$userId}"/>
+              <SET DocVar="pglFormInput" FromDocVar="LocationList"/>
+              <PRINTLN Value="GTINList{$root/RESPONSE/P_LocationIdentification}"/>
+            </THEN>
+          </IF_TEST>
+          <!--<TO_DOCVAR AssignToVar="pglFormInput">
+    <SAMPLE_XML>
+      <LINE TotalRowCount="3" startRowCount="0">
+        <ROWDATA>
+          <LocNumber Value="1000"/>
+          <LocDesc Value="BridgeView"/>
+          <LocType Value="DC"/>
+        </ROWDATA>
+        <ROWDATA>
+          <LocNumber Value="1008"/>
+          <LocDesc Value="Worley"/>
+          <LocType Value="DC"/>
+        </ROWDATA>
+        <ROWDATA>
+          <LocNumber Value="2008"/>
+          <LocDesc Value="Breadenton"/>
+          <LocType Value="DC"/>
+        </ROWDATA>
+      </LINE>
+      <FIELD_NAME Value="{$thisParam/PARAMETERS/FIELD_NAME/@Value}"/>
+    </SAMPLE_XML>
+  </TO_DOCVAR>-->
+        </action>
+      </pre_actions>
+      <if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='select'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search Location" Description=""/>
+          <next_node Name="done4" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done4">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="185,205" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <mgcnode Name="Search Location" location="347,233" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Search Location" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done4 location="492,213" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done4" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done4>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="217,227" endpoint="347,255" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="312,225,4,4" ctrlRect2="247,253,4,4"/>
+      </start2>
+      <mgcnode Name="Search Location">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="363,233" endpoint="363,233" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="361,156,4,4" ctrlRect2="361,156,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="379,255" endpoint="492,235" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="461,253,4,4" ctrlRect2="405,233,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="0">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables/>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

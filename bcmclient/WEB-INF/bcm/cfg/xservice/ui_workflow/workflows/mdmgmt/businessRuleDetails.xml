@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="60" ShowInBreadCrumbs="true" Version="1.0" Name="BusinessRuleDetails" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables/>
+  <nodes>
+    <start Name="start" Description="start">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="outXml">
+            <TO_XML SelectList="$thisParam"/>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{outXml,xml}">
+        <next_node Name="Business Rule Details" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done" Description="done">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Business Rule Details" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="SHOW" Template="businessRuleDetails.pgl" Description="Business Rule Details Form" InputVar="{root,xml}">
+      <pre_actions>
+        <action>
+          <PRINTLN Value="$root: {$root}"/>
+          <PRINTLN Value="$thisParam: {$thisParam}"/>
+          <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+          <SET Var="maxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '10', $thisParam/MAX_ROWS/@Value)}"/>
+          <GET_DOCUMENT ServiceName="BPE_META" Name="DATA_RULE_TEMPLATE" AssignToVar="response" UserId="{$userId}" ReturnRowCount="yes" MaxRows="{$maxRows}" StartAtRow="{$paginateStart}">
+           <RULE_ID Value="{$root/ID/@Value}"/>
+          </GET_DOCUMENT>
+          <!-- Format Date -->
+          <SET Var="dataRuleDoc" FromSelect="$response/DATA_RULE_TEMPLATE"/>
+          <SET DocVar="dataRuleDoc" Property="TOUCH_DATE" FromValue="{substringBefore($dataRuleDoc/TOUCH_DATE/@Value, ' ')}"/>
+          <SET Var="startDate" FromValue="{substringBefore($dataRuleDoc/START_DATE_RANGE/@Value, ' ')}"/>
+          <SET Var="endDate" FromValue="{substringBefore($dataRuleDoc/END_DATE_RANGE/@Value, ' ')}"/>
+          <SET DocVar="dataRuleDoc" Property="VALID_DATE_RANGE" FromValue="{concat($startDate,' to ', $endDate)}"/>
+          <SET DocVar="dataRuleDoc" Property="DATA_STEWARD" FromValue="admin"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML Select="$dataRuleDoc"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <SET DocVar="pglFormInput" Property="ID" FromValue="{$root/ID/@Value}"/>
+        </action>
+      </pre_actions>
+      <if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done" Description=""/>
+          <next_node Name="Business Rule Details" Description=""/>
+        </next_nodes>
+      </if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start location="107,117" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start>
+      <done location="435,112" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done>
+      <mgcnode Name="Business Rule Details" location="273,103" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Business Rule Details" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="139,139" endpoint="273,125" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="237,137,4,4" ctrlRect2="170,123,4,4"/>
+      </start>
+      <mgcnode Name="Business Rule Details">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="305,136" endpoint="435,134" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="400,134,4,4" ctrlRect2="335,132,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="281,103" endpoint="289,103" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="279,26,4,4" ctrlRect2="287,26,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Times New Roman,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="0">
+      <textProps text="Pipeline" font="Times New Roman,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables/>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

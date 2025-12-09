@@ -1,0 +1,1114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="1938" ShowInBreadCrumbs="true" Version="1.0" Name="uiWfXrefManageSystemAttribute" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="Success_Error_Msg" Type="xml" Comment=""/>
+    <variable Name="Atrbt_Success_Error_Msg" Type="xml" Comment=""/>
+    <variable Name="attrbtlines" Type="xml" Comment=""/>
+    <variable Name="attributeCopyRecord" Type="xml" Comment=""/>
+    <variable Name="attributeRecords" Type="xml" Comment=""/>
+    <variable Name="copyRecord" Type="xml" Comment=""/>
+    <variable Name="lines" Type="xml" Comment=""/>
+    <variable Name="newattrbt" Type="xml" Comment=""/>
+    <variable Name="oldSystemInfo" Type="xml" Comment=""/>
+    <variable Name="paginateStart" Type="int" Comment=""/>
+    <variable Name="pgMaxRows" Type="int" Comment=""/>
+    <variable Name="res" Type="xml" Comment=""/>
+    <variable Name="sysattrbt" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="Success_Error_Msg">
+            <MSG/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="Atrbt_Success_Error_Msg">
+            <MSG/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="sysattrbt">
+            <RESPONSE/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="res">
+            <RESPONSE/>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="System &amp; Attribute" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="System &amp; Attribute" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="xrefManageSystemAttribute.pgl">
+      <pre_actions>
+        <action>
+          <SET Var="exportTableId" FromValue="{ifElse($thisParam/FILTER_ID/@Value=null, '', $thisParam/FILTER_ID/@Value)}"/>
+          <SET Var="sortBy" FromValue="{$thisParam/SORT_BY/@Value}"/>
+          <SET Var="sortOrder" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+          <SET Var="atrbt_sortBy" FromValue="{$thisParam/att_SORT_BY/@Value}"/>
+          <SET Var="atrbt_sortOrder" FromValue="{$thisParam/att_SORT_ORDER/@Value}"/>
+          <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+          <SET Var="pgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '5', $thisParam/MAX_ROWS/@Value)}"/>
+          <SET Var="paginateStartAttribute" FromValue="{ifElse($thisParam/att_START_COUNT/@Value = null, '0', $thisParam/att_START_COUNT/@Value)}"/>
+          <SET Var="pgMaxRowsAttribute" FromValue="{ifElse($thisParam/att_MAX_ROWS/@Value = null, '10', $thisParam/att_MAX_ROWS/@Value)}"/>
+          <IF_TEST Test="$userAction != 'ShowAttributes' and $userAction != 'copy' and $userAction != 'create' and $userAction != 'ok' and $userAction != 'update'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="Success_Error_Msg">
+                <MSG/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction != 'showAssociatedObjects' and $userAction != 'copy1' and $userAction != 'create1' and $userAction != 'ok1' and $userAction != 'update1'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="Atrbt_Success_Error_Msg">
+                <MSG/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <!-- Code for System UI -->
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filter">
+            <SystemMnemonicValue InputName="FILTER_SystemMnemonicValue"/>
+            <SystemDescription InputName="FILTER_SystemDescription"/>
+            <LastModifiedDate InputName="FILTER_SystemLastModifiedDate"/>
+            <LastModifiedBy InputName="FILTER_SystemLastModifiedBy"/>
+          </FORM_SEARCH_FILTER>
+          <IF_TEST Test="count($filter/FILTER)!=0">
+            <THEN>
+              <TO_DOCVAR AssignToVar="CIfilters">
+                <FILTERS>
+                  <TO_XML SelectList="$filter/FILTER/*"/>
+                </FILTERS>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <FOR_EACH CurrentElement="tempElem" SelectList="$CIfilters/*">
+            <SET Var="thisValue" FromValue="{$tempElem/@Value}"/>
+            <REMOVE_ATTRIBUTE DocVar="tempElem" Name="Value"/>
+            <SET Attribute="ScalarFn" FromValue="upperCase" DocVar="tempElem"/>
+            <SET Attribute="Value" FromValue="{upperCase($thisValue)}" DocVar="tempElem"/>
+          </FOR_EACH>
+          <IF_TEST Test="strlen($sortBy) != 0">
+            <THEN>
+              <REQUEST AssignToVar="modsys" Name="readSystem" ServiceName="BCM_MASTER" ReturnRowCount="yes" MaxRows="{$pgMaxRows}" StartAtRow="{ifElse($exportTableId='',$paginateStart,'0')}">
+                <TO_XML SelectList="$CIfilters/*"/>
+                <SORT_ORDER Value="{$sortOrder}"/>
+                <SORT_BY Value="{$sortBy}"/>
+              </REQUEST>
+            </THEN>
+            <ELSE>
+              <REQUEST AssignToVar="modsys" Name="readSystem" ServiceName="BCM_MASTER" ReturnRowCount="yes" MaxRows="{$pgMaxRows}" StartAtRow="{ifElse($exportTableId='',$paginateStart,'0')}">
+                <TO_XML SelectList="$CIfilters/*"/>
+              </REQUEST>
+            </ELSE>
+          </IF_TEST>
+          <!--	<SORT SelectList="$modsys/SYSTEM" SortOrder="{$thisParam/SORT_ORDER/@Value}" Key="SystemMnemonicValue"/>-->
+          <TO_DOCVAR AssignToVar="oldSystemInfo">
+            <OLD_SYSTEM_INFO>
+              <TO_XML SelectList="$modsys/*"/>
+            </OLD_SYSTEM_INFO>
+          </TO_DOCVAR>
+          <!-- a record with value EnterNew is appended for creation of new System -->
+          <TO_DOCVAR AssignToVar="new">
+            <SYSTEM>
+              <!--              <SELECTED_ID Value="EnterNew"/>-->
+              <ID Value="9999"/>
+              <SystemMnemonicValue Value="EnterNew"/>
+              <SystemDescription Value="EnterNew"/>
+            </SYSTEM>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='copy'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="new">
+                <SYSTEM/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="new">
+                <!--                <SELECTED_ID Value="{$copyRecord/SystemMnemonicValue/@Value}"/>-->
+                <ID Value="9999"/>
+                <TO_XML SelectList="$copyRecord/*"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='create' and count($res/_RESULT/_ERROR) > 0">
+            <THEN>
+              <TO_DOCVAR AssignToVar="new">
+                <SYSTEM/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="new">
+                <!-- id value 9999 is used to manipulate the fields in PGL-->
+                <ID Value="9999"/>
+                <SystemMnemonicValue Value="{$res/REQUEST/CrossReferenceSystemMnemonicValue/@Value}"/>
+                <SystemDescription Value="{$res/REQUEST/CrossReferenceSystemDescription/@Value}"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!-- Code for Attribute UI -->
+          <!--  The variable TABLE is a flag which holds the value 1 or 2, System table is denoted by 1 and Attribute table by 2 -->
+          <IF_TEST Test="count($thisParam/TABLE) > 0 and $thisParam/TABLE/@Value != '' and $thisParam/TABLE/@Value != null and $thisParam/TABLE/@Value = 2">
+            <THEN>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="attribFilter">
+                <AttributeMnemonicValue InputName="FILTER_AttributeMnemonicValue"/>
+                <AttributeDescription InputName="FILTER_AttributeDescription"/>
+                <LastModifiedDate InputName="FILTER_AttributeLastModifiedDate"/>
+                <LastModifiedBy InputName="FILTER_AttributeLastModifiedBy"/>
+              </FORM_SEARCH_FILTER>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/TABLE/@Value = '' and ($thisParam/FILTER_AttributeMnemonicValue/@Value != '' or $thisParam/FILTER_AttributeDescription/@Value != '' or $thisParam/FILTER_AttributeLastModifiedDate/@Value != '' or $thisParam/FILTER_AttributeLastModifiedBy/@Value != '')">
+                <THEN>
+                  <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="attribFilter">
+                    <AttributeMnemonicValue InputName="FILTER_AttributeMnemonicValue"/>
+                    <AttributeDescription InputName="FILTER_AttributeDescription"/>
+                    <LastModifiedDate InputName="FILTER_AttributeLastModifiedDate"/>
+                    <LastModifiedBy InputName="FILTER_AttributeLastModifiedBy"/>
+                  </FORM_SEARCH_FILTER>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="count($attribFilter/FILTER)!=0">
+            <THEN>
+              <TO_DOCVAR AssignToVar="attribCIfilters">
+                <FILTERS>
+                  <TO_XML SelectList="$attribFilter/FILTER/*"/>
+                </FILTERS>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <FOR_EACH CurrentElement="tempElem" SelectList="$attribCIfilters/*">
+            <SET Var="thisValue" FromValue="{$tempElem/@Value}"/>
+            <REMOVE_ATTRIBUTE DocVar="tempElem" Name="Value"/>
+            <SET Attribute="ScalarFn" FromValue="upperCase" DocVar="tempElem"/>
+            <SET Attribute="Value" FromValue="{upperCase($thisValue)}" DocVar="tempElem"/>
+          </FOR_EACH>
+          <IF_TEST Test="strlen($atrbt_sortBy) != 0">
+            <THEN>
+              <REQUEST AssignToVar="sysAttrb" Name="readAttribute" ServiceName="BCM_MASTER" ReturnRowCount="yes" MaxRows="{ifElse($exportTableId='',$pgMaxRowsAttribute,'65536')}" StartAtRow="{ifElse($exportTableId='',$paginateStartAttribute,'0')}">
+                <TO_XML SelectList="$thisParam/SELECTED_ID"/>
+                <TO_XML SelectList="$attribCIfilters/*"/>
+                <SORT_ORDER Value="{$atrbt_sortOrder}"/>
+                <SORT_BY Value="{$atrbt_sortBy}"/>
+              </REQUEST>
+            </THEN>
+            <ELSE>
+              <REQUEST AssignToVar="sysAttrb" Name="readAttribute" ServiceName="BCM_MASTER" ReturnRowCount="yes" MaxRows="{ifElse($exportTableId='',$pgMaxRowsAttribute,'65536')}" StartAtRow="{ifElse($exportTableId='',$paginateStartAttribute,'0')}">
+                <TO_XML SelectList="$thisParam/SELECTED_ID"/>
+                <TO_XML SelectList="$attribCIfilters/*"/>
+              </REQUEST>
+            </ELSE>
+          </IF_TEST>
+          <!-- a record with value EnterNew is appended for creation of new Attribute -->
+          <TO_DOCVAR AssignToVar="newattrbt">
+            <ATTRIBUTE>
+              <ID Value="9999"/>
+              <AttributeMnemonicValue Value="EnterNew"/>
+              <AttributeDescription Value="EnterNew"/>
+            </ATTRIBUTE>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='copy1'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="newattrbt">
+                <ATTRIBUTE/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="newattrbt">
+                <ID Value="9999"/>
+                <TO_XML SelectList="$attributeCopyRecord/*"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='create1' and count($sysattrbt/_RESULT/_ERROR) > 0">
+            <THEN>
+              <TO_DOCVAR AssignToVar="newattrbt">
+                <ATTRIBUTE/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="newattrbt">
+                <ID Value="9999"/>
+                <AttributeMnemonicValue Value="{$sysattrbt/REQUEST/CrossReferenceAttributeMnemonicValue/@Value}">
+                </AttributeMnemonicValue>
+                <AttributeDescription Value="{$sysattrbt/REQUEST/CrossReferenceAttributeDescription/@Value}"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="attributeRecords">
+            <TO_XML DocVar="attrbt"/>
+          </TO_DOCVAR>
+          <REMOVE_CHILDREN ChildName="Start_At_Row" DocVar="newattrbt"/>
+          <APPEND_TO_XML DocVar="newattrbt">
+            <Start_At_Row Value="{$thisParam/att_START_COUNT/@Value}"/>
+          </APPEND_TO_XML>
+          <!-- Code for Integrated System And Attribute UI -->
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT TotalRowCount="{$modsys/TOTAL_ROW_COUNT/@Value}">
+              <USER_ACTION Value="zzzzz"/>
+              <SELECTED_ID Value="EnterNew"/>
+              <FILTER_ID Value="{$exportTableId}"/>
+              <INPUT_SYSTEM TotalRowCount="{$modsys/TOTAL_ROW_COUNT/@Value}">
+                <TO_XML SelectList="$Success_Error_Msg/*"/>
+                <Start_At_Row Value="{$paginateStart}"/>
+                <TO_XML DocVar="new"/>
+                <TO_XML SelectList="$modsys/SYSTEM"/>
+              </INPUT_SYSTEM>
+              <INPUT_ATTRIB TotalRowCount="{$sysAttrb/TOTAL_ROW_COUNT/@Value}">
+                <TO_XML SelectList="$Atrbt_Success_Error_Msg/*"/>
+                <TO_XML DocVar="newattrbt"/>
+                <TO_XML SelectList="$sysAttrb/ATTRIBUTE"/>
+              </INPUT_ATTRIB>
+            </ROOT>
+          </TO_DOCVAR>
+          <!-- this controls the accessbility of actions for different user roles -->
+          <REQUEST Name="getAccessLevel" ServiceName="BCM_MASTER" AssignToVar="getAccessRoles">
+            <ACTIVITY_ID Value="edmXRefStructure"/>
+            <USER_ID Value="{$userId}"/>
+          </REQUEST>
+          <!--EXECUTE_SQL_QUERY Value="SELECT A.ACCESS_LEVEL FROM ROLE_TEMPLATE A,USER_PROFILE B,USR_GRP_ROLE_MAP C WHERE A.ACTIVITY_ID= ? AND B.ID= ? AND A.ROLE_ID=C.ROLE_ID AND B.USER_GRP_ID=C.USR_GRP_ID"  AssignToVar="getAccessRoles" ReturnRowCount="yes" StartAtRow="0" MaxRows="1" GetNullTags ="Yes" ServiceName="BCM_MASTER">
+	   	<PARAM Type="string" Value="edmXRefStructure"/>
+	   	<PARAM Type="string" Value="{$userId}"/>
+  	   </EXECUTE_SQL_QUERY-->
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$getAccessRoles/SQL_RESULT/ACCESS_LEVEL"/>
+          </APPEND_TO_XML>
+          <!-- following code is for manupulating the UI -->
+          <IF_TEST Test="$thisParam != null">
+            <THEN>
+              <IF_TEST Test="$userAction='copy'">
+                <THEN>
+                  <REMOVE_CHILDREN ChildName="SELECTED_ID" DocVar="thisParam"/>
+                  <SET DocVar="thisParam" Property="SELECTED_ID" FromValue="EnterNew"/>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$userAction='copy1'">
+                    <THEN>
+                      <REMOVE_CHILDREN ChildName="SELECTED_ATTRBT" DocVar="thisParam"/>
+                      <SET DocVar="thisParam" Property="SELECTED_ATTRBT" FromValue="EnterNew"/>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$userAction='clear' or $userAction='clear1' or $userAction='update' or $userAction='ok' or $userAction='ok1' or $userAction='ShowAttributes' or $userAction='update1' or $userAction='showAssociatedObjects' or $thisParam/BUTTON_ID/@Value = 'SYS_RELOAD'">
+                        <THEN>
+                          <IF_TEST Test="$userAction='clear'">
+                            <THEN>
+                              <SET DocVar="thisParam" Property="SELECTED_ID" FromValue="EnterNew"/>
+                              <REMOVE_CHILDREN ChildName="INPUT_ATTRIB" DocVar="pglFormInput"/>
+                            </THEN>
+                          </IF_TEST>
+                          <IF_TEST Test="$userAction='clear1' or $userAction='ShowAttributes'">
+                            <THEN>
+                              <SET DocVar="thisParam" Property="SELECTED_ATTRBT" FromValue="EnterNew"/>
+                              <APPEND_TO_XML DocVar="pglFormInput">
+                                <TABLE_NAME Value="{concat('System Attribute for ',$thisParam/SELECTED_ID[1]/@Value)}"/>
+                              </APPEND_TO_XML>
+                            </THEN>
+                          </IF_TEST>
+                        </THEN>
+                        <ELSE>
+                          <IF_TEST Test="$userAction='create1' or $userAction='update1'">
+                            <!--  or $userAction='ok1' temporarily -->
+                            <THEN>
+                              <!--                      <SET DocVar="thisParam" Property="SELECTED_ATTRBT" FromValue="EnterNew"/>-->
+                            </THEN>
+                            <ELSE>
+                              <SET DocVar="thisParam" Property="SELECTED_ID" FromValue="EnterNew"/>
+                              <SET DocVar="thisParam" Property="SELECTED_ATTRBT" FromValue="EnterNew"/>
+                            </ELSE>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'create' and count($thisParam/SELECTED_ID) > 1">
+            <THEN>
+              <SET Var="id" FromValue="{$thisParam/SELECTED_ID/@Value}"/>
+              <REMOVE_CHILDREN ChildName="SELECTED_ID" DocVar="thisParam"/>
+              <SET_PROPS Select="$thisParam">
+                <SELECTED_ID Value="EnterNew"/>
+              </SET_PROPS>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'create1' and count($thisParam/SELECTED_ATTRBT) > 1">
+            <THEN>
+              <SET Var="atrbtId" FromValue="{$thisParam/SELECTED_ATTRBT/@Value}"/>
+              <REMOVE_CHILDREN ChildName="SELECTED_ATTRBT" DocVar="thisParam"/>
+              <SET_PROPS Select="$thisParam">
+                <SELECTED_ATTRBT Value="EnterNew"/>
+              </SET_PROPS>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="count($thisParam/SELECTED_ID) > 0">
+            <THEN>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'SYS_RELOAD' or $thisParam/BUTTON_ID/@Value = 'update1' or $thisParam/BUTTON_ID/@Value='create1'">
+                <THEN>
+                  <IF_TEST Test="$thisParam/SELECTED_ID/@Value = 'EnterNew'">
+                    <THEN>
+                      <!-- <SET_PROPS Select="$thisParam">
+                        <SELECTED_ID Value="EnterNew"/>
+                      </SET_PROPS>-->
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <TABLE_NAME Value="System Attribute"/>
+                      </APPEND_TO_XML>
+                      <REMOVE_CHILDREN ChildName="INPUT_ATTRIB" DocVar="pglFormInput"/>
+                    </THEN>
+                    <ELSE>
+                      <!-- correction on pagination issue done on 15March07 -->
+                      <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'SYS_RELOAD'">
+                        <THEN>
+                          <IF_TEST Test="count($thisParam/TABLE) = 0 or $thisParam/TABLE/@Value = '' or $thisParam/TABLE/@Value = null">
+                            <THEN>
+                            </THEN>
+                            <ELSE>
+                              <IF_TEST Test="count($thisParam/TABLE) > 0 and $thisParam/TABLE/@Value = 1">
+                                <THEN>
+                                  <APPEND_TO_XML DocVar="pglFormInput">
+                                    <TABLE_NAME Value="System Attribute"/>
+                                  </APPEND_TO_XML>
+                                  <REMOVE_CHILDREN ChildName="INPUT_ATTRIB" DocVar="pglFormInput"/>
+                                </THEN>
+                              </IF_TEST>
+                            </ELSE>
+                          </IF_TEST>
+                          <IF_TEST Test="$thisParam/innerAction/@Value = 'Filter'">
+                            <THEN>
+                            </THEN>
+                            <ELSE>
+                              <IF_TEST Test="$thisParam/att_START_COUNT/@Value = ' ' or $thisParam/att_START_COUNT/@Value = null">
+                                <THEN>
+                                  <SET_PROPS Select="$thisParam">
+                                    <SELECTED_ID Value="EnterNew"/>
+                                  </SET_PROPS>
+                                  <REMOVE_CHILDREN ChildName="INPUT_ATTRIB" DocVar="pglFormInput"/>
+                                </THEN>
+                              </IF_TEST>
+                            </ELSE>
+                          </IF_TEST>
+                          <IF_TEST Test="count($thisParam/TABLE) = 0 or $thisParam/TABLE/@Value = '' or $thisParam/TABLE/@Value = null">
+                            <THEN>
+							<APPEND_TO_XML DocVar="pglFormInput">
+                                <TABLE_NAME Value="{concat('System Attribute for ',$thisParam/SELECTED_ID[1]/@Value)}"/>
+                              </APPEND_TO_XML>
+                            </THEN>
+                            <ELSE>
+                              <IF_TEST Test="count($thisParam/TABLE) > 0 and $thisParam/TABLE/@Value = 2">
+                                <THEN>
+                                  <APPEND_TO_XML DocVar="pglFormInput">
+                                    <TABLE_NAME Value="{concat('System Attribute for ',$thisParam/SELECTED_ID[1]/@Value)}"/>
+                                  </APPEND_TO_XML>
+                                </THEN>
+                              </IF_TEST>
+                            </ELSE>
+                          </IF_TEST>
+                        </THEN>
+                        <!-- CHECK -->
+                        <ELSE>
+                          <APPEND_TO_XML DocVar="pglFormInput">
+                            <TABLE_NAME Value="{concat('System Attribute for ',$thisParam/SELECTED_ID[1]/@Value)}"/>
+                          </APPEND_TO_XML>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$thisParam/SELECTED_ID/@Value != 'EnterNew'">
+                    <THEN>
+                      <IF_TEST Test="count($pglFormInput/TABLE_NAME) > 0">
+                        <THEN>
+                        </THEN>
+                        <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <TABLE_NAME Value="{concat('System Attribute for ',$thisParam/SELECTED_ID[1]/@Value)}"/>
+                      </APPEND_TO_XML>
+					    </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="count($thisParam/FILTER_TABLE) > 0 and $thisParam/FILTER_TABLE/@Value != '' and $thisParam/FILTER_TABLE/@Value != null and $thisParam/FILTER_TABLE/@Value = 1">
+            <THEN>
+              <SET DocVar="thisParam" Property="SELECTED_ID" FromValue="EnterNew"/>
+              <REMOVE_CHILDREN ChildName="INPUT_ATTRIB" DocVar="pglFormInput"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="Success_Error_Msg">
+            <MSG/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="Atrbt_Success_Error_Msg">
+            <MSG/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="copyRecord">
+            <RECORD/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="attrbt">
+            <INPUT_ATTRIB/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="sysattrbt">
+            <RESPONSE/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="res">
+            <RESPONSE/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='clear'">
+            <THEN>
+              <SET_PROPS Select="$thisParam">
+                <FILTER_SystemMnemonicValue Value=""/>
+                <FILTER_SystemDescription Value=""/>
+                <FILTER_SystemLastModifiedDate Value=""/>
+                <FILTER_SystemLastModifiedBy Value=""/>
+              </SET_PROPS>
+              <IF_TEST Test="$thisParam/FILTER_AttributeMnemonicValue/@Value !='' or $thisParam/FILTER_AttributeLastModifiedDate/@Value!='' or $thisParam/FILTER_AttributeLastModifiedBy/@Value!='' or $thisParam/FILTER_AttributeDescription/@Value!=''">
+                <THEN>
+                  <SET_PROPS Select="$thisParam">
+                    <FILTER_AttributeMnemonicValue Value=""/>
+                    <FILTER_AttributeDescription Value=""/>
+                    <FILTER_AttributeLastModifiedDate Value=""/>
+                    <FILTER_AttributeLastModifiedBy Value=""/>
+                  </SET_PROPS>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='clear1'">
+            <THEN>
+              <SET_PROPS Select="$thisParam">
+                <FILTER_AttributeMnemonicValue Value=""/>
+                <FILTER_AttributeDescription Value=""/>
+                <FILTER_AttributeLastModifiedDate Value=""/>
+                <FILTER_AttributeLastModifiedBy Value=""/>
+              </SET_PROPS>
+              <IF_TEST Test="$thisParam/FILTER_SystemMnemonicValue/@Value !='' or $thisParam/FILTER_SystemDescription/@Value!='' or $thisParam/FILTER_SystemLastModifiedDate/@Value!='' or $thisParam/FILTER_SystemLastModifiedBy/@Value!=''">
+                <THEN>
+                  <SET_PROPS Select="$thisParam">
+                    <FILTER_SystemMnemonicValue Value=""/>
+                    <FILTER_SystemDescription Value=""/>
+                    <FILTER_SystemLastModifiedDate Value=""/>
+                    <FILTER_SystemLastModifiedBy Value=""/>
+                  </SET_PROPS>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='update' or $userAction='ok' or $userAction='copy'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="input">
+                <COLLATE_REQUEST>
+                  <INPUT>
+                    <TO_XML SelectList="$pglFormOutput/SystemName"/>
+                    <TO_XML SelectList="$pglFormOutput/SystemDescription"/>
+                    <TO_XML SelectList="$pglFormOutput/SystemMnemonicValue"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="SYSTEM_INFO">
+                    <SystemName/>
+                    <SystemDescription/>
+                    <SystemMnemonicValue/>
+                  </COLLATE_LIST>
+                </COLLATE_REQUEST>
+              </TO_DOCVAR>
+              <COLLATE_XML Var="input" AssignToVar="lines"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='copy'">
+            <THEN>
+              <FOR_EACH CurrentElement="cur" SelectList="$lines/SYSTEM_INFO[SystemMnemonicValue/@Value = $pglFormOutput/SELECTED_ID/@Value]">
+                <TO_DOCVAR AssignToVar="copyRecord">
+                  <RECORD>
+                    <SystemMnemonicValue Value="{$cur/SystemMnemonicValue/@Value}"/>
+                    <SystemDescription Value="{$cur/SystemDescription/@Value}"/>
+                  </RECORD>
+                </TO_DOCVAR>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='ok1' or $userAction='update1' or $userAction='copy1'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="input">
+                <COLLATE_REQUEST>
+                  <INPUT>
+                    <TO_XML SelectList="$pglFormOutput/AttributeMnemonicValue"/>
+                    <TO_XML SelectList="$pglFormOutput/AttributeDescription"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="ATTRIBUTE_INFO">
+                    <AttributeMnemonicValue/>
+                    <AttributeDescription/>
+                  </COLLATE_LIST>
+                </COLLATE_REQUEST>
+              </TO_DOCVAR>
+              <COLLATE_XML Var="input" AssignToVar="attrbtlines"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='copy1'">
+            <THEN>
+              <FOR_EACH CurrentElement="cur" SelectList="$attrbtlines/ATTRIBUTE_INFO[AttributeMnemonicValue/@Value = $pglFormOutput/SELECTED_ATTRBT/@Value]">
+                <TO_DOCVAR AssignToVar="attributeCopyRecord">
+                  <RECORD>
+                    <AttributeMnemonicValue Value="{$cur/AttributeMnemonicValue/@Value}"/>
+                    <AttributeDescription Value="{$cur/AttributeDescription/@Value}"/>
+                  </RECORD>
+                </TO_DOCVAR>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='ManageObject'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ManageSystem'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='copy'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="System &amp; Attribute" Description=""/>
+          <next_node Name="done4" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Create'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Delete'">
+        <next_nodes OutputVar="{pglFormOutput,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Modify'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='create'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Create" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='save'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='copy1'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="System &amp; Attribute" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='create1'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="createAttribute" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Delete1'">
+        <next_nodes OutputVar="{pglFormOutput,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='save1'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ShowAttributes'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="System &amp; Attribute" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='clear'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="System &amp; Attribute" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='update'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Update" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='showAssociatedObjects'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='clear1'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="System &amp; Attribute" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='update1'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="updateAttribute" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='EnterSystemDescription'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="systemDescription" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ok'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Delete" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ok1'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="deleteAttribute" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='EnterAttributeDescription'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="attributeDescription" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='table1'">
+        <next_nodes OutputVar="{pglFormOutput,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done4">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <task Name="Create" InputVar="{nodeInput,xml}">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="createInfo">
+            <INFO>
+              <ACTIONTOBDONE Value="INSERT"/>
+              <SystemName Value="{$nodeInput/SystemName[1]/@Value}"/>
+              <SystemDescription Value="{ifElse($nodeInput/SystemDescription[1]/@Value = 'EnterNew','', $thisParam/SystemDescription[1]/@Value)}"/>
+              <SystemMnemonicValue Value="{ifElse($nodeInput/SystemMnemonicValue[1]/@Value = 'EnterNew','', $thisParam/SystemMnemonicValue[1]/@Value)}"/>
+            </INFO>
+          </TO_DOCVAR>
+          <REQUEST Name="CreateActivateSystemUI" AssignToVar="res" ServiceName="BCM_MASTER" HandleException="yes">
+            <TO_XML SelectList="$createInfo/*"/>
+          </REQUEST>
+          <IF_TEST Test="$res/SCENARIO_ID/@Value != null and $res/SystemMnemonicValue/@Value != null">
+            <THEN>
+              <APPEND_TO_XML DocVar="Success_Error_Msg">
+                <_SUCCESS Value="System Added Successfully!" Details="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$res/@Status = 'Success' and $res/MODULE/@Value = 'Activate'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="Success_Error_Msg">
+                    <_SUCCESS Value="System Activated Successfully!" Details="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$res/@Status = 'Error'">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="Success_Error_Msg">
+                        <_ERRORS Value="SEVERE_ERROR">
+                          <_ERROR Value="{$res/@Description}" Severity="SEVERE_ERROR"/>
+                        </_ERRORS>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="Success_Error_Msg">
+                        <_ERRORS Value="SEVERE_ERROR">
+                          <_ERROR Value="{$res/_RESULT/_ERROR/@Value}" Severity="SEVERE_ERROR"/>
+                        </_ERRORS>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="System &amp; Attribute" Description=""/>
+      </next_nodes>
+    </task>
+    <task Name="Update" InputVar="{nodeInput,xml}">
+      <actions>
+        <action>
+          <FOR_EACH CurrentElement="cur" SelectList="$lines/SYSTEM_INFO[SystemMnemonicValue/@Value = $nodeInput/SELECTED_ID/@Value]">
+            <!--    <FOR_EACH CurrentElement="curLine" SelectList="$lines/SYSTEM_INFO[SystemMnemonicValue/@Value = $cur/SystemMnemonicValue/@Value]">-->
+            <REQUEST Name="UpdateSystem" AssignToVar="res" ServiceName="BCM_MASTER" HandleException="yes">
+              <UPDATE_PROPERTIES>
+                <SystemName Value="{$cur/SystemName/@Value}"/>
+                <SystemDescription Value="{$cur/SystemDescription/@Value}"/>
+              </UPDATE_PROPERTIES>
+              <DOCUMENT_CONTEXT>
+                <SystemMnemonicValue Value="{$cur/SystemMnemonicValue/@Value}"/>
+              </DOCUMENT_CONTEXT>
+              <ACTIONTOBDONE Value="UPDATE"/>
+            </REQUEST>
+            <!--    </FOR_EACH>-->
+          </FOR_EACH>
+          <IF_TEST Test="$res/@Status = 'Success' and $res/@RowCount = 1">
+            <THEN>
+              <APPEND_TO_XML DocVar="Success_Error_Msg">
+                <_SUCCESS Value="System Updated Successfully!" Details="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$res/@Status = 'Error'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="Success_Error_Msg">
+                    <_ERRORS Value="SEVERE_ERROR">
+                      <_ERROR Value="{$res/@Description}" Severity="SEVERE_ERROR"/>
+                    </_ERRORS>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="Success_Error_Msg">
+                    <_ERRORS Value="SEVERE_ERROR">
+                      <_ERROR Value="{$res/_RESULT/_ERROR/@Value}" Severity="SEVERE_ERROR"/>
+                    </_ERRORS>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="System &amp; Attribute" Description=""/>
+      </next_nodes>
+    </task>
+    <task Name="Delete" InputVar="{nodeInput,xml}">
+      <actions>
+        <action>
+          <FOR_EACH CurrentElement="cur" SelectList="$lines/SYSTEM_INFO[SystemMnemonicValue/@Value = $nodeInput/SELECTED_ID/@Value]">
+            <REQUEST Name="DeleteSystem" AssignToVar="res" ServiceName="BCM_MASTER" HandleException="yes">
+              <ACTIONTOBDONE Value="DELETE"/>
+              <TO_XML SelectList="$cur/*"/>
+            </REQUEST>
+            <TO_DOCVAR AssignToVar="field">
+              <FIELD>
+                <TO_XML DocVar="cur"/>
+              </FIELD>
+            </TO_DOCVAR>
+          </FOR_EACH>
+          <IF_TEST Test="$res/_RESULT/_ERROR/@Value != null">
+            <THEN>
+              <APPEND_TO_XML DocVar="Success_Error_Msg">
+                <_ERRORS Value="SEVERE_ERROR">
+                  <_ERROR Value="{$res/_RESULT/_ERROR/@Value}" Severity="SEVERE_ERROR"/>
+                </_ERRORS>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$res/@Status = 'Error'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="Success_Error_Msg">
+                    <_ERRORS Value="SEVERE_ERROR">
+                      <_ERROR Value="{$res/@Description}" Severity="SEVERE_ERROR"/>
+                    </_ERRORS>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="Success_Error_Msg">
+                    <_SUCCESS Value="System Deleted Successfully!" Details="true"/>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="System &amp; Attribute" Description=""/>
+      </next_nodes>
+    </task>
+    <task Name="createAttribute" InputVar="{nodeInput,xml}">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="createInfo">
+            <INFO>
+<!--               <ACTIONTOBDONE Value="INSERT"/>
+ -->              <AttributeMnemonicValue Value="{ifElse($nodeInput/AttributeMnemonicValue[1]/@Value = 'EnterNew','', $thisParam/AttributeMnemonicValue[1]/@Value)}"/>
+              <AttributeDescription Value="{ifElse($nodeInput/AttributeDescription[1]/@Value = 'EnterNew','', $thisParam/AttributeDescription[1]/@Value)}"/>
+              <AttributeName Value="{ifElse($nodeInput/AttributeDescription[1]/@Value = 'EnterNew','', $thisParam/AttributeDescription[1]/@Value)}"/>
+              <SystemMnemonicValue Value="{$nodeInput/SELECTED_ID/@Value}"/>
+            </INFO>
+          </TO_DOCVAR>
+          <REQUEST Name="CreateActivateAttributeUI" AssignToVar="sysattrbt" ServiceName="BCM_MASTER" HandleException="yes">
+            <TO_XML SelectList="$createInfo/*"/>
+          </REQUEST>
+          <IF_TEST Test="$sysattrbt/SCENARIO_ID/@Value != null and $sysattrbt/AttributeMnemonicValue/@Value != null">
+            <THEN>
+              <APPEND_TO_XML DocVar="Atrbt_Success_Error_Msg">
+                <_SUCCESS Value="Attribute Added Successfully!" Details="true"/>
+                <TO_XML SelectList="$attributeRecords/*"/>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$sysattrbt/@Status = 'Success' and $sysattrbt/MODULE/@Value = 'Activate'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="Atrbt_Success_Error_Msg">
+                    <_SUCCESS Value="Attribute Activated Successfully!" Details="true"/>
+                    <TO_XML SelectList="$attributeRecords/*"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$sysattrbt/@Status = 'Error'">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="Atrbt_Success_Error_Msg">
+                        <_ERRORS Value="SEVERE_ERROR">
+                          <_ERROR Value="{$sysattrbt/@Description}" Severity="SEVERE_ERROR"/>
+                        </_ERRORS>
+                        <TO_XML SelectList="$attributeRecords/*"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="Atrbt_Success_Error_Msg">
+                        <_ERRORS Value="SEVERE_ERROR">
+                          <_ERROR Value="{$sysattrbt/_RESULT/_ERROR/@Value}" Severity="SEVERE_ERROR"/>
+                        </_ERRORS>
+                        <TO_XML SelectList="$attributeRecords/*"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="System &amp; Attribute" Description=""/>
+      </next_nodes>
+    </task>
+    <task Name="updateAttribute" InputVar="{nodeInput,xml}">
+      <actions>
+        <action>
+          <FOR_EACH CurrentElement="cur" SelectList="$attrbtlines/ATTRIBUTE_INFO[AttributeMnemonicValue/@Value = $nodeInput/SELECTED_ATTRBT/@Value]">
+            <REQUEST Name="UpdateAttribute" AssignToVar="res1" ServiceName="BCM_MASTER" HandleException="yes">
+              <UPDATE_PROPERTIES>
+                <AttributeName Value="{$cur/AttributeMnemonicValue/@Value}"/>
+                <AttributeDescription Value="{$cur/AttributeDescription/@Value}"/>
+              </UPDATE_PROPERTIES>
+              <DOCUMENT_CONTEXT>
+                <AttributeMnemonicValue Value="{$cur/AttributeMnemonicValue/@Value}"/>
+                <SystemMnemonicValue Value="{$nodeInput/SELECTED_ID/@Value}"/>
+              </DOCUMENT_CONTEXT>
+              <ACTIONTOBDONE Value="UPDATE"/>
+            </REQUEST>
+            <!--    </FOR_EACH>-->
+          </FOR_EACH>
+          <IF_TEST Test="$res1/@Status = 'Success' and $res1/@RowCount = 1">
+            <THEN>
+              <APPEND_TO_XML DocVar="Atrbt_Success_Error_Msg">
+                <_SUCCESS Value="Attribute Updated Successfully!" Details="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$res1/@Status = 'Error'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="Atrbt_Success_Error_Msg">
+                    <_ERRORS Value="SEVERE_ERROR">
+                      <_ERROR Value="{$res1/@Description}" Severity="SEVERE_ERROR"/>
+                    </_ERRORS>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="Atrbt_Success_Error_Msg">
+                    <_ERRORS Value="SEVERE_ERROR">
+                      <_ERROR Value="{$res1/_RESULT/_ERROR/@Value}" Severity="SEVERE_ERROR"/>
+                    </_ERRORS>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="System &amp; Attribute" Description=""/>
+      </next_nodes>
+    </task>
+    <task Name="deleteAttribute" InputVar="{nodeInput,xml}">
+      <actions>
+        <action>
+          <FOR_EACH CurrentElement="cur" SelectList="$attrbtlines/ATTRIBUTE_INFO[AttributeMnemonicValue/@Value = $nodeInput/SELECTED_ATTRBT/@Value]">
+            <REQUEST Name="DeleteAttribute" Action="DELETE" AssignToVar="sysattrbt" ServiceName="BCM_MASTER" HandleException="yes">
+              <!--      <ACTIONTOBDONE Value="DELETE"/>-->
+              <TO_XML SelectList="$cur/*"/>
+              <AttributeName Value="{$cur/AttributeMnemonicValue/@Value}"/>
+              <SystemMnemonicValue Value="{$nodeInput/SELECTED_ID/@Value}"/>
+            </REQUEST>
+          </FOR_EACH>
+          <IF_TEST Test="$sysattrbt/_RESULT/_ERROR/@Value !=null">
+            <THEN>
+              <APPEND_TO_XML DocVar="Atrbt_Success_Error_Msg">
+                <_ERRORS Value="SEVERE_ERROR">
+                  <_ERROR Value="{$sysattrbt/_RESULT/_ERROR/@Value}" Severity="SEVERE_ERROR"/>
+                </_ERRORS>
+              </APPEND_TO_XML>
+              <PRINTLN Value="----------------Print attrbt {$attrbt}------------------"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$sysattrbt/@Status = 'Error'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="Atrbt_Success_Error_Msg">
+                    <_ERRORS Value="SEVERE_ERROR">
+                      <_ERROR Value="{$sysattrbt/@Description}" Severity="SEVERE_ERROR"/>
+                    </_ERRORS>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="Atrbt_Success_Error_Msg">
+                    <_SUCCESS Value="Attribute Deleted Successfully!" Details="true"/>
+                    <TO_XML SelectList="$attributeRecords/*"/>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="System &amp; Attribute" Description=""/>
+      </next_nodes>
+    </task>
+    <sub_workflow Name="systemDescription" InputVar="{nodeInput,xml}" Workflow="uiWfXrefManageSystemDescription">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="System &amp; Attribute" Description=""/>
+      </next_nodes>
+      <input>
+        <TO_XML DocVar="thisParam"/>
+      </input>
+      <output AssignToVar="sysdescOutput"/>
+    </sub_workflow>
+    <sub_workflow Name="attributeDescription" InputVar="{nodeInput,xml}" Workflow="uiWfXrefManageAttributeDescription">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="System &amp; Attribute" Description=""/>
+      </next_nodes>
+      <input>
+        <TO_XML DocVar="thisParam"/>
+      </input>
+      <output AssignToVar="attributeOutput"/>
+    </sub_workflow>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="79,149" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <mgcnode Name="System &amp; Attribute" location="287,142" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="System &amp; Attribute" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done4 location="502,139" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done4" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done4>
+      <Create location="106,85" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Create" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+      </Create>
+      <Update location="407,8" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Update" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+      </Update>
+      <Delete location="486,82" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Delete" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+      </Delete>
+      <createAttribute location="135,211" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="createAttribute" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+      </createAttribute>
+      <updateAttribute location="292,305" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="updateAttribute" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+      </updateAttribute>
+      <deleteAttribute location="473,206" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="deleteAttribute" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+      </deleteAttribute>
+      <systemDescription location="397,280" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="systemDescription" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </systemDescription>
+      <attributeDescription location="185,283" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="attributeDescription" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </attributeDescription>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="111,171" endpoint="287,165" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="241,169,4,4" ctrlRect2="179,184,4,4"/>
+      </start2>
+      <mgcnode Name="System &amp; Attribute">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="295,142" endpoint="303,142" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="245,41,4,4" ctrlRect2="209,87,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="319,153" endpoint="502,161" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="453,151,4,4" ctrlRect2="362,159,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="287,153" endpoint="138,107" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="174,151,4,4" ctrlRect2="248,105,4,4" textRect="197,87,117,9"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="295,142" endpoint="303,142" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="293,65,4,4" ctrlRect2="315,72,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="287,175" endpoint="167,233" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="195,173,4,4" ctrlRect2="255,231,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="295,142" endpoint="303,142" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="259,36,4,4" ctrlRect2="263,-20,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="287,175" endpoint="287,165" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="198,220,4,4" ctrlRect2="116,182,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="311,142" endpoint="423,54" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="309,74,4,4" ctrlRect2="421,118,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="295,188" endpoint="303,188" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="292,204,4,4" ctrlRect2="347,233,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="311,188" endpoint="308,305" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="309,273,4,4" ctrlRect2="306,215,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="311,188" endpoint="413,280" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="309,255,4,4" ctrlRect2="411,209,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="319,153" endpoint="486,104" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="441,151,4,4" ctrlRect2="358,102,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="319,175" endpoint="473,228" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="432,173,4,4" ctrlRect2="355,226,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="295,188" endpoint="201,283" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="293,256,4,4" ctrlRect2="199,209,4,4"/>
+      </mgcnode>
+      <Create>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="138,107" endpoint="287,165" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="247,105,4,4" ctrlRect2="173,163,4,4"/>
+      </Create>
+      <Update>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="423,54" endpoint="303,142" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="421,118,4,4" ctrlRect2="301,74,4,4"/>
+      </Update>
+      <Delete>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="486,104" endpoint="319,165" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="360,102,4,4" ctrlRect2="443,163,4,4"/>
+      </Delete>
+      <createAttribute>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="167,233" endpoint="287,165" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="255,231,4,4" ctrlRect2="195,163,4,4"/>
+      </createAttribute>
+      <updateAttribute>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="308,305" endpoint="303,188" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="306,216,4,4" ctrlRect2="301,274,4,4"/>
+      </updateAttribute>
+      <deleteAttribute>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="473,228" endpoint="319,165" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="356,226,4,4" ctrlRect2="433,163,4,4"/>
+      </deleteAttribute>
+      <systemDescription>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="413,280" endpoint="303,188" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="411,209,4,4" ctrlRect2="301,255,4,4"/>
+      </systemDescription>
+      <attributeDescription>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="201,283" endpoint="303,188" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="199,211,4,4" ctrlRect2="301,258,4,4"/>
+      </attributeDescription>
+    </mgcconnectors>
+    <mgcgroups>
+      <group rect="288,142,32,46" font="Verdana,0,9" textColor="80,80,80" groupFillColor="192,192,192" groupBorderColor="64,64,64" groupBorderStroke="1.5,2,0,10.0,null,0.0"/>
+      <group rect="288,142,32,46" font="Verdana,0,9" textColor="80,80,80" groupFillColor="192,192,192" groupBorderColor="64,64,64" groupBorderStroke="1.5,2,0,10.0,null,0.0"/>
+    </mgcgroups>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="8,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="11" textAttrsKey0="Atrbt_Success_Error_Msg : xml" textAttrsKey1="Success_Error_Msg : xml" textAttrsKey2="attrbtlines : xml" textAttrsKey3="attributeCopyRecord : xml" textAttrsKey4="attributeRecords : xml" textAttrsKey5="copyRecord : xml" textAttrsKey6="lines : xml" textAttrsKey7="newattrbt : xml" textAttrsKey8="oldSystemInfo : xml" textAttrsKey9="paginateStart : int" textAttrsKey10="... and 3 more">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="Success_Error_Msg" Type="xml" Comment=""/>
+        <variable Name="Atrbt_Success_Error_Msg" Type="xml" Comment=""/>
+        <variable Name="attrbtlines" Type="xml" Comment=""/>
+        <variable Name="attributeCopyRecord" Type="xml" Comment=""/>
+        <variable Name="attributeRecords" Type="xml" Comment=""/>
+        <variable Name="copyRecord" Type="xml" Comment=""/>
+        <variable Name="lines" Type="xml" Comment=""/>
+        <variable Name="newattrbt" Type="xml" Comment=""/>
+        <variable Name="oldSystemInfo" Type="xml" Comment=""/>
+        <variable Name="paginateStart" Type="int" Comment=""/>
+        <variable Name="pgMaxRows" Type="int" Comment=""/>
+        <variable Name="res" Type="xml" Comment=""/>
+        <variable Name="sysattrbt" Type="xml" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

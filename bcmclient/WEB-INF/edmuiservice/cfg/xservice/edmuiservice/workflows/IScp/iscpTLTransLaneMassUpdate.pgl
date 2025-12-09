@@ -1,0 +1,130 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="TLTransLaneMassUpdate.pgl">
+  <ui:container id="topContainer" scrollable="true" collapsable="true">
+    <ui:step id="c1" displayText="Transportation Lane Mass Update Selections">
+      <!--      <ui:validation anyFieldIsRequired="false" successMessage="{$root/MESSAGE/SUCCESS_MESSAGE/@Value}"/>-->
+      <!--      <ui:hidden-field id="SELECTED_TA_ID" name="SELECTED_TA_ID"/>
+      <ui:hidden-field id="PREV_START_COUNT" name="PREV_START_COUNT"/>-->
+      <ui:table id="TLaneTable" name="TLaneTable" displayText="Transportation Lanes" displayTextNoRecords="Not found" rowSrc="P_TransportLane" select="$root" collapsable="false" displayCondition="{$root/ABC/displayTableFlag/@Value ='true'}">
+        <ui:field-group>
+          <ui:entry-field displayText="Lane ID " name="TransportLaneIdentifier" dataType="Number" Decimals="0" editable="false" unFormat="true" />
+          <ui:display-field displayText="Lane Name" name="TransportLaneName" />
+          <ui:display-field displayText="Source Location Number" name="OriginLocationIdn" maxlength="13" />
+          <ui:display-field displayText="Source Location Description" name="SrcLocationName" />
+          <ui:display-field displayText="Destination Location Number" name="DestinationLocationIdn" maxlength="13" />
+          <ui:display-field displayText="Destination Location Description" name="DestnLocationName" />
+          <ui:display-field displayText="Transport Mode" name="TransMode" />
+          <ui:display-field displayText="Lane Duration (hours)" name="laneDuration" dataType="Number" maxlength="13" unFormat="true" />
+          <ui:display-field displayText="Lane Type" name="lanetype" />
+          <ui:display-field displayText="Lane Start Date" name="TransportLaneStartDate" dataType="Date" />
+          <ui:display-field displayText="Lane End Date" name="TransportLaneEndDate" dataType="Date" />
+          <ui:display-field displayText="Comments" name="TransportLaneCommentText" />
+        </ui:field-group>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:container id="bottomContainer" displayText="Mass Update" scrollable="true">
+    <ui:step id="c1" displayText="Mass Update" editable="true">
+      <ui:validation successMessage="{$root/SUCCESS_MESSAGE/@Value}" />
+      <ui:field-group id="main" rows="2">
+        <ui:field-group columns="6" id="fieldGroups1">
+          <ui:field-group id="leftFields">
+            <ui:checkbox id="chkLaneDuration" name="chkLaneDuration" onClick="javascript:valChk();" />
+          </ui:field-group>
+          <ui:field-group id="middleFields" columns="12" select="$root/REQUEST">
+            <ui:entry-field displayText="Lane Duration" name="upd_DefaultLaneDuration" dataType="Number" decimals="0" minValue="0" />
+            <ui:checkbox id="chkLaneType" name="chkLaneType" onClick="javascript:valChk();" />
+            <ui:dropdown displayText="Lane Type" name="upd_DefaultLaneType" optionSrc="$root/TL_CLASS/*" selectOne="true" />
+          </ui:field-group>
+        </ui:field-group>
+        <ui:field-group columns="8" id="fieldGroups2" select="$root/REQUEST">
+          <ui:field-group id="leftFields">
+            <ui:textarea name="TransportLaneCommentText" displayText="Comments" required="true" />
+          </ui:field-group>
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons>
+        <!-- RIC: 240988 Praneeth - Cancel button wording changes request - Start -->
+        <ui:button displayText="Back to Search" id="cancel" validate="false" />
+        <!-- RIC: 240988 Praneeth - Cancel button wording changes request - End -->
+        <ui:button displayText="Save" id="Save" name="Save" disabled="{count($root/REQUEST/*/_ERRORS) = 0}" onClick="javascript:valSave();" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>function valChk(){	
+		//core_alert("in CHK!");
+		var chkLaneDuration = document.getElementsByName("chkLaneDuration");
+			var chkLaneType = document.getElementsByName("chkLaneType");
+			
+
+		
+			if(chkLaneDuration[0].checked || chkLaneType[0].checked)
+		{
+				//core_alert("in CHK!");
+				 i2uiToggleButtonState('Save', 'enabled');
+			}		
+		else{
+			 i2uiToggleButtonState('Save', 'disabled');
+			}		
+		}
+		
+		function valSave(){
+		var chkLaneDuration = document.getElementsByName("chkLaneDuration");
+		var chkLaneType = document.getElementsByName("chkLaneType");
+		var DefaultLaneDuration = document.form.upd_DefaultLaneDuration.value;				
+		var DefaultLaneType = document.form.upd_DefaultLaneType.value;		
+		var chkComments = document.form.TransportLaneCommentText.value;	
+		var canSave = "false";
+		if(chkLaneDuration[0].checked || chkLaneType[0].checked)
+		{
+		
+			 if(chkLaneType[0].checked &amp;&amp; DefaultLaneType.length == 0)
+		{
+		// Check Lane Type has been entered
+		core_alert("Please enter the value for Lane Type!");
+				canSave = "false";
+				return;				
+		}
+		else{
+						canSave = "true";
+		}		
+	if(chkLaneDuration[0].checked &amp;&amp; DefaultLaneDuration &lt; 0) {
+		
+		       core_alert("Lane Duration should be a positive integer!");
+
+		      canSave = "false";
+		       return;
+		}	
+		
+			else{
+						canSave = "true";
+		}		
+	
+		if(trimString(chkComments).length &gt; 255){
+		core_alert("Comments should not be greater than 255 characters!");
+				canSave = "false";
+				return;				
+		}			
+				if(trimString(chkComments).length == 0){
+		core_alert("Please enter comments before saving!");
+				canSave = "false";
+				return;				
+    }	
+		else{
+						canSave = "true";
+		}		
+	}
+
+		else{
+		core_alert("Please enter Values for at least one of Default Lane Duration or Default Lane Type");
+		canSave = "false";
+		}
+		if(canSave == "false"){
+		}
+		else{
+							document.form.BUTTON_ID.value = 'Save'; 
+							document.form.action = 'view.x2ps';
+							document.form.submit();  		
+        }		
+		}</ui:script>
+</ui:page-group>
+

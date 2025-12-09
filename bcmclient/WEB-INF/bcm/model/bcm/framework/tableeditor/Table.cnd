@@ -1,0 +1,488 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="init">
+    <xapl:variable name="currentDbTable" resolver="session" global="true"/>
+    <xapl:variable name="pk" resolver="session" global="true"/>
+    <xapl:variable name="hiddenColumns" resolver="session" global="true"/>
+    <xapl:variable name="currentTablesOptionData" resolver="session" global="true"/>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="clear">
+    <xapl:set-variable name="currentDbTable"/>
+  </x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getDbTable">
+    <xapl:return>
+      <xapl:value-of select="$currentDbTable"/>
+    </xapl:return>
+  </x2:command>
+
+   <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="applyRoleFieldAccess">
+
+   <!-- TODO:: skip if override flag is not set on the document -->
+  
+  <!--EQ:567336-->
+	   <xapl:print select="$this"/>
+	   <xapl:choose>
+	   	<!-- Check For AUDIT Trail Tables-->
+	 		<xapl:when test="substring-after($this/TABLE_NAME[1]/@Value,'_') = 'AT'">
+	 			<xapl:print>Check For AUDIT Trail Tables</xapl:print>
+	 			<xapl:if test="count($metaData/SERVICE[@Name=$this/SERVICE[1]/@Value]/DOCUMENTS/DOCUMENT[@Name = $this/TABLE_NAME[1]/@Value]) > 1">
+	 				<docutil:remove select="{$metaData/SERVICE[@Name=$this/SERVICE[1]/@Value]/DOCUMENTS/DOCUMENT[@Name = $this/TABLE_NAME[1]/@Value and (not(@AuditTrail) or @AuditTrail!='true')]}"/>
+	 				<xapl:print select="$metaData/SERVICE[@Name=$this/SERVICE[1]/@Value]/DOCUMENTS/DOCUMENT[@Name = $this/TABLE_NAME[1]/@Value]"/>
+	 			</xapl:if>
+	 		</xapl:when>
+	 		<!-- Check For AUDIT Trail Tables-->
+	 		<xapl:otherwise>
+	 		</xapl:otherwise>
+	 	</xapl:choose>
+	<!--EQ:567336-->
+	
+	<xapl:variable name="currentDocument">
+    <xapl:clone select="{$metaData/SERVICE[@Name=$this/SERVICE[1]/@Value]/DOCUMENTS/DOCUMENT[ @Name = $this/TABLE_NAME[1]/@Value ][1]}"/>
+  </xapl:variable>
+
+    <xapl:variable name="xCoreSrvcName">
+      <x2:get-xcore-service-name name="{$this/SERVICE[1]/@Value}"/>
+    </xapl:variable>
+
+    
+	<xapl:variable name="userRole">
+		<identity:get-property name="SINGLE_USER_ROLE" />
+	</xapl:variable>
+
+
+   <!-- metaData Role Level-->
+	 <xapl:variable name="responses">
+      <xcore:execute-method name="//UserSecurity/getFieldLevelAccess" entireResponse="true">
+	   <ROLE_ID Value="{$userRole}"/>
+	   <SERVICE_NAME Value="{$xCoreSrvcName}"/>
+	   <DOCUMENT_NAME Value="{$this/TABLE_NAME/@Value}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+	
+
+  <xapl:if test="count($responses/RESPONSE/PROPERTIES/PROPERTY) > 0">
+	 <xapl:for-each select="$responses/RESPONSE/PROPERTIES/PROPERTY/PRESENTATION" varName="prop">
+		  <xapl:variable name="currDocProp">
+			<xapl:value-of select="$currentDocument/PROPERTY[@Name = $prop/NAME/@Value]/PRESENTATION"/>
+		  </xapl:variable>
+		  <docutil:set select="$currDocProp">
+		   <xapl:choose>
+			<xapl:when test="$prop/EDITABLE/@Value = 'true'">
+			<EDITABLE Value="yes"/>
+			</xapl:when>
+			<xapl:otherwise>
+			<EDITABLE Value="no"/>
+			</xapl:otherwise>
+			</xapl:choose>
+		  </docutil:set>
+		<xapl:if test="$prop/VIEW/@Value='false'">
+        	<docutil:remove select="$currentDocument/PROPERTY[@Name = $prop/NAME/@Value]"/>
+    	</xapl:if>
+	 </xapl:for-each>
+  </xapl:if>
+  <xapl:return>
+	<xapl:value-of select="$currentDocument"/>
+  </xapl:return>
+</x2:command>
+
+  
+  <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="create">
+    <x2:param name="pTableName" select="{$this/TABLE_NAME[1]/@Value}"/>
+
+	<xapl:variable name="currentDocument">
+    <x2:execute command="bcm.framework.tableeditor.Table:applyRoleFieldAccess">
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+    </xapl:variable>
+
+
+    <xapl:variable name="displayName">
+      <xapl:value-of select="{$currentDocument/@DisplayName}"/>
+    </xapl:variable>
+    <xapl:variable name="surrogateKey">
+      <xapl:choose>
+        <xapl:when test="count($currentDocument/@SurrogateKey) > 0">
+          <xapl:value-of select="{$currentDocument/@SurrogateKey}"/>
+        </xapl:when>
+        <xapl:otherwise>
+          <xapl:value-of select="'no'"/>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+    <!-- Set Columns and table Name -->
+    <xapl:set-variable name="currentDbTable">
+      <CURRENT_TABLE Name="{$pTableName}">
+        <TABLE_NAME Value="{$pTableName}" DisplayName="{$displayName}" SurrogateKey="{$surrogateKey}" Service="{$this/SERVICE[1]/@Value}">
+          <COLUMNS>
+            <xapl:value-of select="{$currentDocument/*}"/>
+          </COLUMNS>
+          <ROWS/>
+        </TABLE_NAME>
+      </CURRENT_TABLE>
+    </xapl:set-variable>
+    <!--Added to copy the presentation from source table for audit trail tables - chandru-->
+    <xapl:variable name="sourceDocument"/>
+    <xapl:if test="$currentDocument/@AuditTrail = 'true' ">
+      <xapl:variable name="sourceDocumentName">
+        <xapl:value-of select="substring-before($pTableName, '_AT')"/>
+      </xapl:variable>
+      <xapl:set-variable name="sourceDocument">
+        <xapl:value-of select="{$metaData/SERVICE[@Name=$this/SERVICE[1]/@Value]/DOCUMENTS/DOCUMENT[ @Name = $sourceDocumentName ]}"/>
+      </xapl:set-variable>
+      <xapl:for-each varName="prop" select="$sourceDocument/PROPERTY">
+        <docutil:set select="$currentDbTable/TABLE_NAME/COLUMNS/PROPERTY[@Name = $prop/@Name]">
+          <xapl:value-of select="$prop/*"/>
+        </docutil:set>
+        <docutil:set select="$currentDbTable/TABLE_NAME/COLUMNS/PROPERTY[@Name = $prop/@Name]/@DisplayName">
+          <xapl:value-of select="$prop/@DisplayName"/>
+        </docutil:set>
+      </xapl:for-each>
+    </xapl:if>
+    <!--sorting properties by sequence -->
+    <docutil:sort select="$currentDbTable/TABLE_NAME/COLUMNS" sort-element="PROPERTY" sort-by="PRESENTATION/SEQUENCE/@Value" data-type="number" order="ascending"/>
+    <!-- set the audit trail attribute to the table if so -->
+    <xapl:if test="$currentDocument/@AuditTrail = 'true' ">
+      <docutil:set select="$currentDbTable/TABLE_NAME/@AuditTrail">true</docutil:set>
+    </xapl:if>
+    <!-- Authorizations start Anish-->
+    <xapl:variable name="xCoreSrvcName">
+      <x2:get-xcore-service-name name="{$this/SERVICE[1]/@Value}"/>
+    </xapl:variable>
+    <xapl:variable name="allDocActivityName" select="{concat( $xCoreSrvcName , ':' , 'All' )}"/>
+    <x2:execute command="bcm.framework.authorization.auth_controller:setAccessibilityOnDocument">
+      <x2:with-param name="documentObj" select="{$currentDbTable}"/>
+      <x2:with-param name="serviceName" select="{$this/SERVICE[1]/@Value}"/>
+      <x2:with-param name="xCoreSrvcName" select="{$xCoreSrvcName}"/>
+      <x2:with-param name="allDocActivityName" select="{$allDocActivityName}"/>
+    </x2:execute>
+    <xapl:print>
+      Authorizing.... $currentDbTable=<xapl:value-of select="$currentDbTable"/>
+    </xapl:print>
+    <xapl:variable name="canAdd" select="{$currentDbTable/@CanAdd}"/>
+    <xapl:variable name="canUpdate" select="{$currentDbTable/@CanUpdate}"/>
+    <xapl:variable name="canRemove" select="{$currentDbTable/@CanRemove}"/>
+    <xapl:variable name="canView" select="{$currentDbTable/@CanView}"/>
+    <xapl:print select="{$canAdd}"/>
+    <xapl:print select="{$canUpdate}"/>
+    <xapl:print select="{$canRemove}"/>
+    <xapl:print select="{$canView}"/>
+    <!-- Authorizations end Anish-->
+    <!-- check for presentation....and add if not present -->
+    <xapl:for-each varName="prop" select="$currentDbTable/TABLE_NAME/COLUMNS/PROPERTY">
+      <xapl:if test="not($prop/PRESENTATION)">
+        <xapl:choose>
+          <xapl:when test="string-length($prop/@PrimaryKey) > 0 ">
+            <docutil:add select="$prop">
+              <xapl:value-of select="$defaultPresentaionForPk/RESPONSE/*"/>
+            </docutil:add>
+          </xapl:when>
+          <xapl:when test="string-length($prop/@PrimaryKey) = 0 and $currentDbTable/TABLE_NAME/@AuditTrail = 'true' ">
+            <docutil:add select="$prop">
+              <xapl:value-of select="$defaultPresentaionForPk/RESPONSE/*"/>
+            </docutil:add>
+          </xapl:when>
+          <xapl:otherwise>
+            <docutil:add select="$prop">
+              <xapl:value-of select="$defaultPresentaion/RESPONSE/*"/>
+            </docutil:add>
+          </xapl:otherwise>
+        </xapl:choose>
+      </xapl:if>
+    </xapl:for-each>
+    <xapl:set-variable name="pk">
+      <PRIMARY_KEYS/>
+    </xapl:set-variable>
+    <!-- for multiple PK... -->
+    <xapl:for-each varName="column" select="$currentDbTable/TABLE_NAME/COLUMNS/PROPERTY[@PrimaryKey = 'yes']">
+      <docutil:add select="$pk">
+        <NAME Value="{$column/@Name}"/>
+      </docutil:add>
+    </xapl:for-each>
+    <!-- set the pk attribute to the table if it has any -->
+    <xapl:if test="count($pk/*)>0">
+      <docutil:set select="$currentDbTable/@hasPks">yes</docutil:set>
+    </xapl:if>
+    <xapl:print>
+       ###############################################################
+       NEW TABLE CREATED IN SESSION:::<xapl:value-of select="$currentDbTable/TABLE_NAME/@Value"/>
+       #####################
+       PK OF TABLE CREATED IN SESSION:::<xapl:value-of select="$pk"/>
+       ###############################################################
+   </xapl:print>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getDefaultPresentation">
+    <xapl:set-variable name="defaultPresentaion">
+      <xcore:execute-method name="//BCMMasterService/getDefaultPresentation" entireResponse="true"/>
+    </xapl:set-variable>
+    <xapl:return>
+      <xapl:value-of select="$defaultPresentaion"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getDefaultPresentationForPrimaryKey">
+    <xapl:set-variable name="defaultPresentaionForPk">
+      <xcore:execute-method name="//BCMMasterService/getDefaultPresentation" entireResponse="true">
+        <IS_PRIMARY_KEY Value="yes"/>
+      </xcore:execute-method>
+    </xapl:set-variable>
+    <xapl:return>
+      <xapl:value-of select="$defaultPresentaionForPk"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="addRow">
+    <x2:param name="pTableName"/>
+    <x2:param name="pRow"/>
+    <xapl:variable name="row">
+      <xapl:value-of select="$pRow"/>
+    </xapl:variable>
+    <docutil:add select="$currentDbTable/TABLE_NAME/ROWS">
+      <ROW>
+        <xapl:value-of select="$row"/>
+      </ROW>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="createXMLFromSelectedId">
+    <x2:param name="selectedId"/>
+    <xapl:variable name="xmlTree">
+      <SELECTED_IDS/>
+    </xapl:variable>
+    <xapl:print>
+          going to call getXMLElement:::
+          selectedId=<xapl:value-of select="$selectedId"/>
+          length=<xapl:value-of select="string-length($selectedId)"/>
+          NULL=<xapl:value-of select="not($selectedId)"/>
+    </xapl:print>
+    <xapl:if test="not(not($selectedId)) and string-length($selectedId) > 1">
+      <x2:execute command="bcm.framework.tableeditor.Table:getXMLElement">
+        <x2:with-param name="selectedId" select="$selectedId"/>
+        <x2:with-param name="xmlTree" select="$xmlTree"/>
+      </x2:execute>
+    </xapl:if>
+    <xapl:return>
+      <xapl:value-of select="$xmlTree"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getXMLElement">
+    <x2:param name="selectedId"/>
+    <x2:param name="xmlTree"/>
+    <xapl:variable name="key" select="substring-after(substring-before($selectedId, '='), '#')"/>
+    <xapl:variable name="value" select="{substring-before( substring-after($selectedId , concat($key,'=') ) , '#')}"/>
+    <!--
+    <xapl:print select="$key"/>
+    <xapl:print select="$value"/>
+    <xapl:print select="$selectedId"/>
+    <xapl:print select="substring-after($selectedId, concat('#', $key, '=', $value))"/> -->
+    <xapl:set-variable name="selectedId" select="substring-after($selectedId, concat('#', $key, '=', $value))"/>
+    <docutil:add select="$xmlTree">
+      <docutil:element name="{$key}" Value="{$value}"/>
+    </docutil:add>
+    <xapl:if test="string-length($selectedId) > 1">
+      <x2:execute command="bcm.framework.tableeditor.Table:getXMLElement">
+        <x2:with-param name="selectedId" select="$selectedId"/>
+        <x2:with-param name="xmlTree" select="$xmlTree"/>
+      </x2:execute>
+    </xapl:if>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getRows">
+    <x2:param name="pTableName" select="{$this/TABLE_NAME/@Value}"/>
+    <x2:param name="this"/>
+    <xapl:variable name="request"/>
+    <xapl:print select="$this"/>
+    <xapl:variable name="rows">
+      <xapl:choose>
+        <xapl:when test="count($this/SELECTED_IDS/*) > 0">
+          <xapl:choose>
+            <xapl:when test="$this/SERVICE/@Value = 'BCMMasterService' or $this/SERVICE/@Value = 'BCMOutboundService' ">
+              <xapl:set-variable name="request" select="concat('//', $this/SERVICE/@Value, '/getDocSmart')"/>
+              <xapl:variable name="response">
+                <xcore:execute-method name="{$request}" DocumentName="{$this/TABLE_NAME/@Value}" entireResponse="false">
+                  <xapl:value-of select="{$this/SELECTED_IDS/*}"/>
+                </xcore:execute-method>
+              </xapl:variable>
+              <!-- TODO Do this dynamically only if timingStats are on. -->
+              <docutil:remove select="$response/TIMING_STATS"/>
+              <docutil:remove select="$response/RESPONSE/TIMING_STATS"/>
+              <x2:execute command="bcm.framework.tableeditor.Table:getEmptyRow">
+                <x2:with-param name="this" select="{$this}"/>
+                <x2:with-param name="pTableName" select="{$this/TABLE_NAME[1]/@Value}"/>
+                <x2:with-param name="currentRow" select="{$response}"/>
+              </x2:execute>
+            </xapl:when>
+            <xapl:otherwise>
+              <xapl:set-variable name="request" select="{concat('//' , $this/SERVICE/@Value , '/', $this/TABLE_NAME[1]/@Value)}"/>
+              <xapl:print>Request parameter Value@@@@@@@@@</xapl:print>
+              <xapl:print select="{$request}"/>
+              <xapl:print>This Parameter Value@@@@@@@@@</xapl:print>
+              <xapl:print select="{$this}"/>
+              <xapl:print>This Parameter End@@@@@@@@@</xapl:print>
+              <xapl:variable name="response">
+                <xcore:get-document name="{$request}" outputResponse="false">
+                  <xapl:value-of select="{$this/SELECTED_IDS/*}"/>
+                </xcore:get-document>
+              </xapl:variable>
+              <x2:execute command="bcm.framework.tableeditor.Table:getEmptyRow">
+                <x2:with-param name="this" select="{$this}"/>
+                <x2:with-param name="pTableName" select="{$this/TABLE_NAME[1]/@Value}"/>
+                <x2:with-param name="currentRow" select="{$response}"/>
+              </x2:execute>
+            </xapl:otherwise>
+          </xapl:choose>
+        </xapl:when>
+        <xapl:otherwise>
+          <x2:execute command="bcm.framework.tableeditor.Table:getEmptyRow">
+            <x2:with-param name="this" select="{$this}"/>
+            <x2:with-param name="pTableName" select="{$this/TABLE_NAME[1]/@Value}"/>
+          </x2:execute>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+    <xapl:return>
+      <!-- Row -->
+      <xapl:value-of select="{$rows}"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getOptionTypes">
+    <xapl:variable name="request"/>
+    <xapl:set-variable name="request" select="{concat('//' , $this/SERVICE[1]/@Value, '/getValidValues')}"/>
+    <!--xapl:print select="$request"/-->
+    <!-- init forms data -->
+    <xapl:if test="count($currentTablesOptionData/*) = 0">
+      <xapl:set-variable name="currentTablesOptionData">
+        <TABLES_DATA>
+          <SERVICE Name="{$this/SERVICE[1]/@Value}"/>
+        </TABLES_DATA>
+      </xapl:set-variable>    
+     </xapl:if>
+        <xapl:if test="count($currentTablesOptionData/SERVICE[@Name = $this/SERVICE[1]/@Value]) = 0">
+          <docutil:add select="$currentTablesOptionData">
+              <SERVICE Name="{$this/SERVICE[1]/@Value}"/>
+          </docutil:add>
+       </xapl:if>
+    <xapl:if test="count($currentTablesOptionData/SERVICE[@Name = $this/SERVICE[1]/@Value]/TABLE[@Name = $this/TABLE_NAME[1]/@Value]/OPTION_TYPES/*) = 0 ">
+      <docutil:add select="$currentTablesOptionData/SERVICE[@Name = $this/SERVICE[1]/@Value]">
+        <TABLE Name="{$this/TABLE_NAME[1]/@Value}">
+          <OPTION_TYPES>
+            <xcore:execute-method name="{$request}" entireResponse="false">
+              <DOCUMENT Name="{$this/TABLE_NAME[1]/@Value}" ServiceName="{$this/SERVICE[1]/@Value}"/>
+            </xcore:execute-method>
+          </OPTION_TYPES>
+        </TABLE>
+      </docutil:add>
+      <!--xapl:print>
+        <xapl:value-of select="$currentTablesOptionData"/>
+      </xapl:print-->
+    </xapl:if>
+    <xapl:return>
+      <xapl:value-of select="$currentTablesOptionData/SERVICE[@Name = $this/SERVICE[1]/@Value]/TABLE[@Name = $this/TABLE_NAME[1]/@Value]/OPTION_TYPES"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getEmptyRow">
+    <x2:param name="pTableName" select="{$this/TABLE_NAME[1]/@Value}"/>
+    <x2:param name="currentRow"/>
+    <x2:param name="this"/>
+    <!-- select any row -->
+    <xapl:variable name="row"/>
+    <xapl:set-variable name="row">
+      <ROW>
+        <xapl:for-each varName="column" select="$currentDbTable/TABLE_NAME/COLUMNS/PROPERTY">
+          <xapl:variable name="decimals"/>
+          <xapl:variable name="type">
+            <xapl:choose>
+              <xapl:when test="$column/@ValidValues != 'null' or count($column/DATASOURCE) > 0 or $column/PRESENTATION/SEARCH_BY/@Value = 'dropdown'  or $column/PRESENTATION/TYPE/@Value = 'dropdown' ">Select</xapl:when>
+              <xapl:when test="starts-with($column/@Type , 'string')">Text</xapl:when>
+              <xapl:when test="starts-with($column/@Type , 'datetime')">DateTime</xapl:when>
+              <xapl:when test="starts-with($column/@Type , 'date')">Date</xapl:when>
+              <!--xapl:when test="$column/@Type = 'int' or $column/@Type = 'float' or $column/@Type = 'double'">Number</xapl:when-->
+              <xapl:when test="starts-with($column/@Type , 'int')">
+                <xapl:value-of select="'Number'"/>
+              </xapl:when>
+              <xapl:when test="starts-with($column/@Type , 'LongString')">
+                <xapl:value-of select="'textarea'"/>
+              </xapl:when>
+              <xapl:when test="$column/@Type = 'float' or $column/@Type = 'double'">
+                <xapl:value-of select="'Number'"/>
+                <xapl:set-variable name="decimals">
+                  <xapl:choose>
+                    <xapl:when test="string-length($column/PRESENTATION/DECIMALS/@Value) > 0">
+                      <xapl:value-of select="$column/PRESENTATION/DECIMALS/@Value"/>
+                    </xapl:when>
+                    <xapl:otherwise>
+                      <xapl:value-of select="'2'"/>
+                    </xapl:otherwise>
+                  </xapl:choose>
+                </xapl:set-variable>
+              </xapl:when>
+              <xapl:otherwise>Text</xapl:otherwise>
+            </xapl:choose>
+          </xapl:variable>
+          <xapl:variable name="columnName" select="$column/@Name"/>
+          <xapl:variable name="name">
+            <xapl:choose>
+              <xapl:when test="string-length($column/@DisplayName) > 0 ">
+                <xapl:value-of select="$column/@DisplayName"/>
+              </xapl:when>
+              <xapl:otherwise>
+                <xapl:value-of select="$column/PRESENTATION/DISPLAY_NAME/@Value"/>
+              </xapl:otherwise>
+            </xapl:choose>
+          </xapl:variable>
+          <xapl:variable name="val">
+            <xapl:choose>
+              <xapl:when test="string-length($currentRow/*[name() = $columnName] /@Value) > 0 ">
+                <xapl:value-of select="$currentRow/*[name() = $columnName] /@Value"/>
+              </xapl:when>
+              <xapl:otherwise>
+                <xapl:value-of select="$column//@DefaultValue"/>
+              </xapl:otherwise>
+            </xapl:choose>
+          </xapl:variable>
+          <xapl:variable name="dataSourceType"/>
+          <xapl:variable name="dataSourceName"/>
+          <xapl:variable name="selectAll"/>
+          <xapl:if test="$type = 'Select'">
+            <xapl:set-variable name="dataSourceType" select="'Command'"/>
+            <xapl:set-variable name="dataSourceName" select="'bcm.framework.tableeditor.Table:getOptionTypes'"/>
+            <xapl:set-variable name="selectAll" select="'No'"/>
+            <xapl:variable name="temp">
+              <x2:execute command="{$dataSourceName}">
+                <x2:with-param name="this" select="{$this}"/>
+              </x2:execute>
+            </xapl:variable>
+          </xapl:if>
+          <FIELD Name="{$columnName}" PrimaryKey="{$column/@PrimaryKey}" MaxLength="{$column/@MaxLength}" Editable="{$column/PRESENTATION/EDITABLE/@Value}" Valid_Values="{$column/PRESENTATION/VALID_VALUES/@List}" MinValue="{$column/@MinValue}" MaxValue="{$column/@MaxValue}" DisplayName="{$name}" Hidden="{$column/PRESENTATION/HIDDEN/@Value}" Sequence="{$column/PRESENTATION/SEQUENCE/@Value}" No_Wrap="{$column/PRESENTATION/NO_WRAP/@Value}" Format="{$column/PRESENTATION/FORMAT/@Value}" DisplayType="{$type}" DataSourceType="{$dataSourceType}" DataSourceName="{$dataSourceName}" SelectAll="{$selectAll}" Required="{$column/@Required}" Value="{$val}" ReferredTable="{$column/@Refers}" ReferredColumn="{$column/@ToProperty}" Decimals="{$decimals}"/>
+        </xapl:for-each>
+      </ROW>
+    </xapl:set-variable>
+    <xapl:return>
+      <!-- Row -->
+      <xapl:value-of select="{$row}"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

@@ -1,0 +1,326 @@
+/*I2_VERSION*/
+
+
+/*-------------------------------- COOKBOOK CLASSES ---------------------------------------*/
+
+/*text classes for cookbook d07c20#586096(IGNORE)*/
+.category {color: #505050; font-family:verdana; font-size:11px; font-weight: bold;} 
+.subcategory1 {color: #505050; font-family:verdana; font-size:11px; font-weight: bold;} 
+.subcategory2 {color: #555555; font-family:verdana; font-size:11px;} 
+.subcategory3 {color: #444444; font-family:verdana; font-size:11px;}
+.subcategory4 {color: #8196ac; font-family:verdana; font-size:11px;} 
+.label {color: #FF0000; font-family:verdana; font-size:11px;}
+.contenttext {color: #505050; font-family:verdana; font-size:11px;}
+.contentheader {color: #999999; font-family:verdana; font-size:16px; font-weight: bold;}
+.contentheader2 {color: #505050; font-family:verdana; font-size:11px; font-weight: bold; color: #505050;}
+.contenttableheader {background: #f1f1f1; color: #505050; font-family:verdana; font-size:11px; font-weight: bold; padding-left: 4px; padding-top: 2px; padding-bottom: 2px; padding-right: 2px;}
+.contenttableheader2 {background: #f1f1f1; color: #505050; font-family:verdana; font-size:11px; font-weight: padding-left: 4px; padding-top: 2px; padding-bottom: 2px; padding-right: 2px;}
+.contenttablebackground {background: #999999}
+.contenttablecodebody {background: #ffffff}
+.contenttablespecbody {background: #ffffff}
+BODY 	{SCROLLBAR-3DLIGHT-COLOR: #999999; 
+	SCROLLBAR-ARROW-COLOR: #656363; 
+	SCROLLBAR-BASE-COLOR: #d1d6f0;
+	SCROLLBAR-HIGHLIGHT-COLOR: #f1f3ff;
+	SCROLLBAR-SHADOW-COLOR: #7d8090;
+	SCROLLBAR-DARKSHADOW-COLOR: #b6b6b6; 
+	SCROLLBAR-TRACK-COLOR: #f2f4fe}
+
+/*-------------------------------- TEXT --------------------------------------------------*/
+
+/*text classes*/
+
+.text {color: #505050; font-family:verdana; font-size:8pt;}
+.lighttext {color: #777777; font-family:verdana; font-size:11px;}
+.boldtext  {font-family: verdana; font-size: 11px; font-weight:bold;}
+.smalltext {color: #505050; font-family:verdana; font-size: 10px;}
+.smalltextbold {color: #505050; font-family:verdana; font-size: 10px; font-weight:bold;}
+.noneditabletext {font-family:verdana; font-size:11px; color:#55554B;}
+p {margin-bottom:5px}
+
+/*-------------------------------- LINKS -------------------------------------------------*/
+
+/*link classes*/
+a
+a 	{text-decoration:none; color: #8196AC; font-family:verdana, sans-sefif, font-size:11px;text-decoration: none;} 
+a:link {text-decoration: underline; color: #505050;} 
+a:hover {text-decoration: underline;} 
+a:active {text-decoration: underline; color: #505050;} 
+a:visited {text-decoration: underline; color: #505050;} 
+
+
+/*-------------------------------- HEADLINES ---------------------------------------------*/
+
+/*headline classes*/
+
+.smallheadline  	{color: #505050; font-family:verdana; font-size:11px; font-weight: bold;}
+.mediumheadline 	{color: #505050; font-family:verdana; font-size:15px; font-weight: bold;}
+.largeheadline  	{color: #505050; font-family:verdana; font-size:18px; font-weight: bold;}
+ 
+ 
+/*------------------------------- BUTTONS -----------------------------------------------*/
+
+/*action button classes*/
+
+.emphasizedbutton a:link 	{color: #636163; font-weight: bold; font-size: 11px; font-family: verdana; text-decoration: none;}
+.emphasizedbutton a:active  	{color: #636163; font-weight: bold; font-size: 11px; font-family: verdana; text-decoration: none;}
+.emphasizedbutton a:visited 	{color: #636163; font-weight: bold; font-size: 11px; font-family: verdana; text-decoration: none;}
+.emphasizedbutton a:hover 	{color: #000000; text-decoration: none }
+.emphasizedbutton 		{margin-left: 8px; cursor:hand; background: #fff400; border-bottom:1px solid #d0bb03; border-right:1px solid #d0bb03; border-left:1px solid #ffffff; border-top:1px solid #ffffff; font-size: 11px; font-family: verdana; text-align: center; padding-bottom: 1px; padding-left:8px; padding-right:8px }		
+.emphasizedbuttonborder	 	{background:#505050;}
+
+.regularbutton a:link 		{color: #636163; font-size: 11px; font-family: verdana; text-decoration: none;}
+.regularbutton a:active  	{color: #636163; font-size: 11px; font-family: verdana; text-decoration: none;}
+.regularbutton a:visited 	{color: #636163; font-size: 11px; font-family: verdana; text-decoration: none;}
+.regularbutton a:hover 		{color: #000000; text-decoration: none }
+.regularbutton 			{margin-right: 4px; margin-left: 4px; cursor:hand; background: #fff6a6; font-size: 11px; font-family: verdana; text-align: center; cursor:hand; border-bottom:1px solid #e4db83; border-right:1px solid #e4db83; border-left:1px solid #ffffcd; border-top:1px solid #ffffcd; padding-bottom: 1px; padding-left:8px; padding-right:8px }		
+.regularbuttonborder 		{background:#999999;}
+
+.inactivebutton 		{margin-right: 4px; margin-left: 4px; background: #fffbdb; font-size: 11px; font-family: verdana; color: #b2b2b2; text-align: center; border-bottom:1px solid #f4f1cd; border-right:1px solid #f4f1cd; border-left:1px solid #ffffff; border-top:1px solid #ffffff; padding-bottom: 1px; padding-left:8px; padding-right:8px }		
+.inactivebuttonborder 		{background: #b2b2b2;}
+
+
+.smallemphasizedbutton a:link 		{color: #636163; font-weight: bold; font-size: 10px; font-family: verdana; text-decoration: none;}
+.smallemphasizedbutton a:active 	{color: #636163; font-weight: bold; font-size: 10px; font-family: verdana; text-decoration: none;}
+.smallemphasizedbutton a:visited	{color: #636163; font-weight: bold; font-size: 10px; font-family: verdana; text-decoration: none;}
+.smallemphasizedbutton a:hover 		{color: #000000; text-decoration: none;}
+.smallemphasizedbutton 			{margin-right: 1px; margin-left: 1px; cursor:hand; background: #fff400; border-bottom:1px solid #d0bb03; border-right:1px solid #d0bb03; border-left:1px solid #ffffff; border-top:1px solid #ffffff; font-size: 10px; font-family: verdana; text-align: center; padding-left: 4px; padding-right: 4px; padding-bottom: .049em;}		
+
+.smallregularbutton a:link 	{color: #636163; font-size: 10px; font-family: verdana; text-decoration: none;}
+.smallregularbutton a:active  	{color: #636163; font-size: 10px; font-family: verdana; text-decoration: none;}
+.smallregularbutton a:visited 	{color: #636163; font-size: 10px; font-family: verdana; text-decoration: none;}
+.smallregularbutton a:hover 	{color: #000000; text-decoration: none;}
+.smallregularbutton 		{margin-right: 1px; margin-left: 1px; cursor:hand; background: #fff6a6; font-size: 10px; font-family: verdana; text-align: center; cursor:hand; border-bottom:1px solid #e4db83; border-right:1px solid #e4db83; border-left:1px solid #ffffcd; border-top:1px solid #ffffcd; padding-left: 4px; padding-right: 4px; padding-bottom: .049em;}		
+
+.smallinactivebutton 		{margin-right: 1px; margin-left: 1px; background: #fffbdb; font-size: 10px; font-family: verdana; color: #b2b2b2; text-align: center; border-bottom:1px solid #f4f1cd; border-right:1px solid #f4f1cd; border-left:1px solid #ffffff; border-top:1px solid #ffffff; padding-left: 4px; padding-right: 4px; padding-bottom: .049em;}		
+
+
+/*palette button classes*/
+
+.upstateleft 		{background-image: url(controls/buttons/upstate_left.gif); width:4px; height:23px; cursor: hand;}		
+.upstatecenter 		{background-image: url(controls/buttons/upstate_center.gif); color: #8e8e8e; width:4px; height:23px; padding: 4px; font-size: 12px; font-family: verdana; font-weight:bold; cursor: hand;}		
+.upstateright 		{background-image: url(controls/buttons/upstate_right.gif); width:4px; height:23px; cursor: hand;}		
+
+.downstateleft 		{background-image: url(controls/buttons/downstate_left.gif); width:4px; height:23px;}		
+.downstatecenter 	{background-image: url(controls/buttons/downstate_center.gif); color: #716601; width:4px; height:23px; padding: 4px; font-size: 12px; font-family: verdana; font-weight:bold;}		
+.downstateright 	{background-image: url(controls/buttons/downstate_right.gif); width:4px; height:23px;}		
+
+
+/*------------------------------- RULES -------------------------------------------------*/
+
+/* horizontal rule */
+
+HR.container  {height:1; width:100%; border:1px; border-left-style:none; border-right-style:none; border-top-style:solid; border-top-color:#cccccc;}
+
+
+/*------------------------------- BACKGROUND --------------------------------------------*/
+
+/*background color classes*/
+
+
+/*------------------------------- FORMS -------------------------------------------------*/
+
+/*form classes*/ 
+
+.inputnoborder		{font-family:verdana; font-size:11px; color: #505050; border:0px; padding-left:5px; padding-right:5px;}
+.tableinput		{margin-right:4px; font-family:verdana; color: #505050; padding-bottom:2px; font-size:11px; border:1px solid #999999; padding-left:4px; padding-right:4px;}
+.tableinputrow 		{background:#ffffff; font-family:verdana; font-size:11px; color: #505050; height:16px; padding-left:2px; padding-right:2px;}
+
+.inputfield		{padding-top:2px; padding-bottom:0px; margin-right: 4px; margin-left:4px; color: #505050; font-family: verdana; font-size:11px; border:1px solid #999999; padding-left:4px; padding-right:4px; height:18px;}
+.pulldown 		{padding-top:1px; padding-bottom:1px; margin-right: 4px; margin-left:4px; color: #505050; font-family: verdana; font-size:11px; height:17px;}
+.displayfield   	{padding-top:1px; padding-bottom:2px; margin-right: 4px; margin-left:4px; padding-left:5px; padding-right: 5px; border: 1px solid #999999; background: #f7f8fd; height:17px;}
+
+.smallinputfield	{padding-top:1px; padding-bottom:0px; margin-right: 4px; margin-left:4px; color: #505050; font-family: verdana; font-size:11px; border:1px solid #999999; padding-left:4px; padding-right:4px;height:16px;}
+.smallpulldown 		{padding-top:0px; padding-bottom:0px; margin-top:1px; margin-left:4px; margin-right:4px; color: #505050; font-family: verdana; font-size:10px; height:16px;}
+.smalldisplayfield   	{padding-top:0px; padding-bottom:1px; margin-right: 4px; margin-left:4px; padding-left:5px; padding-right: 5px; border: 1px solid #999999; background: #f7f8fd; height:15px;}
+
+
+/*------------------------------- LISTS -------------------------------------------------*/
+
+/*list classes*/
+OL 		{margin-left: 18;}
+OL.ul 		{margin-left: 25; margin-top:3px; }
+UL.ul 		{list-style-image: url("common_images/bullet.gif"); margin-left:22; margin-top:3px;}
+
+
+/*------------------------------- TABLES ------------------------------------------------*/
+ 
+/*standard table classes*/
+
+.tablebackground 	{background:#999999;}
+.tableheader 		{background:#bec5e7; font-family:verdana; font-size:11px; font-weight: bold; color:#505050; height:18px; padding-left:5px; padding-right:5px;}
+.tableheader2		{background:#bec5e7; font-family:verdana; font-size:11px; font-weight: bold; color:#505050; height:18px; padding-left:5px; padding-right:4px;}
+
+.listtableheader 	{background:#bec5e7; border-bottom:1px solid #999999;font-family:verdana; font-size:11px; font-weight: bold; color:#505050; height:18px; padding-top: 1px; padding-bottom: 1px; padding-left:5px;}
+.table1 		{background:#d1d6f0; font-family:verdana; font-size:11px; color: #505050; height:17px; padding-left:5px; padding-right:5px;}
+.table2			{background:#f7f8fd; font-family:verdana; font-size:11px; color: #505050; height:17px; padding-left:5px; padding-right:5px;}
+.table3 		{background:#f2f4fe; font-family:verdana; font-size:11px; color: #505050; height:17px; padding-left:5px; padding-right:5px;}
+.table4			{background:#ffffff; font-family:verdana; font-size:11px; color: #505050; height:17px; padding-left:5px; padding-right:5px;}
+.tableborder 		{border:1px solid #999999}
+.scrolltablebackground 	{background:#a6abc4; border:1px solid #ffffff}
+
+.tablefooter		{position:relative; top:-1;background: #d1d6f0;border-left:1px solid #999999;border-right:1px solid #999999;border-bottom:1px solid #999999;}
+.scrolltable2 		{border-bottom:1px solid #cccccc; background:#f7f8fd; font-family:verdana; font-size:11px; color: #505050; height:18px; padding-left:5px; padding-right:5px;}
+.scrolltable3 		{border-bottom:1px solid #cccccc; background:#f2f4fe; font-family:verdana; font-size:11px; color: #505050; height:18px; padding-left:5px; padding-right:5px;}
+
+/*sortable table*/
+
+.columnoff 	 {background: #d1d6f0; color:#505050; padding-left: 5px; font-family: verdana; font-size: 11px; border-top: 1px solid #ffffff; border-left: 1px solid #ffffff; border-bottom: 1px solid #989db7; border-right: 1px solid #989db7;}
+.columnon 	 {background: #afb7db; padding-left: 5px; font-family: verdana; font-size: 11px; color: #3e446a; border-top: 1px solid #616991; border-left: 1px solid #616991; border-bottom: 1px solid #ffffff; border-right: 1px solid #ffffff;}
+.rowoff	  	 {background: #d1d6f0; padding-left: 5px; font-family: verdana; font-size: 11px; border-top: 1px solid #ffffff; border-left: 1px solid #ffffff; border-bottom: 1px solid #989db7; border-right: 1px solid #989db7;}
+.rowon    	 {background: #afb7db; padding-left: 5px; font-family: verdana; font-size: 11px; border-top: 1px solid #616991; border-left: 1px solid #616991; border-bottom: 1px solid #ffffff; border-right: 1px solid #ffffff;}
+.selecttablerow  {background: #d1d6f0;}
+.cellhighlight 	 {background: #fff274; padding-left: 5px}
+.cellhighlight2  {background: #fffacd; padding-left: 5px}
+
+/*graph table*/
+
+.graph  {background: #C59Ac1; font-size: 7px; border:1px solid #a780a2; margin-bottom: 1px; margin-top:1px; margin-left:2px;}
+.graph2 {background: #fbe2ff; font-size: 7px; border:1px solid #a780a2; margin-bottom: 1px; margin-top:3px; margin-left:2px;}
+
+.graphb  {background: #ffaf02; font-size: 7px; border:1px solid #6d6a6a; margin-bottom: 1px; margin-top:1px; margin-left:2px;}
+.graphb2 {background: #fdda8e; font-size: 7px; border:1px solid #a780a2; margin-bottom: 1px; margin-top:3px; margin-left:2px;}
+
+.graphc  {background: #b9dd71; font-size: 7px; border:1px solid #80994e; margin-bottom: 1px; margin-top:1px; margin-left:2px;}
+.graphc2 {background: #ccff99; font-size: 7px; border:1px solid #80994e; margin-bottom: 1px; margin-top:3px; margin-left:2px;}
+
+/*vertical tally table*/
+
+.tallytableborder {border-width: 1px 0px 1px 1px; border-color: #999999; border-style: solid}
+.tallytable1      {background:#d1d6f0; padding-top: 3px; padding-bottom: 2px; color: #505050; border-right:1px solid #999999; border-bottom: 1px solid #999999; font-family:verdana; font-size: 11px; padding-left:5px; padding-right:5px;}
+.tallytable2 	  {background:#f7f8fd; padding-top: 5px; padding-bottom: 5px; color: #505050; border-right:1px solid #999999; font-family:verdana; font-size:11px; padding-left:5px; padding-right:5px;}
+
+.tallytable3 	  {background:#f2f4fe; padding-top: 3px; padding-bottom: 2px; color: #505050; border-top: 1px solid #999999; border-bottom: 1px solid #999999; border-right: 1px solid a6abc4; font-family:verdana; font-size: 11px; padding-left: 5px; padding-right: 5px;}
+.rowborder 	  {border-top:1px solid #999999; border-bottom: 1px solid #999999}
+
+
+/*------------------------------- TREE -------------------------------------------------*/
+ 
+/*tree*/
+
+.one 	{background: #D1D6F0; cursor: hand; border-bottom: 1px solid #999999; height: 19px; font-family: verdana; font-size: 8pt; padding-top: 2px; padding-left: 8px}
+.two 	{background: #f2f4fe; cursor: hand; border-bottom: 1px solid #999999; height: 19px; font-family: verdana; font-size: 8pt; padding-top: 2px; padding-left: 23px}
+.three 	{background: #f2f4fe; cursor: hand; border-bottom: 1px solid #999999; height: 19px; font-family: verdana; font-size: 8pt; padding-top: 2px; padding-left: 38px}
+.four 	{background: #f2f4fe; cursor: hand; border-bottom: 1px solid #999999; height: 19px; font-family: verdana; font-size: 8pt; padding-top: 2px; padding-left: 62px}
+
+.treetable1	{background:#D1D6F0; font-family:verdana; font-size:11px; color: #505050; height:17px; padding-left:5px; padding-right:5px;}
+.treetable2 	{background:#f2f4fe; font-family:verdana; font-size:11px; color: #505050; height:17px; padding-left:38px;}
+
+
+/*------------------------------- GENERIC TABS (Not Implemented) -----------------------*/
+ 
+/*generic tabs (not implemented)*/
+
+.tabselect		{position: relative; background:#dddddd; z-index: 300; color: #505050; height:21px; padding-top:2px; font-family: verdana; font-size: 11px; font-weight: bold; border-left:1px solid #999999; border-right:1px solid #999999; border-top:1px solid #999999; padding-left: 15px; padding-right: 15px;cursor:hand; padding-top: 3px; text-decoration: none;}
+.tab			{position: relative; background:#cccccc; z-index: 100; color: #999999; height:20px; padding-top:2px; font-family: verdana; font-size: 11px; font-weight: bold; margin-top:1px; border-width: 1 1 0 1; border-style: solid; border-color: #999999; padding-left: 15px; padding-right: 15px; cursor:hand; text-decoration: none;}
+.tabbody	 	{background:#dddddd; border-top: 1px solid #a6abc4; border-left: 1px solid #a6abc4; border-right: 1px solid #d5d5d5; z-index: 200; border-bottom:1px solid #d5d5d5}
+
+
+/*------------------------------- CONTAINER/TABS ---------------------------------------*/
+ 
+/*containers*/
+
+.containertabselect	{position: relative; background:#bec5e7; z-index: 300; height:21px; padding-top:3px; font-family: verdana; font-size: 11px; color: #505050; font-weight: bold; border-top:1px solid #999999; padding-left: 7px; padding-right: 7px; cursor:hand; text-decoration: none;}
+.containertab		{position: relative; background:#d1d6f0; height:21px; padding-top:3px; font-family: verdana; font-size: 11px; color: #777777; font-weight: bold; border-top:1px solid #999999; padding-left: 7px; padding-right: 7px; cursor:hand; text-decoration: none;}
+.containerbody	 	{background:#ffffff; border-top: 1px solid #999999; border-left: 1px solid #999999; border-right: 1px solid #cccccc; z-index: 200; border-bottom:1px solid #cccccc}
+.containershadow	{border-right:1px solid #999999; border-bottom:1px solid #999999; width:100%; height:100%}
+.containerheader td 	{background:#bec5e7; font-family: verdana; font-size: 11px; font-weight: bold; color: #505050; height:20px; padding-top:1px; padding-bottom:1px; padding-left:5px; padding-right:5px; border-bottom:1px solid #999999;}
+.containerfooter td 	{background:#bec5e7; font-family: verdana; font-size: 11px; color: #505050; height:20px; padding-top:1px; padding-bottom:1px; padding-left:5px; padding-right:5px; border-top:1px solid #999999;}
+.containertabbody td	{background:#bec5e7; border-bottom:1px solid #999999; font-size:5px;}
+
+/*container tab images*/
+
+.firstleftcorner 	{position: relative; background:#d1d6f0; background-image: url("controls/container/container_first_left_corner.gif"); width: 3px; height: 21px; z-index: 100;}
+.firstleftcornerselect 	{position: relative; background:#bec5e7; background-image: url("controls/container/container_first_left_corner.gif"); width: 3px; height: 21px; z-index: 300;}
+.leftcorner 		{position: relative; background:#d1d6f0; background-image: url("controls/container/container_left_corner.gif"); width: 3px; height: 21px; z-index: 100;}
+.leftcornerselect 	{position: relative; background:#bec5e7; background-image: url("controls/container/container_left_corner.gif"); width: 3px; height: 21px; z-index: 300;}
+.rightcorner 		{position: relative; background:#d1d6f0; background-image: url("controls/container/container_right_corner.gif"); width: 6px; height: 21px; z-index: 100;}
+.rightcornerselect	{position: relative; background:#bec5e7; background-image: url("controls/container/container_right_corner.gif"); width: 6px; height: 21px; z-index: 300;}
+
+
+/*------------------------------- INSPECTOR/TABS ---------------------------------------*/
+ 
+/*inspector*/
+ 
+.inspectortabselect		{position: relative; background:#f7f8fd; z-index: 300; height:21px; padding-top:3px; font-family: verdana; font-size: 11px; color: #505050; font-weight: bold; border-top:1px solid #999999; padding-left: 7px; padding-right: 7px; cursor:hand;}
+.inspectortab			{position: relative; background:#ffffff; height:21px; padding-top:3px; font-family: verdana; font-size: 11px; color: #777777; font-weight: bold; border-top:1px solid #999999; padding-left: 7px; padding-right: 7px; cursor:hand;}
+ 
+.inspectortabbody	 	{background:#f7f8fd; padding:5px; border: 1px solid #999999; z-index: 200;}
+
+/*inspector tab images*/
+ 
+.inspectfirstleftcorner 	{position: relative; background:#ffffff; background-image: url("controls/tabs/inspector_first_left_corner.gif"); width: 3px; height: 21px; z-index: 100;}
+.inspectfirstleftcornerselect	{position: relative; background:#f7f8fd; background-image: url("controls/tabs/inspector_first_left_corner.gif"); width: 3px; height: 21px; z-index: 300;}
+.inspectleftcorner 		{position: relative; background:#ffffff; background-image: url("controls/tabs/inspector_left_corner.gif"); width: 3px; height: 21px; z-index: 100;}
+.inspectleftcornerselect 	{position: relative; background:#f7f8fd; background-image: url("controls/tabs/inspector_left_corner.gif"); width: 3px; height: 21px; z-index: 300;}
+.inspectrightcorner 		{position: relative; background:#ffffff; background-image: url("controls/tabs/inspector_right_corner.gif"); width: 6px; height: 21px; z-index: 100;}
+.inspectrightcornerselect	{position: relative; background:#f7f8fd; background-image: url("controls/tabs/inspector_right_corner.gif"); width: 6px; height: 21px; z-index: 300;}
+
+ 
+/*------------------------------- POWER TABS --------------------------------------------*/
+ 
+.powertabselectwithelement	{position: relative; vertical-align: top; background:#fffacd;  z-index: 300; height:22px; font-family: verdana; font-size: 11px; color: #505050; font-weight: bold; border-top:1px solid #999999; padding-left: 7px; padding-right: 7px; cursor:hand;}
+.powertabwithelement		{position: relative; vertical-align: top; background:#fffde6; height:22px; font-family: verdana; font-size: 11px; color: #777777; font-weight: bold; border-top:1px solid #999999; padding-left: 7px; padding-right: 7px; cursor:hand;}
+  
+.powertabselect	{position: relative; background:#fffacd; z-index: 300; height:24px; padding-top:4px; font-family: verdana; font-size: 11px; color: #505050; font-weight: bold; border-top:1px solid #999999; padding-left: 7px; padding-right: 7px; cursor:hand;}
+.powertab	{position: relative; background:#fffde6; height:24px; padding-top:3px; font-family: verdana; font-size: 11px; color: #777777; font-weight: bold; border-top:1px solid #999999; padding-left: 7px; padding-right: 7px; cursor:hand;}
+ 
+.powertabbody 	{background:#fffacd; border:1px solid #999999; font-size:5px;}
+
+.powertabheader2 	{background:#fffacd; padding:5px; border:1px solid #999999; color: #505050; font-family:verdana; font-size:11px; font-weight: bold; height:26px;}
+.powertabshadow		{border-right:1px solid #cccccc; border-bottom:1px solid #cccccc;}
+.powertabcontent	{background:#fffacd; border-left:1px solid #999999; border-right:1px solid #999999; border-bottom:1px solid #999999; padding: 8px; width:100%; height:100%}
+
+.powertabfirstleftcorner 	{position: relative; background:#fffde6; background-image: url("controls/container/power_first_left_corner.gif"); width: 3px; height: 24px; z-index: 100;}
+.powertabfirstleftcornerselect	{position: relative; background:#fffacd; background-image: url("controls/container/power_first_left_corner.gif"); width: 3px; height: 24px; z-index: 300;}
+.powertableftcorner 		{position: relative; background:#fffde6; background-image: url("controls/container/power_left_corner.gif"); width: 3px; height: 24px; z-index: 100;}
+.powertableftcornerselect 	{position: relative; background:#fffacd; background-image: url("controls/container/power_left_corner.gif"); width: 3px; height: 24px; z-index: 300;}
+.powertabrightcorner 		{position: relative; background:#fffde6; background-image: url("controls/container/power_right_corner.gif"); width: 6px; height: 24px; z-index: 100;}
+.powertabrightcornerselect	{position: relative; background:#fffacd; background-image: url("controls/container/power_right_corner.gif"); width: 6px; height: 24px; z-index: 300;}
+
+
+ /*------------------------------- MAIN PALLET ------------------------------------------*/
+
+
+.leftpalletside		{background-image: url("controls/pallet/left_pallet_side.gif");}
+.rightpalletside	{background-image: url("controls/pallet/right_pallet_side.gif");}
+.toppalletside		{background-image: url("controls/pallet/top_pallet_side.gif");}
+.leftpalletcorner	{background-image: url("controls/pallet/left_pallet_corner.gif");}
+.rightpalletcorner	{background-image: url("controls/pallet/right_pallet_corner.gif");}
+
+
+.leftpalletside2	{background-image: url("controls/pallet/left_pallet_side.gif"); width:5px;}
+.rightpalletside2 	{background-image: url("controls/pallet/right_pallet_side.gif"); width:5px;}
+.toppalletside2		{background-image: url("controls/pallet/top_pallet_side.gif");}
+.leftpalletcorner2	{background-image: url("controls/pallet/left_pallet_corner.gif"); height:5px; width:5px; }
+.rightpalletcorner2	{background-image: url("controls/pallet/right_pallet_corner.gif"); height:5px; width:5px;}
+
+.palletbackground	{background-image: url("controls/pallet/pallet_bg.gif");}
+
+
+/*------------------------------- PALETTE DIVIDERS --------------------------------------*/
+
+/*palette dividers (not used -- other)*/
+
+.divider	{width:977; margin-top:2px; margin-bottom:8px;}
+.dividertext	{padding-left:8px; font-family:verdana; font-weight: bold; color: #505050; font-size: 12px; height:22px;}
+	
+	
+/*palette dividers (not used -- ie5 windows)*/
+
+HR.dividertop  		{height:2; width:975; border:1px; border-left-style:none; border-right-style:none; border-top-style:solid; border-top-color:#ffffff; border-bottom-style:solid; border-bottom-color:#f3f3f3;}
+HR.dividerbottom  	{height:2; width:975; border:1px; border-left-style:none; border-right-style:none; border-top-style:solid; border-top-color:#d9d9d9; border-bottom-style:solid; border-bottom-color:#bfbfbf;}
+.dividerold		{padding-left:8px; font-family:verdana; font-weight: bold; color: #505050; font-size: 12px;}
+
+
+
+ /*------------------------------- CASCADING MENU ---------------------------------------*/
+
+.menu 				{position: absolute; left: 0; top: 0; visibility: hidden; background: #f7f8fd; width: 110px; margin: 0px; padding: 0px; border: 1px solid #e0e5e9; overflow: visible; }
+.menu a, .menu a:visited 	{font-family: verdana; font-size: 11px; text-decoration: none; font-weight: normal; color: black; background: f7f8fd; width: 110px; padding-left: 10px; }
+.menu a:hover           	{cursor: hand; font-family: verdana; font-size: 11px; text-decoration: none; font-weight: normal; color: black; background: #fae87e; width: 110px; padding-left: 10px; }
+.menu .border           	{border: 1px solid #ffffff; border-bottom: 1px solid #a6abc4; border-right: 1px solid #a6abc4; }
+.menu .text             	{overflow: hidden; width: 70px; height: 15px; }
+.menu .arrow             	{overflow: hidden; width: 15px; height: 12px; padding-left: 5px; padding-top: 3px; }
+.menu .arrow img         	{width: 6px; height: 7px; border: 0px;}
+.menu hr                 	{width:90px; height:1px; color: #e0e5e9;}

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands description="_" 
+             xmlns:cfg="http://www.i2.com/configurability" 
+             xmlns:core="http://www.i2.com/core" 
+             xmlns:omx="http://www.i2.com/omx" 
+             xmlns:perm="http://www.i2.com/permissibility" 
+             xmlns:util="http://www.i2.com/util" 
+             xmlns:web="http://www.i2.com/web" 
+             xmlns:x2="http://www.i2.com/x2" 
+             xmlns:xapl="http://www.i2.com/xapl" 
+             xmlns:xcore="http://www.i2.com/xcore" 
+             xmlns:xcore-db="http://www.i2.com/xcore-db" 
+             xmlns:docutil="http://www.i2.com/docutil" 
+             xmlns:oa="http://www.i2.com/oa" 
+             xmlns:xudl="http://www.i2.com/xudl"
+             xmlns:i18n="http://www.i2.com/i18n"
+             xmlns:identity="http://www.i2.com/identity">
+
+
+  <!--  ********************************************************************** 
+   *********************************************************************** -->
+  <x2:command public="yes" description="_" name="save">
+
+    <docutil:remove select="$this/OBJECT_TYPE"/>
+    <docutil:remove select="$this/DOC_TYPE"/>
+    <docutil:remove select="$this/PAGE"/>
+    
+    <docutil:add select="$this">
+      <OBJECT_TYPE Value="PROGRAM"/>
+      <DOC_TYPE Value="PROGRAM"/>
+      <PAGE Value="omx_vmi_program_select_program"/>
+    </docutil:add>
+
+    <x2:execute command="core.search.controller:saveInSession">
+      <x2:with-param name="this" select="$this"/>
+    </x2:execute>
+
+  </x2:command>
+
+  <!--  ********************************************************************** 
+ *********************************************************************** -->
+  <x2:command public="yes" description="_" name="saveReport">
+
+    <x2:execute command="core.report.controller:saveReport">
+      <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="pSearchFormConfigSource" select="'buy.vmi.program.select.program.view:getFormConfig'"/>
+        <x2:with-param name="pSearchReportConfigSource" select="'buy.vmi.program.select.program.view:getReportConfig'"/>
+        <x2:with-param name="pReportDataSource" select="'buy.vmi.program.select.program.view:getReportData_Ids'"/>
+      <x2:with-param name="pFile"  select="'programs'"/>
+      <x2:with-param name="pFormat" select="'csv'"/>
+    </x2:execute>
+
+  </x2:command>
+
+   <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="downloadDocument">
+
+    <!-- Get the data -->
+    <xapl:variable name="data">
+       <TPAS>
+        <xapl:for-each varName="id" select="{$this/ID}">
+          <xcore:execute-method name="//OrderAdminService/getProgramDetails">
+            <TPA>
+              <docutil:element name="ID" Value="{$id/@Value}"/>
+            </TPA>  
+          </xcore:execute-method>
+        </xapl:for-each>
+       </TPAS>
+    </xapl:variable>
+    
+    <!-- downloadFile-->
+    <x2:execute command="core.common:downloadFile">
+      <x2:with-param name="pFileContents" select="$data"/>
+      <x2:with-param name="pFileName" select="'program.xml'"/>
+      <x2:with-param name="pFileType" select="'xml'"/>
+    </x2:execute>
+  </x2:command>
+  
+<!-- ********************************************************************** 
+     *********************************************************************** -->
+  </x2:commands>

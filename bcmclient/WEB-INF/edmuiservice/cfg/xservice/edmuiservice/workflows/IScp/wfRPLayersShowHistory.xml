@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="4" ShowInBreadCrumbs="true" Version="1.0" Name="wfRPLayersShowHistory" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables/>
+  <nodes>
+    <start Name="start2">
+      <actions>
+      </actions>
+      <next_nodes>
+        <next_node Name="history" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done3">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="history" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE" Template="iscpRPLayersHistory.pgl">
+      <pre_actions>
+        <action>
+          <!--  <SET Var="currDate" FromValue="{date()}"/>
+  <SET Var="fromDate" FromValue="{incrDate($currDate,duration((-90),0,0,0))}"/>-->
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root>
+              <FROM_DATE Value="04/10/2006"/>
+              <TO_DATE Value="04/10/2006"/>
+              <line TotalRowCount="5" startRowCount="0">
+                <ROW_DATA>
+                  <itemID Value="480003800"/>
+                  <name Value="Quaker Oats Foods"/>
+                  <locationSpecificIndicator Value="Layer1"/>
+                  <CREATION_DATE Value="1"/>
+                  <SOURCE Value="Sales Order"/>
+                  <START_DAY Value="1"/>
+                  <END_DAY Value="10"/>
+                  <SCENARIO_ID Value="Latest DM inputs"/>
+                  <ALLOCATION_BANDS Value="20,40,60,100"/>
+                  <LAST_MODIFIED_DATE Value="04/10/2006"/>
+                  <isCapacity Value="ckucha"/>
+                </ROW_DATA>
+                <ROW_DATA>
+                  <itemID Value="480003800"/>
+                  <name Value="Quaker Oats Foods"/>
+                  <locationSpecificIndicator Value="Layer2"/>
+                  <CREATION_DATE Value="2"/>
+                  <SOURCE Value="Forecast"/>
+                  <START_DAY Value="1"/>
+                  <END_DAY Value="10"/>
+                  <SCENARIO_ID Value="Upped by 1"/>
+                  <ALLOCATION_BANDS Value="20,40,60,100"/>
+                  <LAST_MODIFIED_DATE Value="03/01/2006"/>
+                  <isCapacity Value="bhoots"/>
+                  <ENTITY_STATE Value="NEW"/>
+                </ROW_DATA>
+                <ROW_DATA>
+                  <itemID Value="480003800"/>
+                  <name Value="Quaker Oats Foods"/>
+                  <locationSpecificIndicator Value="Layer2"/>
+                  <CREATION_DATE Value="2"/>
+                  <SOURCE Value="Forecast"/>
+                  <START_DAY Value="1"/>
+                  <END_DAY Value="10"/>
+                  <SCENARIO_ID Value="Upped by 1"/>
+                  <ALLOCATION_BANDS Value="20,40,60,100"/>
+                  <LAST_MODIFIED_DATE Value="03/01/2006"/>
+                  <isCapacity Value="bhoots"/>
+                </ROW_DATA>
+                <ROW_DATA>
+                  <itemID Value="480004800"/>
+                  <name Value="Gatorade"/>
+                  <locationSpecificIndicator Value="Layer4"/>
+                  <CREATION_DATE Value="1"/>
+                  <SOURCE Value="Slaes Order"/>
+                  <START_DAY Value="1"/>
+                  <END_DAY Value="10"/>
+                  <SCENARIO_ID Value="Latest DM inputs"/>
+                  <ALLOCATION_BANDS Value="20,40,60,100"/>
+                  <LAST_MODIFIED_DATE Value="04/10/2006"/>
+                  <isCapacity Value="ckucha"/>
+                </ROW_DATA>
+                <ROW_DATA>
+                  <itemID Value="480004800"/>
+                  <name Value="Gatorade"/>
+                  <locationSpecificIndicator Value="Layer5"/>
+                  <CREATION_DATE Value="2"/>
+                  <SOURCE Value="Forecast"/>
+                  <START_DAY Value="1"/>
+                  <END_DAY Value="10"/>
+                  <SCENARIO_ID Value="Latest DM inputs"/>
+                  <ALLOCATION_BANDS Value="20,40,60,100"/>
+                  <LAST_MODIFIED_DATE Value="03/01/2006"/>
+                  <isCapacity Value="bhoots"/>
+                </ROW_DATA>
+              </line>
+              <!--      <USER_ID Value="{$userId}"/>-->
+            </root>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='ShowHistory'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ManageParam'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='MassUpdate'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='return'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done3" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="101,130" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <done3 location="425,148" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done3" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done3>
+      <history location="294,163" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="history" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </history>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="133,152" endpoint="294,186" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="251,150,4,4" ctrlRect2="171,184,4,4"/>
+      </start2>
+      <history>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="326,186" endpoint="425,170" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="397,184,4,4" ctrlRect2="348,168,4,4"/>
+      </history>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="0">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables/>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

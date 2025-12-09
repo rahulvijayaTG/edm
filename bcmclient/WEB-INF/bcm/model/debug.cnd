@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" 
+xmlns:xapl="http://www.i2.com/xapl" description="_">  
+
+<x2:command name="init" public="yes" description="enable x2 debugger">
+
+  <x2:debug enabled="false"/>
+
+</x2:command>
+
+</x2:commands>
+
+

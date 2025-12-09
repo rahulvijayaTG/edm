@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:identity="http://www.i2.com/identity" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:cis="http://www.i2.com/cis" xmlns:i18n="http://www.i2.com/i18n" description="_">
+  <!--****************************************************************
+  ****************************************************************** -->
+  <x2:command public="yes" description="_" name="login">
+    <web:invalidate-session/>
+    <xapl:variable name="isValid">
+      <cis:sso-login processLogin="true"/>
+    </xapl:variable>
+    <xapl:choose>
+      <xapl:when test="$isValid = 'true'">
+        <xapl:variable name="userName">
+          <cis:get-user-name/>
+        </xapl:variable>
+        <identity:create-identity userId="{$userName}"/>
+      </xapl:when>
+      <xapl:when test="$isValid = 'false'">
+        <web:display-page>
+          <web:get-page name="ssologin">
+            <ERROR Value="true"/>
+            <VALIDATE_PAGE Value="false"/>
+          </web:get-page>
+        </web:display-page>
+      </xapl:when>
+      <xapl:otherwise>
+        <web:display-page>
+          <web:get-page name="ssologin">
+            <PAGE_DATA Value="{$isValid}"/>
+            <VALIDATE_PAGE Value="false"/>
+          </web:get-page>
+        </web:display-page>
+      </xapl:otherwise>
+    </xapl:choose>
+    <xapl:if test="{$this/CHANGE_PASSWD/@Value='yes'}">
+      <web:display-page>
+        <web:get-page name="core_change_passwd"/>
+      </web:display-page>
+    </xapl:if>
+    <web:display-page>
+      <web:get-page name="core_shell_display"/>
+    </web:display-page>
+  </x2:command>
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="logout">
+    <cis:sso-logout/>
+    <web:invalidate-session/>
+    <web:display-page>
+      <web:get-page name="ssologin">
+        <FROM Value="logout"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!--****************************************************************
+  ****************************************************************** -->
+  <x2:command public="yes" description="_" name="getLoginPage">
+    <xapl:choose>
+      <xapl:when test="$this/VALIDATE_PAGE/@Value = 'false'">
+        <xapl:choose>
+          <xapl:when test="$this/ERROR/@Value = 'true'">
+            <xapl:return>
+              <LOGIN_PAGE_INFO>
+                <MASTHEAD_IMAGE Value="../i2/images/masthead_fivetwo.gif"/>
+                <PANEL_IMAGE Value="../i2/images/login_panel_simple.jpg"/>
+                <COMMAND Value="sso/login.x2c"/>
+                <FROM Value="{$this/FROM/@Value}"/>
+                <ERROR Value="{$this/ERROR/@Value}"/>
+                <CHANGE_PWD Value="no"/>
+                <DESCRIPTION Value="Invalid Login Name or Password."/>
+              </LOGIN_PAGE_INFO>
+            </xapl:return>
+          </xapl:when>
+          <xapl:otherwise>
+            <xapl:return>
+              <LOGIN_PAGE_INFO>
+                <MASTHEAD_IMAGE Value="../i2/images/masthead_fivetwo.gif"/>
+                <PANEL_IMAGE Value="../i2/images/login_panel_simple.jpg"/>
+                <COMMAND Value="sso/login.x2c"/>
+                <FROM Value="{$this/FROM/@Value}"/>
+                <CHANGE_PWD Value="no"/>
+                <DISPLAY_PAGE Value="{$this/PAGE_DATA/@Value}"/>
+              </LOGIN_PAGE_INFO>
+            </xapl:return>
+          </xapl:otherwise>        
+        </xapl:choose>
+      </xapl:when>
+      <xapl:otherwise>
+        <xapl:variable name="isValid">
+          <cis:sso-login processLogin=""/>
+        </xapl:variable>
+        <xapl:choose>
+          <xapl:when test="$isValid = 'true'">
+            <xapl:variable name="userName">
+              <cis:get-user-name/>
+            </xapl:variable>
+            <identity:create-identity userId="{$userName}"/>
+          </xapl:when>
+          <xapl:when test="$isValid = 'false'">
+            <xapl:return>
+              <LOGIN_PAGE_INFO>
+                <MASTHEAD_IMAGE Value="../i2/images/masthead_fivetwo.gif"/>
+                <PANEL_IMAGE Value="../i2/images/login_panel_simple.jpg"/>
+                <COMMAND Value="sso/login.x2c"/>
+                <FROM Value="{$this/FROM/@Value}"/>
+                <ERROR Value="true"/>
+                <CHANGE_PWD Value="no"/>
+                <DESCRIPTION Value="Invalid Login Name or Password."/>
+              </LOGIN_PAGE_INFO>
+            </xapl:return>
+          </xapl:when>
+          <xapl:otherwise>
+            <xapl:return>
+              <LOGIN_PAGE_INFO>
+                <MASTHEAD_IMAGE Value="../i2/images/masthead_fivetwo.gif"/>
+                <PANEL_IMAGE Value="../i2/images/login_panel_simple.jpg"/>
+                <COMMAND Value="sso/login.x2c"/>
+                <FROM Value="{$this/FROM/@Value}"/>
+                <CHANGE_PWD Value="no"/>
+                <DISPLAY_PAGE Value="{$isValid}"/>
+              </LOGIN_PAGE_INFO>
+            </xapl:return>
+          </xapl:otherwise>
+        </xapl:choose>
+        <web:display-page>
+          <web:get-page name="core_shell_display"/>
+        </web:display-page>
+      </xapl:otherwise>
+    </xapl:choose>
+  </x2:command>
+</x2:commands>

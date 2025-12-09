@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+	<xapl:variable name="userPermissionViewForbcmManageQuery">
+		 <x2:execute command="bcm.framework.common:checkAccessPermissions">
+		   <x2:with-param name="activityName" select="'bcmManageQuery'"/>
+		   <x2:with-param name="accessLevel" select="'View'"/>
+		 </x2:execute>
+	</xapl:variable>            
+  	<xapl:if test="$userPermissionViewForbcmManageQuery!='True'">
+	   <docutil:set select="$this">
+	       <DO_SEARCH Value="No"/>   
+	   </docutil:set>   
+	</xapl:if> 	
+  
+    <xapl:print>
+      Value of this in Manage Query
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+    <xapl:if test="$this/MODE/@Value = 'START'">
+      <docutil:remove select="$this/MODE"/>
+      <x2:execute command="bcm.context.controller:cleanContext"/>
+      <x2:execute command="bcm.manage_query.manageQueryController:initQueryDetail"/>
+    </xapl:if>
+    <!-- BREADCRUMBS AT TOP OR AFTER CLEAN-CONTEXT-->
+    <x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+      <x2:with-param name="display" select="'Search Query'"/>
+      <x2:with-param name="page" select="'manageQuery'"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+    <xapl:variable name="form">
+      <x2:execute command="bcm.framework.queryform.Form:getFormContainer">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="pSearchParam" select="$searchParam"/>
+        <x2:with-param name="pFormName" select="'QUERY_MASTER_FORM'"/>
+        <x2:with-param name="pServiceName" select="'BCMMasterService'"/>
+        <x2:with-param name="pSearchFormConfigSource" select="'bcm.manage_query.manageQuerySearchView:getFormConfig'"/>
+        <x2:with-param name="pSearchReportConfigSource" select="'bcm.manage_query.manageQuerySearchView:getReportConfig'"/>
+        <x2:with-param name="pReportDataSource" select="'bcm.manage_query.manageQuerySearchView:getReportData'"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:print>
+    **********  Value of this in Manage Query getFormConfig**********
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+    <xapl:return>
+      <x2:execute command="bcm.manage_query.manageQuerySearchView:getContainer">
+        <x2:with-param name="this" select="{$this}"/>
+        <x2:with-param name="pPage" select="'dbformfilter'"/>
+      </x2:execute>
+      <!-- Container-->
+      <x2:execute command="bcm.manage_query.manageQuerySearchView:getHeader"/>
+      <xapl:value-of select="$form"/>
+      <xapl:value-of select="$context"/>
+      <xapl:value-of select="$this/*"/>
+      <xapl:value-of select="$systemProperties"/>
+      <!-- return buttons depending on context-->
+      <xapl:if test="$userPermissionViewForbcmManageQuery!='True'">
+        <ERROR_MESSAGE Value="You do not have view permissions"/>
+      </xapl:if>      
+    </xapl:return>
+  </x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+    <xapl:return>
+      <x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pPage"/>
+    <!--<xapl:variable name="displaytext"/>-->
+    <xapl:variable name="userPermissionViewForbcmManageQuery">
+	 <x2:execute command="bcm.framework.common:checkAccessPermissions">
+	   <x2:with-param name="activityName" select="'bcmManageQuery'"/>
+	   <x2:with-param name="accessLevel" select="'View'"/>
+	 </x2:execute>
+    </xapl:variable>    
+    <xapl:return>
+      <CONTAINER Scrollable="no">
+        <xapl:if test="$userPermissionViewForbcmManageQuery='True'">      
+        	<EXPRESSION_FILTER Value="yes"/>
+        </xapl:if>
+        <HELP Url="../help/search_query_help.htm"/>
+        <STEP Name="ViewForm" DisplayText="Query Search" OnClick="{$pages:dbformfilter}" Selected="{$pPage = 'dbformfilter'}"/>
+      </CONTAINER>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormConfig">
+    <x2:param name="this" select="$this"/>
+    <xapl:print>
+      Value of this in Manage Query getFormConfig
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+    <xapl:return>
+      <FORM Name="search_form" Action="manageQuerySearch.jsp" method="GET" Target="appFrame">
+        <!--get all search form fields -->
+        <x2:execute command="bcm.framework.queryform.Form:getFormSearchFields">
+          <x2:with-param name="this" select="$this"/>
+        </x2:execute>
+        <!-- Hidden Fields -->
+        <!-- Always Put hidden at the end -->
+        <x2:execute command="bcm.framework.queryform.Form:getFormSearchHiddenFields">
+          <x2:with-param name="this" select="$this"/>
+        </x2:execute>
+        <BUTTONS>
+	  <xapl:variable name="userPermissionViewForbcmManageQuery">
+		 <x2:execute command="bcm.framework.common:checkAccessPermissions">
+		   <x2:with-param name="activityName" select="'bcmManageQuery'"/>
+		   <x2:with-param name="accessLevel" select="'View'"/>
+		 </x2:execute>
+	  </xapl:variable>              
+          <xapl:if test="$userPermissionViewForbcmManageQuery='True'">        
+		  <BUTTON Name="clear" DisplayText="Clear" OnClick="javascript:dispatchClear()"/>
+		  <BUTTON Name="search" DisplayText="Search" OnClick="javascript:onSearch()" Emphasized="yes"/>
+	  </xapl:if>
+        </BUTTONS>
+      </FORM>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportConfig">
+    <x2:param name="this" select="$this"/>
+    <xapl:variable name="id"/>
+    <xapl:set-variable name="id">QueryMaster.queryID</xapl:set-variable>
+
+    <xapl:return>
+      <REPORT Action="{$pages:manageQuery}" Title="Search Query" Method="POST" Selectable="All" Scrollable="yes" ScrollableContainer="no" Id="{$id}" SelectedId="QUERY_ID" PagingTitle="yes" NoRecordsTitle="No Queries found">
+        <FIELDS>
+          <!--get form's report fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+          <!-- get Hidden Fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportHiddenFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+          <!-- additional hidden fields -->
+          <FIELD Name="CURRENT_ID" DisplayType="Hidden" Value=""/>
+          <FIELD Name="UPDATE_ALL" DisplayType="Hidden" Value="{$this/UPDATE_ALL/@Value}"/>
+          <FIELD Name="ACTION" DisplayType="Hidden" Value=""/>
+        </FIELDS>
+        <BUTTONS>
+	  <xapl:variable name="userPermissionViewForbcmManageQuery">
+		 <x2:execute command="bcm.framework.common:checkAccessPermissions">
+		   <x2:with-param name="activityName" select="'bcmManageQuery'"/>
+		   <x2:with-param name="accessLevel" select="'View'"/>
+		 </x2:execute>
+	  </xapl:variable>              
+	  <xapl:variable name="userPermissionRemoveForbcmManageQuery">
+		<x2:execute command="bcm.framework.common:checkAccessPermissions">
+		 <x2:with-param name="activityName" select="'bcmManageQuery'"/>
+		 <x2:with-param name="accessLevel" select="'Remove'"/>
+		</x2:execute>
+	  </xapl:variable>              
+	  <xapl:variable name="userPermissionAddForbcmManageQuery">
+		<x2:execute command="bcm.framework.common:checkAccessPermissions">
+		 <x2:with-param name="activityName" select="'bcmManageQuery'"/>
+		 <x2:with-param name="accessLevel" select="'Add'"/>
+		</x2:execute>
+	  </xapl:variable>  
+	  <xapl:if test="$userPermissionViewForbcmManageQuery='True'">	  
+	          <BUTTON Id="queryDetails" Name="queryDetails" DisplayText="Query Details" OnClick="javascript:onQueryDetails()" DisableOnClick="true" Disabled="report"/>
+	          <BUTTON Id="queryHistory" Name="queryHistory" DisplayText="Query History" OnClick="javascript:onQueryHistory()" DisableOnClick="true" Disabled="report"/>
+	          <BUTTON Id="executeQuery" Name="executeQuery" DisplayText="Execute Query" OnClick="javascript:onExecuteQuery()" DisableOnClick="true" Disabled="report"/>
+	  </xapl:if>
+	  <xapl:if test="$userPermissionRemoveForbcmManageQuery='True'">	  	  
+		  <DIVIDER/>
+		  <BUTTON Id="delete" Name="delete" DisplayText="Delete" OnClick="javascript:onDelete()" Disabled="report" DisableOnClick="true"/>
+	  </xapl:if>
+	  <xapl:if test="$userPermissionAddForbcmManageQuery='True'">	  	  	  
+	          <BUTTON Id="create" Name="Create" DisplayText="Create" OnClick="javascript:onCreate()" DisableOnClick="true"/>
+	  </xapl:if>
+        </BUTTONS>
+        <PAGINATION/>
+      </REPORT>
+    </xapl:return>
+
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportData">
+    <x2:param name="this"/>
+    <xapl:return>
+      <x2:execute command="bcm.framework.queryform.Form:getFormReportData">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="fromProperty" select="'RESULT_PROPERTY'"/>
+        <x2:with-param name="delimeter" select="'_' "/>
+      </x2:execute>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

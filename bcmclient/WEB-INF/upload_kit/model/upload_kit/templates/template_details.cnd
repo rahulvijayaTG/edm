@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">    
+
+  <!--******************************************************************************
+  ********************************************************************************-->
+  <x2:command public="yes" description="_" name="load">
+    
+  	<xapl:return>
+      <!-- Header -->
+      <x2:execute command="upload_kit.templates.template_details:getHeader"/>
+      
+      <!-- Container -->
+      <x2:execute command="upload_kit.templates.template_details:getContainer"/>
+
+  	  <xcore:execute-method  name="//DataUploadService/getTemplate">
+  	    <TEMPLATE Name="{$this/TEMPLATE_NAME/@Value}"/>
+  	  </xcore:execute-method>
+  	</xapl:return>
+  </x2:command>
+
+  <!-- *************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+
+    <xapl:variable name="origHeader" enforceList="true">
+      <x2:execute command="upload_kit.uploads.local_trans_upload_details:getHeader">
+      </x2:execute>
+    </xapl:variable>
+	
+	  <xapl:variable name="templatesPage">
+      <web:get-page name="upload_transaction_templates"/>
+    </xapl:variable>
+
+    <xapl:return>
+	    <HEADER>
+        <HEADING2 Value="Template Details"/>
+        <HEADING_LINK Value="{$templatesPage}" />	
+        <xapl:value-of select="$origHeader/*"/>
+	    </HEADER>
+    </xapl:return>
+  </x2:command>
+  
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    
+    <xapl:return>
+      <!-- Container -->
+      <CONTAINER Scrollable="yes" Editable="false">
+        <HELP Url="{$pages:upload_template_details_help}"/>
+        <STEP
+             DisplayText="Template Details" 
+             Selected="true">
+        </STEP>
+      </CONTAINER>
+    </xapl:return>
+  </x2:command>
+    		 
+</x2:commands>

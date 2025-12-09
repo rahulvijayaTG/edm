@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:identity="http://www.i2.com/identity" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+   <x2:command name="createCalendar" public="yes">
+       <x2:execute command="bcm.context.controller:setCalendarContext"/>
+       <xapl:variable name="calendarName">
+         <xcore:execute-method name="//BCMMasterService/getUniqueId" entireResponse="false">
+           <DOCUMENT_NAME Value="Calendar"/>
+         </xcore:execute-method>
+       </xapl:variable>
+       <xapl:print>
+       printing this --><xapl:value-of select="$this"/>
+       printing context --><xapl:value-of select="$context"/>
+       </xapl:print>
+       <!--EQ:569477& 572277 assignMode variable is to identify whether the calendartype shld be 
+       allowed to change or not.If the page comes from Location/Resource the calendartype shldnt
+       be allowed to change(Mithun ) -->
+       <xapl:choose>
+           <xapl:when test="$context/LOCATION/assignMode/@Value ='true'">
+               <docutil:set select="$context/LOCATION">
+                   <assignMode Value="EDIT"/>
+               </docutil:set>
+           </xapl:when> 
+           <xapl:when test="$context/RESOURCE/assignMode/@Value ='true'">
+               <docutil:set select="$context/RESOURCE">
+                   <assignMode Value="EDIT"/>
+               </docutil:set>
+           </xapl:when> 
+        </xapl:choose>    
+       <docutil:set select="$context/CALENDAR">
+         <MODE Value="NEW"/>
+         <name Value="{$calendarName/@Value}"/>
+         <xapl:choose>
+           <xapl:when test="$context/RESOURCE">
+             <calendarTypeID Value="RESOURCE"/>
+           </xapl:when>
+           <xapl:when test="$context/DL">
+             <calendarTypeID Value="DL"/>
+           </xapl:when>
+           <xapl:when test="$context/LOCATION">
+             <calendarTypeID Value="LOCATION"/>
+           </xapl:when>
+           <xapl:otherwise/>
+         </xapl:choose>
+       </docutil:set>
+       <web:display-page>
+         <web:get-page name="calendarDetail">
+           <!--EQ:569934 dont send "this" next page-->
+           <!--xapl:value-of select="$this/*"/-->
+         </web:get-page>
+       </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="showCalendarDetail" public="yes">
+    <x2:execute command="bcm.context.controller:setCalendarContext"/>
+    <xapl:print select="$this"/>
+    <xapl:print>chandy check this!!</xapl:print>
+    <xapl:if test="string-length($this/CalendarMaster.calendarID/@Value) >0">
+       <xapl:variable name="bucketType">
+            <xapl:choose>
+                <xapl:when test="$this/CalendarMaster.class/@Value='SpecialWeekly'">
+                    <xapl:value-of select="'WEEKLY'"/>
+                </xapl:when>
+                <xapl:when test="$this/CalendarMaster.class/@Value='SpecialMonthly'">
+                    <xapl:value-of select="'MONTHLY'"/>
+                </xapl:when>
+                <xapl:otherwise>
+                </xapl:otherwise>
+            </xapl:choose>
+       </xapl:variable>
+       <xapl:variable name="className">
+            <xapl:choose>
+                <xapl:when test="string-length($this/CalendarMaster.class/@Value)>0">
+                    <xapl:value-of select="$this/CalendarMaster.class/@Value"/>
+                </xapl:when>
+                <xapl:otherwise>
+                    <xapl:value-of select="'Generic'"/>
+                </xapl:otherwise>
+            </xapl:choose>
+       </xapl:variable>
+       <xapl:print>
+        check for class
+                    <xapl:value-of select="$this/CalendarMaster.class/@Value"/>
+                    <xapl:value-of select="'Generic'"/>
+                    <xapl:value-of select="$className"/>
+
+       </xapl:print>
+       
+      <docutil:set select="$context/CALENDAR">
+        <MODE Value="EDIT"/>
+        <calendarID Value="{$this/CalendarMaster.calendarID/@Value}"/>
+        <name Value="{$this/CalendarMaster.name/@Value}"/>
+        <description Value="{$this/CalendarMaster.description/@Value}"/>
+        <calendarTypeID Value="{$this/CalendarMaster.calendarTypeID/@Value}"/>
+        <class Value="{$className}"/>
+        <category Value="{$this/CalendarMaster.category/@Value}"/>
+        <subCategory Value="{$this/CalendarMaster.subCategory/@Value}"/>
+        <UOM Value="{$this/CalendarMaster.UOM/@Value}"/>
+        <horizonID Value="{$this/CalendarMaster.horizonID/@Value}"/>
+        <bucketType Value="{$bucketType}"/>
+      </docutil:set>
+    </xapl:if>
+    <xapl:choose>
+        <xapl:when test="$context/CALENDAR/class/@Value = 'Generic'">
+            <xapl:print>
+                Generic cal
+            </xapl:print>
+            <web:display-page>
+              <web:get-page name="calendarDetail">
+                <xapl:value-of select="$this/*"/>
+              </web:get-page>
+            </web:display-page>
+        </xapl:when>
+        <xapl:otherwise>
+            <xapl:print>
+                Fixed cal
+            </xapl:print>
+            <web:display-page>
+              <web:get-page name="calendarFixedDetail">
+                <!--xapl:value-of select="$this/*"/-->
+              </web:get-page>
+            </web:display-page>
+        </xapl:otherwise>
+    </xapl:choose>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="deleteCalendar" public="yes">
+    <xapl:print select="$this"/>
+    <xapl:variable name="response">
+      <xcore:execute-method name="//BCMMasterService/deleteCalendar" entireResponse="true">
+        <xapl:for-each varName="calID" select="$this/SELECTED_ID/@Value">
+          <calendarID Value="{$calID}"/>
+        </xapl:for-each>
+      </xcore:execute-method>
+    </xapl:variable>
+    <xapl:print select="$response"/>
+    <xapl:variable name="status">
+      <x2:execute command="bcm.framework.util:getResponseStatus">
+        <x2:with-param name="response" select="$response"/>
+        <x2:with-param name="successMessage" select=" 'Calendar deleted successfully.' "/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:print select="$status"/>
+    <docutil:set select="$this">
+      <xapl:value-of select="$status"/>
+    </docutil:set>
+    <web:display-page>
+      <web:get-page name="calendarSearchBreadcrumb">
+        <xapl:value-of select="$this/*"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="addCalendarToResource" public="yes">
+        <xapl:variable name="resourceDetail"/>
+        <xapl:variable name="resDoc"/>
+        
+        <!--<xapl:for-each varName="calID" select="$this/SELECTED_ID/@Value">
+            <xapl:variable name="temp" select="$calendarSearchResult/JOIN_RESULT[./CalendarMaster.calendarID/@Value = $calID]"/>
+            <xapl:print select="$temp"/>
+            <xapl:print select="count($resDetails/CALENDARS/SESSION_DATA/ResourceCalendar.calendarID[@Value=$temp/CalendarMaster.calendarID/@Value])"/>
+            <xapl:if test="count($resDetails/CALENDARS/SESSION_DATA/ResourceCalendar.calendarID[@Value=$temp/CalendarMaster.calendarID/@Value])=0">
+              <xapl:if test="count($resDetails/CALENDARS/JOIN_RESULT/ResourceCalendar.calendarID[@Value=$temp/CalendarMaster.calendarID/@Value])=0">
+                <docutil:add select="$resDetails/CALENDARS">
+                <SESSION_DATA>
+                    <ResourceCalendar.calendarID Value="{$temp/CalendarMaster.calendarID/@Value}"/>
+                    <ResourceCalendar.resourceCalendarID Value=""/>
+                    <xapl:value-of select="$temp/CalendarMaster.name"/>
+                    <xapl:value-of select="$temp/CalendarMaster.calendarTypeID"/>
+                    <xapl:value-of select="$temp/CalendarMaster.category"/>
+                    <xapl:value-of select="$temp/CalendarMaster.subCategory"/>
+                    <xapl:value-of select="$temp/CalendarMaster.class"/>
+                    <xapl:value-of select="$temp/CalendarMaster.UOM"/>
+                    <xapl:value-of select="$temp/CalendarMaster.description"/>
+                </SESSION_DATA>
+               </docutil:add>
+                <xapl:set-variable name="count" select="$count + 1 "/>
+              </xapl:if>
+            </xapl:if>
+        </xapl:for-each>
+        -->
+        <xapl:print>@@@@@@@@@@@   IN SAVE RESOURCE  +++++++++++==</xapl:print>
+        <xapl:print select="$this"/>
+        <xapl:print>@**********    ++++++++++++++++    %%%%%%%%%%%%%%%%%</xapl:print>
+        <xapl:print select="$resDetails"/>
+                
+        <xapl:variable name="count" select="$locDetails/CALENDARS/TOTAL_RECORD_COUNT/@Value"/>
+        <docutil:set select="$resourceDetail/CALENDARS">
+            <TOTAL_RECORD_COUNT Value="{$count}"/>
+        </docutil:set>
+        <xapl:variable name="resData">
+           <calendar/>
+        </xapl:variable>
+        <xapl:variable name="resourceData">
+           <RESOURCE_CALENDARS/>
+        </xapl:variable>
+        <docutil:add select="$resData">
+        <xapl:for-each select="$this/SELECTED_ID" varName="selectedID">
+            <calendarID Value="{$selectedID/@Value}"/>
+        </xapl:for-each>
+        </docutil:add>
+        <xapl:variable name="calendarResFlag" select="'FALSE'"/>
+        
+        <xapl:print>@**********    ++++++++++++++++  RESOURCE DATA **********************</xapl:print>
+        <xapl:print select="$resData"/>
+        
+           <xapl:variable name="calResourceResponse">
+           <xcore:execute-method name="//BCMMasterService/getResourceCalendar" entireResponse="true">
+              <resourceID Value="{$resDetails/resourceID/@Value}"/>
+           </xcore:execute-method>
+  
+           </xapl:variable>
+           <xapl:print>@**********    ++++++++++++++++  RESPONSE  %%%%%%%%%%%%%%%%%</xapl:print>
+           <xapl:print select="$calResourceResponse"/>
+           
+           <xapl:for-each select="$resData/calendarID" varName="calendarIDSelected">
+               <xapl:for-each select="$calResourceResponse/RESPONSE/Resource/calendarID" varName="calendarIDSaved">
+                 <xapl:print>+++++++++++++   IN FOR LOOP   %%%%%%%%%</xapl:print>
+                 <xapl:print select="$calendarIDSelected/@Value"/>
+                 <xapl:print select="$calendarIDSaved/@Value"/>
+              <xapl:choose>
+                 
+                 <xapl:when test="$calendarIDSelected/@Value=$calendarIDSaved/@Value">
+  
+                 <xapl:set-variable name="calendarResFlag"><xapl:value-of select="'TRUE'"/></xapl:set-variable>
+                 </xapl:when>
+              </xapl:choose>
+  
+               </xapl:for-each>
+                            <xapl:print select="$calendarResFlag"/>
+              <xapl:if test="$calendarResFlag='FALSE'">
+                 <docutil:add select="$resourceData">
+                <RESOURCE_CALENDAR>
+                   <calendarID Value="{$calendarIDSelected/@Value}"/>
+                </RESOURCE_CALENDAR>   
+                 </docutil:add>
+              </xapl:if>
+              <xapl:set-variable name="calendarResFlag"><xapl:value-of select="'FALSE'"/></xapl:set-variable>
+           </xapl:for-each>
+           <xapl:print>@**********    ++++++++++++++++ FINAL   %%%%%%%%%%%%%%%%%</xapl:print>
+           <xapl:print select="$resourceData"/>
+                        
+        <xcore:execute-method name="//BCMMasterService/saveResourceCalendars" entireResponse="true">
+              <resourceID Value="{$resDetails/resourceID/@Value}"/>
+              <xapl:value-of select="$resourceData"/>
+        </xcore:execute-method>
+        
+        <x2:execute command="bcm.context.controller:cleanCalendarContext"/>
+        <x2:execute command="bcm.context.controller:cleanResourceContext"/>
+        <web:display-page>
+            <web:get-page name="resourceCalendar"/>
+        </web:display-page>
+    </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="addCalendarToDL" public="yes">
+    <xapl:print select="$this"/>
+    <docutil:set select="$distributionLaneDetails">
+      <calendarID Value="{$this/SELECTED_ID/@Value}"/>
+      <calendarName Value="{$calendarSearchResult/JOIN_RESULT[./CalendarMaster.calendarID/@Value = $this/SELECTED_ID/@Value]/*[name() = 'CalendarMaster.name']/@Value}"/>
+    </docutil:set>
+    <xapl:print select="$distributionLaneDetails"/>
+    <web:display-page>
+      <web:get-page name="distributionLaneDetail"/>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="addCalendarToLocation" public="yes">
+        <xapl:variable name="count" select="$locDetails/CALENDARS/TOTAL_RECORD_COUNT/@Value"/>
+        <docutil:set select="$locDetails/CALENDARS">
+            <TOTAL_RECORD_COUNT Value="{$count}"/>
+        </docutil:set>
+        <xapl:variable name="locData">
+           <calendar/>
+        </xapl:variable>
+        <xapl:variable name="locationData">
+           <LOCATION_CALENDARS/>
+        </xapl:variable>
+        <docutil:add select="$locData">
+        <xapl:for-each select="$this/SELECTED_ID" varName="selectedID">
+            <calendarID Value="{$selectedID/@Value}"/>
+        </xapl:for-each>
+        </docutil:add>
+        <xapl:variable name="calendarFlag" select="'FALSE'"/>
+        
+           <xapl:variable name="calResponse">
+           <xcore:execute-method name="//BCMMasterService/getLocationCalendar" entireResponse="true">
+              <locationID Value="{$locDetails/locationID/@Value}"/>
+           </xcore:execute-method>
+           
+           </xapl:variable>
+           
+           <xapl:for-each select="$locData/calendarID" varName="calendarIDSelected">
+               <xapl:for-each select="$calResponse/RESPONSE/Calendar/locationCalendarID" varName="calendarIDSaved">
+                  <xapl:choose>
+                     <xapl:when test="$calendarIDSelected/@Value=$calendarIDSaved/@Value">
+                       
+                         <xapl:set-variable name="calendarFlag"><xapl:value-of select="'TRUE'"/></xapl:set-variable>
+                     </xapl:when>
+                  </xapl:choose>
+                  
+               </xapl:for-each>
+                 
+              <xapl:if test="$calendarFlag='FALSE'">
+                 <docutil:add select="$locationData">
+                    <LOCATION_CALENDAR>
+                       <calendarID Value="{$calendarIDSelected/@Value}"/>
+                    </LOCATION_CALENDAR>   
+                 </docutil:add>
+                  </xapl:if>
+              <xapl:set-variable name="calendarFlag"><xapl:value-of select="'FALSE'"/></xapl:set-variable>
+           </xapl:for-each>
+                            
+        <xcore:execute-method name="//BCMMasterService/saveLocationCalendars" entireResponse="true">
+                <locationID Value="{$locDetails/locationID/@Value}"/>
+                
+                   <xapl:value-of select="$locationData"/>
+        </xcore:execute-method>
+        
+        <x2:execute command="bcm.context.controller:cleanCalendarContext"/>
+        <x2:execute command="bcm.context.controller:cleanLocationContext"/>
+        <web:display-page>
+            <web:get-page name="locationCalendar"/>
+        </web:display-page>
+    </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="returnToContext" public="yes">
+    <xapl:print select="$this"/>
+    <xapl:print select="$context"/>
+    <xapl:variable name="page">
+      <xapl:choose>
+        <xapl:when test="$context/RESOURCE">resourceCalendar</xapl:when>
+        <xapl:when test="$context/LOCATION">locationCalendar</xapl:when>
+        <xapl:when test="$context/DL">distributionLaneDetail</xapl:when>
+        <xapl:otherwise>calendarSearch</xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+    <xapl:print select="$page"/>
+    <web:display-page>
+      <web:get-page name="{$page}"/>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="exportToExcel" public="yes">
+    <x2:execute command="bcm.framework.util:exportToExcel">
+      <x2:with-param name="pGetReportConfigSource" select="'bcm.calendar.search.view:getReportConfig'"/>
+      <x2:with-param name="pGetReportDataSource" select="'bcm.calendar.search.view:getReportData'"/>
+      <x2:with-param name="pFileNameWithExtension" select="'Calendar.csv'"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+  </x2:command>
+   <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="i18n">
+    <i18n:text>Calendar deleted successfully.</i18n:text>
+  </x2:command>  
+   <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

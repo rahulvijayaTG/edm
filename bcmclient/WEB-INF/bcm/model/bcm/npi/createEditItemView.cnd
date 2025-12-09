@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+
+  <x2:command name="init" public="yes" description="_">
+  </x2:command>
+
+  <x2:command public="yes" description="_" name="initSessionVars">
+      <!-- Reset session variables -->
+      <xapl:set-variable name="npiattributeDetails">
+        <ALL_VALUES>
+          <HIERARCHY/>
+          <ATTRIBUTES/>
+        </ALL_VALUES>
+      </xapl:set-variable>
+
+    <xapl:set-variable name="newProductDetails">
+        <COMMON_PROPS>
+          <ENTITY_DETAILS/>
+        </COMMON_PROPS>
+    </xapl:set-variable>
+    <xapl:set-variable name="tableContext">
+              <PAGES/>
+        </xapl:set-variable>
+        <xapl:set-variable name="sessionData">
+              <ALL_VALUES/>
+    </xapl:set-variable>
+    <xapl:set-variable  name="primaryDocName">
+      <xapl:value-of select="$currentForm/DOCUMENT_TRAVERSAL/@PrimaryDocument"/>
+    </xapl:set-variable >
+    <xapl:set-variable  name="pkPropName">
+          <xapl:value-of select="{$currentForm/RESULT_PROPERTIES/RESULT_PROPERTY[@PrimaryKey='yes']/@Property}"/>
+    </xapl:set-variable >
+    <xapl:print>
+      primaryDocName is
+      <xapl:value-of select="$primaryDocName"/>
+      pkPropName is
+      <xapl:value-of select="$pkPropName"/>
+    </xapl:print>
+  </x2:command>
+
+  <x2:command public="yes" description="_" name="load">
+    <xapl:print>
+      ::::this on load:::
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+
+    <docutil:set select="$this/PAGE/@Value">
+          <xapl:value-of select="'createEditItem'"/>
+    </docutil:set>
+    <xapl:set-variable name="allComnProps">
+          <x2:execute command="bcm.npi.controller:getCommonAttributesList">
+    	  <x2:with-param name="this" select="{$this}"/>
+          </x2:execute>
+    </xapl:set-variable>
+
+
+
+
+    <xapl:if test="$this/USE_SESSIONDATA/@Value = 'TRUE'">
+          <!--xapl:print>
+                ::::resetting in $this @createEditItemView values from sessionData:::
+                <xapl:value-of select="$sessionData"/>
+          </xapl:print-->
+          <xapl:if test="$this/FROM_SELECT_FOREIGN_KEY/@Value = 'true'">
+                <docutil:add select="$this">
+                  <xapl:value-of select="$sessionData/*[name() = $this/FROM_TABLE/@Value]/*"/>
+                </docutil:add>
+                <docutil:remove select="$sessionData/*[name() = $this/FROM_TABLE/@Value]/*"/>
+          </xapl:if>
+    </xapl:if>
+
+    <xapl:if test="$this/FROM_SELECT_FOREIGN_KEY/@Value = 'true'">
+
+     	<!--xapl:print>
+                 newProductDetails before  setting
+                <xapl:value-of select="$newProductDetails"/>
+                $this is
+                <xapl:value-of select="$this"/>
+    	</xapl:print-->
+    	<docutil:remove select="$npiattributeDetails/*[name() = $this/SELECTED_TAB/@Value]/*"/>
+        <docutil:add select="$npiattributeDetails/*[name() = $this/SELECTED_TAB/@Value]">
+          <xapl:value-of select="$this/*"/>
+        </docutil:add>
+        <xapl:for-each select="$allComnProps/PROPERTY" varName="elem">
+	       <xapl:variable name="propName">
+		    <xapl:value-of select="$elem/@Name"/>
+	       </xapl:variable>
+	       <xapl:choose>
+		  <xapl:when test="$this/*[name()=$propName]">
+		    <docutil:set select="$newProductDetails/ENTITY_DETAILS/*[name()=$propName]/@Value">
+		  	    <xapl:value-of select="{$this/*[name()=$propName]/@Value}"/>
+	 	    </docutil:set>
+		  </xapl:when>
+		  <xapl:otherwise>
+		     <docutil:set select="$newProductDetails/ENTITY_DETAILS/*[name()=$propName]"/>
+		  </xapl:otherwise>
+		</xapl:choose>
+		<docutil:set select="$allComnProps/PROPERTY[@Name=$propName]/@Value">
+		    <xapl:value-of select="{$newProductDetails/ENTITY_DETAILS/*[name()=$propName]/@Value}"/>
+	        </docutil:set>
+        </xapl:for-each>
+        <!--xapl:print>
+	  npiattributeDetails##
+	  <xapl:value-of select="$npiattributeDetails"/>
+	  newProductDetails::::$$$$
+	  <xapl:value-of select="$newProductDetails"/>
+	  allComnProps##
+	  <xapl:value-of select="$allComnProps"/>
+        </xapl:print-->
+    </xapl:if>
+
+    <!-- BREADCRUMBS AT TOP OR AFTER CLEAN-CONTEXT-->
+    <x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+      <x2:with-param name="display" select="'New product Introduction'"/>
+      <x2:with-param name="page" select="{$this/PAGE/@Value}"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+
+    <!--xapl:variable name="errorMsgs">
+        <ROOT>
+        </ROOT>
+   </xapl:variable>
+        <xapl:for-each varName="err" select="$this/ERROR_MESSAGE">
+            <xapl:variable name="error">
+            <xapl:value-of select="$err/@Value"/>
+        </xapl:variable>
+        <docutil:add select="$errorMsgs">
+            <ERROR_MESSAGE Value="{$error}"/>
+        </docutil:add>
+        </xapl:for-each>
+   <xapl:print>
+      ::::errorMsgs:::
+      <xapl:value-of select="$errorMsgs"/>
+    </xapl:print>
+        <xapl:if test="count($this/ERROR_MESSAGE) =0">
+                <xapl:set-variable name="errorResDetails"/>
+        </xapl:if-->
+
+    <xapl:return>
+      <!-- Page Header-->
+          <x2:execute command="bcm.npi.createEditItemView:getHeader">
+            <x2:with-param name="this" select="{$this}"/>
+          </x2:execute>
+        <x2:execute command="bcm.npi.createEditItemView:getContainer">
+                <x2:with-param name="this" select="{$this}"/>
+                <x2:with-param name="pPage" select="createEditItem"/>
+        </x2:execute>
+        <x2:execute command="bcm.npi.controller:getManageAttributesPage">
+          <x2:with-param name="this" select="{$this}"/>
+        </x2:execute>
+        <!--xapl:value-of select="$this/*"/>
+        <x2:execute command="bcm.npi.controller:getCommonAttributesList">
+	  <x2:with-param name="this" select="{$this}"/>
+        </x2:execute-->
+        <xapl:value-of select="$allComnProps"/>
+          <SELECTED_TAB Value="{$this/SELECTED_TAB/@Value}"/>
+          <PAGE Value="{$this/PAGE/@Value}"/>
+          <SAVE_ACTION Value="{$this/SAVE_ACTION/@Value}"/>
+          <FORM_NAME Value="{$this/FORM_NAME/@Value}"/>
+          <SERVICE Value="{$this/SERVICE/@Value}"/>
+          <xapl:if test="string-length($this/SUCCESS_MESSAGE/@Value) &gt; 0">
+            <SUCCESS_MESSAGE Value="{$this/SUCCESS_MESSAGE/@Value}"/>
+          </xapl:if>
+          <xapl:if test="string-length($this/ERROR_MESSAGE/@Value) &gt; 0">
+	    <ERROR_MESSAGE Value="{$this/ERROR_MESSAGE/@Value}"/>
+          </xapl:if>
+
+    </xapl:return>
+  </x2:command>
+
+  <x2:command public="yes" description="_" name="getContainer">
+      <x2:param name="pPage"/>
+       <xapl:return>
+        <CONTAINER Scrollable="no">
+          <HELP Url="../help/npi_help.htm"/>
+          <EXPRESSION_FILTER Value="no"/>
+          <STEP Name="entityDetails" DisplayText="{concat($this/SAVE_ACTION/@Value,' Product')}" OnClick="createEditItem" Selected="true"/>
+          <BUTTONS>
+                <BUTTON DisableOnClick="true" Name="Close" Emphasized="true" Id="Close" OnClick="javascript:onClose()" DisplayText="Cancel" />
+                <BUTTON DisableOnClick="true" Name="save" Emphasized="true" Id="create" OnClick="javascript:onCreate()" DisplayText="Save" />
+                <xapl:if test="$this/SAVE_ACTION/@Value = 'Edit'">
+         	   <BUTTON DisableOnClick="true" Name="Revert" Emphasized="true" Id="Revert" OnClick="javascript:onRevert()" DisplayText="Revert" />
+                </xapl:if>
+          </BUTTONS>
+        </CONTAINER>
+      </xapl:return>
+  </x2:command>
+
+    <x2:command public="yes" description="_" name="getHeader">
+      <xapl:return>
+       <x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>
+      </xapl:return>
+    </x2:command>
+
+
+</x2:commands>

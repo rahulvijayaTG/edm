@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+  <display-name>MDM</display-name>
+  <description>Master Data Management UI</description>
+
+  <!-- Compresses output for browsers that can handle gzip content.  Weblogic 6.1 version must include J2EE 1.3
+         functionality for this to be enabled.
+  
+  -->
+  
+  <!--
+    <filter>
+      <filter-name>compressionFilter</filter-name>
+      <filter-class>com.i2.x2.filters.compression.CompressionFilter</filter-class>
+      <init-param>
+        <param-name>compressionThreshold</param-name>
+        <param-value>10</param-value>
+      </init-param>
+    </filter>
+  
+    <filter-mapping>
+      <filter-name>compressionFilter</filter-name>
+      <url-pattern>*.jsp</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+      <filter-name>compressionFilter</filter-name>
+      <url-pattern>*.x2p</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+      <filter-name>compressionFilter</filter-name>
+      <url-pattern>*.x2ps</url-pattern>
+    </filter-mapping>
+  -->
+    
+  <listener>
+    <listener-class>
+      com.i2.ui.pgl.servlet.StudioHttpSessionListener
+    </listener-class>
+  </listener>
+
+  
+  <servlet>
+    <servlet-name>x2servlet</servlet-name>
+    <servlet-class>com.i2.x2.servlet.X2Servlet</servlet-class>
+    <load-on-startup>4</load-on-startup>
+  </servlet>
+  <servlet>
+    <servlet-name>workflowservlet</servlet-name>
+    <servlet-class>com.i2.x2.servlet.WorkflowServlet</servlet-class>
+    <load-on-startup>3</load-on-startup>
+  </servlet>
+  <servlet>
+    <servlet-name>pglServlet</servlet-name>
+    <servlet-class>com.i2.ui.pgl.servlet.PGLServlet</servlet-class>
+    <load-on-startup>5</load-on-startup>
+  </servlet>
+  <servlet>
+    <servlet-name>nonValidatedPGLServlet</servlet-name>
+    <servlet-class>com.i2.ui.pgl.servlet.PGLServlet</servlet-class>
+    <init-param>
+      <param-name>validation</param-name>
+      <param-value>false</param-value>
+    </init-param>
+    <load-on-startup>6</load-on-startup>
+  </servlet>  
+  <servlet>
+    <servlet-name>studioPageServlet</servlet-name>
+    <servlet-class>com.i2.ui.pgl.servlet.StudioPageServlet</servlet-class>
+    <load-on-startup>5</load-on-startup>
+  </servlet>
+  <servlet>
+    <servlet-name>NavigationServlet</servlet-name>
+    <servlet-class>com.i2.ui.pgl.servlet.NavigationServlet</servlet-class>
+    <load-on-startup>5</load-on-startup>
+  </servlet>
+  <servlet>
+ <servlet-name>SearchDownloadServlet</servlet-name>
+    <servlet-class>com.i2.ui.pgl.servlet.SearchDownloadServlet</servlet-class>
+    <load-on-startup>5</load-on-startup>
+  </servlet>  
+  <servlet>
+    <servlet-name>XsltServlet</servlet-name>
+    <servlet-class>XsltServlet</servlet-class>
+    <load-on-startup>5</load-on-startup>
+  </servlet>
+  <servlet>
+    <servlet-name>SvgServlet</servlet-name>
+    <servlet-class>com.i2.ui.web.common.SvgServlet</servlet-class>
+    <load-on-startup>5</load-on-startup>
+  </servlet>
+  <servlet>
+    <servlet-name>ExcelServlet</servlet-name>
+    <servlet-class>com.i2.ui.web.common.ExcelServlet</servlet-class>
+    <load-on-startup>5</load-on-startup>
+  </servlet>
+  <servlet>
+    <servlet-name>CISSessionCoordinator</servlet-name>
+    <servlet-class>com.i2.cis.session.servlet.SessionCoordinationServlet</servlet-class>
+  </servlet>
+  <!-- <servlet>
+    <servlet-name>xcoreServlet</servlet-name>
+    <servlet-class>com.i2.xcoreweb.XcoreWebServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet> -->
+  <servlet>
+    <servlet-name>DownloadServlet</servlet-name>
+    <servlet-class>com.i2.x2.servlet.DownloadServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>CISSessionCoordinator</servlet-name>
+    <url-pattern>CISSessionCoordinator</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>workflowservlet</servlet-name>
+    <url-pattern>*.do</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>x2servlet</servlet-name>
+    <url-pattern>*.x2c</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>x2servlet</servlet-name>
+    <url-pattern>*.cmd</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>nonValidatedPGLServlet</servlet-name>
+    <url-pattern>/core/console/get_command.x2p</url-pattern>
+  </servlet-mapping>  
+  <servlet-mapping>
+    <servlet-name>pglServlet</servlet-name>
+    <url-pattern>*.x2p</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>NavigationServlet</servlet-name>
+    <url-pattern>/navigation.x2ps</url-pattern>
+  </servlet-mapping>  
+  <servlet-mapping>
+    <servlet-name>studioPageServlet</servlet-name>
+    <url-pattern>*.x2ps</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>XsltServlet</servlet-name>
+    <url-pattern>/XsltServlet</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>SvgServlet</servlet-name>
+    <url-pattern>/SvgServlet</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>ExcelServlet</servlet-name>
+    <url-pattern>/ExcelServlet</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>ExcelServlet</servlet-name>
+    <url-pattern>*.xls</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>DownloadServlet</servlet-name>
+    <url-pattern>/DownloadServlet</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>SearchDownloadServlet</servlet-name>
+    <url-pattern>/SearchDownloadServlet</url-pattern>
+  </servlet-mapping>  
+<servlet-mapping>
+  <servlet-name>xcoreServlet</servlet-name>
+  <url-pattern>xcore</url-pattern>
+</servlet-mapping>
+  
+  <session-config>
+    <session-timeout>120</session-timeout>
+  </session-config>
+  <mime-mapping>
+    <extension>txt</extension>
+    <mime-type>text/plain</mime-type>
+  </mime-mapping>
+  <mime-mapping>
+    <extension>html</extension>
+    <mime-type>text/html</mime-type>
+  </mime-mapping>
+  <mime-mapping>
+   <extension>htc</extension>
+   <mime-type>text/x-component</mime-type>
+  </mime-mapping>
+  <welcome-file-list>
+    <welcome-file>bcm/framework/redirect.jsp</welcome-file>
+  </welcome-file-list>
+</web-app>

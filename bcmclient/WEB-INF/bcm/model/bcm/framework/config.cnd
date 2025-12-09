@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:scenario="http://www.i2.com/scenario" xmlns:x2="http://www.i2.com/x2" xmlns:identity="http://www.i2.com/identity" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:cis="http://www.i2.com/cis" description="_">
+
+  <!-- **************************************************************************
+        ***************************************************************************-->
+   <x2:command name="init" public="yes" description="_">
+     <xapl:variable name="otherSolutions" resolver="session" global="true"/>
+     <xapl:variable name="frCommonUI" resolver="session" global="true"/>
+  </x2:command>
+  <!-- **********************************************************************
+        *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+      <xapl:return>
+        <xapl:choose>
+          <!-- when sso enabled -->
+          <xapl:when test="$ssoEnabled = 'true'">
+           <xapl:if test="count($this/SOLUTION) &gt; 0">
+	     <xapl:set-variable name="otherSolutions" select="{$this/SOLUTION/@Value}"/>
+           </xapl:if> 
+           
+            <xapl:print select="{$this/FROMCOMMONUI/@Value}"/>
+             <xapl:if test="count($this/FROMCOMMONUI) &gt; 0">
+	    	     <xapl:set-variable name="frCommonUI" select="{$this/FROMCOMMONUI/@Value}"/>
+           </xapl:if>
+            
+            <x2:execute command="bcm.framework.config:getSSOLoginPage">
+              <x2:with-param name="from" select="$this/FROM/@Value"/>
+              <x2:with-param name="error" select="$this/ERROR/@Value"/>
+              <x2:with-param name="desc" select="$this/DESCRIPTION/@Value"/>
+              <x2:with-param name="solution" select="$this/SOLUTION/@Value"/>
+              
+            </x2:execute>
+          </xapl:when>
+          <!-- sso not enabled -->
+          <xapl:otherwise>
+            <x2:execute command="bcm.framework.config:getLoginPage">
+              <x2:with-param name="from" select="$this/FROM/@Value"/>
+              <x2:with-param name="error" select="$this/ERROR/@Value"/>
+              <x2:with-param name="desc" select="$this/DESCRIPTION/@Value"/>
+            </x2:execute>
+          </xapl:otherwise>
+        </xapl:choose>
+      </xapl:return>
+  </x2:command>
+
+  <!-- **************************************************************************
+        ***************************************************************************-->
+  <x2:command public="yes" description="_" name="getLoginPage">
+    <x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+    <x2:param name="from" select="$this/FROM/@Value"/>
+    <x2:param name="error" select="$this/ERROR/@Value"/>
+    <x2:param name="desc" select="$this/DESCRIPTION/@Value"/>
+    <xapl:return>
+      <LOGIN_PAGE_INFO>
+        <MASTHEAD_IMAGE Value="../../i2/images/masthead_fivetwo.gif"/>
+        <PANEL_IMAGE Value="../../i2/images/login_panel_simple.jpg"/>
+        <COMMAND Value="login/login.cmd"/>
+        <CHANGE_PWD Value="yes"/>
+        <FROM Value="{$from}"/>
+        <ERROR Value="{$error}"/>
+        <DESCRIPTION Value="{$desc}"/>
+      </LOGIN_PAGE_INFO>
+    </xapl:return>
+  </x2:command>
+
+<!-- **********************************************************************
+     *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getSSOLoginPage">
+    <x2:param name="from" select="$this/FROM/@Value"/>
+    <x2:param name="error" select="$this/ERROR/@Value"/>
+    <x2:param name="desc" select="$this/DESCRIPTION/@Value"/>
+    <x2:param name="solution" select="$this/SOLUTION/@Value"/>
+
+    <!-- This command gets called only when the user needs to be logged in.
+    This command helps in generating the sso login page. -->
+
+    <xapl:print><xapl:value-of select="$this"/></xapl:print>
+    
+    <xapl:variable name="loginFormString">
+      <cis:sso-login processLogin=""/>
+    </xapl:variable>
+
+    
+    <xapl:if test="$loginFormString='true'">
+      <xapl:variable name="userName"><cis:get-user-name/></xapl:variable>
+      <identity:create-identity userId="{$userName}"/>
+      
+      <xapl:variable name="sIdAtEnd">
+	 <scenario:get-scenario-id/>  
+      </xapl:variable>
+	    
+      <x2:execute command="bcm.framework.login:setSecurityVars"/>
+      <xapl:set-variable name="sessionInstanceVar" select="$appInstanceEnabled"/>
+      
+      <xapl:variable name="userFavoritesRes">
+        <xcore:execute-method name="//UserSecurity/getFavoriteHierarchy" UserId="{$loginUserId}" entireResponse="true">
+        </xcore:execute-method>
+    </xapl:variable>
+    <xapl:set-variable name="userFavorites">
+        <xapl:value-of select="$userFavoritesRes/RESPONSE/*" />
+    </xapl:set-variable>
+    <xapl:print select="{$userFavorites}"/>
+<xapl:print select="'SOLUTION bbbb'"/>
+<xapl:print select="{$solution}"/>
+     <web:display-page>
+        <web:get-page name="loginSuccess">
+          <xapl:if test="count($this/SOLUTION/@Value) &gt; 0">
+            <SOLUTION Value="{$solution}"/>
+          </xapl:if>
+
+        </web:get-page>
+      </web:display-page>
+    </xapl:if>
+ 
+    <xapl:return>
+      <LOGIN_PAGE_INFO>
+        <MASTHEAD_IMAGE Value="../../i2/images/masthead_fivetwo.gif"/>
+        <PANEL_IMAGE Value="../../i2/images/login_panel_simple.jpg"/>
+        <COMMAND Value="../../core/login/controller/ssoLogin.cmd"/>
+        <CHANGE_PWD Value="yes"/>
+        <FROM Value="{$from}"/>
+        <ERROR Value="{$error}"/>
+	<DISPLAY_PAGE Value="{$loginFormString}"/>
+        <DESCRIPTION Value="{$desc}"/>
+      </LOGIN_PAGE_INFO>
+    </xapl:return>
+  </x2:command>
+  <!-- **************************************************************************
+        ***************************************************************************-->
+  <x2:command public="yes" description="_" name="getChangePasswordPage">
+    <xapl:variable name="response">
+      <xcore:execute-method name="//UserSecurity/promptForSecretQuestion" entireResponse="true">
+        <USER_NAME Value="{$this/USER_NAME/@Value}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    <xapl:return>
+      <CHANGE_PWD_INFO>
+        <MASTHEAD_IMAGE Value="../i2/images/masthead_fivetwo.gif"/>
+        <PANEL_IMAGE Value="../i2/images/login_panel_simple.jpg"/>
+        <COMMAND Value="change_password/changePassword.cmd"/>
+        <FROM Value="{$this/FROM/@Value}"/>
+        <ERROR Value="{$this/ERROR/@Value}"/>
+        <DESCRIPTION Value="{$this/DESCRIPTION/@Value}"/>
+        <USER_NAME Value="{$this/USER_NAME/@Value}"/>
+      </CHANGE_PWD_INFO>
+      <xapl:if test="$this/CHANGE_PASSWORD/@Value = 'yes' ">
+        <x2:execute command="bcm.framework.config:getPasswdSecretQuestions"/>
+      </xapl:if>
+      <CHANGE_PASSWORD Value="{$this/CHANGE_PASSWORD/@Value}"/>
+      <PROMPT_SECRET_QUESTION Value="{$response/RESPONSE/PROMPT_SECRET_QUESTION/@Value}"/>
+      <MY_PROFILE Value="{$this/MY_PROFILE/@Value}"/>
+    </xapl:return>
+  </x2:command>
+
+  <!-- **************************************************************************-->
+  <x2:command public="yes" description="_" name="getChangePasswordInnerPage">
+  	<xapl:print>this in getChangePasswordInnerPage:<xapl:value-of select="$this"/></xapl:print>
+  	<x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+      <x2:with-param name="display" select="'Change Password'"/>
+      <x2:with-param name="page" select="'user_admin_users'"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+    <xapl:variable name="response">
+      <xcore:execute-method name="//UserSecurity/promptForSecretQuestion" entireResponse="true">
+        <USER_NAME Value="{$this/USER_NAME/@Value}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+
+    <xapl:variable name="passwordChangeInnerForm">
+    	<!--header-->
+      	<x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs">
+      		<x2:with-param name="this" select="{$this}"/>
+      	</x2:execute>
+      	<!--container-->
+      	<x2:execute command="bcm.framework.config:getContainer">
+        	<x2:with-param name="this" select="{$this}"/>
+        	<x2:with-param name="pPage" select="'user_admin_users'"/>
+      	</x2:execute>
+      	<!--Change Pwd Form-->
+      	<x2:execute command="bcm.framework.config:getChangePasswdInnerFormConfig">
+      		<x2:with-param name="response" select="{$response}"/>
+      		<x2:with-param name="this" select="{$this}"/>
+      	</x2:execute>
+    </xapl:variable>
+
+    <xapl:return>
+      <CHANGE_PWD_INFO>
+      	<xapl:choose>
+      	<xapl:when test="count($this/ERROR) &gt; 0">
+	        <ERROR Value="{$this/ERROR/@Value}"/>
+        	<DESCRIPTION Value="{$this/DESCRIPTION/@Value}"/>
+      	</xapl:when>
+      	<xapl:otherwise>
+      		<SUCCESS Value="{$this/SUCCESS/@Value}"/>
+      		<DESCRIPTION Value="{$this/DESCRIPTION/@Value}"/>
+      	</xapl:otherwise>
+      	</xapl:choose>
+        <FROM Value="{$this/FROM/@Value}"/>
+      </CHANGE_PWD_INFO>
+      <xapl:if test="$this/CHANGE_PASSWORD/@Value = 'yes'">
+        <x2:execute command="bcm.framework.config:getPasswdSecretQuestions"/>
+      </xapl:if>
+      <xapl:value-of select="$passwordChangeInnerForm"/>
+    </xapl:return>
+  </x2:command>
+
+  <!-- **************************************************************************-->
+  <x2:command public="yes" description="_" name="getChangePasswdInnerFormConfig">
+  	<x2:param name="response" select="{$response}"/>
+  	<x2:param name="this" select="{$this}"/>
+  	<xapl:return>
+  	<FORM Name="pwdChangeForm" Action="change_password/changePasswordInner.cmd" method="POST" Target="appFrame">
+  		<FIELD Type="Password" DisplayText="Old Password" Name="OLD_PASSWORD" Value="" Visibility="Simple"/>
+  		<FIELD Type="Password" DisplayText="New Password" Name="NEW_PASSWORD" Value="" Visibility="Simple"/>
+  		<FIELD Type="Password" DisplayText="New Password" Name="CONFIRM_PASSWORD" Value="" Visibility="Simple"/>
+  		<FIELD Type="Hidden" Name="USER_NAME" Value="{$this/USER_NAME/@Value}" Visibility="Simple"/>
+  		<FIELD Type="Hidden" Name="MY_PROFILE" Value="{$this/MY_PROFILE/@Value}" Visibility="Simple"/>
+  		<FIELD Type="Hidden" Name="CHANGE_PASSWORD" Value="{$this/CHANGE_PASSWORD/@Value}" Visibility="Simple"/>
+  		<FIELD Type="Hidden" Name="PROMPT_SECRET_QUESTION" Value="{$response/RESPONSE/PROMPT_SECRET_QUESTION/@Value}" Visibility="Simple"/>
+  		<BUTTONS>
+            <BUTTON Name="change" DisplayText="Change" OnClick="javascript:changePassword()" Emphasized="yes"/>
+            <BUTTON Name="cancel" DisplayText="Cancel" OnClick="javascript:onCancel()" Emphasized="no"/>
+        </BUTTONS>
+  	</FORM>
+  	</xapl:return>
+  </x2:command>
+
+  <!-- **************************************************************************-->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pPage"/>
+    <xapl:return>
+      <CONTAINER Scrollable="no">
+        <STEP Name="ChangePassword" DisplayText="Change Password" OnClick="{$pages:user_admin_users}" Selected="{$pPage = 'user_admin_users'}"/>
+      </CONTAINER>
+    </xapl:return>
+  </x2:command>
+
+  <!-- **************************************************************************
+        ***************************************************************************-->
+  <x2:command public="yes" description="_" name="getforgotLoginNamePage">
+    <xapl:return>
+      <RECOVER_LOGIN_INFO>
+        <MASTHEAD_IMAGE Value="../../i2/images/masthead_fivetwo.gif"/>
+        <PANEL_IMAGE Value="../../i2/images/login_panel_simple.jpg"/>
+        <COMMAND Value="recover_loginName/recover_loginName.cmd"/>
+        <FROM Value="{$this/FROM/@Value}"/>
+        <ERROR Value="{$this/ERROR/@Value}"/>
+        <DESCRIPTION Value="{$this/DESCRIPTION/@Value}"/>
+        <EMAIL_ADDRESS Value="{$this/EMAIL_ADDRESS/@Value}"/>
+      </RECOVER_LOGIN_INFO>
+    </xapl:return>
+  </x2:command>
+  <!-- **************************************************************************
+        ***************************************************************************-->
+  <x2:command public="yes" description="_" name="getForgotPasswordPage">
+    <xapl:return>
+      <RECOVER_PWD_INFO>
+        <MASTHEAD_IMAGE Value="../../i2/images/masthead_fivetwo.gif"/>
+        <PANEL_IMAGE Value="../../i2/images/login_panel_simple.jpg"/>
+        <COMMAND Value="recover_password/recoverPassword.cmd"/>
+        <FROM Value="{$this/FROM/@Value}"/>
+        <ERROR Value="{$this/ERROR/@Value}"/>
+        <ERR_DESCRIPTION Value="{$this/ERR_DESCRIPTION/@Value}"/>
+        <USER_NAME Value="{$this/USER_NAME/@Value}"/>
+        <x2:execute command="bcm.framework.config:getPasswdSecretQuestionFromLogin">
+          <x2:with-param name="userName" select="{$this/USER_NAME/@Value}"/>
+        </x2:execute>
+      </RECOVER_PWD_INFO>
+    </xapl:return>
+  </x2:command>
+  <!-- **************************************************************************
+        ***************************************************************************-->
+  <x2:command public="yes" description="_" name="getIndexPage">
+    <x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+        
+    <xapl:variable name="scenarioDetails"/>
+    <xapl:variable name="scenarioId">
+      <scenario:get-scenario-id/>
+    </xapl:variable>
+    <xapl:print>PRINTING SCENARIO ID INSIDE GETINDEXPAGE ... </xapl:print>
+    <xapl:print select="$scenarioId"/>
+    <xapl:if test="$scenarioId != 0">
+      <xapl:print>SCENARIO ID IS NOT ZERO ... ... </xapl:print>
+      <xapl:set-variable name="scenarioDetails">
+        <xcore:execute-method name="//BCMMasterService/getScenarioDetailsFromID" entireResponse="true">
+          <scenarioID Value="{$scenarioId}"/>
+          <name Value="{$parentScId}"/>
+        </xcore:execute-method>
+      </xapl:set-variable>
+    </xapl:if>
+    <xapl:print>PRINTING SCENARIO DETAILS INSIDE GETINDEXPAGE ... </xapl:print>
+    <xapl:print select="$scenarioDetails"/>
+    
+    <xapl:print select="$frCommonUI"/>
+    <xapl:return>
+      <MASTHEAD_IMAGE Value="../../i2/images/masthead_fivetwo.gif"/>
+      <ROLE Value="User"/>
+      <USERNAME Value="{identity-username()}"/>
+      <FORCED_LOGOUT Value="true"/>
+      <LOGOUT_ACTION Value="{$pages:logout}"/>
+      <HELP_ACTION Value="{$pages:general_help}"/>
+      <ABOUT_ACTION Value="{$pages:about}"/>
+      <ACTIVITY Value="{$selectedActivity}"/>
+      <SCENARIO Value="{$scenarioDetails/RESPONSE/ScenarioMaster/name/@Value}"/>
+     <xapl:if test="string-length($otherSolutions) &gt; 0">
+      <SOLUTION Value="{$otherSolutions}"/>
+     </xapl:if>
+     
+     <xapl:if test="string-length($frCommonUI) &gt; 0">
+           <FROMCOMMONUI Value="{$frCommonUI}"/>
+     </xapl:if>
+     </xapl:return>
+  </x2:command>
+  <!-- **************************************************************************
+        ***************************************************************************-->
+  <x2:command public="yes" description="_" name="getMiddlePage">
+    <x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+    <x2:param name="solution" select="$this/SOLUTION/@Value"/>
+    <xapl:variable name="navUrl">
+      <web:get-page name="nav_page">
+        <ACTIVITY Value="{$selectedActivity}"/>
+       <xapl:if test="count($this/SOLUTION) &gt; 0">
+        <SOLUTION Value="{$solution}"/>
+       </xapl:if>
+       
+      </web:get-page>
+    </xapl:variable>
+    <xapl:variable name="homeUrl">
+      <xapl:choose>
+        <xapl:when test="$selectedActivity = 'manage_inventory'">
+          <web:get-page name="imx_home_page"/>
+        </xapl:when>
+        <xapl:when test="$selectedActivity = 'manage_pricing'">
+          <web:get-page name="pricer_home_page"/>
+        </xapl:when>
+        <xapl:otherwise>
+          <web:get-page name="nav_home"/>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+   
+    <xapl:return>
+      <MIDDLE_PAGE_INFO>
+        <NAV_FRAME Value="show"/>
+        <!-- show | hide -->
+	<xapl:if test="count($this/SOLUTION) = 0">
+        <NAV_PAGE_URL Value="{concat('../framework/nav.jsp?ACTIVITY=', $selectedActivity)}"/>
+       </xapl:if>
+       <xapl:otherwise>
+	<NAV_PAGE_URL Value="{concat('../framework/nav.jsp?ACTIVITY=', $selectedActivity,'&amp;SOLUTION=',$otherSolutions)}"/>
+       </xapl:otherwise>         
+        <HOME_PAGE_URL Value="../framework/home.jsp"/>
+        <!-- passing activity 'coz the variables formed above are not being used for some reason -->
+      </MIDDLE_PAGE_INFO>
+    </xapl:return>
+   
+  </x2:command>
+  <!-- **************************************************************************
+        ***************************************************************************-->
+  <x2:command public="yes" description="_" name="getPasswdSecretQuestions">
+    <xapl:variable name="passwdQuestionResplyDoc">
+      <xcore:execute-method name="//UserSecurity/getPasswdSecretQuestions" entireResponse="true"/>
+    </xapl:variable>
+    <xapl:return>
+      <PWD_QUESTIONS>
+        <xapl:value-of select="$passwdQuestionResplyDoc/RESPONSE/CODE_MASTER_VALUE"/>
+      </PWD_QUESTIONS>
+    </xapl:return>
+  </x2:command>
+  <!-- **************************************************************************
+        ***************************************************************************-->
+  <x2:command public="yes" description="_" name="getPasswdSecretQuestionFromLogin">
+    <x2:param name="userName"/>
+    <xapl:print select="{$this}"/>
+    <xapl:print select="{$userName}"/>
+    <xapl:if test=" string-length($userName) &gt; 0 ">
+      <xapl:variable name="passwdQuestionResplyDoc">
+        <xcore:execute-method name="//UserSecurity/getPasswdSecretQuestion" entireResponse="true">
+          <USER_NAME Value="{$userName}"/>
+        </xcore:execute-method>
+      </xapl:variable>
+      <xapl:print select="{$passwdQuestionResplyDoc}"/>
+      <xapl:return>
+        <xapl:value-of select="$passwdQuestionResplyDoc/RESPONSE/PWD_RECOVERY/*"/>
+      </xapl:return>
+    </xapl:if>
+  </x2:command>
+  <!-- **************************************************************************
+        ***************************************************************************-->
+</x2:commands>

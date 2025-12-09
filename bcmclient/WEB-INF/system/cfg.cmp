@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:components xmlns:x2="http://www.i2.com/x2" xmlns:xapl="http://www.i2.com/xapl" description="">
+
+   <x2:component name="load-recent-entries"
+                description="">
+    <x2:class value="com.i2.ui.pgl.x2.components.LoadRecentEntries"/>
+  </x2:component>
+
+  <x2:component name="store-recent-entries"
+               description="">
+   <x2:class value="com.i2.ui.pgl.x2.components.StoreRecentEntries"/>
+  </x2:component>
+
+ <x2:component name="get-cfg-fields"
+                description="">
+    <x2:class value="com.i2.ui.pgl.x2.components.GetConfigurableFields"/>
+    <x2:input name="name" description="" required="true"/>
+    <x2:input name="id" description="" required="true"/>
+    <x2:input name="sys-id" description="" required="true"/>
+  </x2:component>
+ 
+
+  
+<x2:component name="export-table"
+                description="">
+    <x2:class value="com.i2.ui.pgl.x2.components.ExportTable"/>
+    <x2:input name="name" description="" required="true"/>
+    <x2:input name="id" description="" required="true"/>
+  </x2:component>
+  
+
+  </x2:components>

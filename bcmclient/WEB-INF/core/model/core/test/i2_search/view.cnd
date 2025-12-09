@@ -1,0 +1,584 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands 
+             xmlns:x2="http://www.i2.com/x2" 
+             xmlns:core="http://www.i2.com/core" 
+             xmlns:xcore="http://www.i2.com/xcore" 
+             xmlns:xcore-db="http://www.i2.com/xcore-db" 
+             xmlns:xapl="http://www.i2.com/xapl" 
+             xmlns:web="http://www.i2.com/web" 
+             xmlns:docutil="http://www.i2.com/docutil" 
+             xmlns:util="http://www.i2.com/util" 
+             xmlns:xudl="http://www.i2.com/xudl" 
+             xmlns:cfg="http://www.i2.com/configurability" 
+             xmlns:perm="http://www.i2.com/permissibility" 
+             xmlns:omx="http://www.i2.com/omx" 
+             xmlns:identity="http://www.i2.com/identity" description="_">  
+    
+
+<!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+    <x2:param name="pPage" select="'core_test_search'"/>
+    
+    <!-- Search Param Overrides - Start:-->    
+    <xapl:variable name="searchParams">
+      <SEARCH_PARAM>
+        <SORT_BY Value="NAME"/>
+      </SEARCH_PARAM>
+    </xapl:variable>  
+    <!-- Search Param Overrides.  End-->    
+    
+    <xapl:return>
+
+      <!-- Header -->
+      <x2:execute command="core.page.view:getHeader">
+        <x2:with-param name="pHeading" select="'Search'"/>
+      </x2:execute>
+      
+      <!-- Search / Form and Report -->  
+      <x2:execute command="core.search.search:getSearch">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="pSearchParams" select="{$searchParams}"/>
+        <x2:with-param name="pSearchFormConfigSource" select="'core.test.i2_search.view:getFormConfig'"/>
+        <x2:with-param name="pSearchReportConfigSource" select="'core.test.i2_search.view:getReportConfig'"/>
+        <x2:with-param name="pReportDataSource" select="'core.test.i2_search.view:getReportData'"/>
+      </x2:execute>
+      
+      <!-- Links -->
+      <LINKS>
+        <x2:execute command="core.links.controller:register">
+          <x2:with-param name="this" select="$this"/>
+          <x2:with-param name="pPage" select="$pPage"/>
+        </x2:execute>
+      </LINKS>
+      
+    </xapl:return>
+    
+  </x2:command>  
+
+
+<!-- ********************************************************************** 
+     *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormConfig">
+    <xapl:return>
+    
+<!--     Links|
+            Empty|LinkedText|Label
+ -->
+      <!-- Search Fields -->
+      <FORM 
+            DisplayText="Search"
+            MethodName="//OrderAdminService/getSearchResults" 
+            Collapsable="yes"
+            Validation="true"
+            Target="appFrame"
+            Name="search_form" 
+            Type="none" 
+            method="POST" 
+            >
+        <FIELD 
+              DisplayText="Name"  
+              Type="Text" 
+              Name="NAME" 
+              Required="true"
+              Value="{$this/NAME/@Value}"/>
+       
+
+        <FIELD 
+              DisplayText="Type" 
+              Type="Select" 
+              Name="TYPE"
+              Value="{$this/TYPE/@Value}" 
+              DataSourceType="Command"
+              DataSourceName="core.test.i2_search.view:getTypes"              
+               >
+        </FIELD>
+        
+            <FIELD 
+              DisplayText="Type" 
+              Type="MultiSelect" 
+              Name="MULTI_TYPE"
+              Value="{$this/MULTI_TYPE/@Value}" 
+              DataSourceType="Command"
+              DataSourceName="core.test.i2_search.view:getTypes"              
+              Visibility="Advanced" 
+               >
+        </FIELD>
+
+         <FIELD 
+              DisplayText="Number" 
+              Type="Number" 
+              Name="NUMBER"  
+              Value="{$this/NUMBER/@Value}"/>          
+
+       <FIELD 
+              DisplayText="Currency" 
+              Type="Currency" 
+              Name="CURRENCY"  
+              Value="{$this/CURRENCY/@Value}"
+              Visibility="Advanced"              
+              />          
+
+              
+         <FIELD 
+              DisplayText="Phone" 
+              Type="Phone" 
+              Name="PHONE"  
+              Value1="{$this/PHONE_AREA_CODE/@Value}"
+              Value2="{$this/PHONE_LOCAL_NUM_1/@Value}"
+              Value3="{$this/PHONE_LOCAL_NUM_2/@Value}"
+              />     
+              
+     <FIELD 
+              DisplayText="Notes" 
+              Type="TextArea" 
+              Name="NOTES"  
+              Value="{$this/NOTES/@Value}"
+              />  
+              
+      <FIELD 
+              DisplayText="Check Me" 
+              Type="CheckBox" 
+              Name="CHECKBOX"  
+              Value="{$this/CHECKBOX/@Value}"
+              CheckedValue="true"    
+              Visibility="Advanced"              
+                        
+              />                                   
+              
+          <FIELD 
+              DisplayText="Ship To" 
+              Type="Text" 
+              Name="SHIP_TO_NAME"
+              Value="{$this/SHIP_TO_NAME/@Value}"              
+              Visibility="Advanced"              
+               >
+            <LINKS>
+              <LINK 
+                  OnClick="javascript:onSearchShipTo()">
+                  <IMAGE Src="/pop_up_window.gif"/>
+              </LINK>
+            </LINKS>               
+        </FIELD>
+              
+
+
+        <FIELD 
+                DisplayText="Valid" 
+                Type="DateRange" 
+                Name="VALID_DATE"
+                Value1="{$this/VALID_DATE_FIRST/@Value}"
+                Value2="{$this/VALID_DATE_LAST/@Value}"/>
+
+        <x2:execute command="core.search.view:getHiddenFields">
+          <x2:with-param name="this" select="$this"/>
+        </x2:execute>
+        
+        <x2:execute command="core.search.view:getHiddenFields_save">
+          <x2:with-param name="this" select="$this"/>
+        </x2:execute>
+        
+        <!-- Form Buttons -->
+        <BUTTONS>
+            <BUTTON
+                  Id="save_search_button"
+                  DisplayText="Save Search"
+                  OnClick="javascript:onSaveSearch()"/>
+  
+          <BUTTON
+                  Id="search_button"
+                  Name="search"
+                  DisplayText="Search"
+                  OnClick="javascript:onSearch()"
+                  Emphasized="yes"/>
+        </BUTTONS>
+      </FORM>
+    </xapl:return>
+  </x2:command>
+
+
+  <!-- ********************************************************************** 
+    *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportConfig">
+    <xapl:return>
+    
+      <REPORT 
+              Selectable="All" 
+              Scrollable="yes" 
+              Id="ID"
+              SelectedId="S_ID"
+              RowSrc="ROWS/ROW"
+              TotalRowCount="count(ROWS/ROW)"
+              UseNewNaming="true"              
+              DoPaging="true"
+              Title=" Report Title"
+              PagingTitle="yes"
+              NoRecordsTitle="Custom Title for No Rows"
+              >
+        <HELP Url="{$pages:select_report_help}"/>
+        <FIELDS>
+          
+          <!-- Select + Link -->
+          <FIELD 
+                DisplayText="Id" 
+                Url="test.jsp" 
+                Sortable="yes" 
+                Name="ID" 
+                Select="ID/@Value"
+                UrlParam="All"
+                DoI18n="false"
+                />
+
+          <FIELD 
+                DisplayText="Name"
+                Name="NAME"                 
+                Type="Text" 
+                DisplayType="Text"
+                DoI18n="false"
+                />
+
+           <!-- Number -->     
+          <FIELD 
+                DisplayText="Number"
+                Name="NUMBER"                 
+                Type="Text" 
+                DisplayType="Number"
+                DoI18n="false"
+                />
+
+
+          <FIELD 
+                DisplayText="Select"
+                Name="NUMBER"                 
+                Type="Text" 
+                DisplayType="Select"
+
+                />
+                
+          <!-- Date -->
+          <FIELD 
+                DisplayText="Date" 
+                Type="Text" 
+                DisplayType="Date"
+                Sortable="yes" 
+                Name="DATE" 
+                Format="common"
+                />
+                
+          <!-- DateTime -->
+          <FIELD 
+                DisplayText="DateTime" 
+                Type="Text" 
+                DisplayType="Date"
+                Sortable="yes" 
+                Name="DATE_TIME" 
+                Format="DateTime"
+                />
+                
+
+          <!-- Currency -->
+          <FIELD 
+                DisplayText="Currency" 
+                Type="Text" 
+                DisplayType="Currency"
+                Sortable="yes" 
+                Name="CURRENCY" 
+                />
+
+
+          <!-- Phone -->
+          <FIELD 
+                DisplayText="Phone" 
+                Type="Text" 
+                DisplayType="Phone"
+                Sortable="yes" 
+                Name="PHONE" 
+                />
+                
+          <!-- Hidden Fields -->
+
+          <FIELD 
+                Type="None" 
+                DisplayType="Hidden"
+                Name="ID" />
+
+          <FIELD 
+                Type="None" 
+                DisplayType="Hidden"
+                Name="TYPE" />
+                
+          <x2:execute command="core.report.view:getHiddenFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+          
+           
+        </FIELDS>
+        	 <BUTTONS>
+              <BUTTON
+                  Id="download_document_button"
+                  DisplayText="Download Document"
+                  OnClick="javascript:downloadDocument()"
+                  Disabled="report"/>
+              <BUTTON
+                  Id="save_report_button"
+                  DisplayText="Save Report"
+                  OnClick="javascript:saveReport()"
+                  Disabled="report"/>
+            </BUTTONS>
+  					<PAGINATION/>
+      </REPORT>
+    </xapl:return>
+  </x2:command>
+
+  
+    <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportData">
+    <x2:param name="pForm"/>
+    <x2:param name="this"/>
+
+    <xapl:return>
+      <xapl:choose>
+        <xapl:when test="{($this/DO_SEARCH/@Value = 'Yes' ) and count($pForm/FIELD[@Type !='Hidden' and (string-length(@Value) > 0  or string-length(@Value1) >0 or string-length(@Value2) > 0)]) > 0}">
+        <DATA>
+    <ROWS TotalRowCount="20" Status="Success">
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-1"/>
+        <NAME Value="Name 1"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <PHONE Value="9728691111"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-2"/>
+        <NAME Value="Name 1"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <PHONE Value="9728691111"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-3"/>
+        <NAME Value="Name 3"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <PHONE Value="9728691111"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-4"/>
+        <NAME Value="Name 4"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-5"/>
+        <NAME Value="Name 5"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-6"/>
+        <NAME Value="Name 6"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-7"/>
+        <NAME Value="Name 7"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-8"/>
+        <NAME Value="Name 8"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-9"/>
+        <NAME Value="Name 9"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-10"/>
+        <NAME Value="Name 10"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+<!-- -->       <ROW ExistingDocument="yes">
+        <ID Value="ID-11"/>
+        <NAME Value="Name 11"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-12"/>
+        <NAME Value="Name 12"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-13"/>
+        <NAME Value="Name 13"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-14"/>
+        <NAME Value="Name 14"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-15"/>
+        <NAME Value="Name 15"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-16"/>
+        <NAME Value="Name 16"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-17"/>
+        <NAME Value="Name 17"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-18"/>
+        <NAME Value="Name 18"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-19"/>
+        <NAME Value="Name 19"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-20"/>
+        <NAME Value="Name 20"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+      <ROW ExistingDocument="yes">
+        <ID Value="ID-21"/>
+        <NAME Value="Name 21"/>
+        <NUMBER Value="100000"/>
+        <CURRENCY Value="100000"/>
+        <SELECT Value="100000"/>
+        <DATE_TIME Value="03/31/2003 00:00:00:000"/>
+        <DATE Value="03/31/2003 00:00:00:000"/>
+        <PHONE Value="9728691111"/>
+      </ROW>
+    </ROWS>
+</DATA>
+        </xapl:when>
+      </xapl:choose>
+    </xapl:return>
+
+  </x2:command>
+
+  
+  <!-- ********************************************************************** 
+       *********************************************************************** -->
+    <x2:command public="yes" description="_" name="getTypes">
+    <xapl:return>
+      <TYPES>
+        <TYPE ExistingDocument="yes">
+          <VALUE_ID Value="TYPE1"/>
+          <DESCRIPTION Value="Type1"/>
+        </TYPE>
+        <TYPE ExistingDocument="yes">
+          <VALUE_ID Value="TYPE2"/>
+          <DESCRIPTION Value="Type2"/>
+        </TYPE>
+      </TYPES>
+    </xapl:return>
+  </x2:command>
+  
+<!-- ********************************************************************** 
+     *********************************************************************** -->
+</x2:commands>

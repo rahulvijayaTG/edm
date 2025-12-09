@@ -1,0 +1,590 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="studio.templates.ecriwizard" source="studio.controller.load" version="2">
+  <ui:container scrollable="true" collapsable="true">
+    <ui:step id="Outer" displayText="Manage Group Class" scrollable="true" editable="false">
+      <ui:field-group name="mesg" select="$root">
+        <ui:choose-field name="BUTTON_ID">
+          <ui:when test="$root/MESSAGES/@Status = 'ERROR'">
+            <ui:display-field displayText="" name="error" value="{$root/MESSAGES/MESSAGE/@Value}" class="requiredIndicatorRed"/>
+          </ui:when>
+          <ui:when test="$root/MESSAGES/@Status= 'SUCCESS'">
+            <ui:display-field displayText="" name="success" value="{$root/MESSAGES/MESSAGE/@Value}" class="requiredIndicatorGreen"/>
+          </ui:when>
+          <ui:otherwise/>
+        </ui:choose-field>
+      </ui:field-group>
+      <ui:field-group>
+        <ui:hidden-field name="actionTaken" value="{$root/actionTaken/@Value}"/>
+      </ui:field-group>
+      <ui:grid>
+        <ui:row>
+          <ui:cell width="100%" valign="top" colSpan="3">
+            <ui:field-group columns="1">
+              <ui:dropdown id="groupDimension" name="groupDimension" displayText="Group Dimension" optionSrc="$root/GROUP_DIMENSIONS/*" required="true" onChange="Javascript:onDimensionChange()"/>
+            </ui:field-group>
+          </ui:cell>
+        </ui:row>
+        <ui:row>
+          <ui:cell width="47%" valign="top">
+            <ui:container collapsable="true">
+              <ui:step id="rr" displayText="{$root/DISPLAY_STRINGS/GROUP_CLASS/@Value}">
+                <ui:table id="GroupDescTable" name="GroupDescTable" displayText="Select Group Class" displayTextNoRecords="No records found" select="$root/GROUP_CLASSES" rowId="groupClassID" postRowIdAs="groupClassID5" selectable="Single" maxRows="5" doPaging="true" totalRowCount="$root/GROUP_CLASSES/@TotalRowCount" startAtRow="$root/startRow_GroupClasses/@Value">
+                  <ui:field-group>
+                    <ui:choose-field name="groupClassID" id="groupClassID" displayText="Group Class ID">
+                      <ui:when test="./@clickOnCreate = 'TRUE'">
+                        <ui:entry-field id="groupClassID" name="groupClassID" required="true"/>
+                      </ui:when>
+                      <ui:otherwise>
+                        <ui:display-field name="groupClassID" id="groupClassID"/>
+                      </ui:otherwise>
+                    </ui:choose-field>
+                    <ui:choose-field name="description" id="description" displayText="Group Class Description">
+                      <ui:when test="./@clickOnCreate = 'TRUE'">
+                        <ui:entry-field id="description" name="description"/>
+                      </ui:when>
+                      <ui:otherwise>
+                        <ui:display-field name="description" id="description"/>
+                      </ui:otherwise>
+                    </ui:choose-field>
+                  </ui:field-group>
+                  <ui:buttons>
+                    <ui:button id="cancelGrpClass" name="cancelGrpClass" displayText="Cancel" displayCondition="{$root/actionTaken/@Value='CREATE_GRP_CLASS'}"/>
+                    <ui:button id="GET_DETAILS_OF_GRP_CLASS" displayText="Get Details" name="getGroupClassDetails" enabledBySelections="true" disabled="true" displayCondition="{$root/actionTaken/@Value!='CREATE_GRP_CLASS'}"/>
+                    <ui:button id="CREATE_GRP_CLASS" displayText="Create" name="createGroupClass"/>
+                    <ui:button id="SAVE_GRP_CLASS" displayText="Save" name="saveGroupClass"/>
+                    <ui:button id="DELETE_GRP_CLASS" displayText="Delete" name="deleteGroupClass" enabledBySelections="true" disabled="true" displayCondition="{$root/actionTaken/@Value!='CREATE_GRP_CLASS'}"/>
+                  </ui:buttons>
+                </ui:table>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+          <ui:cell valign="top" width="5%"/>
+          <ui:cell valign="top">
+            <ui:container collapsable="true" scrollable="TRUE" displayCondition="{$root/showAttributeSets/@Value='TRUE'}">
+              <ui:step id="abc" displayText="{$root/DISPLAY_STRINGS/ATTRIBUTE_SET/@Value}">
+                <ui:table id="AttributeSetDescTable" displayText="Select Attribute Set" select="$root/ATTRIBUTE_SETS" displayTextNoRecords="" selectable="Single" rowId="attributeSetID" postRowIdAs="attributeSetID5" maxRows="5" doPaging="true" totalRowCount="$root/ATTRIBUTE_SETS/@TotalRowCount" startAtRow="$root/startRow_AttributeSets/@Value">
+                  <ui:field-group>
+                    <ui:choose-field name="updatedLogicalTableName" id="updatedLogicalTableName" displayText="Updated Table Name">
+                      <ui:when test="./@clickOnCreate = 'TRUE'">
+                        <ui:dropdown name="updatedLogicalTableName" id="updatedLogicalTableName" optionSrc="$root/TABLES/*" onChange="javaScript:onAttributeSetTableNameChange()" required="true">
+                          <ui:option id="" value="Select"/>
+                        </ui:dropdown>
+                      </ui:when>
+                      <ui:otherwise>
+                        <ui:display-field name="updatedLogicalTableName" id="updatedLogicalTableName"/>
+                      </ui:otherwise>
+                    </ui:choose-field>
+                    <ui:choose-field name="attributeSetID" id="attributeSetID" displayText="Attribute Set ID">
+                      <ui:when test="./@clickOnCreate = 'TRUE'">
+                        <ui:dropdown name="attributeSetID" id="attributeSetID" optionSrc="$root/ATT_SETS_FOR_CREATE/*" required="true" onChange="javaScript:onSelectingAttSetForNewTableName()">
+                          <ui:option id="" value="Select"/>
+                        </ui:dropdown>
+                      </ui:when>
+                      <ui:otherwise>
+                        <ui:display-field name="attributeSetID" id="attributeSetID"/>
+                      </ui:otherwise>
+                    </ui:choose-field>
+                  </ui:field-group>
+                  <ui:buttons>
+                    <ui:button name="cancelAttSetForGrpClass" id="cancelAttSetForGrpClass" displayText="Cancel" displayCondition="{($root/actionTaken/@Value='CREATE_ATT_SET_FOR_GRP_CLASS') or ($root/actionTaken/@Value='ATT_SET_TABLENAME_CHANGED') or ($root/actionTaken/@Value='ATT_SET_SELECTED_FOR_NEW_TABLE')}"/>
+                    <ui:button id="getAttSetDetails" displayText="Get Details" name="getAttSetDetails" enabledBySelections="true" disabled="true" displayCondition="{$root/actionTaken/@Value!='CREATE_ATT_SET_FOR_GRP_CLASS' and $root/actionTaken/@Value!='ATT_SET_TABLENAME_CHANGED' and $root/actionTaken/@Value!='ATT_SET_SELECTED_FOR_NEW_TABLE'}"/>
+                    <ui:button id="CREATE_ATT_SET_FOR_GRP_CLASS" displayText="Create" name="createAttSetForGrpClass"/>
+                    <ui:button id="SAVE_NEW_ATT_SET_FOR_GRP_CLASS" displayText="Save" name="saveAttSetForGrpClass"/>
+                    <ui:button id="DELETE_ATT_SET_FOR_GRP_CLASS" displayText="Delete" name="deleteAttSetForGrpClass" enabledBySelections="true" disabled="true" displayCondition="{$root/actionTaken/@Value!='CREATE_ATT_SET_FOR_GRP_CLASS' and $root/actionTaken/@Value!='ATT_SET_TABLENAME_CHANGED' and $root/actionTaken/@Value!='ATT_SET_SELECTED_FOR_NEW_TABLE'}"/>
+                    <!--<ui:button id="updatePriorityButton" displayText="Update Priority" name="updatePriorityButton" enabledBySelections="true" disabled="true"/>-->
+                  </ui:buttons>
+                </ui:table>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+        </ui:row>
+      </ui:grid>
+      <ui:step id="x" displayText=""/>
+      <ui:field-group>
+        <ui:field-space displayText="" id=""/>
+      </ui:field-group>
+      <ui:grid>
+        <ui:row>
+          <ui:cell width="47%" valign="top">
+            <ui:container collapsable="true" scrollable="true" displayCondition="{$root/showAttributes/@Value='TRUE'}">
+              <ui:step id="abc" displayText="{$root/DISPLAY_STRINGS/ATTRIBUTES/@Value}">
+                <ui:table id="AttributesTable" displayText="Attributes" select="$root/ATTRIBUTES" displayTextNoRecords="" rowId="updatedLogicalColumnName" postRowIdAs="updatedLogicalColumnName" maxRows="5" doPaging="true" totalRowCount="$root/ATTRIBUTES/@TotalRowCount" startAtRow="$root/startRow_Attributes/@Value">
+                  <ui:field-group>
+                    <!--<ui:hidden-field name="attributeSetID" id="attributeSetID"/>-->
+                    <!--<ui:display-field name="" id="" displayText=""/>-->
+                    <ui:display-field name="updatedLogicalColumnName" id="updatedLogicalColumnName" displayText="Attributes"/>
+                  </ui:field-group>
+                </ui:table>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+          <ui:cell valign="top" width="5%"/>
+          <ui:cell width="48%" valign="top">
+            <ui:container displayCondition="{$root/showPriorities/@Value='TRUE'}">
+              <ui:step id="abc" displayText="{$root/DISPLAY_STRINGS/UPDATE_PRIORITY/@Value}">
+                <ui:grid>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:table id="updatePriorityTable" displayText="Priority Table" select="$root/UPDATE_PRIORITIES_DETAILS" displayTextNoRecords="" rowId="updatePriority_attSet" selectable="Single" postRowIdAs="updatePriority_attSet" maxRows="-1" doPaging="false">
+                        <ui:field-group>
+                          <ui:display-field id="groupDimension_attSet" name="groupDimension_attSet" displayText="Group Dimension"/>
+                          <ui:display-field name="groupClass_attSet" id="groupClass_attSet" displayText="Group Class"/>
+                          <ui:display-field name="updatePriority_attSet" id="updatePriority_attSet" displayText="Priority"/>
+                        </ui:field-group>
+                      </ui:table>
+                      <ui:field-group>
+                        <ui:hidden-field id="valueOfNextElement" name="valueOfNextElement"/>
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell width="10%">
+                      <ui:grid>
+                        <ui:row>
+                          <ui:cell>
+                            <ui:field-group>
+                              <ui:image-link-field id="upButton" src="/arrow-up.gif" name="upButton" onClick="javaScript:clickOnUpButton()"/>
+                            </ui:field-group>
+                          </ui:cell>
+                        </ui:row>
+                        <ui:row>
+                          <ui:cell>
+                            <ui:field-group>
+                              <ui:image-link-field id="downButton" src="/arrow-down.gif" name="downButton" onClick="javaScript:clickOnDownButton()"/>
+                            </ui:field-group>
+                          </ui:cell>
+                        </ui:row>
+                      </ui:grid>
+                    </ui:cell>
+                  </ui:row>
+                </ui:grid>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+        </ui:row>
+      </ui:grid>
+    </ui:step>
+  </ui:container>
+  <ui:script>function onLoad()
+		{
+		
+		var buttonsList = 'CREATE_GRP_CLASS#cancelGrpClass#SAVE_GRP_CLASS#GET_DETAILS_OF_GRP_CLASS#DELETE_GRP_CLASS#CREATE_ATT_SET_FOR_GRP_CLASS' ;
+	var b_stat_arr = disableAllButtons(buttonsList);
+
+		if(!document.forms[1].groupDimension.options[0].selected)
+		{
+			var buttonlistVar = 'CREATE_GRP_CLASS#cancelGrpClass#CREATE_ATT_SET_FOR_GRP_CLASS';
+	 	        enableAllButtons(b_stat_arr,buttonlistVar);
+		
+		
+			if(document.forms[1].actionTaken.value == 'CREATE_GRP_CLASS')
+			{
+			  
+		            for(i=0;i&lt;document.form.elements.length;i++)
+			    {
+				if(document.form.elements[i].name==&quot;groupClassID5&quot;)
+				{
+					if((document.form.elements[i].checked)&amp;&amp;(document.form.elements[i].value!=&quot;&quot;))
+					{
+						document.form.elements[i].checked=false;
+					}
+					else if(document.form.elements[i].value==&quot;&quot;)
+					{
+						document.form.elements[i].checked=true;
+					}
+				}
+			    }
+			    var buttonlistVar = 'SAVE_GRP_CLASS';
+			    enableAllButtons(b_stat_arr,buttonlistVar);
+			    var buttonsList = 'CREATE_GRP_CLASS';
+			    var b_stat_arr = disableAllButtons(buttonsList);
+			}
+			else if(document.forms[1].actionTaken.value == 'NEW_DIM_AS_INPUT')
+			{
+				
+				var buttonlistVar = 'CREATE_GRP_CLASS#cancelGrpClass';
+ 			        enableAllButtons(b_stat_arr,buttonlistVar);
+			}
+	
+			else if(document.forms[1].actionTaken.value == 'GET_DETAILS_OF_GRP_CLASS')
+			{
+				
+				var buttonsList = 'SAVE_NEW_ATT_SET_FOR_GRP_CLASS';
+				var b_stat_arr1 = disableAllButtons(buttonsList);
+				var buttonlistVar = 'CREATE_GRP_CLASS#CREATE_ATT_SET_FOR_GRP_CLASS';
+			//	alert(buttonlistVar);
+			//	enableAllButtons(b_stat_arr,buttonlistVar);
+		
+				
+			}
+	
+			else if(document.forms[1].actionTaken.value == 'NEW_ATT_SET_AS_INPUT')
+			{
+			var buttonsList = 'SAVE_NEW_ATT_SET_FOR_GRP_CLASS';
+				var b_stat_arr1 = disableAllButtons(buttonsList);
+				var buttonlistVar = 'CREATE_GRP_CLASS#CREATE_ATT_SET_FOR_GRP_CLASS';
+			        enableAllButtons(b_stat_arr,buttonlistVar);
+			}
+
+			else if(document.forms[1].actionTaken.value == 'CREATE_ATT_SET_FOR_GRP_CLASS')
+			{
+			
+				for(i=0;i&lt;document.form.elements.length;i++)
+				{
+					if(document.form.elements[i].name==&quot;attributeSetID5&quot;)
+					{
+						if((document.form.elements[i].checked)&amp;&amp;(document.form.elements[i].value!=&quot;&quot;))
+						{
+							document.form.elements[i].checked=false;
+						}
+						else if(document.form.elements[i].value==&quot;&quot;)
+						{
+							document.form.elements[i].checked=true;
+						}
+					}
+				}
+		
+	                	 buttonsList = 'CREATE_ATT_SET_FOR_GRP_CLASS#SAVE_GRP_CLASS#SAVE_NEW_ATT_SET_FOR_GRP_CLASS';
+			     	var b_stat_arr = disableAllButtons(buttonsList);
+		
+		
+			}
+
+			else if(document.forms[1].actionTaken.value == 'ATT_SET_TABLENAME_CHANGED')
+			{
+			
+				for(i=0;i&lt;document.form.elements.length;i++)
+				{
+					if(document.form.elements[i].name==&quot;attributeSetID5&quot;)
+					{
+						if((document.form.elements[i].checked)&amp;&amp;(document.form.elements[i].value!=&quot;&quot;))
+							document.form.elements[i].checked=false;
+						else
+							document.form.elements[i].checked=true;
+						
+					}
+				}
+				buttonsList = 'SAVE_NEW_ATT_SET_FOR_GRP_CLASS#CREATE_ATT_SET_FOR_GRP_CLASS';
+			     	 var b_stat_arr = disableAllButtons(buttonsList);
+			}
+		
+			else if(document.forms[1].actionTaken.value == 'ATT_SET_SELECTED_FOR_NEW_TABLE')
+			{
+				
+			buttonsList = 'SAVE_NEW_ATT_SET_FOR_GRP_CLASS#CREATE_ATT_SET_FOR_GRP_CLASS';
+	
+     				var b_stat_arr = disableAllButtons(buttonsList);
+				var buttonlistVar = 'SAVE_NEW_ATT_SET_FOR_GRP_CLASS';
+		                enableAllButtons(b_stat_arr,buttonlistVar);
+				
+			}
+
+			else if(document.forms[1].actionTaken.value == 'SAVE_NEW_ATT_SET_FOR_GRP_CLASS')
+			{
+			
+				var buttonlistVar = 'CREATE_ATT_SET_FOR_GRP_CLASS';
+			        enableAllButtons(b_stat_arr,buttonlistVar);
+				buttonsList = 'SAVE_GRP_CLASS#SAVE_NEW_ATT_SET_FOR_GRP_CLASS';
+			     	var b_stat_arr = disableAllButtons(buttonsList);
+			}
+		
+			else if(document.forms[1].actionTaken.value == 'DELETE_ATT_SET_FOR_GRP_CLASS')
+			{
+			
+				var buttonlistVar = 'CREATE_ATT_SET_FOR_GRP_CLASS';
+				     enableAllButtons(b_stat_arr,buttonlistVar);
+				 buttonsList = 'SAVE_GRP_CLASS#SAVE_NEW_ATT_SET_FOR_GRP_CLASS';
+			     	var b_stat_arr = disableAllButtons(buttonsList);
+			}
+			
+			else if(document.forms[1].actionTaken.value == 'DELETE_GRP_CLASS')
+			{
+			
+				buttonsList = 'SAVE_GRP_CLASS';
+     				var b_stat_arr = disableAllButtons(buttonsList);
+		
+		
+			}
+	else if(document.form.actionTaken.value == 'CLICK_ON_UP_BUTTON')
+			{
+			      
+				var buttonsList = 'SAVE_NEW_ATT_SET_FOR_GRP_CLASS';
+			     	var b_stat_arr = disableAllButtons(buttonsList);
+		var buttonlistVar = 'CREATE_ATT_SET_FOR_GRP_CLASS';
+				     enableAllButtons(b_stat_arr,buttonlistVar);
+			}
+		
+			else if(document.form.actionTaken.value == 'CLICK_ON_DOWN_BUTTON')
+			{
+			      
+				var buttonsList = 'SAVE_NEW_ATT_SET_FOR_GRP_CLASS';
+			     	var b_stat_arr = disableAllButtons(buttonsList);
+		var buttonlistVar = 'CREATE_ATT_SET_FOR_GRP_CLASS';
+				     enableAllButtons(b_stat_arr,buttonlistVar);
+			}
+			else if(document.form.actionTaken.value == '')
+			{
+			      
+				var buttonsList = 'CREATE_GRP_CLASS#cancelGrpClass';
+			     	var b_stat_arr = disableAllButtons(buttonsList);
+			}
+		
+			
+			
+		}
+		
+		
+		onLoadSuper();
+     scrollHelper();
+     autoCollapseRows();
+		}	
+	
+	
+		function onAttributeSetTableNameChange()
+		{
+	
+			form.BUTTON_ID.value = 'ATT_SET_TABLENAME_CHANGED' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		}
+		
+	
+    function clickOnUpButton()
+		{
+
+		var isRowSelected='FALSE';
+		
+		for(i=0;i&lt;document.form.elements.length;i++)
+			{
+				if(document.form.elements[i].name==&quot;updatePriority_attSet&quot;)
+				{
+						if(document.form.elements[i].checked)
+						{
+								isRowSelected='TRUE';
+								break;
+						}
+						else
+						{
+								continue;
+						}
+				}
+		}
+		
+		if(isRowSelected=='TRUE')
+		{
+				form.BUTTON_ID.value = 'CLICK_ON_UP_BUTTON' ; 
+								form.SUBMIT_AS_XML.value = 'false';
+								form.action = 'view.x2ps';
+								form.submit();
+		}
+		else
+		{
+			core_alert('Please select an Attribute Set to update the priority');
+				return;
+		}	
+		
+		
+			
+		}
+
+		function clickOnDownButton()
+		{
+		var isRowSelected='FALSE';
+		
+		for(i=0;i&lt;document.form.elements.length;i++)
+			{
+				if(document.form.elements[i].name==&quot;updatePriority_attSet&quot;)
+				{
+						if(document.form.elements[i].checked)
+						{
+								isRowSelected='TRUE';
+								break;
+						}
+						else
+						{
+								continue;
+						}
+				}
+		}
+		
+		if(isRowSelected=='TRUE')
+		{
+				form.BUTTON_ID.value = 'CLICK_ON_DOWN_BUTTON' ; 
+								form.SUBMIT_AS_XML.value = 'false';
+								form.action = 'view.x2ps';
+								form.submit();
+		}
+		else
+		{
+			core_alert('Please select an Attribute Set to update the priority');
+				return;
+		}	
+		
+		}
+    function onDimensionChange()
+		{
+			
+
+			form.BUTTON_ID.value = 'NEW_DIM_AS_INPUT' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		}
+  
+    
+    function on_getAttSetDetails()
+	{
+				form.BUTTON_ID.value = 'NEW_ATT_SET_AS_INPUT' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		
+	}
+	
+		function on_cancelAttSetForGrpClass()
+		{
+			form.BUTTON_ID.value = 'GET_DETAILS_OF_GRP_CLASS' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		
+		}
+		
+		function on_cancelGrpClass()
+		{
+		form.BUTTON_ID.value = 'NEW_DIM_AS_INPUT' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		
+		}
+		
+		function onSelectingAttSetForNewTableName()
+	{
+					
+		if(!document.form.attributeSetID.value==&quot;&quot;)
+		{
+		
+		
+						form.BUTTON_ID.value = 'ATT_SET_SELECTED_FOR_NEW_TABLE' ; 
+						form.SUBMIT_AS_XML.value = 'false';
+						form.action = 'view.x2ps';
+						form.submit();
+		}
+		else
+		{
+		var buttonsList = 'saveAttSetForGrpClass';
+    var b_stat_arr1 = disableAllButtons(buttonsList);		
+		//alert('blank');
+		return;
+		}
+		
+		}
+
+		function enableAllButtons(buttons_stat_array, buttons){
+	var buttons_array = buttons.split('#');
+
+	for (b_count = 0; b_count&lt;buttons_array.length; b_count++) {
+		if (buttons_stat_array[b_count] == 'enabled')
+			i2uiToggleButtonState( buttons_array[b_count], 'enabled');
+		if (buttons_stat_array[b_count] == 'enabled_bold')
+			i2uiToggleButtonState( buttons_array[b_count], 'enabled','Emphasized');
+	}
+}
+
+ function disableAllButtons(buttons) {
+
+	var buttons_array = buttons.split('#');
+	var b_stat_array = new Array(buttons_array.length);
+	var b_count = 0 ;
+	while (b_count &lt; buttons_array.length) {
+		b_stat_array[b_count] = i2uiShowItemVisibility(buttons_array[b_count]) ;
+		if (b_stat_array[b_count].indexOf('enabled') != -1)
+			i2uiToggleButtonState( buttons_array[b_count], 'disabled');
+			b_count++ ;
+	}
+	return b_stat_array ;
+}
+ 
+		function i2uiToggleButtonState(id, desiredState, desiredType)
+{
+		
+	//alert('id '+id.value);	
+  // valid for IE alone
+  if (!document.all)  return;
+  var obj = document.getElementById(id);
+  if (obj == null) return;
+		//alert('object ki value.. '+obj.value)
+  var cell = obj.rows[0].cells[0];
+  var anchor = cell.childNodes[0];
+  var state = obj.className;
+  if (desiredState == null)
+  {
+    if (state == &quot;buttonBorder&quot;)
+      desiredState = &quot;disabled&quot;;
+    else
+      desiredState = &quot;enabled&quot;;
+  }
+  if (desiredState == &quot;disabled&quot;)
+  {
+  	//checking if it is already disabled.
+  	if (state == &quot;buttonBorder&quot;)
+  	{
+	    obj.className = &quot;buttonBorderDisabled&quot;;
+	    cell.id = &quot;buttonDisabled&quot;;
+	    cell.className = &quot;buttonTextDisabled&quot;;
+	    var href = anchor.getAttribute(&quot;href&quot;);
+	    if (href != null)
+	    {
+	      anchor.setAttribute(&quot;href2&quot;, href);
+	      anchor.removeAttribute(&quot;href&quot;);
+	    }
+  	}
+  }
+  else
+  {
+    obj.className = &quot;buttonBorder&quot;;
+    if (desiredType == null)
+      desiredType = &quot;Regular&quot;;
+    cell.id = &quot;button&quot;+desiredType;
+    cell.className = &quot;buttonText&quot;;
+    var href = anchor.getAttribute(&quot;href2&quot;);
+    if (href != null)
+    {
+      anchor.setAttribute(&quot;href&quot;, href);
+      anchor.removeAttribute(&quot;href2&quot;);
+    }
+  }
+}
+		
+		
+		
+function i2uiShowItemVisibility(id) {
+	var item;
+	var status = 'no item' ;
+	var debug = false ;
+	if (document.layers) {
+		item = document.layers[id];
+		if (item != null) {
+			if (item.visibility == 'hide')
+				status = 'disabled' ;
+			else
+				status = 'enabled' ;
+		}
+	}
+
+	item = document.getElementById(id);
+	if (item != null) {
+		if (debug == true) alert('id..item.className..'+id+'..'+item.className) ;
+		
+		if (item.className == 'buttonBorderDisabled')
+			status = 'disabled' ;
+		else {
+			status = 'enabled' ;
+			var cell = item.rows[0].cells[0];
+			if(cell.id.indexOf('Emphasized') != -1)
+				status = 'enabled_bold' ;
+		}
+	}
+	if (debug == true) alert('id..status..'+id+'..'+status) ;
+	return status;
+}</ui:script>
+</ui:page-group>

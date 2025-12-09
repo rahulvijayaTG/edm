@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:i18n="http://www.i2.com/i18n" xmlns:omx="http://www.i2.com/omx" description="_">  
+  
+
+<!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+    
+    <xapl:return>
+
+    <!-- Page Header-->
+      <x2:execute command="core.search.select.name.view:getHeader">
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+
+        
+      <!-- Container -->
+      <x2:execute command="core.search.select.name.view:getContainer">
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+        <x2:execute command="core.page.controller:getParameters">
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+      
+      
+    </xapl:return>
+    
+  </x2:command>  
+
+  
+  
+<!-- ********************************************************************** 
+     *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+    <xapl:return>
+      <x2:execute command="core.page.view:getHeader">
+        <x2:with-param name="pHeading" select="'Save Search'"/>
+      </x2:execute>
+    </xapl:return>
+
+  </x2:command>
+	
+
+    <!-- ********************************************************************** 
+       *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pPage"/>
+
+    
+    <xapl:return>
+      
+      <CONTAINER>
+        
+        <STEP
+             DisplayText="Save Search"
+             Selected="true"
+              >
+          
+          <BUTTONS>
+            
+            <BUTTON 
+                    Name="Cancel" 
+                    DisplayText="Cancel" 
+                    OnClick="javascript:onCancel();" />
+            <BUTTON 
+                    Name="Ok" 
+                    DisplayText="Submit" 
+                    OnClick="javascript:onOk();" />
+
+            
+          </BUTTONS>
+          
+        </STEP>
+
+        
+      </CONTAINER>
+      
+    </xapl:return>
+    
+  </x2:command>
+
+  
+  </x2:commands>

@@ -1,0 +1,83 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="iscpPiMassUpdate.pgl">
+  <ui:container id="topcontainer" displayText="PI Mass Update">
+    <ui:step id="tablecontainer" displayText="Product Interchangeability(PI) Search Results">
+      <ui:table id="table" rowId="INT_GRP_ID" postRowIdAs="searchresults" rowSrc="$root/linelocparams" maxRows="10">
+        <ui:field-group id="fg4">
+          <ui:hidden-field id="searchresults" name="searchresults" />
+          <ui:display-field id="INT_GRP_ID" name="INT_GRP_ID" displayText="Group ID" />
+          <ui:display-field id="INT_GRP_Desc" name="INT_GRP_Desc" displayText="Group description" />
+          <ui:display-field id="INT_GRP_Line_ID" name="INT_GRP_Line_ID" displayText="Group Line Id" dataType="Number" align="left" />
+          <ui:display-field id="PRD_PROD" name="PRD_PROD" displayText="Predecessor Product" />
+          <ui:display-field id="PRD_PROD_DESC" name="PRD_PROD_DESC" displayText="Predecessor Product Description" />
+          <ui:display-field id="SUCCSS_PROD" name="SUCCSS_PROD" displayText="Successor Product" />
+          <ui:display-field id="SUCCSS_PROD_DESC" name="SUCCSS_PROD_DESC" displayText="Successor Product Description" />
+          <ui:display-field id="Status" name="Status" displayText="Group Status" />
+          <ui:display-field id="Location" name="Location" displayText="Location" />
+          <ui:display-field id="Location_Description" name="Location_Description" displayText="Location Description" />
+          <ui:display-field id="Strategy" name="Strategy" displayText="Use Up Strategy" />
+          <ui:display-field id="Interchange_Direction" name="Interchange_Direction" displayText="Interchangeability Direction" />
+          <ui:display-field id="Inventory_use_up_Date" name="Inventory_use_up_Date" displayText="Predecessor Product Use Up Date" />
+          <ui:display-field id="Deploy_Start_Date" name="Deploy_Start_Date" displayText="Deployment Start Date" />
+          <ui:display-field id="Deploy_End_Date" name="Deploy_End_Date" displayText="Deployment End Date" />
+          <ui:display-field id="Production_Start_Date" name="Production_Start_Date" displayText="Production Start Date" />
+          <ui:display-field id="Production_End_Date" name="Production_End_Date" displayText="Production End Date" />
+          <ui:display-field id="Ship_Start_Date" name="Ship_Start_Date" displayText="Customer Shipment Start Date" />
+          <ui:display-field id="Ship_End_Date" name="Ship_End_Date" displayText="Customer Shipment End Date" />
+          <ui:display-field id="Comment" name="Comment" displayText="Comments" />
+          <!--<ui:display-field id="Date_Modified" name="Date_Modified" displayText="Date Modified"/>
+          <ui:display-field id="Modified_By" name="Modified_By" displayText="Modified By"/>-->
+        </ui:field-group>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:container id="bottomContainer" displayText="Mass Update">
+    <ui:step id="c1" displayText="" editable="true">
+      <ui:validation successMessage="{$root/succssmsg/message/@Value}" />
+      <ui:field-group columns="2" id="fieldGroups1" select="$root/searchcriteria">
+        <ui:field-group id="leftFields" columns="2">
+          <ui:checkbox id="strategycheck" name="strategycheck" onClick="javaScript:selectcheck()" />
+          <ui:dropdown displayText="Use Up Strategy" id="useUpStrt" name="useUpStrt" dataType="Text" required="false" optionSrc="$root/stat/OPTION" />
+          <ui:checkbox id="useupdt" name="useupdt" onClick="javaScript:selectcheck()" />
+          <ui:entry-field size="10" name="InvDt" id="InvDt" dataType="Date" displayText="Predecessor Product Use Up Date" />
+          <ui:checkbox id="prdnstrtdt" name="prdnstrtdt" onClick="javaScript:selectcheck()" />
+          <ui:entry-field displayText="Production Start Date" id="prodStDT" name="prodStDT" dataType="Date" required="false" size="10" />
+          <ui:checkbox id="prdnenddt" name="prdnenddt" onClick="javaScript:selectcheck()" />
+          <ui:entry-field displayText="Production End Date" id="prodENDDT" name="prodENDDT" dataType="Date" required="false" size="10" />
+          <ui:checkbox id="shipstrtdt" name="shipstrtdt" onClick="javaScript:selectcheck()" />
+          <ui:entry-field displayText="Customer Shipment Start Date" id="custSTDT" name="custSTDT" dataType="Date" required="false" size="10" />
+        </ui:field-group>
+        <ui:field-group id="rightFields" columns="2">
+          <ui:checkbox id="shipenddt" name="shipenddt" onClick="javaScript:selectcheck()" />
+          <ui:entry-field displayText="Customer Shipment End Date" id="custENDDT" name="custENDDT" dataType="Date" required="false" size="10" />
+          <ui:checkbox id="direction" name="direction" onClick="javaScript:selectcheck()" />
+          <ui:dropdown name="intrChngDir" id="intrChngDir" displayText="Interchangeability Direction" optionSrc="$root/statdir/OPTION" />
+          <ui:checkbox id="depstrtdt" name="depstrtdt" onClick="javaScript:selectcheck()" />
+          <ui:entry-field size="10" name="depStDt" id="depStDt" dataType="Date" displayText="Deployment Start Date" />
+          <ui:checkbox id="dependdate" name="dependdate" onClick="javaScript:selectcheck()" />
+          <ui:entry-field size="10" name="depEndDt" id="depEndDt" dataType="Date" displayText="Deployment End Date" />
+        </ui:field-group>
+        <ui:field-group id="commentsgrp" columns="2">
+          <ui:textarea id="comments" name="comments" required="true" displayText="Comments" readOnly="false" size="250" />
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button displayText="Save" id="Save" enabledBySelections="true" disabled="{$root/savebuttonstatus/@Value}" />
+        <!-- RIC: 240988 Praneeth - Cancel button wording changes request - Start --> 
+        <ui:button displayText="Back to Search" id="Cancel" enabledBySelections="false" validate="false" />
+        <!-- RIC: 240988 Praneeth - Cancel button wording changes request - End --> 
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>function selectcheck(){	
+																														
+										if(document.form.strategycheck.checked || document.form.useupdt.checked || document.form.prdnstrtdt.checked || document.form.prdnenddt.checked || document.form.shipstrtdt.checked || document.form.shipenddt.checked || document.form.direction.checked || document.form.depstrtdt.checked || document.form.dependdate.checked)
+											{																																																								
+													i2uiToggleButtonState('Save', 'enabled');
+											}
+										else
+											{
+													i2uiToggleButtonState('Save', 'disabled');
+											 }
+									}</ui:script>
+</ui:page-group>
+

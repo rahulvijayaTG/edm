@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands description="_" 
+             xmlns:FUNCTION="http://www.i2.com/FUNCTION" 
+             xmlns:REMOVE="http://www.i2.com/REMOVE" 
+             xmlns:cfg="http://www.i2.com/configurability" 
+             xmlns:core="http://www.i2.com/core" 
+             xmlns:omx="http://www.i2.com/omx" 
+             xmlns:perm="http://www.i2.com/permissibility" 
+             xmlns:util="http://www.i2.com/util" 
+             xmlns:web="http://www.i2.com/web" 
+             xmlns:x2="http://www.i2.com/x2" 
+             xmlns:xapl="http://www.i2.com/xapl" 
+             xmlns:xcore="http://www.i2.com/xcore" 
+             xmlns:xcore-db="http://www.i2.com/xcore-db" 
+             xmlns:docutil="http://www.i2.com/docutil" 
+             xmlns:xudl="http://www.i2.com/xudl"
+             xmlns:identity="http://www.i2.com/identity">  
+  
+  
+  <!--************************************************************************-->   
+  
+  <x2:command public="yes" description="_" name="getPageData">
+    <xapl:return>
+    
+	  <x2:execute command="omx.add_book.org.pages:getTabs">
+	    <x2:with-param name="page">contacts</x2:with-param>
+        <x2:with-param name="orgId"><xapl:value-of select="{$this/ORG_ID/@Value}" /></x2:with-param>
+	  </x2:execute>
+      
+	 <x2:execute command="omx.add_book.contacts:returnOrgEntityInfo">
+       <x2:with-param name="pOrgId"><xapl:value-of select="{$this/ORG_ID/@Value}" /></x2:with-param>
+	 </x2:execute>
+     
+	 <x2:execute command="omx.add_book.contacts:getContacts">
+       <x2:with-param name="this" select="$this"/>
+     </x2:execute>
+     
+     <x2:execute command="omx.alert:getAlerts">
+      <x2:with-param name="pRefresh"><xapl:value-of select="$this/REFRESH/@Value"/></x2:with-param>
+      <x2:with-param name="pERROR"><xapl:value-of select="$this/ERROR/@Value"/></x2:with-param>
+    </x2:execute>
+    
+      <xapl:value-of select="{$this/EDIT_CONTACT_ID}"/>
+    </xapl:return>
+  </x2:command>
+  
+  <!--************************************************************************-->   
+
+</x2:commands>

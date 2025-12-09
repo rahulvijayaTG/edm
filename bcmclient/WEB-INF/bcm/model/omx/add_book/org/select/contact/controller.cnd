@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="addNew">
+    <xapl:print select="{$this}"/>
+	<web:display-page>
+	  <web:get-page name="org_contact">
+		<IS_NEW Value="true"/>
+		<ORG_ID Value="{$addBookCurrOrgId/@Value}"/>
+      </web:get-page>
+	</web:display-page>
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="details">
+	
+	<xapl:variable name="opType">
+	  <EDITABLE Value="false"/>
+	</xapl:variable>
+	
+	<perm:is-allowed document="ORGANIZATION" action="contacts">
+	  <xapl:set-variable name="opType">
+	    <EDITABLE Value="true"/>
+	  </xapl:set-variable>
+	</perm:is-allowed>
+	
+	
+	<web:display-page>
+	  <web:get-page name="org_contact">
+	    <xapl:value-of select="{$this/*}"/>
+		<xapl:value-of select="{$opType}"/>
+	  </web:get-page>
+	</web:display-page>
+	 
+  </x2:command>
+  
+    <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="makeDefault">
+  
+    <xapl:print select="$this"/>
+    
+	<xapl:variable name="contactId">
+	  <xapl:value-of select="{$this/CONTACT_ID[position()=$this/SELECTED_INDEX/@Value]/@Value}"/>
+	</xapl:variable>
+	
+	<xapl:print select="$contactId"/>
+		
+	<!-- form the this variable -->
+	<docutil:set select="$this">
+	  <CONTACT_ID Value="{$contactId}"/>
+	  <ID Value="{$addBookCurrOrgId/@Value}"/>
+	</docutil:set>
+	
+    <xapl:variable name="response">
+	  <x2:execute command="omx.add_book.org.controller:addEditOrg">
+	    <x2:with-param name="this" select="{$this}"/>
+	  </x2:execute>
+	</xapl:variable>
+	
+	<xapl:print select="$response"/>
+	
+	<xapl:if test="string-length($response/RESPONSE/_RESULT/_ERROR/@Value) != 0">      
+      <web:display-page>
+        <web:get-page name="edit_org">
+          <ERROR Value="{$response/RESPONSE/_RESULT/_ERROR/@Value}"/>
+          <REFRESH Value="true"/>
+          <ORG_ID Value="{$addBookCurrOrgId/@Value}"/>
+        </web:get-page>
+      </web:display-page>
+    </xapl:if>
+	
+	<xapl:variable name="result">
+      <ROOT>
+	    <ORG_ID Value="{$addBookCurrOrgId/@Value}"/>
+		<STATUS_MSG Value="Update Successful"/>
+      </ROOT>
+    </xapl:variable>
+	
+	<web:display-page>
+	  <web:get-page name="edit_org">
+	    <xapl:value-of select="{$result/*}"/>
+	  </web:get-page>
+	</web:display-page>
+	
+  </x2:command>  
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

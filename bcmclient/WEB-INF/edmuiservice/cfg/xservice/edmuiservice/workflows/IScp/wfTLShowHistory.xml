@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="21" ShowInBreadCrumbs="true" Version="1.0" Name="wfTLShowHistory" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables/>
+  <nodes>
+    <start Name="start2">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="outputXml">
+            <ROOT>
+              <!-- Audit Trail for TransAsset -->
+              <AUDIT_TRAIL_NAME Value="TransportationAssetTrail"/>
+              <!-- Audit Trail for TransLaneXTransAsset-->
+              <AUDIT_TRAIL_NAME Value="LaneAssetAssignmentTrail"/>
+              <!-- Audit Trail for TransLaneXProduct -->
+              <AUDIT_TRAIL_NAME Value="LaneProductAssignmentTrail"/>
+              <SERVICE_NAME Value="INTERFACE_MASTER"/>
+              <AUDIT_DAYS Value="90"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{outputXml,xml}">
+        <next_node Name="TL Show History" Description=""/>
+      </next_nodes>
+    </start>
+    <sub_workflow Name="TL Show History" InputVar="{nodeInXml,xml}" Workflow="//UI_WORKFLOW/dataTraceability">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes>
+        <next_node Name="done5" Description=""/>
+      </next_nodes>
+      <input>
+        <action>
+          <TO_XML SelectList="$nodeInXml/*"/>
+        </action>
+      </input>
+    </sub_workflow>
+    <done Name="done5">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="130,125" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <mgcnode Name="TL Show History" location="232,61" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="TL Show History" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+      <done5 location="358,119" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done5" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done5>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="162,147" endpoint="232,84" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="212,145,4,4" ctrlRect2="177,82,4,4"/>
+      </start2>
+      <mgcnode Name="TL Show History">
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="264,84" endpoint="358,141" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="332,82,4,4" ctrlRect2="285,139,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="0">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables/>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,297 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="TLLaneProductCreate.pgl">
+  <ui:container id="cnt" scrollable="true">
+    <ui:step id="stp" displayText="Create New Lane Product Assignment">
+      <ui:validation successMessage="{$root/SUCCESS_MESSAGE/@Value}" />
+      <ui:field-group id="new" columns="2">
+        <ui:hidden-field id="START_COUNT" name="START_COUNT" />
+        <ui:entry-field name="TransportLaneIdentifier" displayText="Lane Name" required="true">
+          <ui:links>
+            <ui:link displayText="Select Lane" targetType="popup" targetName="catalogPopup">
+              <ui:url page="view.x2ps">
+                <SELECTABLE select="'Single'" />
+                <BUTTON_ID select="'Select_tl_id'" />
+                <FIELD_NAME select="'TransportLaneIdentifier'" />
+                <!-- <POP_LANE_NAME select="'TransportLaneName'"/>-->
+              </ui:url>
+              <ui:image src="pop_up_window.gif" />
+            </ui:link>
+          </ui:links>
+        </ui:entry-field>
+        <ui:hidden-field displayText="Lane Name" name="TransportLaneName" />
+        <!-- RIC: 232490 Praneeth - TLXProduct Copy/Create screen fields re-arrangement start -->
+        <ui:dropdown name="SegmentIdentification" displayText="Segment" optionSrc="$root/SGMNT_DET/*" selectOne="true" required="true" />
+        <!-- RIC: 226753 Praneeth - TLXProduct Copy/Create screen Material pop-up duplicates start -->
+        <ui:entry-field name="ItemIdentification" displayText="Material Number" required="true">
+          <ui:links>
+            <ui:link displayText="Select Item" targetType="popup" targetName="catalogPopup">
+              <ui:url page="view.x2ps">
+                <SELECTABLE select="'Single'" />
+                <BUTTON_ID select="'Select_item_id'" />
+                <FIELD_NAME select="'ItemIdentification'" />
+                <POP_ASST_DESC select="'ItemDescription'" />
+                <SOURCE select="'LaneItem'" />
+                <SOURCE1 select="'LaneItemRPL'" />
+              </ui:url>
+              <ui:image src="pop_up_window.gif" />
+            </ui:link>
+          </ui:links>
+        </ui:entry-field>
+        <!-- RIC: 226753 Praneeth - TLXProduct Copy/Create screen Material pop-up duplicates End -->
+        <ui:entry-field displayText="Material Description" name="ItemDescription" readOnly="true" />
+        <ui:dropdown displayText="Lane Item Status" name="TransportationLaneStatus" optionSrc="$root/LANE_ITEM_STATUS/*" selectOne="true" required="true" />
+        <ui:dropdown displayText="Sourcing Priority" name="SourcingPriority" optionSrc="$root/SRC_PRIR/*" selectOne="true" required="true" />
+        <ui:entry-field displayText="Lane Item Start Date" name="EffectiveStartDate" dataType="Date" required="true" />
+        <ui:entry-field displayText="Lane Item End Date" name="EffectiveEndDate" dataType="Date" required="true" />
+        <ui:dropdown displayText="Replenishment Lot Size UOM" name="ReplenishmentLotSizeUOM" optionSrc="$root/UOM_VALUES/*" required="true" id="ReplenishmentLotSizeUOM" onChange="javascript:fetchRPLUOMVal();" selectOne="true" />
+        <!--     		      </ui:field-group>
+			<ui:field-group id="newGrp" columns="2">-->
+        <ui:entry-field displayText="Replenishment Lot Size" name="ReplenishmentLotSize" dataType="Number" decimals="0" maxlength="13" align="left" unFormat="true" editable="false" />
+        <!--        <ui:entry-field displayText="Replenishment Rounding Value" name="ReplenishmentRoundingValue" dataType="Number" decimals="4" maxlength="13"/>-->
+        <!--      </ui:field-group>
+      <ui:field-group rows="1" id="subFg">-->
+        <ui:dropdown displayText="Transport Mode Priority" name="TransportModePriority" optionSrc="$root/TRANS_MODE_PRIR/*" selectOne="true" required="true" />
+        <ui:entry-field displayText="Unloading Time (hours)" name="UnloadingTime" dataType="Number" decimals="0" align="left" maxlength="11" required="true" unFormat="true" minValue="0" />
+        <ui:entry-field displayText="Loading Time (hours)" name="LoadingTime" dataType="Number" decimals="0" align="left" maxlength="11" required="true" unFormat="true" minValue="0" />
+        <!-- RIC: 232490 Praneeth - TLXProduct Copy/Create screen fields re-arrangement End -->
+        <!-- MYANG RIC 249141  - TL Prod single sku field Start -->
+        <ui:entry-field displayText="Single SKU" name="ReplenishmentRoundingValue" dataType="Number" decimals="0" maxlength="13" align="left" required="true" />
+        <!-- MYANG RIC 249141  - TL Prod single sku field End -->
+      </ui:field-group>
+      <ui:field-group columns="2" id="subFg">
+        <!--       <ui:dropdown name="DestinationReceivingDays" displayText="Destination Receiving Days" required="true" size="7">
+          <ui:option id="SUN" value="Sunday"/>
+          <ui:option id="MON" value="Monday"/>
+          <ui:option id="TUE" value="Tuesday"/>
+          <ui:option id="WED" value="Wednesday"/>
+          <ui:option id="THU" value="Thursday"/>
+          <ui:option id="FRI" value="Friday"/>
+          <ui:option id="SAT" value="Saturday"/>
+        </ui:dropdown>-->
+        <ui:field-group displayText="Destination Receiving Days" id="days" columns="2">
+          <ui:checkbox id="SUN" name="SUN" displayText="Sun" />
+          <ui:checkbox id="MON" name="MON" displayText="Mon" />
+          <ui:checkbox id="TUE" name="TUE" displayText="Tues" />
+          <ui:checkbox id="WED" name="WED" displayText="Wed" />
+          <ui:checkbox id="THU" name="THU" displayText="Thurs" />
+          <ui:checkbox id="FRI" name="FRI" displayText="Fri" />
+          <ui:checkbox id="SAT" name="SAT" displayText="Sat" />
+        </ui:field-group>
+        <ui:textarea displayText="Comments" name="TransportLaneXItemCommentText" required="false" />
+        <ui:hidden-field name="DestinationReceivingDays" />
+      </ui:field-group>
+      <ui:buttons id="buttons1" name="buttons1">
+        <ui:button displayText="Back to Search" id="cancel" validate="false" />
+        <ui:button displayText="Save" id="save" onClick="javascript:formDestnRcvngDay();" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function rplUomOnItemSelect(selectedUOMIDrplCombo){
+		var rplUomArr = null;
+		rplUomArr = selectedUOMIDrplCombo.split(',');
+		document.form.ReplenishmentLotSizeUOM.options.length=0;
+		document.form.ReplenishmentLotSizeUOM.options[0]=new Option('Select...' , '' );
+		for(i=0; i &lt; rplUomArr.length; i++)
+			{
+		var indexOfColon = rplUomArr[i].indexOf(":");
+		var beforeColon = rplUomArr[i].substring(0,indexOfColon);
+		var afterColon = rplUomArr[i].substring(indexOfColon +1 ,rplUomArr[i].length);
+		//alert(beforeColon);
+		//alert(afterColon);
+		//alert(rplUomArr[i]);
+				document.form.ReplenishmentLotSizeUOM.options[i+1]=new Option(beforeColon,afterColon);
+   		}
+	
+		}
+		
+		function		fetchRPLUOMVal(){
+		var selRplUomVal= document.getElementById("ReplenishmentLotSizeUOM").value;
+	
+		if(selRplUomVal == ''){
+		core_alert('Please select a value for Replenishment Lot Size UOM');
+		return;
+		}
+		else{
+		document.form.BUTTON_ID.value = 'fetchRPLUom'; 
+		document.form.action = 'view.x2ps';
+		document.form.submit();	
+		}
+		}
+		
+		function validateTime() {
+		var canSubmit = "false";
+		var unldngTime = document.form.UnloadingTime.value;
+		var ldngTime = document.form.LoadingTime.value;		
+		var ldngTimeDurn = ldngTime.split(":");
+		var unldngTimeDurn = unldngTime.split(":");		
+		var pattern = new RegExp(/([0-9]{1,2})([:]{1})([0-9]{2})([:]{1})([0-9]{2})/);
+    		if(!pattern.test(unldngTime) || unldngTimeDurn.length &gt; 3 || unldngTimeDurn[2].match(/\D/)){
+		       core_alert("Invalid value entered for Unloading time. It should be in hh:mm:ss format!");
+		       document.form.UnloadingTime.focus();
+					 canSubmit = "false";
+					 return;		
+		}
+		if(unldngTimeDurn[0].search(/\./) != -1 || unldngTimeDurn[0]  &lt; 0 || unldngTimeDurn[0].match(/\D/)){
+		       core_alert("Unloading time should be a positive integer!");
+					 document.form.UnloadingTime.focus();
+		       canSubmit = "false";
+					 return;		
+		}				
+		if(unldngTimeDurn[1]  &gt; 59){
+		       core_alert("Minutes in Unloading Time should not be greater than 59!");
+		       document.form.UnloadingTime.focus();
+					 canSubmit = "false";
+					 return;		
+		}
+		if( unldngTimeDurn[2] &gt; 59){
+		       core_alert("Seconds in Unloading Time should not be greater than 59!");
+		       document.form.UnloadingTime.focus();
+					 canSubmit = "false";
+					 return;		
+		}			
+	if(unldngTimeDurn[0] &lt;=0 &amp;&amp; unldngTimeDurn[1] &lt;=0 &amp;&amp; unldngTimeDurn[2] &lt;=0){
+		       core_alert("Invalid value entered for Unloading Time. It should not be 00:00:00!");
+		       document.form.UnloadingTime.focus();
+					 canSubmit = "false";
+					 return;		
+		}			
+		
+    		if(!pattern.test(ldngTime) || ldngTimeDurn.length &gt; 3 || ldngTimeDurn[2].match(/\D/)){
+		       core_alert("Invalid value entered for Loading time. It should be in hh:mm:ss format!");
+		       document.form.LoadingTime.focus();
+					 canSubmit = "false";
+					 return;
+		}
+		if(ldngTimeDurn[0].search(/\./) != -1 || ldngTimeDurn[0]  &lt; 0  || ldngTimeDurn[0].match(/\D/)){
+		       core_alert("Loading time should be a positive integer!");
+					 document.form.LoadingTime.focus();
+		       canSubmit = "false";
+					 return;		
+		}				
+		if(ldngTimeDurn[1]  &gt; 59){
+		       core_alert("Minutes in Loading Time should not be greater than 59!");
+		       document.form.LoadingTime.focus();
+					 canSubmit = "false";
+					 return;		
+		}
+		if( ldngTimeDurn[2] &gt; 59){
+		       core_alert("Seconds  in Loading Time should not be greater than 59!");
+		       document.form.LoadingTime.focus();
+					 canSubmit = "false";
+					 return;		
+		}			
+		if(ldngTimeDurn[0] &lt;=0 &amp;&amp; ldngTimeDurn[1] &lt;=0 &amp;&amp; ldngTimeDurn[2] &lt;=0){
+		       core_alert("Invalid value entered for Loading Time. It should not be 00:00:00!");
+		       document.form.LoadingTime.focus();
+					 canSubmit = "false";
+					 return;		
+		}			
+		else{
+   		       canSubmit = "true";
+		}
+		return canSubmit;
+	} 
+		
+		function formDestnRcvngDay(){
+var bIsValid = true;
+ document.form.SUBMIT_AS_XML.value = 'false';
+
+bIsValid = (isValid_stp());
+ 
+if( bIsValid == false )
+{
+  validation_alert('stp');
+}
+
+	
+if ( bIsValid == true) 
+{		
+	  var sun =document.getElementsByName( 'SUN' );		
+		var mon = document.getElementsByName( 'MON' );
+		var tue = document.getElementsByName( 'TUE' );
+		var wed = document.getElementsByName( 'WED' );
+		var thu = document.getElementsByName( 'THU' );
+		var fri = document.getElementsByName( 'FRI' );
+		var sat = document.getElementsByName( 'SAT' );
+		var destnRcvngDay;
+		if(sun[0].checked)								
+		    destnRcvngDay = 1;
+		else
+		    destnRcvngDay = 0;
+		if(mon[0].checked)								
+				destnRcvngDay += '' + 1;
+		else
+		    destnRcvngDay +='' + 0;
+		if(tue[0].checked)								
+		    destnRcvngDay +='' + 1;
+		else
+		    destnRcvngDay +='' + 0;
+		if(wed[0].checked)								
+		    destnRcvngDay += '' + 1;
+		else
+		    destnRcvngDay += '' + 0;
+		if(thu[0].checked)								
+		    destnRcvngDay += '' + 1;
+		else
+		    destnRcvngDay += '' + 0;
+		if(fri[0].checked)								
+		    destnRcvngDay += '' + 1;
+		else
+		    destnRcvngDay += '' + 0;
+		if(sat[0].checked)								
+		    destnRcvngDay += '' + 1;
+		else
+		    destnRcvngDay += '' + 0;	
+		var ReplenishmentLotSize = document.form.ReplenishmentLotSize.value;
+		var ReplenishmentLotSizeUOM = document.form.ReplenishmentLotSizeUOM.value;		
+		var ReplenishmentRoundingValue = document.form.ReplenishmentRoundingValue.value;		
+		var startDate = document.form.EffectiveStartDate_DC.value;
+		var endDate = document.form.EffectiveEndDate_DC.value;				
+					if (Date.parse(startDate) &gt; Date.parse(endDate)) {
+							core_alert("Invalid Date Range,Start Date cannot be after End Date!")
+							return;
+					}				
+	/*	if(ReplenishmentLotSize != ReplenishmentRoundingValue){
+		core_alert("Rpln Lot Size value and the Rpln Rounding value should be the same!");
+		document.form.SUBMIT_AS_XML.value = 'false';
+		}*/
+    <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+    if (ReplenishmentRoundingValue.length == 0)
+		{
+		core_alert("Please enter a positive value for Single SKU.");
+				canSave = "false";
+				return;				
+		}
+		else{
+				canSave = "true";
+		}
+    
+    if (ReplenishmentRoundingValue.length &gt; 0)
+		{
+				var anum=/(^\d+$)|(^\d+\.\d+$)/;
+				if (!anum.test(ReplenishmentRoundingValue)) {
+					core_alert("Please enter a positive value for Single SKU.");
+					canSave = "false";
+					return;				
+				}
+		}
+    <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+    if(ReplenishmentLotSizeUOM.length == 0){
+		core_alert("Please enter the value for Replenishment Lot Size UOM!");
+     return;
+		}				
+	/*	if(!validateTime()){
+		return;
+		}*/
+		
+ 		document.form.DestinationReceivingDays.value = destnRcvngDay;	
+ 		disableButtons(); 
+ 		trapExcelPivotChanges(); 		
+		document.form.BUTTON_ID.value = 'save'; 
+		document.form.action = 'view.x2ps';
+		document.form.submit();	
+		}
+		}
+  </ui:script>
+</ui:page-group>
+

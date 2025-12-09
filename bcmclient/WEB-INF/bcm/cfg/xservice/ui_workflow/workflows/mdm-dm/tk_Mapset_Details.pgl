@@ -1,0 +1,726 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="create_buffer" selectedStep="{$root/STEP_NUM/@Value}" displayText="{$root/CAPTION/@Value}" scrollable="false" type="Wizard">
+    <ui:step displayText="Basic And Dimensionality" id="step1" scrollable="false" editable="true">
+      <!-- ************** -->
+      <!-- needed by studio -->
+      <ui:field-group select="$root">
+        <ui:hidden-field name="EV_NAME" />
+        <ui:hidden-field name="EV_KEY" />
+        <ui:hidden-field name="CURRENT_USER_ID" value="{identity-user-id()}" />
+      </ui:field-group>
+      <ui:field-group select="$root/MAPSET">
+        <ui:entry-field displayText="Name" name="NAME" required="true" editable="{$root/OPERATION/@Value != 'EDIT'}" />
+        <ui:entry-field displayText="Description" name="DESCRIPTION" />
+        <ui:dropdown displayText="Status" name="STATUS" selectAll="false" value="BI-DIRECTIONAL" id="STATUS">
+          <ui:option id="ACTIVE" value="ACTIVE" />
+          <ui:option id="INACTIVE" value="INACTIVE" />
+        </ui:dropdown>
+      </ui:field-group>
+      <ui:container collapsable="false">
+        <ui:help displayPage="{$pages:Manage_mapset_definition_help}" />
+        <ui:help displayPage="{$pages:Manage_mapset_definition_help}" />
+        <ui:step id="Dimensionality" select="$root" editable="true" displayText="Dimensionality">
+          <ui:field-group select="$root">
+            <ui:hidden-field name="EV_NAME" />
+            <ui:hidden-field name="EV_KEY" />
+            <ui:hidden-field name="CURRENT_USER_ID" value="{identity-user-id()}" />
+            <ui:hidden-field id="operation" name="operation" value="{$root/OPERATION/@Value}" />
+          </ui:field-group>
+          <ui:grid id="one" cellSpacing="10%">
+            <ui:row>
+              <ui:cell valign="top" align="left">
+                <ui:container collapsable="false">
+                  <ui:step id="SourceDimensionStep" displayText="Source Dimension">
+                    <ui:field-group>
+                      <ui:dropdown displayText="" name="SourceDimensionLBox" id="SourceDimensionLBox" size="6" editable="true" required="false" selectOne="false" optionSrc="$root/SOURCE/DIMENSIONS/*" />
+                    </ui:field-group>
+                  </ui:step>
+                </ui:container>
+              </ui:cell>
+              <ui:cell valign="top" align="left">
+                <ui:container collapsable="false">
+                  <ui:step id="TargetDimensionStep" displayText="Target Dimension">
+                    <ui:field-group>
+                      <ui:dropdown displayText="" name="TargetDimensionLBox" id="TargetDimensionLBox" size="6" editable="true" required="false" selectOne="false" optionSrc="$root/TARGET/DIMENSIONS/*" />
+                    </ui:field-group>
+                  </ui:step>
+                </ui:container>
+              </ui:cell>
+            </ui:row>
+          </ui:grid>
+        </ui:step>
+      </ui:container>
+      <ui:buttons>
+        <ui:button displayText="Close" id="CANCEL" name="CANCEL" validate="false" />
+        <ui:divider />
+        <ui:button displayText="Previous" id="PREVIOUS" name="PREVIOUS" disabled="true" />
+        <ui:button displayText="Next" id="NEXT" name="NEXT" enabledBySelections="false" />
+        <ui:divider />
+        <ui:button displayText="Finish" id="FINISH" name="FINISH" disabled="true" />
+      </ui:buttons>
+      <ui:script>function onLoad()
+       {
+				
+				 onLoadSuper();
+         scrollHelper();
+	 //debugger;
+	 if((document.form.operation.value == 'EDIT') || (document.form.operation.value == 'DUPLICATE'))
+	   {
+	      document.form.SourceDimensionLBox.disabled='true';
+	     document.form.TargetDimensionLBox.disabled='true';
+	   }
+	  if((document.form.operation.value == 'EDIT') || (document.form.operation.value == 'DUPLICATE'))
+		i2uiToggleButtonState('FINISH','enabled','Regular');		
+	  else
+		i2uiToggleButtonState('FINISH','disabled');
+         }
+
+		 /*      		function dimcheck()
+				{
+						
+				  if (document.form.SourceDimensionLBox.value == '')
+        {
+            core_alert ('Please select at least one Source Dimension') ;
+            return ;
+        }
+
+        if (document.form.TargetDimensionLBox.value == '')
+        {
+            core_alert ('Please select at least one Target Dimension') ;
+            return ;
+        }
+				
+				} 	*/
+				
+   /*  function on_NEXT() 
+          {
+				//debugger;
+				//	alert ('Amit1');
+      var bIsValid = true;  
+             document.form.SUBMIT_AS_XML.value = 'false';  
+
+             bIsValid = (isValid_step1());  
+             if (bIsValid == false)  
+                 validation_alert('step1');  
+             if ( bIsValid == true) 
+             { 
+			
+              disableButtons(); 
+              document.form.BUTTON_ID.value = 'NEXT' ; 
+              document.form.action = 'view.x2ps';  
+              document.form.submit();  
+             }  
+             onResize(); 
+             return; 
+          } 
+			*/</ui:script>
+    </ui:step>
+    <!-- @ PAGE 2 -->
+    <ui:step id="step2" displayText="Mappings" select="$root" editable="true">
+      <ui:field-group select="$root">
+        <ui:hidden-field name="EV_NAME" />
+        <ui:hidden-field name="EV_KEY" />
+        <ui:hidden-field name="CURRENT_USER_ID" value="{identity-user-id()}" />
+        <ui:hidden-field name="MAX_Rows" />
+        <ui:hidden-field id="operation" name="operation" value="{$root/OPERATION/@Value}" />
+      </ui:field-group>
+      <ui:field-group select="$root">
+        <ui:hidden-field name="EV_NAME" />
+        <ui:hidden-field name="EV_KEY" />
+        <ui:hidden-field name="CURRENT_USER_ID" value="{identity-user-id()}" />
+        <ui:hidden-field name="MAX_Rows" />
+        <ui:hidden-field id="operation" name="operation" value="{$root/OPERATION/@Value}" />
+      </ui:field-group>
+      <ui:script>var nSelectedRows = 0 ; 
+           var selectedMapinfo = null ;   
+           var selectedCheckbox = null ;
+	   
+	  function onLoad()
+       {
+         onLoadSuper();
+         scrollHelper();
+	 //debugger;
+	  if((document.form.operation.value == 'DUPLICATE'))
+		i2uiToggleButtonState('FINISH','enabled','Regular');		
+	  else
+		i2uiToggleButtonState('FINISH','disabled');
+         }	
+
+           function i2uiRowSelectionCallback (tableID)
+           {
+                if (tableID == null)
+                        return ;
+		
+		try
+		{
+			hasNoSelections = (i2uiGetSelectedRowNums(tableID).length == 0);
+              
+			if (hasNoSelections == true)
+			{
+				i2uiToggleButtonState('Copy','disabled');
+				i2uiToggleButtonState('Modify','disabled');
+				i2uiToggleButtonState('Remove','disabled');
+			}
+			else
+			{
+				i2uiToggleButtonState('Copy','enabled','Regular');
+				i2uiToggleButtonState('Modify','enabled','Regular');
+				i2uiToggleButtonState('Remove','enabled','Regular');
+			
+
+                if (i2uiGetSelectedRowNums(tableID).length &gt; 1)                
+                {
+                    disableButton ('Copy') ;
+                    disableButton ('Modify') ;
+                    return ;
+                }
+                
+                if (i2uiGetSelectedRowNums(tableID).length &lt; 2)                
+                {
+                    enableButton ('Copy') ;
+                    enableButton ('Modify') ;
+                }
+                
+                selectedMapinfoTable = tableID + "_rowselector" ;
+                var tableobj = document.getElementById(selectedMapinfoTable);
+                if (tableobj != null)
+                {
+                    var checkboxes;
+
+                    // IE has a document object per element
+                    if(tableobj.document)
+                        checkboxes = tableobj.document.getElementsByTagName("INPUT");
+                    else
+                        checkboxes = document.getElementsByTagName("INPUT");
+
+                    if (checkboxes != null)
+                    {
+                        var len = checkboxes.length;
+                        for(var i=0; i &lt; len; i++)
+                        {
+                            var id = tableID + "_rowselector" ;
+                            if (checkboxes[i].id == id)
+                            {
+                                if (checkboxes[i].checked)
+                                {
+                                    selectedCheckbox = checkboxes [i] ;
+                                    populateSelectedMapinfo (selectedCheckbox) ;                
+                                }
+                            }
+                        }    
+                    }
+                } 
+		} // end of else
+		}catch(e){}	
+           }
+
+           function setMapinfoData (index, data)
+           {
+                if (data != null) 
+                {
+                    if (selectedMapinfo == null)
+                    {
+                        selectedMapinfo = new Mapinfo () ;
+                    }
+
+                    if (index == 0)
+                    {
+                        selectedMapinfo.id = data ;
+                    }
+                }
+           }
+
+           function Mapinfo ()
+           {
+              this.id   = "" ;  
+           }
+
+           function populateSelectedMapinfo (selectedCheckbox)
+           {
+                if (selectedCheckbox == null)
+                    return ; 
+
+                var rowObj = selectedCheckbox ;
+                if(rowObj.parentElement) 
+                    rowObj = rowObj.parentElement.parentElement ;
+                else    
+                    rowObj = rowObj.parentNode.parentNode ;
+
+                if (selectedMapinfo == null)    
+                    selectedMapinfo = new Mapinfo () ;
+                var cellsCount = rowObj.cells.length ;
+                for (var i = 0; i &lt; cellsCount; i++)
+                {
+                    if (rowObj.cells[i].tagName == 'TH')                    
+                    {
+                        if (rowObj.cells[i].innerText != null)
+                        {
+                            setMapinfoData (i, rowObj.cells[i].innerText) ;
+                        }
+                    }
+                }
+           }
+   
+          var definedMappingRow = null ;
+          function selectDefineMappingRow ()
+          {
+              var defineMappingTable = document.getElementById ('DefineMapping') ;
+          }
+          
+          function on_APPLY ()
+          {
+                //debugger;
+              var defineMappingTable = document.getElementById ('DefineMapping') ;
+              var inputs = defineMappingTable.getElementsByTagName('INPUT');
+              for (var i = 0; i &lt; inputs.length; i++)
+              {
+                  if ((inputs[i].type == 'text') &amp;&amp; (inputs[i].value == ''))
+                  {
+                      core_alert ('Empty Field [' + inputs[i].name + ']') ;
+                      inputs[i].focus () ;
+                      return ;
+                  }    
+              }
+	      if(!isValidDefineMappings())
+	      {
+			core_alert('Source and Target Mappings cannot be same');
+			return;
+	      }
+              disableButtons(); 
+              document.form.BUTTON_ID.value = 'APPLY' ; 
+              document.form.action = 'view.x2ps';  
+              document.form.submit();  
+              onResize();  
+              return; 
+          }
+
+          function isValidDefineMappings()
+	  {
+	  	var tmpSrcLevel = null ;
+		var tmpTgtLevel = null ;
+		var tmpSrcMember = null ;
+		var tmpTgtMember = null ;
+
+		var tmpSrcValue = null ;
+		var tmpTgtValue = null ;
+		var tmpSrcMemberValue = null ;
+		var tmpTgtMemberValue = null ;
+
+		var srcLevel = "SourceLevel" ;
+		var tgtLevel = "TargetLevel"  ;
+		var srcMember = "SourceMember" ;
+		var tgtMember = "TargetMember" ;
+		
+		var found = false ;
+		var inputElement = null ;
+		var nSrcLevelCount = 0 ;
+		var nTgtLevelCount = 0 ;
+		for (var i = 1; i &lt; 9; i++)
+		{
+			tmpTgtLevel = tgtLevel + i ;
+			inputElement = document.getElementById (tmpTgtLevel) ;
+			if (inputElement != null)
+			{
+				nTgtLevelCount++ ;
+			}
+			
+			tmpSrcLevel = srcLevel + i ;
+			inputElement = document.getElementById (tmpSrcLevel) ;
+			if (inputElement != null)
+			{
+				nSrcLevelCount++ ;
+			}
+			
+		}
+		if (nTgtLevelCount != nSrcLevelCount)
+		{
+			return true ;
+		}
+
+		for (var i = 1; i &lt; 9; i++)
+		{
+			tmpSrcLevel = srcLevel + i ;
+			inputElement = document.getElementById (tmpSrcLevel) ;
+			if (inputElement == null)
+			{
+				break ;
+			}
+			tmpSrcValue = inputElement.value ;
+
+			tmpTgtLevel = tgtLevel + i ;
+			inputElement = document.getElementById (tmpTgtLevel) ;
+			tmpTgtValue = inputElement.value ;
+			if (tmpSrcValue != tmpTgtValue)
+				return true ;
+
+			tmpSrcMember = srcMember + i ;
+			inputElement = document.getElementById (tmpSrcMember) ;
+			tmpSrcMemberValue = inputElement.value ;
+
+			tmpTgtMember = tgtMember + i ;
+			inputElement = document.getElementById (tmpTgtMember) ;
+			tmpTgtMemberValue = inputElement.value ;
+			if (tmpSrcMemberValue == tmpTgtMemberValue)
+				return false ;
+                        found = true ;
+		}
+		return found ;
+	  }
+
+	  
+	  function on_CLEARALL() 
+	  { 
+		var bIsValid = true;  
+		document.form.SUBMIT_AS_XML.value = 'false';  
+		 bIsValid = (isValid_step2());  
+	  if (bIsValid == false)  
+		validation_alert('step2');  
+	  if ( bIsValid == true) 
+	  { 
+		  var inputs = document.getElementsByTagName('INPUT');
+		  for (var i = 0; i &lt; inputs.length; i++)
+		  {
+			  if (inputs[i].type == 'text')
+			     inputs[i].value = "" ;
+		   }
+		  disableButtons(); 
+		  document.form.BUTTON_ID.value = 'CLEARALL' ; 
+		  document.form.action = 'view.x2ps';  
+		  document.form.submit();  
+	  }  
+		onResize();  
+		return; 
+	  }
+
+
+          function on_COPY ()
+          {
+                i2uiRowSelectionCallback('ExistingMapping');
+		document.form.SelectedMapping.value = selectedMapinfo.id ;
+                disableButtons(); 
+                document.form.BUTTON_ID.value = 'COPY' ; 
+                document.form.action = 'view.x2ps';  
+                document.form.submit();  
+                onResize();  
+                return; 
+          }
+
+          function on_MODIFY ()
+          {
+                i2uiRowSelectionCallback('ExistingMapping');
+		document.form.SelectedMapping.value = selectedMapinfo.id ;
+                disableButtons(); 
+                document.form.BUTTON_ID.value = 'MODIFY' ; 
+                document.form.action = 'view.x2ps';  
+                document.form.submit();  
+                onResize();  
+                return; 
+          }
+
+          function on_REMOVE ()
+          {
+                i2uiRowSelectionCallback('ExistingMapping');
+		document.form.SelectedMapping.value = selectedMapinfo.id ;
+                disableButtons(); 
+                document.form.BUTTON_ID.value = 'REMOVE' ; 
+                document.form.action = 'view.x2ps';  
+                document.form.submit();  
+                onResize();  
+                return; 
+          }
+
+          function on_SearchMember (dimName, SrcLevelField)
+          {
+            if ((SrcLevelField == null) || (dimName == null))
+                return ;
+            
+            var levelField = document.getElementById(SrcLevelField);
+            document.form.SelectedField.value = SrcLevelField ;
+            document.form.SelectedDimension.value = dimName ;
+            document.form.SelectedLevel.value = levelField.value ;
+            disableButtons(); 
+            document.form.BUTTON_ID.value = 'SEARCH_MEMBER' ; 
+            document.form.action = 'view.x2ps';  
+            document.form.submit();  
+            onResize();  
+            return; 
+          }</ui:script>
+      <ui:dynamic-pgl select="$root/DYNAMIC-TABLE/*" />
+      <ui:field-group columns="2">
+        <ui:field-space displayText="Space" />
+        <ui:field-space displayText="Space" />
+      </ui:field-group>
+      <ui:dynamic-pgl select="$root/DEFINE-DYNAMIC-TABLE/*" />
+      <ui:buttons>
+        <ui:button displayText="Close" id="CANCEL" name="CANCEL" validate="false" />
+        <ui:divider />
+        <ui:button displayText="Previous" id="PREVIOUS" name="PREVIOUS" disabled="false" />
+        <ui:button displayText="Next" id="NEXT" name="NEXT" enabledBySelections="false" />
+        <ui:divider />
+        <ui:button displayText="Finish" id="FINISH" name="FINISH" disabled="true" />
+      </ui:buttons>
+      <ui:script>/*  function on_NEXT() 
+          { 
+				//debugger;
+//alert('Amit2');
+             var bIsValid = true;  
+             document.form.SUBMIT_AS_XML.value = 'false';  
+
+             bIsValid = (isValid_step2());  
+             if (bIsValid == false)  
+                 validation_alert('step2');  
+             if ( bIsValid == true) 
+             { 
+                 disableButtons(); 
+                 document.form.BUTTON_ID.value = 'NEXT' ; 
+                 document.form.action = 'view.x2ps';  
+                 document.form.submit();  
+             }  
+             onResize();  
+             return; 
+          }  */</ui:script>
+    </ui:step>
+    <ui:step displayText="User Rights" id="step3" scrollable="false">
+      <ui:field-group select="$root">
+        <ui:hidden-field name="EV_NAME" />
+        <ui:hidden-field name="EV_KEY" />
+        <ui:hidden-field name="CURRENT_USER_ID" value="{identity-user-id()}" />
+      </ui:field-group>
+      <ui:container collapsable="false">
+        <ui:help displayPage="{$pages:Manage_mapset_definition_help}" />
+        <ui:help displayPage="{$pages:Manage_mapset_definition_help}" />
+        <ui:step id="containerstep2" select="$root" editable="true" displayText="User / UserGroup Access Rights">
+          <ui:field-group select="$root">
+            <ui:hidden-field name="EV_NAME" />
+            <ui:hidden-field name="EV_KEY" />
+            <ui:hidden-field name="CURRENT_USER_ID" value="{identity-user-id()}" />
+          </ui:field-group>
+          <ui:grid id="one" cellSpacing="12%">
+            <ui:row>
+              <ui:cell valign="top" align="left" width="25%">
+                <ui:container collapsable="false">
+                  <ui:step id="zoneStep" displayText="User / UserGroup">
+                    <ui:grid>
+                      <ui:row>
+                        <ui:cell>
+                          <ui:field-group>
+                            <ui:dropdown displayText="" displayNoWrap="true" colSpan="2" size="8" sortable="true" name="User" optionSrc="$root/USERS/*" align="left" />
+                          </ui:field-group>
+                        </ui:cell>
+                      </ui:row>
+                      <ui:row>
+                        <ui:cell>
+                          <ui:field-group columns="2">
+                            <ui:checkbox id="Read" displayText="Read" name="Read" defaultValue="true" />
+                            <ui:checkbox id="Write" displayText="Write" name="Write" />
+                          </ui:field-group>
+                        </ui:cell>
+                      </ui:row>
+                    </ui:grid>
+                    <ui:buttons>
+                      <ui:button displayText="Add" id="ADD_USER" name="ADD_USER" />
+                    </ui:buttons>
+                  </ui:step>
+                </ui:container>
+              </ui:cell>
+              <ui:cell valign="top" align="left" width="50%">
+                <ui:table width="50%" scrollable="true" displayText="Access Rights Preferences" rowId="User" select="$root/RIGHTS" selectable="All" collapsable="false" postRowIdAs="SelectedUser" maxRows="-1" id="tab1">
+                  <ui:field-group>
+                    <ui:display-field size="2" displayText="User / UserGroup" name="User" id="User" />
+                    <ui:display-field size="2" displayText="Acces Rights" name="AccessRights" id="AccessRights" />
+                  </ui:field-group>
+                  <ui:buttons>
+                    <ui:button displayText="Remove" id="REMOVE_USER" name="REMOVE_USER" enabledBySelections="true" />
+                  </ui:buttons>
+                </ui:table>
+              </ui:cell>
+            </ui:row>
+          </ui:grid>
+        </ui:step>
+      </ui:container>
+      <ui:buttons>
+        <ui:button displayText="Close" id="CANCEL" validate="false" />
+        <ui:divider />
+        <ui:button displayText="Previous" id="PREVIOUS" disabled="false" />
+        <ui:button displayText="Next" id="NEXT" disabled="true" />
+        <ui:divider />
+        <ui:button displayText="Finish" id="FINISH" disabled="false" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>function on_FINISH() 
+	          {          
+	
+	             var bIsValid = true;  
+	             document.form.SUBMIT_AS_XML.value = 'false';  
+		if (typeof(isValid_step1) == 'function' )
+		{
+	             bIsValid = (isValid_step1());  
+	             if (bIsValid == false)  
+	                 validation_alert('step1');  
+	             if ( bIsValid == true) 
+	             { 
+	                 disableButtons(); 
+	                 document.form.BUTTON_ID.value = 'FINISH' ; 
+	                 document.form.action = 'view.x2ps';  
+	                 document.form.submit();  
+	             }  
+	        }
+
+		if (typeof(isValid_step2) == 'function' )
+		{
+	             bIsValid = (isValid_step2());  
+	             if (bIsValid == false)  
+	                 validation_alert('step2');  
+	             if ( bIsValid == true) 
+	             { 
+	                 disableButtons(); 
+	                 document.form.BUTTON_ID.value = 'FINISH' ; 
+	                 document.form.action = 'view.x2ps';  
+	                 document.form.submit();  
+	             }  
+	        }
+	        
+	        if (typeof(isValid_step3) == 'function' )
+				{
+			             bIsValid = (isValid_step3());  
+			             if (bIsValid == false)  
+			                 validation_alert('step3');  
+			             if ( bIsValid == true) 
+			             { 
+			                var tableobj = document.getElementById('tab1');
+					 if (tableobj != null)
+					 {
+						// users are there in the table
+					 }
+					 else
+					 {
+					      // table is blank. No users
+					      core_alert(' Please add one User / UserGroup before saving.');
+					      return;
+					 }
+					 disableButtons(); 
+			                 document.form.BUTTON_ID.value = 'FINISH' ; 	
+			                 document.form.action = 'view.x2ps';  
+			                 document.form.submit();  
+			             }  
+	        }
+	             onResize();  
+	             return; 
+          }</ui:script>
+  <ui:script>function on_FINISH() 
+	          {          
+	
+	             var bIsValid = true;  
+	             document.form.SUBMIT_AS_XML.value = 'false';  
+		if (typeof(isValid_step1) == 'function' )
+		{
+	             bIsValid = (isValid_step1());  
+	             if (bIsValid == false)  
+	                 validation_alert('step1');  
+	             if ( bIsValid == true) 
+	             { 
+	                 disableButtons(); 
+	                 document.form.BUTTON_ID.value = 'FINISH' ; 
+	                 document.form.action = 'view.x2ps';  
+	                 document.form.submit();  
+	             }  
+	        }
+
+		if (typeof(isValid_step2) == 'function' )
+		{
+	             bIsValid = (isValid_step2());  
+	             if (bIsValid == false)  
+	                 validation_alert('step2');  
+	             if ( bIsValid == true) 
+	             { 
+	                 disableButtons(); 
+	                 document.form.BUTTON_ID.value = 'FINISH' ; 
+	                 document.form.action = 'view.x2ps';  
+	                 document.form.submit();  
+	             }  
+	        }
+	        
+	        if (typeof(isValid_step3) == 'function' )
+				{
+			             bIsValid = (isValid_step3());  
+			             if (bIsValid == false)  
+			                 validation_alert('step3');  
+			             if ( bIsValid == true) 
+			             { 
+			                var tableobj = document.getElementById('tab1');
+					 if (tableobj != null)
+					 {
+						// users are there in the table
+					 }
+					 else
+					 {
+					      // table is blank. No users
+					      core_alert(' Please add one User / UserGroup before saving.');
+					      return;
+					 }
+					 disableButtons(); 
+			                 document.form.BUTTON_ID.value = 'FINISH' ; 	
+			                 document.form.action = 'view.x2ps';  
+			                 document.form.submit();  
+			             }  
+	        }
+	             onResize();  
+	             return; 
+          } 
+		
+			function on_NEXT()
+		{
+		//	alert('Amit');
+		 var bIsValid = true;  
+	             document.form.SUBMIT_AS_XML.value = 'false';  
+		
+			if (typeof(isValid_step1) == 'function' )
+		{
+		 if (document.form.SourceDimensionLBox.value == '')
+        {
+            core_alert ('Please select at least one Source Dimension') ;
+            return ;
+        }
+
+        if (document.form.TargetDimensionLBox.value == '')
+        {
+            core_alert ('Please select at least one Target Dimension') ;
+            return ;
+        }
+		
+		
+	//	alert('Amit1');
+		   bIsValid = (isValid_step1());  
+             if (bIsValid == false)  
+                 validation_alert('step1');  
+             if ( bIsValid == true) 
+             { 
+			
+              disableButtons(); 
+              document.form.BUTTON_ID.value = 'NEXT' ; 
+              document.form.action = 'view.x2ps';  
+              document.form.submit();  
+             }  
+		}
+		
+		if (typeof(isValid_step2) == 'function' )
+		{
+			//alert('Amit2');
+		    bIsValid = (isValid_step2());  
+             if (bIsValid == false)  
+                 validation_alert('step2');  
+             if ( bIsValid == true) 
+             { 
+                 disableButtons(); 
+                 document.form.BUTTON_ID.value = 'NEXT' ; 
+                 document.form.action = 'view.x2ps';  
+                 document.form.submit();  
+             }  
+		}
+		   onResize();  
+	             return; 
+		
+		}</ui:script>
+</ui:page-group>
+

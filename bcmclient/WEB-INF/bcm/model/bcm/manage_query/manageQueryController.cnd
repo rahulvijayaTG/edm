@@ -1,0 +1,957 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands description="_" xmlns:cfg="http://www.i2.com/configurability" xmlns:core="http://www.i2.com/core" xmlns:omx="http://www.i2.com/omx" xmlns:perm="http://www.i2.com/permissibility" xmlns:util="http://www.i2.com/util" xmlns:web="http://www.i2.com/web" xmlns:x2="http://www.i2.com/x2" xmlns:xapl="http://www.i2.com/xapl" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:docutil="http://www.i2.com/docutil" xmlns:oa="http://www.i2.com/oa" xmlns:xudl="http://www.i2.com/xudl" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="init">
+    <xapl:variable name="queryDetail" resolver="session" global="true"/>
+    <xapl:variable name="paramSeq" resolver="session" global="true"/>
+    <xapl:variable name="executeResult" resolver="session" global="true"/>
+    <xapl:variable name="sessDataTypes" resolver="session" global="true"/>
+    <xapl:variable name="sesshistoryData" resolver="session" global="true"/>
+    <xapl:variable name="paramList" resolver="session" global="true"/>
+    <x2:execute command="bcm.manage_query.manageQueryController:initQueryDetail"/>
+    <x2:execute command="bcm.manage_query.manageQueryController:initParamSeq"/>
+    <x2:execute command="bcm.manage_query.manageQueryController:getDataTypes"/>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="initQueryDetail">
+    <xapl:set-variable name="queryDetail">
+      <QUERY_DETAIL>
+      </QUERY_DETAIL>
+    </xapl:set-variable>
+    <xapl:set-variable name="paramList"><ROOT/></xapl:set-variable>
+    <xapl:set-variable name="paramSeq"/>
+    <xapl:print>
+         ***QUERY_DETAIL Initalized***
+         <xapl:value-of select="{$queryDetail}"/>
+         <xapl:value-of select="{$paramList}"/>
+    </xapl:print>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="initParamSeq">
+    <xapl:set-variable name="paramSeq"/>
+    <xapl:print>
+         ***Param Sequence Initalized***
+         <xapl:value-of select="{$paramSeq}"/>
+    </xapl:print>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="delQueryMaster">
+    <xapl:print select="{$this}"/>
+    <xapl:print select="{$queryDetail}"/>
+    <xapl:variable name="logResponse"/>
+    <xapl:variable name="paramResponse"/>
+    <xapl:variable name="response">
+      <xcore:execute-method name="//BCMMasterService/delQueryMaster" entireResponse="true">
+        <xapl:for-each select="$this/QUERY_ID" varName="queryID">
+          <queryID Value="{$queryID/@Value}"/>
+        </xapl:for-each>
+      </xcore:execute-method>
+    </xapl:variable>
+
+    <xapl:if test="$response/RESPONSE/@Status = 'Success'">
+      <xapl:set-variable name="logResponse">
+        <xcore:execute-method name="//BCMMasterService/delExecLog" entireResponse="true">
+          <xapl:for-each select="$this/QUERY_ID" varName="queryID">
+            <queryID Value="{$queryID/@Value}"/>
+          </xapl:for-each>
+        </xcore:execute-method>
+      </xapl:set-variable>
+      <xapl:set-variable name="paramResponse">
+        <xcore:execute-method name="//BCMMasterService/delParam" entireResponse="true">
+          <xapl:for-each select="$this/QUERY_ID" varName="queryID">
+            <queryID Value="{$queryID/@Value}"/>
+          </xapl:for-each>
+        </xcore:execute-method>
+      </xapl:set-variable>
+    </xapl:if>
+    
+    <xapl:print select="{$logResponse}"/>
+    <xapl:print select="{$paramResponse}"/>
+    
+    <xapl:variable name="status">
+      <x2:execute command="bcm.framework.util:getResponseStatus">
+        <x2:with-param name="response" select="$response"/>
+        <x2:with-param name="successMessage" select=" 'The Query has been successfully deleted!' "/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:print select="{$response}"/>
+    <web:display-page>
+      <web:get-page name="manageQuery">
+        <xapl:value-of select="$status"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getQueryDetail">
+    <xapl:print select="{$this}"/>
+    <x2:execute command="bcm.manage_query.manageQueryController:initQueryDetail"/>
+    <xapl:variable name="response">
+      <xcore:execute-method name="//BCMMasterService/getQueryDetail" entireResponse="true">
+        <xapl:value-of select="{$this/QUERY_ID}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    <xapl:print select="{$response}"/>
+    <docutil:add select="$queryDetail">
+      <xapl:value-of select="{$response/RESPONSE/*}"/>
+    </docutil:add>
+    <xapl:print select="{$queryDetail}"/>
+    <web:display-page>
+      <web:get-page name="manageQueryDetail">
+           <xapl:value-of select="$this/*"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getQueryHistory">
+    <xapl:print select="{$this}"/>
+    <x2:execute command="bcm.manage_query.manageQueryController:initQueryDetail"/>
+    <xapl:variable name="response">
+      <xcore:execute-method name="//BCMMasterService/getQueryDetail" entireResponse="true">
+        <xapl:value-of select="{$this/QUERY_ID}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    <xapl:print select="{$response}"/>
+    <docutil:add select="$queryDetail">
+      <xapl:value-of select="{$response/RESPONSE/*}"/>
+    </docutil:add>
+    <xapl:print select="{$queryDetail}"/>
+    <web:display-page>
+      <web:get-page name="manageQueryExecHistory">
+    <xapl:value-of select="$this/*"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="executeQuery">
+    <xapl:print select="{$this}"/>
+    <x2:execute command="bcm.manage_query.manageQueryController:initQueryDetail"/>
+    <xapl:variable name="response">
+      <xcore:execute-method name="//BCMMasterService/getQueryDetail" entireResponse="true">
+        <xapl:value-of select="{$this/QUERY_ID}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    <xapl:print select="{$response}"/>
+    <docutil:add select="$queryDetail">
+      <xapl:value-of select="{$response/RESPONSE/*}"/>
+    </docutil:add>
+    <xapl:print select="{$queryDetail}"/>
+    <web:display-page>
+      <web:get-page name="manageQueryExec">
+    <xapl:value-of select="$this/*"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="execute">
+    <xapl:print select="{$this}"/>
+    <xapl:variable name="valNum" select="1"/>
+    <!--xapl:set-variable name="paramList"><ROOT/></xapl:set-variable-->
+    <xapl:variable name="startAtRows"/>
+    <xapl:variable name="maxRows"/>
+    
+    <xapl:choose>
+      <xapl:when test="$this/fromPage"/>
+      <xapl:otherwise>
+        <xapl:print>
+          ***if fromPage doesn't exist***
+        </xapl:print>
+        <xapl:set-variable name="paramList"><ROOT/></xapl:set-variable>
+        <xapl:for-each select="$this/QueryParam.paramValue" varName="paramValues">
+          <xapl:print select="{$paramSeq}"/>
+          <xapl:choose>
+          <xapl:when test="string-length($paramValues/@Value) &gt; 0">
+          <docutil:add select="$paramList">
+            <PARAM Type="{$paramSeq/JOIN_RESULT[$valNum]/QueryParam.dataType/@Value}" Value= "{$paramValues/@Value}" />
+          </docutil:add>
+          </xapl:when>        
+              <xapl:otherwise>
+          <docutil:add select="$paramList">
+            <PARAM Type="{$paramSeq/JOIN_RESULT[$valNum]/QueryParam.dataType/@Value}" Value= "%" />
+          </docutil:add>
+          </xapl:otherwise>       
+          </xapl:choose>          
+
+          <xapl:print select="{$paramList}"/>
+          <xapl:set-variable name="valNum" select="$valNum+1"/>
+        </xapl:for-each>
+      </xapl:otherwise>
+    </xapl:choose>
+    
+    <xapl:choose>
+      <xapl:when test="$this/fromPage/@Value = 'ResultPage'">
+        <xapl:print>
+          ***if then***
+          <xapl:value-of select="$this"/>
+        </xapl:print>
+        <xapl:set-variable name="startAtRows" select="$this/START_COUNT/@Value"/>
+        <xapl:set-variable name="maxRows" select="$this/MAX_ROWS/@Value"/>
+      </xapl:when>
+      <xapl:otherwise>
+        <xapl:print>
+          ***otherwise***
+          <xapl:value-of select="$this"/>
+        </xapl:print>
+        <xapl:set-variable name="startAtRows" select="0"/>
+        <xapl:set-variable name="maxRows" select="10"/>
+      </xapl:otherwise>
+    </xapl:choose>
+
+    <xapl:print select="{$paramList/*}"/>
+    
+    <xapl:print select="{$queryDetail}"/>
+    
+    <xapl:set-variable name="executeResult">
+      <xcore:execute-method name="//BCMMasterService/executeQuery" entireResponse="true">
+        <QueryString Value="{$queryDetail/QueryMaster/queryString/@Value}" StartAtRow="{$startAtRows}" MaxRows="{$maxRows}">
+          <xapl:value-of select="$paramList/*"/>
+        </QueryString>
+      </xcore:execute-method>
+    </xapl:set-variable>
+    
+    <xapl:print select="{$executeResult}"/>
+    <xapl:variable name="executeResultCount" select="$executeResult/RESPONSE/@TotalRowCount"/>
+    <xapl:print select="{$executeResultCount}"/>
+    <!-- Issue 574857 , truncating the long error message -->
+    <xapl:variable name="errorMessage">
+            <xapl:value-of select="{substring-before($executeResult/RESPONSE/@Description, 'Context=Executing Query:' )}"/>
+          </xapl:variable>
+       <xapl:print select="{$errorMessage}"/>
+       
+    <xapl:choose>
+      <xapl:when test="$this/fromPage/@Value = 'ResultPage'"/>
+      <xapl:otherwise>
+        <xapl:variable name="execLog">
+          <xcore:execute-method name="//BCMMasterService/addExecLog" entireResponse="true">
+            <LOG>
+              <runTime Value="{$executeResult/RESPONSE/timeTaken/@Value}"/>
+              <queryID Value="{$queryDetail/QueryMaster/queryID/@Value}"/>
+              <numberOfRecord Value="{$executeResultCount}"/>
+              <result Value="{$executeResult/@Status}"/>
+              <errorMessage Value="{$errorMessage}"/>
+            </LOG>
+            <xapl:if test="($executeResult/startTime/@Value != '') or ($executeResult/startTime/@Value != null)">
+              <runDateTime Value="{$executeResult/startTime/@Value}"/>
+            </xapl:if>
+          </xcore:execute-method>
+        </xapl:variable>
+
+        <!--xapl:print select="{$execLog}"/-->
+
+        <docutil:set select="$queryDetail/QueryMaster">
+          <lastRunDateTime Value="{$execLog/RESPONSE/runDateTime/@Value}"/>
+          <lastResult Value="{$executeResult/@Status}"/>
+          <lastRunTime Value="{$execLog/RESPONSE/runTime/@Value}"/>
+          <lastExecutedBy Value="{$execLog/RESPONSE/executedBy/@Value}"/>
+        </docutil:set>
+
+        <xapl:print select="{$queryDetail}"/>
+
+        <xapl:variable name="queryMaster">
+          <xcore:execute-method name="//BCMMasterService/saveQueryDetail" entireResponse="true">
+            <xapl:value-of select="{$queryDetail}"/>
+          </xcore:execute-method>
+        </xapl:variable>
+        <xapl:print select="{$queryMaster}"/>
+
+      </xapl:otherwise>
+    </xapl:choose>
+
+    <docutil:remove select="$this/fromPage"/>
+
+    <docutil:set select="$this">
+      <RECORD_COUNT Value="{$executeResult/RESPONSE/@TotalRowCount}"/>
+      <START_COUNT Value="{$startAtRows}"/>
+      <MAX_ROWS Value="{$maxRows}"/>
+    </docutil:set>
+
+    <docutil:remove select="$this/QueryParam.queryID"/>
+    <!--docutil:remove select="$this/QueryParam.paramValue"/-->
+    <docutil:remove select="$this/*[@Value='']"/>
+    <xapl:print select="{$this}"/>
+    <web:display-page>
+      <web:get-page name="manageQueryExecResult">
+        <xapl:value-of select="$this/*"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="cancel">
+    <x2:execute command="bcm.manage_query.manageQueryController:initQueryDetail"/>
+    <x2:execute command="bcm.manage_query.manageQueryController:initParamSeq"/>
+    <web:display-page>
+      <web:get-page name="manageQuery"/>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <!--EQ:573939 To go back to the Execute page-->
+   <x2:command public="yes" description="_" name="cancelFromExecResult">
+        <web:display-page>
+          <web:get-page name="manageQueryExec"/>
+        </web:display-page>
+      </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="saveQuery">
+    <xapl:print>
+      <xapl:value-of select="$queryDetail"/>
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+    <xapl:choose>
+      <xapl:when test="string-length($queryDetail/QueryMaster/queryID/@Value) &gt; 0">
+        <xapl:print>
+          ***if then***
+        </xapl:print>
+        <docutil:set select="$queryDetail/QueryMaster">
+          <queryString Value="{$this/queryString/@Value}"/>
+        </docutil:set>
+      </xapl:when>
+      <xapl:otherwise>
+        <x2:execute command="bcm.manage_query.manageQueryController:initQueryDetail"/>
+        <xapl:print>
+          ***otherwise***
+          <xapl:value-of select="$queryDetail"/>
+        </xapl:print>
+        <docutil:set select="$queryDetail">
+          <QueryMaster>
+            <queryString Value="{$this/queryString/@Value}"/>
+            <queryName Value="{$this/queryName/@Value}"/>
+          </QueryMaster>
+        </docutil:set>
+      </xapl:otherwise>
+    </xapl:choose>
+    <xapl:print select="{$queryDetail}"/>
+    <xapl:variable name="response">
+      <xcore:execute-method name="//BCMMasterService/saveQueryDetail" entireResponse="true">
+        <xapl:value-of select="{$queryDetail}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    <xapl:print select="{$response}"/>
+    <xapl:variable name="status">
+      <x2:execute command="bcm.framework.util:getResponseStatus">
+        <x2:with-param name="response" select="$response"/>
+        <x2:with-param name="successMessage" select=" 'The Query has been successfully saved!' "/>
+      </x2:execute>
+    </xapl:variable>
+    <docutil:set select="$this">
+      <xapl:value-of select="$status"/>
+    </docutil:set>
+    <xapl:print>
+      ****** before changing queryDetail********
+      <xapl:value-of select="$queryDetail"/>
+      <xapl:value-of select="$response"/>
+    </xapl:print>
+    <xapl:if test="$response/RESPONSE/queryID">
+      <docutil:set select="$queryDetail/QueryMaster">
+        <queryID Value="{$response/RESPONSE/queryID/@Value}"/>
+      </docutil:set>
+    </xapl:if>
+    <xapl:print>
+      ****** after changing queryDetail********
+      <xapl:value-of select="$queryDetail"/>
+    </xapl:print>
+    <web:display-page>
+      <web:get-page name="manageQueryDetail">
+        <!--EQ:574814-->
+        <MODE Value="{$this/MODE/@Value}" />
+        <!--xapl:value-of select="$this/*"/-->
+        <xapl:value-of select="$queryDetail"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="saveQueryAndReturn">
+    <xapl:print>
+      <xapl:value-of select="$queryDetail"/>
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+    <xapl:choose>
+      <xapl:when test="string-length($queryDetail/QueryMaster/queryID/@Value) &gt; 0">
+        <xapl:print>
+          ***if then***
+        </xapl:print>
+        <docutil:set select="$queryDetail/QueryMaster">
+          <queryString Value="{$this/queryString/@Value}"/>
+        </docutil:set>
+      </xapl:when>
+      <xapl:otherwise>
+        <x2:execute command="bcm.manage_query.manageQueryController:initQueryDetail"/>
+        <xapl:print>
+          ***otherwise***
+          <xapl:value-of select="$queryDetail"/>
+        </xapl:print>
+        <docutil:set select="$queryDetail">
+          <QueryMaster>
+            <queryString Value="{$this/queryString/@Value}"/>
+            <queryName Value="{$this/queryName/@Value}"/>
+          </QueryMaster>
+        </docutil:set>
+      </xapl:otherwise>
+    </xapl:choose>
+    <xapl:print select="{$queryDetail}"/>
+    <xapl:variable name="response">
+      <xcore:execute-method name="//BCMMasterService/saveQueryDetail" entireResponse="true">
+        <xapl:value-of select="{$queryDetail}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    <xapl:print select="{$response}"/>
+    <xapl:variable name="status">
+      <x2:execute command="bcm.framework.util:getResponseStatus">
+        <x2:with-param name="response" select="$response"/>
+        <x2:with-param name="successMessage" select=" 'The Query has been successfully saved!' "/>
+      </x2:execute>
+    </xapl:variable>
+    <docutil:set select="$this">
+      <xapl:value-of select="$status"/>
+    </docutil:set>
+    <xapl:if test="$response/RESPONSE/queryID">
+      <docutil:set select="$queryDetail/QueryMaster">
+        <queryID Value="{$response/RESPONSE/queryID/@Value}"/>
+      </docutil:set>
+    </xapl:if>
+    <x2:execute command="bcm.manage_query.manageQueryController:initQueryDetail"/>
+    <x2:execute command="bcm.manage_query.manageQueryController:initParamSeq"/>
+    <web:display-page>
+      <web:get-page name="manageQuery">
+        <!--EQ:574814-->
+        <MODE Value="{$this/MODE/@Value}" />
+        <!--xapl:value-of select="$this/*"/-->
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="addParamDetail">
+    <web:display-page>
+      <web:get-page name="manageQueryDetail">
+       <!--EQ:574814-->
+        <MODE Value="{$this/MODE/@Value}" />
+        <ADD_PARAMDTL Value="True"/>
+        <PAGE Value="manageQueryDetails" />
+        <!--xapl:value-of select="$this/*"/-->
+        <xapl:value-of select="$queryDetail"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="saveParamDetail">
+   <xapl:variable name="seqid">
+     <xapl:list-size select="$paramSeq/JOIN_RESULT"/>
+   </xapl:variable>
+   <xapl:print>
+   *** ParamSeq/JOIN_RESULT ****
+      <xapl:value-of select="$paramSeq/JOIN_RESULT"/>
+   *** seqid ****
+      <xapl:value-of select="$seqid"/>
+    </xapl:print>
+    <xapl:variable name="response">
+      <xcore:execute-method name="//BCMMasterService/addParam" entireResponse="true">
+        <queryID Value="{$queryDetail/QueryMaster/queryID/@Value}"/>
+        <parameter Value="{$this/paramName/@Value}"/>
+        <description Value="{$this/paramDesc/@Value}"/>
+        <dataType Value="{$this/paramDataType/@Value}"/>
+        <sequence Value="{$seqid+1}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    <xapl:variable name="status">
+      <x2:execute command="bcm.framework.util:getResponseStatus">
+        <x2:with-param name="response" select="$response"/>
+        <x2:with-param name="successMessage" select=" 'The Query Parameter has been successfully saved!' "/>
+      </x2:execute>
+    </xapl:variable>
+    <docutil:set select="$this">
+      <xapl:value-of select="$status"/>
+    </docutil:set>
+    <xapl:if test="$response/@Status = 'Error' or $response/RESPONSE/@Status = 'Error' ">
+	<docutil:remove select="$this/ERROR_MESSAGE"/>
+	<xapl:variable name="errMsg">
+	    <i18n:text>Cannot specify same parameter name for a query. Please specify different parameter name.</i18n:text>
+	</xapl:variable>
+        <docutil:set select="$this">
+         <ERROR_MESSAGE Value="{$errMsg}"/>
+         </docutil:set>
+    </xapl:if>
+    <web:display-page>
+      <web:get-page name="manageQueryDetail">
+    <xapl:value-of select="$this/*"/>
+    <!--xapl:value-of select="$queryDetail"/-->
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  need to be modified
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="moveUp">
+    <xapl:print select="{$this}"/>
+    <xapl:variable name="qID">
+      <x2:execute command="bcm.framework.queryform.Form:getValueFromSelectedId">
+        <x2:with-param name="selectedId" select="$this/SELECTED_ID/@Value"/>
+        <x2:with-param name="key" select="'QueryParam.queryID'"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:print select="$qID"/>
+    <xapl:variable name="param">
+      <x2:execute command="bcm.framework.queryform.Form:getValueFromSelectedId">
+        <x2:with-param name="selectedId" select="$this/SELECTED_ID/@Value"/>
+        <x2:with-param name="key" select="'QueryParam.parameter'"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:variable name="sequence">
+      <x2:execute command="bcm.framework.queryform.Form:getValueFromSelectedId">
+        <x2:with-param name="selectedId" select="$this/SELECTED_ID/@Value"/>
+        <x2:with-param name="key" select="'QueryParam.sequence'"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:choose>
+      <xapl:when test="$sequence = 1">
+        <xapl:print select="'no call to server'"/>
+      </xapl:when>
+      <xapl:otherwise>
+        <!-- update session with new priority -->
+        <x2:execute command="bcm.manage_query.manageQueryController:updateParamSeq">
+          <x2:with-param name="pSequence" select="$sequence"/>
+          <x2:with-param name="pQID" select="$qID"/>
+          <x2:with-param name="pParam" select="$param"/>
+          <x2:with-param name="pOpr" select="'UP'"/>
+        </x2:execute>
+      </xapl:otherwise>
+    </xapl:choose>
+    <web:display-page>
+      <web:get-page name="manageQueryDetail">
+        <xapl:value-of select="$this/*"/>
+        <xapl:value-of select="$queryDetail"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!--  **********************************************************************
+  need to be modified
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="moveDown">
+    <xapl:print select="{$this}"/>
+    <xapl:variable name="qID">
+      <x2:execute command="bcm.framework.queryform.Form:getValueFromSelectedId">
+        <x2:with-param name="selectedId" select="$this/SELECTED_ID/@Value"/>
+        <x2:with-param name="key" select="'QueryParam.queryID'"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:print select="$qID"/>
+    <xapl:variable name="param">
+      <x2:execute command="bcm.framework.queryform.Form:getValueFromSelectedId">
+        <x2:with-param name="selectedId" select="$this/SELECTED_ID/@Value"/>
+        <x2:with-param name="key" select="'QueryParam.parameter'"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:print select="$param"/>
+    <xapl:variable name="sequence">
+      <x2:execute command="bcm.framework.queryform.Form:getValueFromSelectedId">
+        <x2:with-param name="selectedId" select="$this/SELECTED_ID/@Value"/>
+        <x2:with-param name="key" select="'QueryParam.sequence'"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:variable name="maxSequence" select="count($paramSeq/JOIN_RESULT)"/>
+    <xapl:choose>
+      <xapl:when test="$sequence = $maxSequence">
+        <xapl:print select="'no call to server in down op'"/>
+      </xapl:when>
+      <xapl:otherwise>
+        <!-- update session with new priority -->
+        <x2:execute command="bcm.manage_query.manageQueryController:updateParamSeq">
+          <x2:with-param name="pSequence" select="$sequence"/>
+          <x2:with-param name="pQID" select="$qID"/>
+          <x2:with-param name="pParam" select="$param"/>
+          <x2:with-param name="pOpr" select="'DOWN'"/>
+        </x2:execute>
+      </xapl:otherwise>
+    </xapl:choose>
+    <web:display-page>
+      <web:get-page name="manageQueryDetail">
+        <xapl:value-of select="$this/*"/>
+        <xapl:value-of select="$queryDetail"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!--  **********************************************************************
+  need to be modified
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="updateParamSeq">
+    <x2:param name="pSequence" select="$pSequence"/>
+    <x2:param name="pQID" select="$pQID"/>
+    <x2:param name="pParam" select="$pParam"/>
+    <x2:param name="pOpr" select="$pOpr"/>
+    <xapl:choose>
+      <xapl:when test="$pOpr = 'UP'">
+        <!-- if record is moving UP -->
+        <xapl:variable name="tempDoc">
+          <TEMP/>
+        </xapl:variable>
+        <xapl:variable name="prevSequence" select="$pSequence - 1"/>
+        <!-- get prev param node -->
+        <xapl:variable name="prevParamDoc" select="$paramSeq/JOIN_RESULT[QueryParam.sequence/@Value = $prevSequence]"/>
+        <!-- put all children into tempDoc -->
+        <docutil:set select="$tempDoc">
+          <xapl:value-of select="$prevParamDoc/*"/>
+        </docutil:set>
+        <!-- get current param node -->
+        <xapl:variable name="currParamDoc" select="$paramSeq/JOIN_RESULT[QueryParam.sequence/@Value = $pSequence]"/>
+
+       <xapl:print>
+          <xapl:value-of select="$paramSeq"/>
+          <xapl:value-of select="$currParamDoc"/>
+          <xapl:value-of select="$prevParamDoc"/>
+        </xapl:print>
+
+        <!-- remove all children of prev node -->
+        <docutil:remove select="$prevParamDoc/*"/>
+        <!-- add current param node children to previous node -->
+        <docutil:set select="$prevParamDoc">
+          <xapl:value-of select="$currParamDoc/*"/>
+          <DATAOPT Value="UPDATE"/>
+        </docutil:set>
+        <!-- reset the priority -->
+        <docutil:set select="$prevParamDoc/QueryParam.sequence/@Value">
+          <xapl:value-of select="$prevSequence"/>
+        </docutil:set>
+        <docutil:remove select="$currParamDoc/*"/>
+        <docutil:set select="$currParamDoc">
+          <xapl:value-of select="$tempDoc/*"/>
+          <DATAOPT Value="UPDATE"/>
+        </docutil:set>
+        <docutil:set select="$currParamDoc/QueryParam.sequence/@Value">
+          <xapl:value-of select="$pSequence"/>
+        </docutil:set>
+      </xapl:when>
+      <xapl:otherwise>
+        <xapl:variable name="tempDoc">
+          <TEMP/>
+        </xapl:variable>
+        <xapl:variable name="nextSequence" select="$pSequence + 1"/>
+        <!-- get prev param node -->
+        <xapl:variable name="nextParamDoc" select="$paramSeq/JOIN_RESULT[QueryParam.sequence/@Value = $nextSequence]"/>
+        <!-- put all children into tempDoc -->
+        <docutil:set select="$tempDoc">
+          <xapl:value-of select="$nextParamDoc/*"/>
+        </docutil:set>
+        <!-- get current param node -->
+        <xapl:variable name="currParamDoc" select="$paramSeq/JOIN_RESULT[QueryParam.sequence/@Value = $pSequence]"/>
+
+       <xapl:print>
+          <xapl:value-of select="$paramSeq"/>
+          <xapl:value-of select="$currParamDoc"/>
+          <xapl:value-of select="$nextParamDoc"/>
+        </xapl:print>
+
+        <!-- remove all children of prev node -->
+        <docutil:remove select="$nextParamDoc/*"/>
+        <!-- add current param node children to previous node -->
+        <docutil:set select="$nextParamDoc">
+          <xapl:value-of select="$currParamDoc/*"/>
+          <DATAOPT Value="UPDATE"/>
+        </docutil:set>
+        <!-- reset the priority -->
+        <docutil:set select="$nextParamDoc/QueryParam.sequence/@Value">
+          <xapl:value-of select="$nextSequence"/>
+        </docutil:set>
+        <docutil:remove select="$currParamDoc/*"/>
+        <docutil:set select="$currParamDoc">
+          <xapl:value-of select="$tempDoc/*"/>
+          <DATAOPT Value="UPDATE"/>
+        </docutil:set>
+        <docutil:set select="$currParamDoc/QueryParam.sequence/@Value">
+          <xapl:value-of select="$pSequence"/>
+        </docutil:set>
+      </xapl:otherwise>
+    </xapl:choose>
+       <xapl:print>
+          <xapl:value-of select="$paramSeq"/>
+        </xapl:print>
+    <xapl:variable name="response">
+      <xcore:execute-method name="//BCMMasterService/modParamSeq" entireResponse="true">
+        <xapl:value-of select="$paramSeq"/>
+      </xcore:execute-method>
+    </xapl:variable>
+  </x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="delQueryParam">
+    <xapl:variable name="queryParamIDs"/>
+    <xapl:variable name="queryID">
+      <x2:execute command="bcm.framework.queryform.Form:getValueFromSelectedId">
+        <x2:with-param name="selectedId" select="$this/SELECTED_ID/@Value"/>
+        <x2:with-param name="key" select="'QueryParam.queryID'"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:variable name="paramID">
+      <x2:execute command="bcm.framework.queryform.Form:getValueFromSelectedId">
+        <x2:with-param name="selectedId" select="$this/SELECTED_ID/@Value"/>
+        <x2:with-param name="key" select="'QueryParam.parameter'"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:set-variable name="queryParamIDs">
+      <QueryParam>
+        <queryID Value="{$queryID}"/>
+        <parameter Value="{$paramID}"/>
+      </QueryParam>
+    </xapl:set-variable>
+    <xapl:print>
+      **** this ****
+      <xapl:value-of select="$this"/>
+      **** queryID ****
+      <xapl:value-of select="$queryID"/>
+      **** paramID ****
+      <xapl:value-of select="$paramID"/>
+      **** queryParamIDs ****
+      <xapl:value-of select="$queryParamIDs"/>
+      **** paramSeq ****
+      <xapl:value-of select="$paramSeq"/>
+    </xapl:print>
+    <docutil:remove select="$this/SELECTED_ID"/>
+
+    <xapl:for-each select="$paramSeq/JOIN_RESULT[QueryParam.queryID/@Value=$queryID]" varName="paramData">
+      <xapl:choose>
+        <xapl:when test="$paramData/QueryParam.parameter/@Value=$paramID">
+          <docutil:remove select="$paramData"/>
+        </xapl:when>
+        <xapl:otherwise>
+          <docutil:set select="$paramData">
+            <DATAOPT Value="UPDATE"/>
+          </docutil:set>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:for-each>
+    
+    <xapl:print>
+        ****paramSeq after deleting param****<xapl:value-of select="$paramSeq"/>
+    </xapl:print>
+    
+    <xapl:variable name="seqid"/>
+    <xapl:set-variable name="seqid" select="'0'"/>
+    
+    <xapl:for-each select="$paramSeq/JOIN_RESULT" varName="paramData">
+      <xapl:choose>
+        <xapl:when test="$paramData/DATAOPT/@Value='UPDATE' ">
+          <xapl:set-variable name="seqid" select="$seqid + 1"/>
+          <docutil:set select="$paramData">
+            <QueryParam.sequence Value="{$seqid}"/>
+            <DATAOPT Value="UPDATE"/>
+          </docutil:set>
+        </xapl:when>
+      </xapl:choose>
+    </xapl:for-each>
+
+    <xapl:variable name="response">
+      <xcore:execute-method name="//BCMMasterService/delParam" entireResponse="true">
+      <!-- EQ:574938 -->
+        <xapl:value-of select="$queryParamIDs/*"/>
+      </xcore:execute-method>
+    </xapl:variable>
+
+    <xapl:variable name="status">
+      <x2:execute command="bcm.framework.util:getResponseStatus">
+        <x2:with-param name="response" select="$response"/>
+        <x2:with-param name="successMessage" select=" 'The Query Parameter has been successfully deleted!' "/>
+      </x2:execute>
+    </xapl:variable>
+    
+    <docutil:set select="$this">
+      <xapl:value-of select="$status"/>
+    </docutil:set>
+
+    <xapl:variable name="seqResponse">
+      <xcore:execute-method name="//BCMMasterService/modParamSeq" entireResponse="true">
+        <xapl:value-of select="$paramSeq"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    
+        <xapl:print select="{$response}"/>
+        <xapl:print select="{$seqResponse}"/>
+        
+    <web:display-page>
+      <web:get-page name="manageQueryDetail">
+        <xapl:value-of select="$this/*"/>
+        <xapl:value-of select="$queryDetail"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getDataTypes">
+    <xapl:variable name="data"/>
+
+    <xapl:if test="count($sessDataTypes/*) = 0">
+
+      <xapl:set-variable name="sessDataTypes">
+        <DATA_TYPES/>
+      </xapl:set-variable>
+      <xapl:set-variable name="data">
+        <ROOT>
+          <xcore:execute-method name="//BCMMasterService/getSupportedDatatypes"/>
+        </ROOT>
+      </xapl:set-variable>
+
+      <xapl:for-each select="$data/datatype" varName="dataType">
+        <xapl:print select="{$dataType}"/>
+        <docutil:add select="$sessDataTypes">
+          <CODE_MASTER_VALUE>
+            <VALUE_ID Value="{$dataType/@Name}" />
+            <DESCRIPTION Value="{$dataType/@Name}" />
+          </CODE_MASTER_VALUE>
+        </docutil:add>
+        <xapl:print select="{$sessDataTypes}"/>
+      </xapl:for-each>
+
+    </xapl:if>
+
+    <xapl:return>
+      <xapl:value-of select="$sessDataTypes"/>
+    </xapl:return>
+
+  </x2:command>
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="exportToExcel">
+    <x2:param name="pFormat" select="'xls'"/>
+    <x2:param name="pGetReportConfigSource"/>
+    <x2:param name="pGetReportDataSource"/>
+    <!-- Extension always .xls -->
+    <x2:param name="pFileNameWithExtension" select="{concat('Data', '.', 'xls')}"/>
+    <x2:param name="this"/>
+    
+    <xapl:variable name="fileFormat">
+        <xapl:choose>
+            <xapl:when test="string-length($this/FILE_FORMAT/@Value) > 0">
+                <xapl:value-of select="$this/FILE_FORMAT/@Value"/>
+            </xapl:when>
+            <xapl:otherwise>
+                <xapl:value-of select="xls"/>            
+            </xapl:otherwise>
+        </xapl:choose>
+    </xapl:variable>
+    
+    <xapl:variable name="fileName">
+        <xapl:choose>
+            <xapl:when test="string-length($this/FILE_NAME/@Value) > 0">
+                <xapl:value-of select="$this/FILE_NAME/@Value"/>
+            </xapl:when>
+            <xapl:otherwise>
+                <xapl:value-of select="Data"/>            
+            </xapl:otherwise>
+        </xapl:choose>
+    </xapl:variable>
+    
+    <xapl:variable name="startAtRows" select="$this/START_COUNT/@Value"/>
+    <xapl:variable name="maxRows" select="$this/MAX_ROWS/@Value"/>
+
+    <xapl:variable name="fileNameWithExtension">
+       <xapl:value-of select="{concat($fileName,'.',$fileFormat)}"/>            
+    </xapl:variable>
+    
+    
+    <xapl:variable name="reportData"/>
+    <xapl:variable name="execReportData"/>
+    <xapl:variable name="reportFormat"/>
+
+    <xapl:choose>
+
+      <xapl:when test="$this/EXPORT_ALL/@Value='YES'">
+
+        <!-- Get Report Data -->
+        <xapl:set-variable name="startAtRows" select="0"/>
+        <xapl:set-variable name="maxRows" select="99999999"/>
+
+      </xapl:when>       
+
+      <xapl:otherwise/>
+
+    </xapl:choose>
+
+    <xapl:set-variable name="execReportData">
+      <xcore:execute-method name="//BCMMasterService/executeQuery" entireResponse="true">
+        <QueryString Value="{$queryDetail/QueryMaster/queryString/@Value}" StartAtRow="{$startAtRows}" MaxRows="{$maxRows}">
+          <xapl:value-of select="$paramList/*"/>
+        </QueryString>
+      </xcore:execute-method>
+    </xapl:set-variable>
+           
+    <xapl:set-variable name="reportData"><RESPONSE/></xapl:set-variable>
+    <xapl:set-variable name="reportFormat">
+      <REPORT>
+        <FIELDS>
+        </FIELDS>
+      </REPORT>
+    </xapl:set-variable>
+    
+    <xapl:print>
+      execReportData::<xapl:value-of select="$execReportData"/>
+    </xapl:print>
+    
+    <xapl:for-each select="$execReportData/RESPONSE/SQL_RESULT" varName="execData">
+      <xapl:print select="$execData"/>
+      <docutil:add select="$reportData">
+        <JOIN_RESULT>
+          <xapl:value-of select="$execData/*"/>
+        </JOIN_RESULT>
+      </docutil:add>
+    </xapl:for-each>
+
+    <xapl:print>
+      reportData::<xapl:value-of select="$reportData"/>
+    </xapl:print>
+
+    <xapl:for-each select="$execReportData/RESPONSE/SQL_RESULT[1]/*" varName="execformat">
+
+      <xapl:variable name="headerName" select="name($execformat)"/>
+      <xapl:print select="$headerName"/>
+
+      <docutil:add select="$reportFormat/FIELDS">
+        <FIELD Name="{$headerName}" DisplayText="{$headerName}"/>
+      </docutil:add>
+
+    </xapl:for-each>
+
+    <xapl:print>
+      reportFormat::<xapl:value-of select="$reportFormat"/>
+    </xapl:print>
+
+    <!-- get Actual Report-->
+    <xapl:variable name="report">
+      <xapl:choose>
+        <xapl:when test="$pFormat = 'csv'">
+            <x2:execute command="core.report.controller:generate_csv">
+            <x2:with-param name="pReportData" select="$reportData"/>
+            <x2:with-param name="pReportFormat" select="$reportFormat"/>
+          </x2:execute>  
+        </xapl:when>
+        <xapl:when test="$pFormat = 'xls'">
+            <x2:execute command="core.report.controller:generate_csv">
+            <x2:with-param name="pReportData" select="$reportData"/>
+            <x2:with-param name="pReportFormat" select="$reportFormat"/>
+          </x2:execute>  
+        </xapl:when>
+        <xapl:when test="$pFormat = 'xml'">
+          <xapl:value-of select="$reportFormat"/>
+        </xapl:when>
+      </xapl:choose>
+    </xapl:variable>
+    
+    <xapl:print select="$report"/>
+    <!-- downloadFile-->
+    <x2:execute command="bcm.framework.common:downloadFile">
+      <x2:with-param name="pFileContents" select="$report"/>
+      <x2:with-param name="pFileName" select="$fileNameWithExtension"/>
+      <x2:with-param name="pFileType" select="'text'"/>
+    </x2:execute>
+  </x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

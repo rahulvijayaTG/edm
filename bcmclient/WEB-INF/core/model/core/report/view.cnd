@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" description="_">  
+  
+  
+  
+  
+ <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHiddenFields">
+    <xapl:return>
+
+      <FIELD 
+             Type="Hidden" 
+             Name="DIRECTORY" 
+             Value="{$this/DIRECTORY[position() = 1]/@Value}" 
+             />
+      
+      <FIELD 
+             Type="Hidden" 
+             Name="FILE" 
+             Value="{$this/FILE[position() = 1]/@Value}" 
+             />
+    
+      <FIELD 
+             Type="Hidden" 
+             Name="PAGE" 
+             Value="{$this/PAGE[position() = 1]/@Value}" 
+             />
+      
+      <FIELD 
+             Name="SORT_BY" 
+             Type="Hidden" 
+             Value="{$this/SORT_BY[position() = 1]/@Value}" />
+             
+      <!-- DOC_TYPE will go -->       
+      <FIELD 
+             Name="DOC_TYPE" 
+             Type="Hidden" 
+             Value="{$this/DOC_TYPE[position() = 1]/@Value}" />
+
+     <FIELD 
+             Name="OBJECT_TYPE" 
+             Type="Hidden" 
+             Value="{$this/OBJECT_TYPE[position() = 1]/@Value}" />
+             
+       <FIELD 
+             Type="Hidden" 
+             Name="JSCRIPT" 
+             Value="{$this/JSCRIPT[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+      
+       <FIELD 
+             Type="Hidden" 
+             Name="SHOW_HEADER" 
+             Value="{$this/SHOW_HEADER[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+
+      <FIELD 
+             Name="SORT_ORDER" 
+             Type="Hidden" 
+             Value="{$this/SORT_ORDER[position() = 1]/@Value}"/>
+
+       <FIELD 
+             Type="Hidden" 
+             Name="RET_PAGE" 
+             Value="{$this/RET_PAGE[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+
+      <FIELD
+               Type="Hidden"
+               Name="DO_SEARCH"
+               Value="{$this/DO_SEARCH/@Value}"
+               Visibility="Simple"/>
+     
+
+
+    </xapl:return>
+  </x2:command>  
+  
+  
+   <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHiddenFields_saveReport">
+    <xapl:return>
+    </xapl:return>          
+  </x2:command>     
+  
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getHiddenFields_old">
+		<xapl:return>
+			<FIELD Type="Hidden" Name="DIRECTORY" Value="{$this/DIRECTORY[position() = 1]/@Value}"/>
+			<FIELD Type="Hidden" Name="FILE" Value="{$this/FILE[position() = 1]/@Value}"/>
+			<FIELD Type="Hidden" Name="PAGE" Value="{$this/PAGE[position() = 1]/@Value}"/>
+			<FIELD Name="SORT_BY" Type="Hidden" Value="{$this/SORT_BY[position() = 1]/@Value}"/>
+			<!-- DOC_TYPE will go -->
+			<FIELD Name="DOC_TYPE" Type="Hidden" Value="{$this/DOC_TYPE[position() = 1]/@Value}"/>
+			<FIELD Name="OBJECT_TYPE" Type="Hidden" Value="{$this/OBJECT_TYPE[position() = 1]/@Value}"/>
+			<FIELD Type="Hidden" Name="JSCRIPT" Value="{$this/JSCRIPT[position() = 1]/@Value}" Visibility="Simple"/>
+			<FIELD Type="Hidden" Name="SHOW_HEADER" Value="{$this/SHOW_HEADER[position() = 1]/@Value}" Visibility="Simple"/>
+			<FIELD Name="SORT_ORDER" Type="Hidden" Value="{$this/SORT_ORDER[position() = 1]/@Value}"/>
+			<FIELD Type="Hidden" Name="RET_PAGE" Value="{$this/RET_PAGE[position() = 1]/@Value}" Visibility="Simple"/>
+			<FIELD Type="Hidden" Name="DO_SEARCH" Value="{$this/DO_SEARCH/@Value}" Visibility="Simple"/>
+		</xapl:return>
+	</x2:command>
+
+  </x2:commands>

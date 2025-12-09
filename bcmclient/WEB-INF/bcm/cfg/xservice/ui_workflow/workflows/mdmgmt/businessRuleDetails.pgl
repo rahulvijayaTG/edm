@@ -1,0 +1,35 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container collapsable="false" scrollable="true">
+    <ui:help displayPage="{$pages:businessRuleDetails}"/>
+    <ui:step id="header" displayText="Business Rule Details" select="$root/DATA_RULE_TEMPLATE">
+      <ui:field-group columns="2" id="fieldGroups">
+        <ui:field-group id="LeftFields">
+          <ui:display-field displayText="Name" name="RULE_NAME" />
+          <ui:display-field displayText="Description" name="DESCRIPTION" displayNoWrap="false" />
+          <ui:display-field displayText="Type" name="RULE_TYPE" />
+          <ui:display-field displayText="Data Group" name="DOCUMENT" />
+        </ui:field-group>
+        <ui:field-group id="RightFields">
+          <ui:display-field displayText="Data Steward" name="DATA_STEWARD" />
+          <ui:display-field displayText="Category" name="CATEGORY" />
+          <ui:display-field displayText="Valid" name="VALID_DATE_RANGE" />
+          <ui:display-field displayText="Created On" name="TOUCH_DATE" />
+        </ui:field-group>
+      </ui:field-group>
+      <ui:grid>
+        <ui:row>
+          <ui:cell>
+            <ui:field-group>
+              <ui:display-field value="Logical Rule" />
+              <ui:textarea displayText="" value="{string($root/DATA_RULE_TEMPLATE/RULE_EXPR/@Value)}" rows="15" columns="120" editable="false" displayNoWrap="false" />
+              <ui:display-field value="Physical Rule" />
+              <ui:textarea displayText="" value="{string($root/DATA_RULE_TEMPLATE/P_RULE_EXPR_1/@Value)}" rows="5" columns="120" editable="false" displayNoWrap="false" />
+              <ui:display-field value="" />
+            </ui:field-group>
+          </ui:cell>
+        </ui:row>
+      </ui:grid>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

@@ -1,0 +1,43 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="SearchObjectClass.pgl">
+  <ui:table id="ObjectTable" displayText="Select Object Class" displayTextNoRecords="No Records Found" rowId="ObjectClassMnemonicValue" rowSrc="$root/ObjectClass" selectable="Single" doPaging="true" maxRows="10" startAtRow="@StartAtRow" filter="true" postRowIdAs="SELECTED_ITEM" scrollable="true" select="ROOT">
+    <ui:field-group id="fg1">
+      <ui:display-field id="ObjectClassMnemonicValue" name="ObjectClassMnemonicValue" displayText="Name" sortable="true"/>
+      <ui:display-field id="ObjectClassDescription" name="ObjectClassDescription" displayText="Description" sortable="true"/>
+      <ui:dropdown id="ObjectClassDomain" sortable="true" name="ObjectClassDomain" size="1" selectOne="true" editable="false" displayText="CodeDecode/Xref" filter="true">
+        <ui:option id="Y" value="Code_Decode" selected="{$root/MASS_ENTRY_ObjectClassDomain/@Value='Y'}"/>
+        <ui:option id="N" value="XRef" selected="{$root/MASS_ENTRY_ObjectClassDomain/@Value='N'}"/>
+      </ui:dropdown>
+      <ui:dropdown id="ObjectClassStatus" name="ObjectClassStatus" sortable="true" displayText="Status" size="1" selectOne="true" editable="false" filter="true">
+        <ui:option id="1" value="Active" selected="{$root/MASS_ENTRY_ObjectClassStatus/@Value=1}"/>
+        <ui:option id="2" value="Deleted" selected="{$root/MASS_ENTRY_ObjectClassStatus/@Value=2}"/>
+      </ui:dropdown>
+      <ui:display-field id="LastModifiedDate" name="LastModifiedDate" displayText="LastModifiedDate" filter="false" sortable="true" sortType="descending"/>
+    </ui:field-group>
+    <ui:buttons id="bg1">
+      <ui:button id="Cancel" name="Cancel" displayText="Cancel" onClick="javascript:window.close();"/>
+      <ui:divider id="div1"/>
+      <ui:button id="Select" name="Select" displayText="Select and Return" onClick="javascript:on_select()"/>
+    </ui:buttons>
+  </ui:table>
+  <ui:script>function on_select()
+  {
+				
+     var x = document.getElementsByName( 'SELECTED_ITEM' );
+		
+    var length = x.length;
+ 
+    var selectedObjClass = null;
+    
+    for(i=0; i&lt;length; i++)
+    {		
+      var t = x[ i ];	    
+      if ( t.checked )
+      {
+        selectedObjClass = t.value;
+      }
+    }
+    	// alert(selectedObjClass);
+		parent.opener.form.ObjectClassMnemonicValue.value =selectedObjClass;
+		window.close();
+}</ui:script>
+</ui:page-group>

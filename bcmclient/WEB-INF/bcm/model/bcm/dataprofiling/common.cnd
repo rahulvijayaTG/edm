@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:ui="http://www.i2.com/ui" xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:report="http://www.i2.com/report" xmlns:i18n="http://www.i2.com/i18n" description="_">
+  
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="generate_xlt">
+    <x2:param name="pReportFormat"/>
+    <x2:param name="pReportData"/>
+    <!-- Table -->
+    <xapl:variable name="xltTable">
+      <RESULT Value=""/>
+    </xapl:variable>
+    <!-- Table Header -->
+    <xapl:variable name="tableHeader">
+      <RESULT Value=""/>
+    </xapl:variable>
+    
+    <xapl:for-each varName="col" select="$pReportFormat/field-group/display-field">
+      <!-- Get i18n col header -->
+      <xapl:variable name="colHeader">
+        <i18n:text>
+          <xapl:value-of select="$col/@displayText"/>
+        </i18n:text>
+      </xapl:variable>
+      <!-- Add col header  to table header -->
+      <docutil:set select="$tableHeader/@Value">
+        <xapl:value-of select="concat($tableHeader/@Value, $colHeader , '&#009;')"/>
+      </docutil:set>
+    </xapl:for-each>
+    
+    
+    <!-- Add table Header to table -->
+    <docutil:set select="$xltTable/@Value">
+      <xapl:value-of select="concat($xltTable/@Value, $tableHeader/@Value , '&#10;')"/>
+    </docutil:set>
+    <xapl:variable name="tableRow">
+      <RESULT Value=""/>
+    </xapl:variable>
+    <xapl:for-each varName="row" select="$pReportData/COLUMN">
+      <!-- Table Row -->
+      <docutil:remove select="$tableRow/@Value"/>
+      <xapl:for-each varName="col" select="$pReportFormat/field-group/display-field">
+        <xapl:variable name="cellData">
+         <xapl:choose>
+          <xapl:when test="$col/@dataType = 'Date'">
+           <i18n:date><xapl:value-of select="$row/*[name() = $col/@name]/@Value"/></i18n:date>
+          </xapl:when>
+          <xapl:otherwise>
+           <i18n:text><xapl:value-of select="$row/*[name() = $col/@name]/@Value"/></i18n:text>
+          </xapl:otherwise>
+         </xapl:choose>
+        </xapl:variable>
+        <!-- Add the cell to the Row -->
+        <docutil:set select="$tableRow/@Value">
+          <xapl:value-of select="concat($tableRow/@Value, $cellData, '&#009;')"/>
+        </docutil:set>
+      </xapl:for-each>
+      <!-- Column -->
+      <!-- Add the row to table -->
+      <docutil:set select="$xltTable/@Value">
+        <xapl:value-of select="concat($xltTable/@Value, $tableRow/@Value, '&#10;')"/>
+      </docutil:set>
+    </xapl:for-each>
+    <!-- Row -->
+    <xapl:print select="$xltTable"/>
+    <xapl:return>
+      <xapl:value-of select="$xltTable/@Value"/>
+    </xapl:return>
+  </x2:command>
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+</x2:commands>

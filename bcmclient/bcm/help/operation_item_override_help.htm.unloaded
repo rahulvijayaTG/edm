@@ -1,0 +1,98 @@
+<html>
+<head>
+<link rel="STYLESHEET" type="text/css" href="includes/style_sheet_core.css">
+<link rel="STYLESHEET" type="text/css" href="includes/style_sheet_doc.css">
+
+
+<title>BCM Examples</title>
+
+
+</HEAD>
+<body>
+
+<h1>Edit Override&nbsp;</h1>
+
+<div id="overDiv" style="position:absolute; visibility:hidden; z-index:1000;"></div>
+
+<hr>
+
+<a name="top">
+
+<!-- Begin Page Layout -->
+
+</a>
+    <p>In the Edit Override page, you can override the <b>Rate</b>, <b>Yield</b>
+    and <b>Average Cycle Time</b> attributes of the selected operation. &nbsp;<br>
+</p>
+<table class="shadow" cellspacing="0" cellpadding="0" width="100%" border="0">
+  <tr>
+    <td class="tableHeader">&nbsp;What you can do</td>
+  </tr>
+  <tr>
+    <td>
+      <table class="tableBorder" cellspacing="1" cellpadding="0" width="100%" border="0">
+        <tr class="tableRow0">
+          <td>
+            <p class="Header2">Overriding Operation Item Attributes</p>
+            <ol>
+              <li>In the Supply Chain Search page, select the operation class of
+                type <b>Manufacturing</b>. <br>
+                The Supply Path page is displayed.
+              <li>In the Supply Path Detail area of the Supply Path page, click
+                the required supply chain element. 
+              <li>From the menu list, select the <b>Edit Item Override</b>
+                option.<br>
+                The Edit Override page is displayed.
+              <li>In the Edit Override page, you can override the following
+                values:
+                <ol>
+                  <li>Rate </li>
+                  <li>Average Cycle Time </li>
+                  <li>Yield Type </li>
+                  <li>Yield</li>
+                </ol>
+            </ol>
+            <blockquote>
+              <p><b>Note: </b>Enter a value between 0 and 1 in the <b>Yield</b>
+              field. The Yield type can be either <b>Static</b> or <b>TimePhased</b>.
+              From the <b>Yield Type</b> list, if you select <b>Static</b>, the <b>Yield</b>
+              field is displayed. If you select <b>Static</b> Yield type, you
+              can associate a yield calendar to that operation item override. If
+              you select <b>TimePhased</b> Yield type, the <b>Yield</b> field is
+              not displayed.</p>
+            </blockquote>
+            <ol start="5">
+              <li>Click the <b>Reset to Default</b> button, if you wish to
+                revert the override for the selected operation item. The
+                Override will not exist any longer for the operation item
+                combination and default values for the operation are considered.
+              </li>
+              <li>Click the <b>Save and Return</b> button to return to the
+                Supply Path page. <br>
+                The details of the Operation-Item Override are highlighted in
+                the <b>Operation Details</b> area of the Supply Path page.</li>
+            </ol>
+          </td>
+        </tr>
+      </table>
+  </tr>
+</table>
+
+<a name="top">
+
+<hr>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+
+<tr>
+
+<td class="breadcrumbs"><script language="JavaScript" src="tagline.js"></script>
+  <p><a href="javascript:history.back();" onClick="window.scrollTo(0,0)"><img src="includes/top_of_page.gif" border="0" alt="top of page" width="16" height="16"></a></p>
+</td>
+
+</tr>
+
+</table>
+
+</body>
+</html>

@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" description="_">
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="addNewEntry">
+    <xapl:print select="$this"/>
+    <xapl:variable name="pattern_attr">
+      <PATTERN_ATTRIBUTES>
+        <xapl:if test="$this/patternName/@Value != 'EVERYDAY' ">
+          <PATTERN_ATTRIBUTE>
+            <xapl:choose>
+              <xapl:when test="$this/bucketSize/@Value = '-1' ">
+                <xapl:choose>
+                  <xapl:when test="$this/patternName/@Value = 'EVERY_N_DAYS' ">
+                    <patternAttribute Value="N"/>
+                    <patternAttributeValue Value="{$this/EVERY_N_DAYS/@Value}"/>
+                  </xapl:when>
+                  <xapl:when test="$this/patternName/@Value = 'DAYS_OF_WEEK' ">
+                    <xapl:variable name="dateSeq" select="$this/WEEK_DAY[1]/@Value"/>
+                    <xapl:print select="$dateSeq"/>
+                    <xapl:for-each select="$this/WEEK_DAY[position() != 1 ]/@Value" varName="day">
+                      <xapl:print>
+                            @@@@@@@
+                           <xapl:value-of select="$day"/>---
+                           <xapl:value-of select="$dateSeq"/>
+                      </xapl:print>
+                      <xapl:set-variable name="dateSeq" select="concat ( $dateSeq , ' ' , $day ) "/>
+                    </xapl:for-each>
+                    <xapl:print select="$dateSeq"/>
+                    <patternAttribute Value="DAYS"/>
+                    <patternAttributeValue Value="{$dateSeq}"/>
+                  </xapl:when>
+                </xapl:choose>
+              </xapl:when>
+              <xapl:when test="$this/bucketSize/@Value = '1' "/>
+              <xapl:when test="$this/bucketSize/@Value = '7' ">
+                <xapl:choose>
+                  <xapl:when test="$this/patternName/@Value = 'EVERY_N_DAYS' ">
+                    <patternAttribute Value="N"/>
+                    <patternAttributeValue Value="{$this/EVERY_N_DAYS/@Value}"/>
+                  </xapl:when>
+                </xapl:choose>
+              </xapl:when>
+            </xapl:choose>
+          </PATTERN_ATTRIBUTE>
+        </xapl:if>
+      </PATTERN_ATTRIBUTES>
+    </xapl:variable>
+    <xapl:print select="$pattern_attr"/>
+    <xapl:variable name="cal_entry_attr">
+      <CALENDAR_ENTRY_ATTRIBUTES>
+        <xapl:for-each varName="child" select="$appCalendarDetailColumns/calendarTypeID[@Value = $context/CALENDAR/calendarTypeID/@Value]/*">
+          <xapl:if test=" string-length($this/*[name() =$child/@Value ] /@Value) > 0 ">
+            <CALENDAR_ENTRY_ATTRIBUTE>
+              <calendarEntryAttributeID Value="{$child/@Value}"/>
+              <entryAttributeValue Value="{$this/*[name() =$child/@Value ] /@Value }"/>
+            </CALENDAR_ENTRY_ATTRIBUTE>
+          </xapl:if>
+        </xapl:for-each>
+      </CALENDAR_ENTRY_ATTRIBUTES>
+    </xapl:variable>
+    <xapl:print select="$cal_entry_attr"/>
+    <xapl:variable name="request">
+      <CALENDAR>
+        <CALENDAR_HEADER>
+          <xapl:value-of select="$context/CALENDAR/*[name() != 'CALENDAR_DETAILS' and name() != 'calendarID']"/>
+          <xapl:if test="string-length($context/CALENDAR/calendarID/@Value) > 0 ">
+            <xapl:value-of select="$context/CALENDAR/calendarID"/>
+          </xapl:if>
+        </CALENDAR_HEADER>
+        <CALENDAR_DETAILS>
+          <startDate Value="{$this/startDate/@Value}"/>
+          <xapl:if test="string-length($this/endDate/@Value) > 0 ">
+            <endDate Value="{$this/endDate/@Value}"/>
+          </xapl:if>
+          <bucketSize Value="{$this/bucketSize/@Value}"/>
+          <patternName Value="{$this/patternName/@Value}"/>
+          <xapl:if test="string-length($this/dailyStartTime/@Value) > 0 ">
+            <dailyStartTime Value="{ concat('01/01/1900 ' , $this/dailyStartTime/@Value) }"/>
+          </xapl:if>
+          <xapl:if test="string-length($this/dailyEndTime/@Value) > 0 ">
+            <dailyEndTime Value="{concat('01/01/1900 ' ,$this/dailyEndTime/@Value)}"/>
+          </xapl:if>
+          <xapl:value-of select="$pattern_attr"/>
+          <xapl:value-of select="$cal_entry_attr"/>
+        </CALENDAR_DETAILS>
+      </CALENDAR>
+    </xapl:variable>
+    <xapl:print select="$request"/>
+    <xapl:variable name="response">
+      <xcore:execute-method name="//BCMMasterService/saveCalendar" entireResponse="true">
+        <xapl:value-of select="$request"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    <xapl:print select="$response"/>
+    <xapl:variable name="status">
+      <x2:execute command="bcm.framework.util:getResponseStatus">
+        <x2:with-param name="response" select="$response"/>
+        <x2:with-param name="successMessage" select=" 'This Calendar Entry has been successfully added!' "/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:print select="$status"/>
+    <docutil:set select="$this">
+      <xapl:value-of select="$status"/>
+    </docutil:set>
+    <xapl:print select="$context"/>
+    <xapl:variable name="page"/>
+    <xapl:choose>
+      <xapl:when test="name($status) = 'ERROR_MESSAGE' ">
+        <xapl:set-variable name="page" select="'calendarEntry'"/>
+        <docutil:set select="$this">
+          <name Value="{$context/CALENDAR/name/@Value}"/>
+        </docutil:set>
+      </xapl:when>
+      <xapl:otherwise>
+        <xapl:set-variable name="page" select="'calendarDetail'"/>
+        <!-- update the calendar ID in case its new one -->
+        <xapl:if test="$context/CALENDAR/MODE/@Value = 'NEW' ">
+          <docutil:set select="$context/CALENDAR">
+            <!--MODE Value="EDIT"/-->
+            <calendarID Value="{$response/RESPONSE/calendarID/@Value}"/>
+          </docutil:set>
+        </xapl:if>
+      </xapl:otherwise>
+    </xapl:choose>
+    <web:display-page>
+      <web:get-page name="{$page}">
+        <xapl:value-of select="$this/*"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+    *********************************************************************** -->
+  <x2:command public="yes" description="_" name="updateEntry">
+    <xapl:print select="$this"/>
+    <xapl:variable name="pattern_attr">
+      <PATTERN_ATTRIBUTES>
+        <xapl:if test="$this/patternName/@Value != 'EVERYDAY' ">
+          <PATTERN_ATTRIBUTE>
+            <xapl:choose>
+              <xapl:when test="$this/patternName/@Value = 'EVERY_N_DAYS' ">
+                <patternAttribute Value="N"/>
+                <patternAttributeValue Value="{$this/EVERY_N_DAYS/@Value}"/>
+              </xapl:when>
+              <xapl:when test="$this/patternName/@Value = 'DAYS_OF_WEEK' ">
+                <xapl:variable name="dateSeq" select="$this/WEEK_DAY[1]/@Value"/>
+                <xapl:print select="$dateSeq"/>
+                <xapl:for-each select="$this/WEEK_DAY[position() != 1 ]/@Value" varName="day">
+                  <xapl:print>
+                            @@@@@@@
+                           <xapl:value-of select="$day"/>---
+                           <xapl:value-of select="$dateSeq"/>
+                  </xapl:print>
+                  <xapl:set-variable name="dateSeq" select="concat ( $dateSeq , ' ' , $day ) "/>
+                </xapl:for-each>
+                <xapl:print select="$dateSeq"/>
+                <patternAttribute Value="DAYS"/>
+                <patternAttributeValue Value="{$dateSeq}"/>
+              </xapl:when>
+            </xapl:choose>
+          </PATTERN_ATTRIBUTE>
+        </xapl:if>
+      </PATTERN_ATTRIBUTES>
+    </xapl:variable>
+    <xapl:print select="$pattern_attr"/>
+    <xapl:variable name="cal_entry_attr">
+      <CALENDAR_ENTRY_ATTRIBUTES>
+        <xapl:for-each varName="child" select="$appCalendarDetailColumns/calendarTypeID[@Value = $context/CALENDAR/calendarTypeID/@Value]/*">
+          <xapl:if test=" string-length($this/*[name() =$child/@Value ] /@Value) > 0 ">
+            <CALENDAR_ENTRY_ATTRIBUTE>
+              <calendarEntryAttributeID Value="{$child/@Value}"/>
+              <entryAttributeValue Value="{$this/*[name() =$child/@Value ] /@Value }"/>
+            </CALENDAR_ENTRY_ATTRIBUTE>
+          </xapl:if>
+        </xapl:for-each>
+      </CALENDAR_ENTRY_ATTRIBUTES>
+    </xapl:variable>
+    <xapl:print select="$cal_entry_attr"/>
+    <xapl:variable name="request">
+      <CALENDAR_DETAILS>
+        <calendarID Value="{$this/calendarID/@Value}"/>
+        <calendarEntryID Value="{$this/calendarEntryID/@Value}"/>
+        <effStartDate Value="{$this/effStartDate/@Value}"/>
+        <xapl:if test="string-length($this/effEndDate/@Value) > 0 ">
+          <effEndDate Value="{$this/effEndDate/@Value}"/>
+        </xapl:if>
+        <patternName Value="{$this/patternName/@Value}"/>
+        <priority Value="{$this/priority/@Value}"/>
+        <xapl:if test="string-length($this/dailyStartTime/@Value) > 0 ">
+          <dailyStartTime Value="{concat('01/01/1900 ' , $this/dailyStartTime/@Value) }"/>
+        </xapl:if>
+        <xapl:if test="string-length($this/dailyEndTime/@Value) > 0 ">
+          <dailyEndTime Value="{concat('01/01/1900 ' , $this/dailyEndTime/@Value) }"/>
+        </xapl:if>
+        <xapl:value-of select="$pattern_attr"/>
+        <xapl:value-of select="$cal_entry_attr"/>
+      </CALENDAR_DETAILS>
+    </xapl:variable>
+    <xapl:print select="$request"/>
+    <xapl:variable name="response">
+      <xcore:execute-method name="//BCMMasterService/updateCalendarEntries" entireResponse="true">
+        <xapl:value-of select="$request"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    <xapl:print select="$response"/>
+    <xapl:variable name="status">
+      <x2:execute command="bcm.framework.util:getResponseStatus">
+        <x2:with-param name="response" select="$response"/>
+        <x2:with-param name="successMessage" select=" 'This Calendar Entry has been successfully updated!' "/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:print select="$status"/>
+    <docutil:set select="$this">
+      <xapl:value-of select="$status"/>
+    </docutil:set>
+    <xapl:variable name="page"/>
+    <xapl:choose>
+      <xapl:when test="name($status) = 'ERROR_MESSAGE' ">
+        <xapl:set-variable name="page" select="'calendarEntry'"/>
+        <docutil:set select="$this">
+          <name Value="{$context/CALENDAR/name/@Value}"/>
+        </docutil:set>
+      </xapl:when>
+      <xapl:otherwise>
+        <xapl:set-variable name="page" select="'calendarDetail'"/>
+      </xapl:otherwise>
+    </xapl:choose>
+    <web:display-page>
+      <web:get-page name="{$page}">
+        <xapl:value-of select="$this/*"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- ********************************************************************** 
+     *********************************************************************** -->
+  <x2:command public="yes" description="_" name="i18n">
+     <i18n:text>This Calendar Entry has been successfully added!</i18n:text>
+     <i18n:text>This Calendar Entry has been successfully updated!</i18n:text>
+     </x2:command>
+</x2:commands>

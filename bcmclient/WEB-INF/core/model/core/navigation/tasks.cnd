@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:identity="http://www.i2.com/identity" xmlns:i18n="http://www.i2.com/i18n" description="_">  
+  
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getLinks">
+    <x2:param name="selectedActivity" select="'manage_orders'"/>
+    
+    <xapl:variable name="tasks">
+      <TASKS>
+        <util:map-execute map="NAV_TASKS" key="{$selectedActivity}"/>
+      </TASKS>
+    </xapl:variable>  
+
+    <xapl:return>
+      <xapl:if test="count($tasks/PAD/PAD_ITEM)  >0">
+        <xapl:value-of select="$tasks"/>
+      </xapl:if>
+    </xapl:return>
+    
+  </x2:command>	
+  
+  
+  <!-- ********************************************************************** -->
+  <!-- DEPRECATED :: USE getPAD COMMAND FROM core.search.search_pad:getPAD ** -->
+  <!-- ********************************************************************** -->
+  <x2:command public="yes" description="_" name="getSavedSearches">
+    
+    <xapl:return>
+      <!-- Saved Searches Start:: -->
+      <xapl:variable name="userId"><identity:get-user-id/></xapl:variable>
+      <xapl:variable name="recentNames">
+        <SAVED_SEARCHES>
+          <omx:get-recent userId="{$userId}" max="10">
+            <SAVED_SEARCH/>
+          </omx:get-recent>
+        </SAVED_SEARCHES>
+      </xapl:variable>
+      <xapl:variable name="savedSearches">
+        <xapl:if test="count($recentNames/ID) > 0">
+        <FAVORITES>
+        <xcore:get-document name="//BPE_UIService/FAVORITE">
+          <OR>
+          <xapl:for-each select="$recentNames/ID/@Value" varName="name">
+              <NAME Value="{$name}"/>
+          </xapl:for-each>
+          </OR>
+          <USER_ID Value="{$userId}"/>
+        </xcore:get-document>
+        </FAVORITES>
+        </xapl:if>
+      </xapl:variable>
+			<PAD_ITEM OnClick="" DisplayText="My Saved Searches">
+          <xapl:for-each select="$savedSearches/FAVORITE/NAME/@Value" varName="name">
+          <xapl:variable name="url">
+            <web:get-page name="core_search_view">
+              <NAME Value="{$name}"/>
+            </web:get-page>
+          </xapl:variable>
+          <PAD_ITEM OnClick="{$url}" DisplayText="{$name}"/>  
+        </xapl:for-each>
+        <PAD_ITEM OnClick="{$pages:core_search_select_saved_search_display}" DisplayText="More..."/>
+			</PAD_ITEM>
+      <!-- Saved Searches End. -->
+    </xapl:return>    
+  </x2:command>	
+
+
+</x2:commands>	

@@ -1,0 +1,614 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:bcm="http://www.i2.com/bcm" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:identity="http://www.i2.com/identity" xmlns:i18n="http://www.i2.com/i18n" description="_">
+	<!-- **********************************************************************
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="init">
+		<xapl:variable name="currentService" resolver="session" global="true"/>
+	</x2:command>
+	<!--  **********************************************************************
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getLinks">
+		<x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+		<!--<xapl:print>
+                      anish kumar::::
+         selectedActivity::::<xapl:value-of select="$selectedActivity"/>
+        </xapl:print>-->
+		<!-- create pad-->
+		<xapl:variable name="pad">
+			<PAD Name="tasks" DisplayText="Tasks" Scrollable="yes">
+				<xapl:choose>
+					<xapl:when test="($selectedActivity = 'bcmDataManagement') or ($selectedActivity = 'bcmReferenceStaging')">
+						<x2:execute command="core.navigation.functions:getReferencePadItem">
+							<x2:with-param name="selectedActivity" select="$selectedActivity"/>
+						</x2:execute>
+						<!-- set this service session variable  for used as flag for calling serive related API -->
+						<xapl:set-variable name="currentService">
+							<xapl:value-of select="'BCMMasterService'"/>
+						</xapl:set-variable>
+					</xapl:when>
+					<xapl:when test="($selectedActivity = 'bcmInputStaging')">
+						<!-- load the document access control list for user -->
+						<!--x2:execute command="bcm.framework.authorization.auth_controller:loadUserDocAccessControlList"/-->
+						<x2:execute command="core.navigation.functions:getInboundPadItem">
+							<x2:with-param name="selectedActivity" select="$selectedActivity"/>
+						</x2:execute>
+						<!-- set this service session variable  for used as flag for calling serive related API -->
+						<xapl:set-variable name="currentService">
+							<xapl:value-of select="'BCMINService'"/>
+						</xapl:set-variable>
+					</xapl:when>
+					<xapl:when test="$selectedActivity = 'bcmOutputStaging'">
+						<!-- load the document access control list for user -->
+						<xapl:if test="$showOutputStaging='yes'">
+							<!--x2:execute command="bcm.framework.authorization.auth_controller:loadUserDocAccessControlList"/-->
+							<x2:execute command="core.navigation.functions:getOutBoundPadItem">
+								<x2:with-param name="selectedActivity" select="$selectedActivity"/>
+							</x2:execute>
+							<!-- set this service session variable  for used as flag for calling serive related API -->
+							<xapl:set-variable name="currentService">
+								<xapl:value-of select="'BCMOutboundService'"/>
+							</xapl:set-variable>
+						</xapl:if>
+					</xapl:when>
+					<xapl:when test="$selectedActivity = 'bcmADWTableView'">
+						<x2:execute command="core.navigation.functions:getADWPadItem">
+							<x2:with-param name="selectedActivity" select="$selectedActivity"/>
+						</x2:execute>
+						<!-- set this service session variable  for used as flag for calling serive related API -->
+						<xapl:set-variable name="currentService">
+							<xapl:value-of select="'ADWService'"/>
+						</xapl:set-variable>
+					</xapl:when>
+				</xapl:choose>
+			</PAD>
+		</xapl:variable>
+		<xapl:print select="$pad"/>
+		<xapl:return>
+			<xapl:if test="count($pad/PAD_ITEM)  >0">
+				<xapl:value-of select="$pad"/>
+			</xapl:if>
+		</xapl:return>
+	</x2:command>
+	<!-- get the Extension PAD ITEMS (for i2 Studio)-->
+	<x2:command public="yes" description="_" name="getStudioExtensions">
+		<x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+		<xapl:variable name="studioNavigation">
+			<xcore:execute-method name="//UIWorkflowService/getNavigation" entireResponse="false">
+				<user_id Value="{identity-user-id()}"/>
+				<user_name Value="{identity-username()}"/>
+			</xcore:execute-method>
+		</xapl:variable>
+		<xapl:return>
+			<xapl:if test="count($pad/PAD_ITEM) >0">
+				<xapl:value-of select="$pad"/>
+			</xapl:if>
+			<xapl:value-of select="$studioNavigation/*"/>
+		</xapl:return>
+	</x2:command>
+	<!-- **********************************************************************
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getReferencePadItem">
+		<x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+		<!-- create pad items -->
+		<xapl:variable name="pad">
+			<!-- table editors -->
+			<perm:is-allowed document="TASKS" action="bcmTableEdit">
+				<xapl:choose>
+					<xapl:when test="$firstTimeLoad='yes'">
+						<PAD_ITEM OnClick="{concat($pages:reference_staging,'&amp;Auth_Enabled=true')}" Target="_top" DisplayText="View Tables" Selected="{$selectedActivity = 'bcmReferenceStaging'}"/>
+						<xapl:set-variable name="firstTimeLoad" select="'no'"/>
+					</xapl:when>
+					<xapl:otherwise>
+						<!-- load the document access control list for user -->
+						<xapl:choose>
+							<xapl:when test="$loadedAccess = 'yes'"/>
+							<xapl:otherwise>
+								<x2:execute command="bcm.framework.authorization.auth_controller:loadUserDocAccessControlList"/>
+							</xapl:otherwise>
+						</xapl:choose>
+						<perm:is-allowed document="TASKS" action="bcmViewTables">
+							<PAD_ITEM DisplayText="View Tables">
+								<perm:is-allowed document="INSTANCES" action="bcmReferenceTableEdits">
+									<x2:execute command="bcm.framework.authorization.auth_controller:setAccessibleDocumentList">
+										<x2:with-param name="foldersDoc" select="{$masterFolders}"/>
+										<x2:with-param name="serviceName" select="'BCMMasterService'"/>
+									</x2:execute>
+									<PAD_ITEM DisplayText="Master Tables">
+										<SERVICE Name="BCMMasterService">
+											<xapl:value-of select="$userAccessibleDocuments/SERVICE[@Name = 'BCMMasterService']/*"/>
+										</SERVICE>
+									</PAD_ITEM>
+								</perm:is-allowed>
+								<perm:is-allowed document="TASKS" action="bcmAuditTrailMasterTableEdit">
+                                    <PAD_ITEM DisplayText="Data Audit">
+                                        <x2:execute command="bcm.framework.authorization.auth_controller:setAccessibleDocumentList">
+                                          <x2:with-param name="foldersDoc" select="{$masterAuditTrailFolders}"/>
+                                          <x2:with-param name="serviceName" select="'BCMMasterService'"/>
+                                          <x2:with-param name="isAuditTrail" select="'yes'"/>
+                                        </x2:execute>
+                                        <PAD_ITEM OnClick="{$pages:DataAuditReport}" DisplayText="Data Audit Report"/>
+                                        <PAD_ITEM OnClick="{$pages:DataTraceability}" DisplayText="Data Traceability"/>
+                                        <PAD_ITEM DisplayText="Audit Trail Tables">
+                                          <SERVICE Name="BCMMasterService">
+                                            <xapl:value-of select="$userAccessibleAuditTrailDocuments/SERVICE[@Name = 'BCMMasterService']/*"/>
+                                          </SERVICE>
+                                        </PAD_ITEM>
+                                    </PAD_ITEM>
+								</perm:is-allowed>
+							</PAD_ITEM>
+						</perm:is-allowed>
+					</xapl:otherwise>
+				</xapl:choose>
+			</perm:is-allowed>
+			<!-- Table Editors -->
+			<!-- system configuration (Code master)-->
+			<perm:is-allowed document="TASKS" action="bcmManageCodeMaster">
+				<PAD_ITEM DisplayText="Code Master">
+					<PAD_ITEM OnClick="{concat($pages:editable_code_master,'&amp;Auth_Enabled=true')}" DisplayText="Manage Code Master"/>
+				</PAD_ITEM>
+			</perm:is-allowed>
+			<!-- system configuration (Code master)-->
+			<!-- Enterprise Model -->
+			<perm:is-allowed document="TASKS" action="bcmManageEnterprise">
+				<PAD_ITEM DisplayText="Enterprise Model">
+					<perm:is-allowed document="TASKS" action="bcmManageRoles">
+						<PAD_ITEM OnClick="{concat($pages:user_role_search,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Manage Roles"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageUsers">
+						<PAD_ITEM OnClick="{concat($pages:user_search_view,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Manage Users"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageUserGroups">
+						<PAD_ITEM OnClick="{concat($pages:user_admin_group_search,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Manage User Groups"/>
+					</perm:is-allowed>
+				</PAD_ITEM>
+			</perm:is-allowed>
+			<!-- Enterprise Model -->
+			<!-- Hierarchy Data Model-->
+			<perm:is-allowed document="TASKS" action="bcmManageHierarchyData">
+				<!--    <PAD_ITEM DisplayText="Manage Hierarchy">    -->
+				<PAD_ITEM DisplayText="Hierarchy Meta Data">
+					<PAD_ITEM OnClick="{concat($pages:dimension, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Dimension"/>
+					<PAD_ITEM OnClick="{concat($pages:hierarchy, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Hierarchy"/>
+					<PAD_ITEM OnClick="{concat($pages:level, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Level"/>
+					<PAD_ITEM OnClick="{concat($pages:levelHierarchy, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Level Hierarchy"/>
+					<PAD_ITEM OnClick="{concat($pages:member, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Member"/>
+					<PAD_ITEM OnClick="{concat($pages:timeHierarchy, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Time Hierarchy"/>
+					<PAD_ITEM OnClick="{concat($pages:searchMemberHierarchy, '?MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Member Hierarchy"/>
+				</PAD_ITEM>
+			</perm:is-allowed>
+			<!-- Hierarchy Data Model-->
+			<!-- PIPO -->
+			<perm:is-allowed document="TASKS" action="bcmManagePIPO">
+				<PAD_ITEM DisplayText="Manage PIPO">
+					<PAD_ITEM OnClick="{concat($pages:PIPOSetup,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="PIPO Setup"/>
+					<PAD_ITEM OnClick="{concat($pages:PIPORelationsSrch,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="PIPO"/>
+				</PAD_ITEM>
+			</perm:is-allowed>
+			<!-- PIPO-->
+			<!--EQ:582045  scenario -->
+			<!--Eq:586551 uncommenting the scenario management link for 6.2.4 -->
+			<perm:is-allowed document="TASKS" action="invOptEditScenarios">
+				<PAD_ITEM DisplayText="Scenario Management">
+					<perm:is-allowed document="TASKS" action="invOptEditScenarios">
+						<PAD_ITEM OnClick="{concat($pages:scenarioSearch,'&amp;Auth_Enabled=false')}" DisplayText="Maintain Scenarios"/>
+					</perm:is-allowed>
+				</PAD_ITEM>
+			</perm:is-allowed>
+			<!-- scenario -->
+			<!-- Master Data -->
+			<perm:is-allowed document="TASKS" action="bcmManageMasterData">
+				<PAD_ITEM DisplayText="Manage Master Data">
+					<perm:is-allowed document="TASKS" action="bcmManageItem">
+						<PAD_ITEM OnClick="{concat($pages:manage_items, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Items"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageChannel">
+						<PAD_ITEM OnClick="{concat($pages:manage_channels, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Channels"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageSysProps">
+						<PAD_ITEM OnClick="{concat($pages:manage_sysProps, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="SystemProperties"/>
+					</perm:is-allowed>
+					<!-- We don't need this extra tag (Naresh Malkoti commented out)
+                    <PAD_ITEM DisplayText="Manage Location">
+                        <perm:is-allowed document="TASKS" action="bcmManageLocation">
+                            <PAD_ITEM OnClick="{concat( $pages:searchLocation , '&amp;MODE=START','&amp;Auth_Enabled=true') }" DisplayText="Locations"/>
+                        </perm:is-allowed>
+                        <perm:is-allowed document="TASKS" action="bcmManageHandling">
+                            <PAD_ITEM DisplayText="Handling" OnClick="{concat($pages:searchLocationHandling, '&amp;MODE=START','&amp;Auth_Enabled=true')}"/>
+                        </perm:is-allowed>
+                        <perm:is-allowed document="TASKS" action="bcmManageStorage">
+                            <PAD_ITEM DisplayText="Storage" OnClick="{concat($pages:searchLocationStorage, '&amp;MODE=START','&amp;Auth_Enabled=true')}"/>
+                        </perm:is-allowed>
+                                        </PAD_ITEM>
+                    -->
+					<perm:is-allowed document="TASKS" action="bcmManageOrganizationMaster">
+						<PAD_ITEM OnClick="{concat($pages:manage_organizations, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Organizations"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageLocation">
+						<PAD_ITEM OnClick="{concat( $pages:searchLocation , '&amp;MODE=START','&amp;Auth_Enabled=true') }" DisplayText="Locations"/>
+					</perm:is-allowed>
+					<!--EQ:569003-->
+					<perm:is-allowed document="TASKS" action="bcmManageOrgLocRelation">
+						<PAD_ITEM OnClick="{concat( $pages:manage_orgLocRelations , '&amp;MODE=START','&amp;Auth_Enabled=true') }" DisplayText="OrgLocationRelation"/>
+					</perm:is-allowed>
+					<!--EQ:569003-->
+					<perm:is-allowed document="TASKS" action="bcmManageHandling">
+						<PAD_ITEM DisplayText="Handling" OnClick="{concat($pages:searchLocationHandling, '&amp;MODE=START','&amp;Auth_Enabled=true')}"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageStorage">
+						<PAD_ITEM DisplayText="Storage" OnClick="{concat($pages:searchLocationStorage, '&amp;MODE=START','&amp;Auth_Enabled=true')}"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageItemLocation">
+						<PAD_ITEM OnClick="{concat($pages:bufferSearchView,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="ItemLocation"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageBufferClass">
+						<PAD_ITEM OnClick="{concat($pages:buffer_class_search,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="BufferClass"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageItemLocationGroup">
+						<PAD_ITEM OnClick="{concat($pages:item_location_group_search,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="ItemLocationGroup"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageItemClass">
+						<PAD_ITEM OnClick="{concat($pages:item_class_search,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="ItemClass"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageItemGroup">
+						<PAD_ITEM OnClick="{concat($pages:item_group_search,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="ItemGroup"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageResource">
+						<PAD_ITEM DisplayText="Resources" OnClick="{$pages:search_resource_leftnav}"/>
+					</perm:is-allowed>
+				</PAD_ITEM>
+			</perm:is-allowed>
+            <!--Data Quality-->
+            <perm:is-allowed document="TASKS" action="bcmManageDataQuality">
+            <PAD_ITEM DisplayText="Data Quality" >
+                <PAD_ITEM OnClick="{$pages:DataProfiling}" DisplayText="Data Profiling"/>
+                <PAD_ITEM OnClick="{$pages:DataQuality}" DisplayText="Data Quality Report"/>
+            </PAD_ITEM>
+            </perm:is-allowed>
+            <!-- MetaData Management -->
+            <perm:is-allowed document="TASKS" action="bcmManageMetaData">
+            <PAD_ITEM DisplayText="Metadata Management">
+                <PAD_ITEM OnClick="{$pages:SearchMetaData}" DisplayText="Search Metadata"/>
+            </PAD_ITEM>
+            </perm:is-allowed>
+            
+            
+	<!--PAD_ITEM DisplayText="Test Workflow" OnClick="{$pages:ManagetestWf}"/-->
+	
+			<!-- GPM Administration -->
+			<perm:is-allowed document="TASKS" action="bcmManageCodeMaster">
+				<PAD_ITEM DisplayText="Group Parameter Mgmt">
+					<PAD_ITEM OnClick="{concat($pages:ManageAttriSets,'&amp;Auth_Enabled=true')}" DisplayText="Manage Attribute Sets"/>
+					<PAD_ITEM OnClick="{concat($pages:ManageGrpCls,'&amp;Auth_Enabled=true')}" DisplayText="Manage Group Class"/>
+					<PAD_ITEM OnClick="{concat($pages:ManageGroup,'&amp;Auth_Enabled=true')}" DisplayText="Manage Groups"/>
+				</PAD_ITEM>
+			</perm:is-allowed>
+			
+		
+	
+			<!-- GPM Administration -->
+			<!-- Manufacturing Models -->
+			<perm:is-allowed document="TASKS" action="bcmManufacturingModel">
+				<PAD_ITEM DisplayText="Manage Mfg Network">
+					<perm:is-allowed document="TASKS" action="bcmManageResourceAlternate">
+						<PAD_ITEM OnClick="{concat($pages:resaltsearch, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Resource Alternates"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageBOR">
+						<PAD_ITEM OnClick="{concat($pages:borsearch,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="BOR"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageOperation">
+						<PAD_ITEM OnClick="{concat($pages:operation_search, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Operation"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageRouting">
+						<PAD_ITEM OnClick="{concat($pages:routingopsearch, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Routing"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageBOM">
+						<PAD_ITEM OnClick="{concat($pages:bom_home, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="BOM"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageSupplyChain">
+						<PAD_ITEM OnClick="{concat($pages:ibr_search,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Supply Chain"/>
+					</perm:is-allowed>
+					<!--
+                                         <perm:is-allowed document="TASKS" action="bcmManageSellerSafety">
+                                                <PAD_ITEM OnClick="{concat($pages:sellerproductsearch,'&amp;MODE=START')}" DisplayText="Seller Product"/>
+                                        </perm:is-allowed>
+                                        -->
+				</PAD_ITEM>
+			    <perm:is-allowed document="TASKS" action="bcmMaterialManagement">
+			      <PAD_ITEM DisplayText="Material Management">
+				<perm:is-allowed document="TASKS" action="bcmManageNpi">
+				    <PAD_ITEM OnClick="{concat($pages:npiHomeFromNav,'&amp;MODE=START','&amp;Auth_Enabled=true','&amp;ACTION_ID=bcmManageNpi')}" DisplayText="Manage NPI"/>
+				</perm:is-allowed>
+			      </PAD_ITEM>
+            		   </perm:is-allowed>
+			</perm:is-allowed>
+			<!-- Manufacturing Models -->
+			<!-- Distribution Model   -->
+			<perm:is-allowed document="TASKS" action="bcmDistributionNetwork">
+				<PAD_ITEM DisplayText="Manage Dist Network">
+					<perm:is-allowed document="TASKS" action="bcmManageTransportationMode">
+						<PAD_ITEM OnClick="{concat($pages:transportModeHomeFromNav,'&amp;Auth_Enabled=true')}" DisplayText="Transport Mode"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageDL">
+						<PAD_ITEM OnClick="{concat($pages:distributionLaneHomeFromNav,'&amp;Auth_Enabled=true')}" DisplayText="Distribution Lane"/>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageBOD">
+						<PAD_ITEM OnClick="{concat($pages:bodHomeFromNav,'&amp;Auth_Enabled=true')}" DisplayText="Bill of Distribution"/>
+					</perm:is-allowed>
+				</PAD_ITEM>
+			</perm:is-allowed>
+			<!-- Distribution Model  -->
+			<!-- Calendar Model  -->
+			<perm:is-allowed document="TASKS" action="bcmManageCalendar">
+				<PAD_ITEM OnClick="{concat($pages:calendarSearch, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Manage Calendars"/>
+			</perm:is-allowed>
+			<!-- Calendar Model  -->
+			<!-- Authorization Security -->
+			<xapl:if test="$securityCheck ='yes'">
+				<perm:is-allowed document="TASKS" action="bcmManageAuthSecurity">
+					<PAD_ITEM OnClick="{concat($pages:manage_security,'&amp;Auth_Enabled=true')}" DisplayText="Manage Security"/>
+				</perm:is-allowed>
+			</xapl:if>
+			<!-- Authorization Security -->
+			<!-- Manage Query -->
+			<perm:is-allowed document="TASKS" action="bcmManageQuery">
+				<PAD_ITEM OnClick="{concat($pages:manageQuery,'&amp;Auth_Enabled=true','&amp;MODE=START')}" DisplayText="Manage Query"/>
+			</perm:is-allowed>
+			<!-- Manage Query -->
+			<!-- Data Validation Summary -->
+			<perm:is-allowed document="TASKS" action="bcmDataValidation">
+				<PAD_ITEM OnClick="{concat($pages:dataValidationSummary,'?Auth_Enabled=false','&amp;MODE=START')}" DisplayText="Data Validation Errors"/>
+			</perm:is-allowed>
+			<!-- Data Validation Summary -->
+			<!-- Entity State View -->
+			<perm:is-allowed document="TASKS" action="bcmReportEntityStateView">
+				<PAD_ITEM OnClick="{concat($pages:bcm_home,'?Auth_Enabled=true')}" DisplayText="Reports">
+					<PAD_ITEM OnClick="{concat($pages:bcm_home,'?Auth_Enabled=true')}" DisplayText="Entity State View"/>
+				</PAD_ITEM>
+			</perm:is-allowed>
+			<!-- Added by Satish : Dummy PGL-based added for co-located mode support. Should not be in the installer -->
+			<perm:is-allowed document="TASKS" action="bcmTestColocatedPGL">
+				<PAD_ITEM OnClick="{$pages:TestWorkflow}" DisplayText="Test Workflow"/>
+			</perm:is-allowed>
+			<!-- get the Extension PAD ITEMS (from inv opt)-->
+			<x2:execute command="core.navigation.functions:getPadItemExtension">
+				<x2:with-param name="selectedActivity" select="$selectedActivity"/>
+			</x2:execute>
+			<!-- get the Extension PAD ITEMS (for retail)-->
+			<x2:execute command="core.navigation.functions:getRetailPadItemExtension">
+				<x2:with-param name="selectedActivity" select="$selectedActivity"/>
+			</x2:execute>
+			<x2:execute command="core.navigation.functions:getdmPadItemExtension">
+				<x2:with-param name="selectedActivity" select="$selectedActivity"/>
+			</x2:execute>
+			<x2:execute command="core.navigation.functions:getStudioExtensions">
+				<x2:with-param name="selectedActivity" select="$selectedActivity"/>
+			</x2:execute>
+			<perm:is-allowed document="TASKS" action="businessRules">
+				<PAD_ITEM OnClick="{$pages:BusinessRules}" DisplayText="Business Rules"/>
+			</perm:is-allowed>
+			<perm:is-allowed document="UPLOAD_KIT" action="excelUpload">
+				<PAD_ITEM DisplayText="Upload Documents">
+					<PAD_ITEM OnClick="{$pages:upload_transaction_templates}" DisplayText="Upload Documents"/>
+					<PAD_ITEM OnClick="{$pages:upload_reports}" DisplayText="View Reports"/>
+				</PAD_ITEM>
+			</perm:is-allowed>
+		</xapl:variable>
+		<xapl:print select="$pad"/>
+		<xapl:return>
+			<xapl:if test="count($pad/PAD_ITEM)  >0">
+				<xapl:value-of select="$pad"/>
+			</xapl:if>
+		</xapl:return>
+	</x2:command>
+	<!-- **********************************************************************
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getInboundPadItem">
+		<x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+		<!-- create pad items -->
+		<xapl:choose>
+			<xapl:when test="$loadedAccess = 'yes'"/>
+			<xapl:otherwise>
+				<x2:execute command="bcm.framework.authorization.auth_controller:loadUserDocAccessControlList"/>
+			</xapl:otherwise>
+		</xapl:choose>
+		<xapl:variable name="perminputtables"/>
+		<xapl:variable name="permnetchange"/>
+		<xapl:variable name="permerrortables"/>
+		<xapl:variable name="pad">
+			<!-- table editors -->
+			<perm:is-allowed document="TASKS" action="bcmTableEdit">
+				<x2:execute command="bcm.framework.authorization.auth_controller:setAccessibleDocumentList">
+					<x2:with-param name="foldersDoc" select="{$inputFolders}"/>
+					<x2:with-param name="serviceName" select="'BCMINService'"/>
+				</x2:execute>
+				<perm:is-allowed document="INSTANCES" action="bcmInboundTableEdits">
+					<perm:is-allowed document="TASKS" action="bcmManageInputTables">
+						<xapl:set-variable name="perminputtables">
+							<xapl:value-of select="'yes'"/>
+						</xapl:set-variable>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageNCTables">
+						<xapl:set-variable name="permnetchange">
+							<xapl:value-of select="'yes'"/>
+						</xapl:set-variable>
+					</perm:is-allowed>
+					<perm:is-allowed document="TASKS" action="bcmManageErrorTables">
+						<xapl:set-variable name="permerrortables">
+							<xapl:value-of select="'yes'"/>
+						</xapl:set-variable>
+					</perm:is-allowed>
+					<docutil:remove select="{$userAccessibleDocuments/SERVICE[@Name = 'BCMINService']/ALL_FOLDERS/FOLDER/DOCUMENTS/DOCUMENT[@AuditTrail='true']}"/>
+					<docutil:remove select="{$userAccessibleDocuments/SERVICE[@Name = 'BCMINService']/ALL_FOLDERS/FOLDER[@Name ='Plan']}"/>
+					<xapl:if test="$perminputtables='yes' or $permnetchange='yes' or $permerrortables='yes'">
+						<PAD_ITEM DisplayText="View Tables">
+							<xapl:if test="$perminputtables='yes'">
+								<PAD_ITEM DisplayText="Inbound Staging Tables">
+									<SERVICE Name="BCMINService">
+										<xapl:value-of select="$userAccessibleDocuments/SERVICE[@Name = 'BCMINService']/*"/>
+									</SERVICE>
+								</PAD_ITEM>
+							</xapl:if>
+							<!-- Net Change Tables -->
+							<xapl:if test="$permnetchange='yes'">
+								<x2:execute command="bcm.framework.authorization.auth_controller:setAccessibleDocumentList">
+									<x2:with-param name="foldersDoc" select="{$ncFolders}"/>
+									<x2:with-param name="serviceName" select="'BCMNCService'"/>
+								</x2:execute>
+								<PAD_ITEM DisplayText="Net Change Tables">
+									<SERVICE Name="BCMNCService">
+										<xapl:value-of select="$userAccessibleDocuments/SERVICE[@Name = 'BCMNCService']/*"/>
+									</SERVICE>
+								</PAD_ITEM>
+							</xapl:if>
+							<xapl:if test="$permerrortables='yes'">
+								<x2:execute command="bcm.framework.authorization.auth_controller:setAccessibleDocumentList">
+									<x2:with-param name="foldersDoc" select="{$errorFolders}"/>
+									<x2:with-param name="serviceName" select="'BCMINService'"/>
+									<x2:with-param name="isError" select="'yes'"/>
+								</x2:execute>
+								<docutil:remove select="{$userAccessibleErrorDocuments/SERVICE[@Name = 'BCMINService']/ALL_FOLDERS/FOLDER[@Name ='Plan']}"/>
+								<PAD_ITEM DisplayText="Error Tables">
+									<SERVICE Name="BCMINService">
+										<xapl:value-of select="$userAccessibleErrorDocuments/SERVICE[@Name = 'BCMINService']/*"/>
+									</SERVICE>
+								</PAD_ITEM>
+							</xapl:if>
+						</PAD_ITEM>
+					</xapl:if>
+				</perm:is-allowed>
+			</perm:is-allowed>
+			<!-- Data Load Workflow -->
+			<perm:is-allowed document="TASKS" action="bcmExecuteDataLoadWorkflow">
+				<PAD_ITEM OnClick="{concat($pages:controlPanel,'&amp;Auth_Enabled=true&amp;MODE=START')}" DisplayText="Data Load Workflow"/>
+			</perm:is-allowed>
+			<!-- Data Errors -->
+			<!--
+                        perm:is-allowed document="TASKS" action="bcmManageDataErrors">
+                                <PAD_ITEM OnClick="{concat($pages:all_documents,'?Auth_Enabled=true')}" DisplayText="Data Errors"/>
+                        </perm:is-allowed
+                        -->
+			<perm:is-allowed document="TASKS" action="bcmManageDataErrors">
+				<PAD_ITEM OnClick="{concat($pages:errorSummary,'&amp;Auth_Enabled=true&amp;MODE=START')}" DisplayText="Data Load Error Report"/>
+			</perm:is-allowed>
+		</xapl:variable>
+		<xapl:print select="$pad"/>
+		<xapl:return>
+			<xapl:if test="count($pad/PAD_ITEM)  >0">
+				<xapl:value-of select="$pad"/>
+			</xapl:if>
+		</xapl:return>
+	</x2:command>
+	<!-- **********************************************************************
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getOutBoundPadItem">
+		<x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+		<xapl:choose>
+			<xapl:when test="$loadedAccess = 'yes'"/>
+			<xapl:otherwise>
+				<x2:execute command="bcm.framework.authorization.auth_controller:loadUserDocAccessControlList"/>
+			</xapl:otherwise>
+		</xapl:choose>
+		<!-- create pad items -->
+		<xapl:variable name="pad">
+			<!-- table editors -->
+			<perm:is-allowed document="TASKS" action="bcmTableEdit">
+				<PAD_ITEM DisplayText="View Tables">
+					<perm:is-allowed document="INSTANCES" action="bcmOutboundTableView">
+						<x2:execute command="bcm.framework.authorization.auth_controller:setAccessibleDocumentList">
+							<x2:with-param name="foldersDoc" select="{$outboundFolders}"/>
+							<x2:with-param name="serviceName" select="'BCMOutboundService'"/>
+						</x2:execute>
+						<docutil:remove select="{$userAccessibleDocuments/SERVICE[@Name = 'BCMOutboundService']/ALL_FOLDERS/FOLDER/DOCUMENTS/DOCUMENT[@AuditTrail='true']}"/>
+						<PAD_ITEM DisplayText="Outbound Staging Tables">
+							<SERVICE Name="BCMOutboundService">
+								<xapl:value-of select="$userAccessibleDocuments/SERVICE[@Name = 'BCMOutboundService']/*"/>
+							</SERVICE>
+						</PAD_ITEM>
+					</perm:is-allowed>
+				</PAD_ITEM>
+			</perm:is-allowed>
+			<!-- Synchronize Data -->
+			<perm:is-allowed document="TASKS" action="bcmConductSynchronization">
+				<PAD_ITEM OnClick="{concat($pages:outboundStagingRefreshPage,'?Auth_Enabled=true')}" DisplayText="Synchronize Data"/>
+			</perm:is-allowed>
+		</xapl:variable>
+		<xapl:print select="$pad"/>
+		<xapl:return>
+			<xapl:if test="count($pad/PAD_ITEM)  >0">
+				<xapl:value-of select="$pad"/>
+			</xapl:if>
+		</xapl:return>
+	</x2:command>
+	<!-- **********************************************************************
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getADWPadItem">
+		<x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+		<!-- create pad items -->
+		<xapl:variable name="pad">
+			<!-- table editors -->
+			<perm:is-allowed document="TASKS" action="bcmTableEdit">
+				<PAD_ITEM DisplayText="View Tables">
+					<perm:is-allowed document="INSTANCES" action="bcmADWTableView">
+						<PAD_ITEM DisplayText="ADW Tables">
+							<SERVICE Name="ADWService">
+								<xapl:value-of select="$adwFolders"/>
+							</SERVICE>
+						</PAD_ITEM>
+					</perm:is-allowed>
+				</PAD_ITEM>
+			</perm:is-allowed>
+			<!-- Plan Work Order -->
+			<perm:is-allowed document="TASKS" action="bcmADWPlanWorkOrder">
+				<PAD_ITEM OnClick="{concat($pages:planworkordersearch, '&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Plan Work Order"/>
+			</perm:is-allowed>
+		</xapl:variable>
+		<xapl:print select="$pad"/>
+		<xapl:return>
+			<xapl:if test="count($pad)  >0">
+				<xapl:value-of select="$pad"/>
+			</xapl:if>
+		</xapl:return>
+	</x2:command>
+	<!-- **********************************************************************
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getPadItemExtension">
+		<x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+		<!-- left bank so that others/invopt etc can define it -->
+	</x2:command>
+	<!-- **********************************************************************
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getRetailPadItemExtension">
+		<x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+		<!-- left bank so that others/invopt etc can define it -->
+	</x2:command>
+	<!-- **********************************************************************
+  *********************************************************************** -->
+	<!--  **********************************************************************
+    *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getdmPadItemExtension">
+	  <x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+	    <xapl:variable name="dm-pad">
+	       <perm:is-allowed document="TASKS" action="bcmManageDMMeta">
+		  <PAD_ITEM DisplayText="Manage DM Metadata">
+			<perm:is-allowed document="TASKS" action="bcmMemMaintenance">
+			   <PAD_ITEM OnClick="{$pages:MemberWf}" DisplayText="Member Maintenance"/>
+			</perm:is-allowed>
+			<perm:is-allowed document="TASKS" action="bcmMeasureMaintenance">
+			    <PAD_ITEM OnClick="{$pages:MeasureWf}" DisplayText="Measure Maintenance"/>
+			</perm:is-allowed>
+			<perm:is-allowed document="TASKS" action="bcmMapSetMaintenance">
+			    <PAD_ITEM OnClick="{$pages:MapsetWf}" DisplayText="Mapset Maintenance"/>
+			</perm:is-allowed>
+		  </PAD_ITEM>
+		</perm:is-allowed>
+	    </xapl:variable>
+	    <!--xapl:print select="$dm-pad"/>
+	    <xapl:print select="count($dm-pad/*)"/-->
+
+	    <xapl:return>
+		<xapl:if test="count($dm-pad/*)  >0">
+		    <xapl:value-of select="$dm-pad"/>
+		</xapl:if>
+    	   </xapl:return>
+	</x2:command>
+</x2:commands>

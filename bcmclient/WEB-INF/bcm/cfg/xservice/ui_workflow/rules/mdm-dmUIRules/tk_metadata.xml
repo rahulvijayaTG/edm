@@ -1,0 +1,1813 @@
+<DOCUMENTS>
+		<!-- @
+          @ This method returns all the dimensions.
+					@ No input params.
+					@	Returns :-
+					<DIMENSIONS>
+							<DIMENSION>
+										<Id Value="Geo" />
+										<Name Value="Geo" />
+										<Description Value="Geo" />
+							</DIMENSION>
+					</DIMENSIONS>
+    -->
+		<DEFINE_METHOD Access="public" Name="GetAllDimensions">
+		<RULE>
+			<ACTION>
+							<GET_DOCUMENT AssignToVar="dimNames" Name="Dimension" ServiceName="BCM_MASTER">
+										<SELECT>
+													<Id />
+													<Name />
+													<Description />
+						        </SELECT>
+						  </GET_DOCUMENT>
+				
+							<IF_TEST Test="count($dimNames/*)  > 0">
+							<THEN>
+										<TO_DOCVAR AssignToVar="dimensions">
+														<DIMENSIONS />
+										</TO_DOCVAR>
+									  <FOR_EACH CurrentElement="dimXML" SelectList="$dimNames/*">
+															<ADD_CHILDREN DocVar="dimensions" FromValue="{$dimXML}" />								
+										</FOR_EACH>
+										<SET Var="thisReturn" FromDocVar="dimensions"  />
+							</THEN>
+							<ELSE>
+										 <SET Var="$thisReturn/Status" FromValue="ERROR" />
+											<LOG Value="No dimensions found" />
+					   </ELSE> 							
+						 </IF_TEST>
+						<SET Var="$thisReturn/Status" FromValue="ERROR" />
+			</ACTION>
+		</RULE>
+		</DEFINE_METHOD>
+
+		<!-- @
+          @ This method returns the dimension information of the Given dimension.
+					@ input params. : Dimension Name <DIM_NAME Value="Geo"
+					@	Returns :-
+							<DIMENSION>
+										<Id Value="Geo" />
+										<Name Value="Geo" />
+										<Description Value="Geo" />
+							</DIMENSION>
+    -->
+	<DEFINE_METHOD Access="public" Name="GetDimension">
+		<RULE>
+			<ACTION>
+							<IF_TEST Test="($thisParam/DIM_NAME = null)">
+							<THEN>
+											<EXCEPTION Value="INCORRECT_PARAMETERS FOR THE REQUEST" />
+							</THEN>
+							</IF_TEST>
+							<GET_DOCUMENT AssignToVar="dimInfo" Name="Dimension" ServiceName="BCM_MASTER">
+										<SELECT>
+													<Id />
+													<Name />
+													<Description />
+						        </SELECT>
+										<Id Value="$thisParam/DIM_NAME/@Value" />
+						  </GET_DOCUMENT>
+				
+							<IF_TEST Test="count($dimNames/*)  > 0">
+							<THEN>
+										<TO_DOCVAR AssignToVar="dimensions">
+														<DIMENSIONS />
+										</TO_DOCVAR>
+									  <FOR_EACH CurrentElement="dimXML" SelectList="$dimNames/*">
+															<ADD_CHILDREN DocVar="dimensions" FromValue="{$dimXML}" />								
+										</FOR_EACH>
+										<SET Var="thisReturn" FromDocVar="dimensions"  />
+							</THEN>
+							<ELSE>
+										 <SET Var="$thisReturn/Status" FromValue="ERROR" />
+											<LOG Value="No dimensions found" />
+					   </ELSE> 							
+						 </IF_TEST>
+						<SET Var="$thisReturn/Status" FromValue="ERROR" />
+			</ACTION>
+		</RULE>
+		</DEFINE_METHOD>
+	
+		<!-- @ Removes the Mapset from the mapset-master, mapset-dims, mapset-mappings and also the mapset rights -->
+		<DEFINE_METHOD Access="public" Name="DeleteMapset">
+		<RULE>
+			<ACTION>
+						<PRINTLN Value="DELETING the Mapset {$thisParam/MAPSET/@Value}" />
+				
+						<MODIFY_DOCUMENT Name="MapsetMaster" ServiceName="BCM_MASTER">
+									<DOCUMENT_CONTEXT>
+												<mapsetID Value="{$thisParam/MAPSET/@Value}" MatchBy="EQUAL" />
+									</DOCUMENT_CONTEXT>
+									<UPDATE_PROPERTIES>
+													<ENTITY_STATE Value="DELETED" />
+													<status Value="Inactive" />
+													<LAST_MODIFIED_DATE Value="{date()}"/>
+									</UPDATE_PROPERTIES>
+						</MODIFY_DOCUMENT>
+			</ACTION>
+		</RULE>
+		</DEFINE_METHOD>
+
+		<!-- Retrieves all the mapsets for the given source dimensions and target dimensions -->
+		<DEFINE_METHOD Access="public" Name="GetNMapSets">
+		<RULE>
+					<ACTION>
+									<SET  Var="q1"  FromValue="select distinct a.MAPSET_ID ,c.NAME, c.DESCRIPTION  from MST_MAPSET_DIMS a , MST_MAPSET_MASTER c " />
+									<SET Var="q2" FromValue="where c.SYS_ENT_STATE ='ACTIVE' and a.MAPSET_ID = c.MAPSET_ID and a.SCENARIO_ID = c.SCENARIO_ID and a.tgt_dim_name is null " />
+									
+									<SET Var="q3" FromValue="and a.SRC_DIM_NAME in ( " />
+									<SET Var="Count" FromValue="0" />
+									<SET Var="Incrementer" FromValue="1" />
+									<SET Var="quote" FromValue="'" />
+									<FOR_EACH CurrentElement="srcDim" SelectList="$thisParam/SOURCE/*" >
+										<SET Var="Count" FromValue="{int($Count + $Incrementer)}" />
+										<IF_TEST Test="$Count != 1" >
+										<THEN>
+											<SET Var="q3" FromValue="{concat ($q3 , ',' ,$quote ,$srcDim/@Value , $quote)}" />
+										</THEN>
+										<ELSE>
+											<SET Var="q3" FromValue="{concat ($q3 , $quote ,$srcDim/@Value , $quote)}" />
+										</ELSE>
+										</IF_TEST>
+									</FOR_EACH>
+									<SET Var="q3" FromValue="{concat ($q3 , ')')}" />
+	
+									<SET Var="q4" FromValue=" and a.mapset_id in ( select b.mapset_id from mst_mapset_dims b where b.src_dim_name is null " />
+									<SET Var="q5" FromValue=")" />									
+									<SET Var="q6" FromValue=" and b.TGT_DIM_NAME in ( " />
+									<SET Var="Count" FromValue="0" />
+									<SET Var="Incrementer" FromValue="1" />
+									<FOR_EACH CurrentElement="tgtDim" SelectList="$thisParam/TARGET/*" >
+										<SET Var="Count" FromValue="{int($Count + $Incrementer)}" />
+										<IF_TEST Test="$Count != 1" >
+										<THEN>
+											<SET Var="q6" FromValue="{concat ($q6 , ',' ,$quote ,$tgtDim/@Value , $quote)}" />
+										</THEN>
+										<ELSE>
+											<SET Var="q6" FromValue="{concat ($q6 , $quote ,$tgtDim/@Value , $quote)}" />
+										</ELSE>
+										</IF_TEST>
+									</FOR_EACH>
+									<SET Var="q6" FromValue="{concat ($q6 , ')')}" /> 
+				          <IF_TEST Test="$thisParam/SOURCE =  null">
+									<THEN>
+										<SET Var="q3" FromValue="" />					
+									</THEN>									
+									</IF_TEST>
+									<IF_TEST Test="$thisParam/TARGET =  null">
+									<THEN>
+										<SET Var="q6" FromValue="" />					
+									</THEN>									
+									</IF_TEST>
+									<SET Var="q8" FromValue="" />
+									<IF_TEST Test="$thisParam/CONDITION/* != null">
+									<THEN>
+											<FOR_EACH CurrentElement="tempCondition" SelectList="$thisParam/CONDITION/*" >
+														<SET Var="q8" FromValue="{concat(' and c.',name($tempCondition),' like ', $quote ,'%',$tempCondition/@Value,'%',$quote)}" />
+											</FOR_EACH>
+									</THEN>
+									</IF_TEST>
+									<SET Var="q9" FromValue="" />
+									<IF_TEST Test="$thisParam/sort/* != null">
+									<THEN>
+											<FOR_EACH CurrentElement="tempSort" SelectList="$thisParam/sort/*" >
+												<IF_TEST Test="$tempSort/@Sort = 'Ascending'">
+												<THEN>
+														<SET Var="q9" FromValue="{concat(' order by ',name($tempSort), '  ASC')}" />
+											</THEN>
+											<ELSE>
+														<SET Var="q9" FromValue="{concat(' order by ',name($tempSort), '  DESC')}" />						
+										</ELSE>
+										</IF_TEST>
+											</FOR_EACH>
+									</THEN>
+									</IF_TEST>
+									<SET Var="finalQuery" FromValue="{concat($q1,$q2,$q3,$q4,$q6,$q5,$q8,$q9)}" />
+									<EXECUTE_SQL_QUERY AssignToVar="queryResult" ReturnRowCount="yes" Value="{$finalQuery}" MaxRows="{$Max_Rows/@Value}"  StartAtRow="{$thisParam/startcount/@Value}"/>	
+								 <SET Var="totalrowcount" FromValue="{$queryResult/@TotalRowCount}"/>	
+								<TO_DOCVAR AssignToVar="mapSets"	>
+									<MAPSETS>
+									<FOR_EACH CurrentElement="temp" SelectList="$queryResult/SQL_RESULT">
+											<TO_DOCVAR AssignToVar="tempDocVar">
+												<MapsetMaster>
+													<mapsetID Value="{$temp/MAPSET_ID/@Value}" />
+													<name Value="{$temp/NAME/@Value}" />
+													<description Value="{$temp/DESCRIPTION/@Value}" />
+												</MapsetMaster>
+											</TO_DOCVAR>							
+											<TO_XML DocVar="tempDocVar" />
+									</FOR_EACH>
+								</MAPSETS>					
+								</TO_DOCVAR>
+				
+									<TO_DOCVAR AssignToVar="listOfMapsets">
+												<MAPSETS TotalRowCount="{$totalrowcount}">
+																<FOR_EACH CurrentElement="currElement" SelectList="$mapSets/*">
+																					<TO_DOCVAR AssignToVar="mapset">
+																							<MAPSET>
+																										<ID Value="{$currElement/mapsetID/@Value}" /> 
+																										<NAME Value="{$currElement/name/@Value}" /> 
+																										<DESCRIPTION Value="{$currElement/description/@Value}" /> 
+																							</MAPSET>
+																					</TO_DOCVAR>
+																					<TO_XML DocVar="mapset" />
+																</FOR_EACH>						
+												</MAPSETS>
+									</TO_DOCVAR>
+									<!--	
+									<IF_TEST Test="(count($thisParam/SOURCE/*) = 0) and (count($thisParam/TARGET/*)  = 0)">
+									<THEN>
+                  -->  
+													<FOR_EACH CurrentElement="currElement" SelectList="$listOfMapsets/*">
+																<GET_DOCUMENT AssignToVar="mapsetDims" Name="MapsetDims" ServiceName="BCM_MASTER">
+																			<mapsetID Value="{$currElement/ID/@Value}" />
+																			<SELECT>
+																							<sourceDimensionName />
+																			</SELECT>												
+																</GET_DOCUMENT>
+																<IF_TEST Test="$mapsetDims/@Status = 'Success'">
+																<THEN>
+																					<TO_DOCVAR AssignToVar="source">
+																								<SOURCE>
+																												<FOR_EACH CurrentElement="currMapDim" SelectList="$mapsetDims/*">
+																															<TO_DOCVAR AssignToVar="mapsetDim">
+																																		<DIMENSION Value="{$currMapDim/sourceDimensionName/@Value}" />
+																															</TO_DOCVAR>
+																															<TO_XML DocVar="mapsetDim" />
+																												</FOR_EACH>	 
+																								</SOURCE>
+																					</TO_DOCVAR>																																										
+																					<ADD_CHILDREN DocVar="currElement" FromDocVar="source" />											
+																</THEN>
+																<ELSE>
+																																
+																</ELSE>
+																</IF_TEST>	
+																<GET_DOCUMENT AssignToVar="mapsetDims" Name="MapsetDims" ServiceName="BCM_MASTER">
+																			<mapsetID Value="{$currElement/ID/@Value}" />
+																			<SELECT>
+																							<targetDimensionName />
+																			</SELECT>												
+																</GET_DOCUMENT>
+																<IF_TEST Test="$mapsetDims/@Status = 'Success'">
+																<THEN>
+																					<TO_DOCVAR AssignToVar="target">
+																								<TARGET>
+																												<FOR_EACH CurrentElement="currMapDim" SelectList="$mapsetDims/*">
+																															<TO_DOCVAR AssignToVar="mapsetDim">
+																																		<DIMENSION Value="{$currMapDim/targetDimensionName/@Value}" />
+																															</TO_DOCVAR>
+																															<TO_XML DocVar="mapsetDim" />
+																												</FOR_EACH>	 
+																								</TARGET>
+																					</TO_DOCVAR>											
+																					<ADD_CHILDREN DocVar="currElement" FromDocVar="target" />											
+																</THEN>
+																<ELSE>
+																																
+																</ELSE>
+																</IF_TEST>								
+													</FOR_EACH>
+									                			
+									<TO_DOCVAR AssignToVar="thisReturn">
+											<TO_XML SelectList="$listOfMapsets" />
+									</TO_DOCVAR>													
+					</ACTION>
+		</RULE>
+		
+		</DEFINE_METHOD>
+	
+		<DEFINE_METHOD Name="GetLevel" Access="public">
+		<RULE>
+		<ACTION>
+						<REQUEST ServiceName="{$ServiceName}" AssignToVar="temp" Name="GetBaseDimensionName">
+										<DIMENSION Value="{$thisParam/DIMENSION/@Value}"  />
+							</REQUEST>
+						<SET Var="baseDimensionName" FromValue="{$temp/BASE_DIMENSION/@Value}" />	
+						<SET Var="baseDimensionId" FromValue="{$temp/BASE_DIMENSION_ID/@Value}" />
+						<GET_DOCUMENT AssignToVar="dimension" Name="Dimension" ServiceName="BCM_MASTER">
+										<!--<Name Value="{$thisParam/DIMENSION/@Value}" />-->
+										<Name Value="{$baseDimensionName}" />
+										<SELECT>
+												  <Id />			
+										</SELECT>
+						</GET_DOCUMENT>		
+						<PRINTLN Value="Dimension {$dimension}" />
+						<GET_DOCUMENT AssignToVar="allLevels" Name="Level" ServiceName="BCM_MASTER">
+										<DimensionId Value="{$dimension/Dimension/Id/@Value}" />
+										<SELECT>
+												  <Id />			
+													<Name />
+													<Description />
+										</SELECT>
+						</GET_DOCUMENT>
+						<TO_DOCVAR AssignToVar="dimensionInfo">
+						<ROOT>
+						<DIMENSION>
+									<ID Value="{$dimension/Dimension/Id/@Value}" />
+									<!--<NAME Value="{$thisParam/DIMENSION/@Value}" />-->
+									<Name Value="{$baseDimensionName}" />
+									<FOR_EACH CurrentElement="currentLevel" SelectList="$allLevels/*">
+													<TO_DOCVAR AssignToVar="level">
+																<LEVEL>
+																			<ID Value="{$currentLevel/Id/@Value}" />
+																			<NAME Value="{$currentLevel/Name/@Value}" />
+																			<DESCRIPTION Value="{$currentLevel/Description/@Value}" />
+																</LEVEL>
+													</TO_DOCVAR>
+													<TO_XML DocVar="level" />
+									</FOR_EACH>
+						</DIMENSION>
+						</ROOT>
+						</TO_DOCVAR>
+						<SET DocVar="thisReturn" FromDocVar="dimensionInfo" />
+		</ACTION>	
+		</RULE>
+		</DEFINE_METHOD>
+	
+		<DEFINE_METHOD Access="public" Name="GetMembers">
+		<RULE>
+				<ACTION>
+				        <!-- Put validations for the dimension and the level. As long as these APIS are called from the UI, we won't have any problem -->
+							<REQUEST ServiceName="{$ServiceName}" AssignToVar="temp" Name="GetBaseDimensionName">
+											<DIMENSION Value="{$thisParam/DIMENSION/@Value}"  />
+								</REQUEST>
+							<SET Var="baseDimensionName" FromValue="{$temp/BASE_DIMENSION/@Value}" />	
+							<SET Var="baseDimensionId" FromValue="{$temp/BASE_DIMENSION_ID/@Value}" />	
+							
+							<GET_DOCUMENT AssignToVar="Dimension" Name="Dimension" ServiceName="BCM_MASTER">
+											<!--<Name Value="{$thisParam/DIMENSION/@Value}" />-->
+											<Name Value="{$baseDimensionName}" />
+											<SELECT>
+													<Id />	
+											</SELECT>
+								</GET_DOCUMENT>
+				
+								<GET_DOCUMENT AssignToVar="Level" Name="Level" ServiceName="BCM_MASTER">
+											<Name Value="{$thisParam/LEVEL/@Value}" />
+											<DimensionId Value="{$Dimension/Dimension/Id/@Value}" />
+											<SELECT>
+													<Id />	
+											</SELECT>
+								</GET_DOCUMENT>
+
+								<SET Var="MAX_ROWS" FromValue="{$thisParam/MAX_ROWS/@Value}" />
+								<IF_TEST Test="$MAX_ROWS = null or $MAX_ROWS = 0">
+								<THEN>
+												<SET Var="MAX_ROWS" FromValue="5" />
+								</THEN>				
+								</IF_TEST>
+				
+								<SET Var="START_AT_ROW" FromValue="{$thisParam/START_AT_ROW/@Value}" />
+								<IF_TEST Test="$START_AT_ROW = null or $START_AT_ROW = 0">
+								<THEN>
+												<SET Var="START_AT_ROW" FromValue="0" />
+								</THEN>				
+								</IF_TEST>
+				         
+								<GET_DOCUMENT AssignToVar="members"  Name="Member" ReturnRowCount="yes" MaxRows="{$Max_Rows/@Value}"  StartAtRow="{$thisParam/startcount/@Value}" ServiceName="BCM_MASTER">
+												<dimensionID Value="{$Dimension/Dimension/Id/@Value}" />
+												<LevelId Value="{$Level/Level/Id/@Value}" />
+												<memberStat Value = "0"/>
+												<IF_TEST Test="count($thisParam/CONDITION) > 0">
+													<THEN>
+																	<TO_XML SelectList="$thisParam/CONDITION/*" />
+													</THEN>
+												</IF_TEST>
+												<SELECT>
+															<Id />
+															<Name />
+															<Description />
+												</SELECT>
+												<ORDER_BY>
+														<Name Sort="Ascending"/>
+												</ORDER_BY>
+								</GET_DOCUMENT>
+								<SET Var="totalrowcount" FromValue="{$members/@TotalRowCount}"/>
+								<SET DocVar="thisReturn" FromDocVar="members" />
+				</ACTION>	
+		</RULE>
+		</DEFINE_METHOD>		
+
+		<!-- 
+					@ PersistMapset : Persists the mapset in the database.
+		-->
+		<DEFINE_METHOD Access="public" Name="PersistMapset">		
+		<RULE>
+				<ACTION>
+              <!--Generate the unique Id for the Mapset -->
+							<NATIVE_FUNCTION ClassName="com.i2.xcore.util.UniqueIdGenerator" MethodName="getUniqueId" AssignToVar="mapsetId">
+										<PARAM Value="MST"/>
+							</NATIVE_FUNCTION>
+				
+						<SET Var="Description" FromValue="{$thisParam/MAPSET/DESCRIPTION/@Value}" />
+						<IF_TEST Test="$Description = ''">
+						<THEN>
+									<SET Var="Description" FromValue="{$thisParam/MAPSET/NAME/@Value}" />
+						</THEN>
+						</IF_TEST>
+				     <!-- ADD the record in the Mapsetmaster table -->
+							<ADD_DOCUMENT AssignToVar="return" Name="MapsetMaster" ServiceName="BCM_MASTER">
+											<mapsetID Value="{$mapsetId}" />
+											<name Value="{$thisParam/MAPSET/NAME/@Value}" />						
+										  <description Value="{$Description}" />		
+											<ENTITY_STATE Value="{$thisParam/MAPSET/STATUS/@Value}" />
+											<CREATION_DATE Value="{date()}"/>
+											<SOURCE Value="UI"/>
+							</ADD_DOCUMENT>
+				
+						<TO_DOCVAR AssignToVar="Mapset">
+									<TO_XML SelectList="$thisParam/MAPSET" />
+						</TO_DOCVAR>
+				
+						<TO_DOCVAR AssignToVar="MapsetDims">
+									<MAPSETDIMS />
+						</TO_DOCVAR>
+				
+						<!-- Generate the records for the mapset dims table -->
+						<SET Var="Count" FromValue="0" />
+						<SET Var="Incrementer" FromValue="1" />
+						<TO_DOCVAR AssignToVar="tp">
+								<TP />
+						</TO_DOCVAR>
+				
+						<TO_DOCVAR AssignToVar="MapsetInfo">
+									<MAPSET_INFO />
+						</TO_DOCVAR>
+						<CLONE_XML AssignToVar="finalMapsetInfo" DocVar="MapsetInfo" />
+				
+						<FOR_EACH CurrentElement="currentDimension" SelectList="$Mapset/SOURCE/*">
+												<SET Var="Count" FromValue="{int($Count + $Incrementer)}" />
+												<SET Var="colLvlName" FromValue="{concat('L_COL', $Count)}" />
+												<SET Var="colMemName" FromValue="{concat('M_COL', $Count)}" />
+												<SET Var="srcLevel" FromValue="{concat('SourceLevel', $Count)}" />
+												<SET Var="srcMember" FromValue="{concat('SourceMember', $Count)}" />
+
+												<NATIVE_FUNCTION ClassName="com.i2.xcore.util.UniqueIdGenerator" MethodName="getUniqueId" AssignToVar="mapsetDimId">
+															<PARAM Value="MDIM"/>
+												</NATIVE_FUNCTION>
+					
+												<!-- The following Native call will make the levelCoumnxxx as the Element tag with TP as the child which need to be removed -->
+												<NATIVE_FUNCTION AssignToVar="GetColumn" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																	<PARAM Value="{$colLvlName}" />
+																	<PARAM  Var="tp" />
+												</NATIVE_FUNCTION>
+												<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+												<TO_DOCVAR AssignToVar="element">
+															<TO_XML SelectList="$GetColumn/ROOT/*" />
+												</TO_DOCVAR>
+												<DELETE_ALL_CHILDREN Select="$element" >
+																<TP/>
+												</DELETE_ALL_CHILDREN>
+												<SET DocVar="element" Attribute="Value" FromValue="{$srcLevel}" />
+												<ADD_CHILDREN DocVar="MapsetInfo" FromDocVar="element" />
+					
+												<!-- The following Native call will make the levelCoumnxxx as the Element tag with TP as the child which need to be removed -->
+												<NATIVE_FUNCTION AssignToVar="GetColumn" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																	<PARAM Value="{$colMemName}" />
+																	<PARAM  Var="tp" />
+												</NATIVE_FUNCTION>
+												<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+												<TO_DOCVAR AssignToVar="element">
+															<TO_XML SelectList="$GetColumn/ROOT/*" />
+												</TO_DOCVAR>
+												<DELETE_ALL_CHILDREN Select="$element" >
+																<TP/>
+												</DELETE_ALL_CHILDREN>
+												<SET DocVar="element" Attribute="Value" FromValue="{$srcMember}" />
+												<ADD_CHILDREN DocVar="MapsetInfo" FromDocVar="element" />
+					
+												<ADD_DOCUMENT AssignToVar="response" Name="MapsetDims" ServiceName="BCM_MASTER">
+																<mapsetDimensionID Value="{$mapsetDimId}" />
+																<mapsetID Value="{$mapsetId}" />
+																<sourceDimensionName Value="{$currentDimension/@Value}" />
+																<sourceLevelColumn Value="{$colLvlName}" />
+																<sourceMemberColumn Value="{$colMemName}" />
+																<CREATION_DATE Value="{date()}"/>
+																<ENTITY_STATE Value="ACTIVE" />
+																<SOURCE Value="UI"/>
+											</ADD_DOCUMENT>
+				</FOR_EACH>
+				
+					  <SET Var="TargetCount" FromValue="0" />	
+						<FOR_EACH CurrentElement="currentDimension" SelectList="$Mapset/TARGET/*">
+												<SET Var="Count" FromValue="{int($Count + $Incrementer)}" />
+												<SET Var="colLvlName" FromValue="{concat('L_COL', $Count)}" />
+												<SET Var="colMemName" FromValue="{concat('M_COL', $Count)}" />
+					
+												<SET Var="TargetCount" FromValue="{int($TargetCount + $Incrementer)}" />
+												<SET Var="srcLevel" FromValue="{concat('TargetLevel', $TargetCount)}" />
+												<SET Var="srcMember" FromValue="{concat('TargetMember', $TargetCount)}" />
+
+												<NATIVE_FUNCTION ClassName="com.i2.xcore.util.UniqueIdGenerator" MethodName="getUniqueId" AssignToVar="mapsetDimId">
+															<PARAM Value="MDIM"/>
+												</NATIVE_FUNCTION>
+					
+												<!-- The following Native call will make the levelCoumnxxx as the Element tag with TP as the child which need to be removed -->
+												<NATIVE_FUNCTION AssignToVar="GetColumn" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																	<PARAM Value="{$colLvlName}" />
+																	<PARAM  Var="tp" />
+												</NATIVE_FUNCTION>
+												<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+												<TO_DOCVAR AssignToVar="element">
+															<TO_XML SelectList="$GetColumn/ROOT/*" />
+												</TO_DOCVAR>
+												<DELETE_ALL_CHILDREN Select="$element" >
+																<TP/>
+												</DELETE_ALL_CHILDREN>
+												<SET DocVar="element" Attribute="Value" FromValue="{$srcLevel}" />
+												<ADD_CHILDREN DocVar="MapsetInfo" FromDocVar="element" />
+					
+												<!-- The following Native call will make the levelCoumnxxx as the Element tag with TP as the child which need to be removed -->
+												<NATIVE_FUNCTION AssignToVar="GetColumn" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																	<PARAM Value="{$colMemName}" />
+																	<PARAM  Var="tp" />
+												</NATIVE_FUNCTION>
+												<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+												<TO_DOCVAR AssignToVar="element">
+															<TO_XML SelectList="$GetColumn/ROOT/*" />
+												</TO_DOCVAR>
+												<DELETE_ALL_CHILDREN Select="$element" >
+																<TP/>
+												</DELETE_ALL_CHILDREN>
+												<SET DocVar="element" Attribute="Value" FromValue="{$srcMember}" />
+												<ADD_CHILDREN DocVar="MapsetInfo" FromDocVar="element" />
+
+												<ADD_DOCUMENT AssignToVar="response" Name="MapsetDims" ServiceName="BCM_MASTER">
+																<mapsetDimensionID Value="{$mapsetDimId}" />
+																<mapsetID Value="{$mapsetId}" />
+																<targetDimensionName Value="{$currentDimension/@Value}" />
+																<targetLevelColumn Value="{$colLvlName}" />
+																<targetMemberColumn Value="{$colMemName}" />
+																<CREATION_DATE Value="{date()}"/>
+																<ENTITY_STATE Value="ACTIVE" />
+																<SOURCE Value="UI"/>
+											</ADD_DOCUMENT>
+						 </FOR_EACH>
+						
+						<TO_DOCVAR AssignToVar="defineMappings">
+								<ROOT>
+										<TO_XML SelectList="$Mapset/EXISTING_MAPPING/MAP_INFO[@STATE='CREATE']" />
+										<TO_XML SelectList="$Mapset/EXISTING_MAPPING/MAP_INFO[@STATE='EXIST']" />
+										<TO_XML SelectList="$Mapset/EXISTING_MAPPING/MAP_INFO[@STATE='MODIFY']" />  <!--Added due to issue 581768 i.e. modification of a mapping during the time of addition of the duplicated mapset -->
+								</ROOT>
+						</TO_DOCVAR>
+						<SET Var="Count" FromValue="0" />
+						<FOR_EACH CurrentElement="currentMapInfo" SelectList="$defineMappings/MAP_INFO">					
+												<NATIVE_FUNCTION ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_MapsetUtility" MethodName="populateMapsetInfo" AssignToVar="mapsetInfo">
+															<PARAM Var="MapsetInfo"/>
+															<PARAM Var="currentMapInfo"/>
+												</NATIVE_FUNCTION>
+												<ADD_CHILDREN DocVar="finalMapsetInfo" FromSelectList="$mapsetInfo/*" />
+											 <SET DocVar="finalMapsetInfo" Property="mapsetID" FromValue="{$mapsetId}" />
+												<ADD_DOCUMENT AssignToVar="response" Name="MapsetMappings" ServiceName="BCM_MASTER">
+																<TO_XML SelectList="$finalMapsetInfo/*" />
+																<ENTITY_STATE Value="ACTIVE" />
+																<CREATION_DATE Value="{date()}"/>
+																<SOURCE Value="UI"/>
+												</ADD_DOCUMENT>
+												<REMOVE_CHILDREN DocVar="finalMapsetInfo" />
+						 </FOR_EACH>
+								
+				     <REQUEST AssignToVar="rights" Name="AddMapsetRights">
+										<MAPSETID Value="{$mapsetId}" />
+										<TO_XML SelectList="$thisParam/USERLIST" />
+										<TO_XML SelectList="$thisParam/RIGHTS" />
+										<ENTITY_STATE Value="ACTIVE" />
+						</REQUEST>
+				</ACTION>	
+		</RULE>
+		</DEFINE_METHOD>		
+	
+	  <DEFINE_METHOD Access="public" Name="AddMapsetRights">
+		<RULE>
+					<ACTION>
+										<TO_DOCVAR AssignToVar="ValidRights">
+													<RIGHTS>
+																<TO_XML SelectList="$thisParam/RIGHTS/LINE[@STATE='CREATE']" />
+																<TO_XML SelectList="$thisParam/RIGHTS/LINE[@STATE='EXIST']" />
+													</RIGHTS>
+										</TO_DOCVAR>
+										<IF_TEST Test="count($ValidRights/LINE) = 0">
+										<THEN>
+														<EXIT />
+										</THEN>
+										</IF_TEST>
+				
+										<SET Var="MapsetID" FromValue="{$thisParam/MAPSETID/@Value}" />										
+									 
+									  <TO_DOCVAR AssignToVar="addRights">
+													<TOP />
+										</TO_DOCVAR>
+				
+										<TO_DOCVAR AssignToVar="AccessRights">
+													<access>
+																<TO_XML SelectList="$ValidRights/LINE/AccessRights" />
+													</access>
+										</TO_DOCVAR>
+										<FOR_EACH CurrentElement="currentAccessRights" SelectList="$AccessRights/AccessRights">
+														<SET Var="aRights" FromValue="{normalize-space($currentAccessRights/@Value)}" />
+														<SET DocVar="currentAccessRights" Attribute="Value" FromValue="R" /> 
+														<IF_TEST Test="$aRights = 'READ WRITE'">
+														<THEN>
+																			<SET DocVar="currentAccessRights" Attribute="Value" FromValue="RW" /> 
+														</THEN>	
+														</IF_TEST>													
+														<IF_TEST Test="$aRights = 'WRITE READ'">
+														<THEN>
+																			<SET DocVar="currentAccessRights" Attribute="Value" FromValue="RW" /> 
+														</THEN>	
+														</IF_TEST>													
+														<IF_TEST Test="$aRights = 'WRITE'">
+														<THEN>
+																			<SET DocVar="currentAccessRights" Attribute="Value" FromValue="W" /> 
+														</THEN>	
+														</IF_TEST>													
+										</FOR_EACH>
+										<SET Var="type" FromValue="U" />
+										<FOR_EACH CurrentElement="currentUserRights" SelectList="$ValidRights/LINE">
+																		 <IF_TEST Test="$thisParam/USERLIST/USER[@Value = $currentUserRights/User/@Value] != null">
+																		 <THEN>
+																							<SET Var="type" FromValue="U" />
+																							<TO_DOCVAR AssignToVar="userType">
+																											<TO_XML SelectList="$thisParam/USERLIST/USER[@Value = $currentUserRights/User/@Value]" />
+																							</TO_DOCVAR>
+																						 <IF_TEST Test="$userType/@Type = 'Group'">
+																						 <THEN>
+																										<SET Var="type" FromValue="UG" />
+																						 </THEN>
+																						</IF_TEST>							
+																			</THEN>		
+																			</IF_TEST>
+																      <ADD_DOCUMENT AssignToVar="response" Name="MapsetRights" HandleException="true" ServiceName="BCM_MASTER">
+																					 <mapsetID Value="{$MapsetID}" />
+																					 <name Value="{$currentUserRights/User/@Value}" />
+																					 <accessRights Value="{$currentUserRights/AccessRights/@Value}" />
+						                               <type Value="{$type}"  />
+																						<ENTITY_STATE Value="ACTIVE" />
+																						<CREATION_DATE Value="{date()}"/>
+																						<SOURCE Value="UI"/>
+																			</ADD_DOCUMENT>
+																			<IF_TEST Test="$response/@Status='Error'">
+																			<THEN>
+																			      <MODIFY_DOCUMENT Name="MapsetRights" ServiceName="BCM_MASTER">
+																									<DOCUMENT_CONTEXT>
+																												 <mapsetID Value="{$MapsetID}" />
+																												 <name Value="{$currentUserRights/User/@Value}" />
+																								 </DOCUMENT_CONTEXT>
+																								 <UPDATE_PROPERTIES>
+																										 <accessRights Value="{$currentUserRights/AccessRights/@Value}" />
+																										<ENTITY_STATE Value="ACTIVE" />
+																										<LAST_MODIFIED_DATE Value="{date()}"/>
+											                           </UPDATE_PROPERTIES> 
+																						</MODIFY_DOCUMENT>
+																			</THEN>
+																			</IF_TEST>
+										</FOR_EACH>
+										<SET DocVar="thisReturn" FromDocVar="addRights" />
+					</ACTION>
+		</RULE>
+		</DEFINE_METHOD>
+
+		<!--
+					@ Function : This function returns the List of the Mapset Dimensions
+					@ Parameters :
+				  @                in :  MAPSETID, the Id of the mapset whose Source/Target dimension need to be retrieved.
+				  @                in :  DIMTYPE, the value{SOURCE, TARGET} only.
+		-->
+		<DEFINE_METHOD Access="public" Name="GetSourceTargetDimensionOfMapset">
+		<API_DOC>
+					<INPUT>
+								<REQUEST Name="GetSourceTargetDimensionOfMapset" Comment="This API returns the SOURCE or TARGET dimensions of the given mapset">
+												<MAPSETID Value="string" />
+												<DIMTYPE Value="SOURCE|TARGET" />
+								</REQUEST>
+					</INPUT>
+					<OUTPUT>
+								<ON_SUCCESS>
+												<RESPONSE Status="Success" Comment="Returns the list of DIMENSION">
+														<DIMENSIONS>
+																		<DIMENSION Value="string" Repeatable="true" />
+														</DIMENSIONS>
+												</RESPONSE>
+								</ON_SUCCESS>
+					</OUTPUT>
+		</API_DOC>
+		<RULE>
+					<ACTION>
+								<IF_TEST Test="($thisParam/MAPSETID/@Value = null) or (strlen($thisParam/MAPSETID/@Value) = 0) or ($thisParam/DIMTYPE/@Value = null) or (strlen($thisParam/DIMTYPE/@Value) = 0)">
+								<THEN>
+												 <EXCEPTION Value="REQUIRED_FIELD_MISSING" />		
+								</THEN>
+								</IF_TEST>
+								<IF_TEST Test="($thisParam/DIMTYPE/@Value = 'SOURCE') or ($thisParam/DIMTYPE/@Value = 'TARGET')">
+								<THEN>
+								</THEN>
+								<ELSE>
+												 <EXCEPTION Value="INVALID_VALUE" />		
+								</ELSE>
+								</IF_TEST>
+				
+								<SET Var="DimType" FromValue="{$thisParam/DIMTYPE/@Value}" />
+								<TO_DOCVAR AssignToVar="dimList">
+												<DIMENSIONS />
+								</TO_DOCVAR>
+				
+									<IF_TEST Test="$DimType = 'SOURCE'">
+									<THEN>
+													<GET_DOCUMENT AssignToVar="mapsetDims" Name="MapsetDims" ServiceName="BCM_MASTER">
+																<mapsetID Value="{$thisParam/MAPSETID/@Value}" />
+																<SELECT>
+																				<sourceDimensionName />
+																</SELECT>												
+													</GET_DOCUMENT>
+													<IF_TEST Test="$mapsetDims/@Status = 'Success'">
+													<THEN>
+																		<TO_DOCVAR AssignToVar="dimensions">
+																					<DIMENSIONS>
+																									<FOR_EACH CurrentElement="currMapDim" SelectList="$mapsetDims/*">
+																												<IF_TEST Test="strlen($currMapDim/sourceDimensionName/@Value) > 0">
+																												<THEN>
+																																<TO_DOCVAR AssignToVar="mapsetDim">
+																																			<DIMENSION Value="{$currMapDim/sourceDimensionName/@Value}" />
+																																</TO_DOCVAR>
+																																<TO_XML DocVar="mapsetDim" />
+																												</THEN>
+																												</IF_TEST>
+																									</FOR_EACH>	 
+																					</DIMENSIONS>
+																		</TO_DOCVAR>																																										
+																		<SET DocVar="thisReturn" FromDocVar="dimensions" />
+													</THEN>
+													</IF_TEST>						
+									</THEN>
+									<ELSE>
+													<GET_DOCUMENT AssignToVar="mapsetDims" Name="MapsetDims" ServiceName="BCM_MASTER">
+																<mapsetID Value="{$thisParam/MAPSETID/@Value}" />
+																<SELECT>
+																				<targetDimensionName />
+																</SELECT>												
+													</GET_DOCUMENT>
+													<IF_TEST Test="$mapsetDims/@Status = 'Success'">
+													<THEN>
+																		<TO_DOCVAR AssignToVar="dimensions">
+																					<DIMENSIONS>
+																									<FOR_EACH CurrentElement="currMapDim" SelectList="$mapsetDims/*">
+																												<IF_TEST Test="strlen($currMapDim/targetDimensionName/@Value) > 0">
+																												<THEN>
+																																<TO_DOCVAR AssignToVar="mapsetDim">
+																																			<DIMENSION Value="{$currMapDim/targetDimensionName/@Value}" />
+																																</TO_DOCVAR>
+																																<TO_XML DocVar="mapsetDim" />
+																												</THEN>
+																												</IF_TEST>
+																									</FOR_EACH>	 
+																					</DIMENSIONS>
+																		</TO_DOCVAR>																																										
+																		<SET DocVar="thisReturn" FromDocVar="dimensions" />																				
+													</THEN>
+													</IF_TEST>						
+									</ELSE>
+									</IF_TEST>
+
+					</ACTION>
+		</RULE>		
+		</DEFINE_METHOD>
+
+		<DEFINE_METHOD Name="TestMethod">
+		<RULE>
+			<ACTION>
+							<REQUEST Name="TestMethod2" AssignToVar="response" />
+							<PRINTLN DocVar="response" />												
+			</ACTION>
+		</RULE>
+		</DEFINE_METHOD>				
+
+		<DEFINE_METHOD Name="TestMethod2">
+		<RULE>
+			<ACTION>
+							<REQUEST Name="GetSourceTargetDimensionOfMapset" AssignToVar="response">
+												<MAPSETID Value="MST-171106341091798" />
+												<DIMTYPE   Value="KUCHBI" />
+							</REQUEST>
+							<PRINTLN DocVar="response" />
+
+							<REQUEST Name="GetSourceTargetDimensionOfMapset" AssignToVar="response">
+												<MAPSETID Value="" />
+												<DIMTYPE   Value="SOURCE" />
+							</REQUEST>
+							<PRINTLN DocVar="response" />
+
+							<REQUEST Name="GetSourceTargetDimensionOfMapset" AssignToVar="response">
+												<DIMTYPE   Value="SOURCE" />
+							</REQUEST>
+							<PRINTLN DocVar="response" />
+								
+							<REQUEST Name="GetSourceTargetDimensionOfMapset" AssignToVar="response">
+							</REQUEST>
+							<PRINTLN DocVar="response" />
+
+							<REQUEST Name="GetSourceTargetDimensionOfMapset" AssignToVar="response">
+												<MAPSETID Value="MST-171106341091798" />
+												<DIMTYPE   Value="" />
+							</REQUEST>
+							<PRINTLN DocVar="response" />
+												
+			</ACTION>
+		</RULE>
+		</DEFINE_METHOD>				
+
+		<!--
+					@ Function : This function returns the List of the Mapset Dimensions
+					@ Parameters :
+				  @                in :  MAPSETID, the Id of the mapset whose Source/Target dimension need to be retrieved.
+				  @                in :  SOURCE, the list of dimension. 
+				  @                in :  TARGET, the list of dimension. 
+		-->
+		<DEFINE_METHOD Access="public" Name="GetMappingsForMapSet">
+		<API_DOC>
+					<INPUT>
+								<REQUEST Name="GetMappingsForMapSet" Comment="This API returns the SOURCE or TARGET dimensions of the given mapset">
+												<MAPSETID Value="string" />
+												<SOURCE>
+																<DIMENSION Value="string" />
+												</SOURCE>
+												<TARGET>
+																<DIMENSION Value="string" />
+												</TARGET>
+								</REQUEST>
+					</INPUT>
+					<OUTPUT>
+								<ON_SUCCESS>
+												<RESPONSE Status="Success" Comment="Returns the list of DIMENSION">
+														<MAP_INFO	STATE="EXIST">
+																		<SourceLevel1 Value="string" />
+														</MAP_INFO>
+												</RESPONSE>
+								</ON_SUCCESS>
+					</OUTPUT>
+		</API_DOC>
+		<RULE>
+					<ACTION>
+								<IF_TEST Test="($thisParam/MAPSETID/@Value = null) or (strlen($thisParam/MAPSETID/@Value) = 0)">
+								<THEN>
+												 <EXCEPTION Value="REQUIRED_FIELD_MISSING" />		
+								</THEN>
+								</IF_TEST>
+				
+								<IF_TEST Test="($thisParam/SOURCE = null) or (count($thisParam/SOURCE/*) = 0)">
+								<THEN>
+												 <EXCEPTION Value="REQUIRED_FIELD_MISSING" />		
+								</THEN>
+								</IF_TEST>
+
+								<IF_TEST Test="($thisParam/TARGET = null) or (count($thisParam/TARGET/*) = 0)">
+								<THEN>
+												 <EXCEPTION Value="REQUIRED_FIELD_MISSING" />		
+								</THEN>
+								</IF_TEST>
+				
+								<SET Var="MapsetID" FromValue="{$thisParam/MAPSETID/@Value}" />
+								<TO_DOCVAR AssignToVar="mapsetsInfo">
+												<EXISTING_MAPPING />
+								</TO_DOCVAR>
+								<TO_DOCVAR AssignToVar="mapsetInfo">
+												<MAP_INFO />
+								</TO_DOCVAR>
+								<CLONE_XML AssignToVar="PrototypeMapset" DocVar="mapsetInfo" />
+								<SET DocVar="PrototypeMapset" Property="MapID" FromValue="mapID" />
+								<TO_DOCVAR AssignToVar="tp">
+										<TP />
+								</TO_DOCVAR>
+												
+								<!--
+											@ Iterate through the dimensions in the SOURCE tag. For each such dimension, get the sourceLevelColumn
+											@ and sourceMemberColumn.	
+                -->
+								<SET Var="Count" FromValue="0" />
+								<SET Var="Incrementer" FromValue="1" />
+								<FOR_EACH CurrentElement="currentDimension" SelectList="$thisParam/SOURCE/*">
+												<!--
+														With the ensuing GET_DOCUMENT, we will get the name of the column in which
+														we have stored the values of the level and member name respectively.
+                        --> 
+												<SET Var="Count" FromValue="{int($Count + $Incrementer)}" />
+												<SET Var="srcLevel" FromValue="{concat('SourceLevel', $Count)}" />
+												<SET Var="srcMember" FromValue="{concat('SourceMember', $Count)}" />
+												<GET_DOCUMENT AssignToVar="MapsetDims" Name="MapsetDims" ServiceName="BCM_MASTER">
+																<mapsetID Value="{$MapsetID}" />
+																<sourceDimensionName Value="{$currentDimension/@Value}" />
+																<SELECT>
+																			<sourceLevelColumn />
+																			<sourceMemberColumn />
+																</SELECT>
+												</GET_DOCUMENT>
+												<!--  
+																Check the return value for the error. Now, I am ignoring the call.
+												-->
+												<!--
+															We have received the names of the column in which we have stored the level and member information.
+															 Now, we make the names of the column as the XML tag using the native call.
+                        -->
+												<NATIVE_FUNCTION AssignToVar="GetElement" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																	<PARAM Value="{$MapsetDims/MapsetDims/sourceLevelColumn/@Value}" />
+																	<PARAM  Var="tp" />
+												</NATIVE_FUNCTION>
+												<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+												<TO_DOCVAR AssignToVar="element">
+															<TO_XML SelectList="$GetElement/ROOT/*" />
+												</TO_DOCVAR>
+												<DELETE_ALL_CHILDREN Select="$element" >
+																<TP/>
+												</DELETE_ALL_CHILDREN>
+												<ADD_CHILDREN DocVar="mapsetInfo" FromDocVar="element" />
+												
+												<!--
+															Now we need to store the data in the format that the application understands.
+                        -->   
+												<NATIVE_FUNCTION AssignToVar="GetElement" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																	<PARAM Value="{$srcLevel}" />
+																	<PARAM  Var="tp" />
+												</NATIVE_FUNCTION>
+												<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+												<TO_DOCVAR AssignToVar="element">
+															<TO_XML SelectList="$GetElement/ROOT/*" />
+												</TO_DOCVAR>
+												<DELETE_ALL_CHILDREN Select="$element" >
+																<TP/>
+												</DELETE_ALL_CHILDREN>
+												<SET DocVar="element" Attribute="Value" FromValue="{$MapsetDims/MapsetDims/sourceLevelColumn/@Value}" />
+												<ADD_CHILDREN DocVar="PrototypeMapset" FromDocVar="element" />
+																	
+												<NATIVE_FUNCTION AssignToVar="GetElement" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																	<PARAM Value="{$MapsetDims/MapsetDims/sourceMemberColumn/@Value}" />
+																	<PARAM  Var="tp" />
+												</NATIVE_FUNCTION>
+												<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+												<TO_DOCVAR AssignToVar="element">
+															<TO_XML SelectList="$GetElement/ROOT/*" />
+												</TO_DOCVAR>
+												<DELETE_ALL_CHILDREN Select="$element" >
+																<TP/>
+												</DELETE_ALL_CHILDREN>
+												<ADD_CHILDREN DocVar="mapsetInfo" FromDocVar="element" />
+					
+												<NATIVE_FUNCTION AssignToVar="GetElement" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																	<PARAM Value="{$srcMember}" />
+																	<PARAM  Var="tp" />
+												</NATIVE_FUNCTION>
+												<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+												<TO_DOCVAR AssignToVar="element">
+															<TO_XML SelectList="$GetElement/ROOT/*" />
+												</TO_DOCVAR>
+												<DELETE_ALL_CHILDREN Select="$element" >
+																<TP/>
+												</DELETE_ALL_CHILDREN>
+												<SET DocVar="element" Attribute="Value" FromValue="{$MapsetDims/MapsetDims/sourceMemberColumn/@Value}" />
+												<ADD_CHILDREN DocVar="PrototypeMapset" FromDocVar="element" />
+					
+								</FOR_EACH>
+
+								<!--
+											@ Iterate through the dimensions in the TARGET tag. For each such dimension, get the targetLevelColumn
+											@ and targetMemberColumn.	
+                -->
+								<SET Var="Count" FromValue="0" />
+								<FOR_EACH CurrentElement="currentDimension" SelectList="$thisParam/TARGET/*">
+												<!--
+														With the ensuing GET_DOCUMENT, we will get the name of the column in which
+														we have stored the values of the level and member name respectively.
+                        --> 
+												<SET Var="Count" FromValue="{int($Count + $Incrementer)}" />
+												<SET Var="srcLevel" FromValue="{concat('TargetLevel', $Count)}" />
+												<SET Var="srcMember" FromValue="{concat('TargetMember', $Count)}" />
+												<GET_DOCUMENT AssignToVar="MapsetDims" Name="MapsetDims" ServiceName="BCM_MASTER">
+																<mapsetID Value="{$MapsetID}" />
+																<targetDimensionName Value="{$currentDimension/@Value}" />
+																<SELECT>
+																			<targetLevelColumn />
+																			<targetMemberColumn />
+																</SELECT>
+												</GET_DOCUMENT>
+												<!--  
+																Check the return value for the error. Currently, I am ignoring the call.
+												-->
+												<!--
+															We have received the names of the column in which we have stored the level and member information.
+															 Now, we make the names of the column as the XML tag using the native call.
+                        -->
+												<NATIVE_FUNCTION AssignToVar="GetElement" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																	<PARAM Value="{$MapsetDims/MapsetDims/targetLevelColumn/@Value}" />
+																	<PARAM  Var="tp" />
+												</NATIVE_FUNCTION>
+												<!-- 
+															Delete the TP from the GetColumn and add the attribute Value to it. Ain't it is the elusive
+                              of converting it to the element tag. Off course, if I don't pass the dummy parameter, you
+															will get the NullPointerException at the server. I know how to fix it but who is gonna open
+															the eclipse and modify the code. 
+												-->
+												<TO_DOCVAR AssignToVar="element">
+															<TO_XML SelectList="$GetElement/ROOT/*" />
+												</TO_DOCVAR>
+												<DELETE_ALL_CHILDREN Select="$element" >
+																<TP/>
+												</DELETE_ALL_CHILDREN>
+												<ADD_CHILDREN DocVar="mapsetInfo" FromDocVar="element" />
+					
+												<NATIVE_FUNCTION AssignToVar="GetElement" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																	<PARAM Value="{$srcLevel}" />
+																	<PARAM  Var="tp" />
+												</NATIVE_FUNCTION>
+												<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+												<TO_DOCVAR AssignToVar="element">
+															<TO_XML SelectList="$GetElement/ROOT/*" />
+												</TO_DOCVAR>
+												<DELETE_ALL_CHILDREN Select="$element" >
+																<TP/>
+												</DELETE_ALL_CHILDREN>
+												<SET DocVar="element" Attribute="Value" FromValue="{$MapsetDims/MapsetDims/targetLevelColumn/@Value}" />
+												<ADD_CHILDREN DocVar="PrototypeMapset" FromDocVar="element" />
+					
+												<NATIVE_FUNCTION AssignToVar="GetElement" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																	<PARAM Value="{$MapsetDims/MapsetDims/targetMemberColumn/@Value}" />
+																	<PARAM  Var="tp" />
+												</NATIVE_FUNCTION>
+												<!-- 
+															Delete the TP from the GetColumn and add the attribute Value to it. Ain't it is the elusive
+                              of converting it to the element tag. Off course, if I don't pass the dummy parameter, you
+															will get the NullPointerException at the server. I know how to fix it but who is gonna open
+															the eclipse and modify the code. 
+												-->
+												<TO_DOCVAR AssignToVar="element">
+															<TO_XML SelectList="$GetElement/ROOT/*" />
+												</TO_DOCVAR>
+												<DELETE_ALL_CHILDREN Select="$element" >
+																<TP/>
+												</DELETE_ALL_CHILDREN>
+												<ADD_CHILDREN DocVar="mapsetInfo" FromDocVar="element" />
+					
+												<NATIVE_FUNCTION AssignToVar="GetElement" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																	<PARAM Value="{$srcMember}" />
+																	<PARAM  Var="tp" />
+												</NATIVE_FUNCTION>
+												<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+												<TO_DOCVAR AssignToVar="element">
+															<TO_XML SelectList="$GetElement/ROOT/*" />
+												</TO_DOCVAR>
+												<DELETE_ALL_CHILDREN Select="$element" >
+																<TP/>
+												</DELETE_ALL_CHILDREN>
+												<SET DocVar="element" Attribute="Value" FromValue="{$MapsetDims/MapsetDims/targetMemberColumn/@Value}" />
+												<ADD_CHILDREN DocVar="PrototypeMapset" FromDocVar="element" />
+					
+								</FOR_EACH>
+				
+								<GET_DOCUMENT AssignToVar="MapsetMappings" Name="MapsetMappings" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+												<mapsetID Value="{$MapsetID}" />
+												<ENTITY_STATE Value="ACTIVE" />
+												<SELECT>
+															<mapID />
+															<TO_XML SelectList="$mapsetInfo/*" />
+												</SELECT>
+								</GET_DOCUMENT>
+				
+								<SET Var="Count" FromValue="0" />
+								<SET Var="Incrementer" FromValue="1" />
+								<FOR_EACH CurrentElement="currentMapping" SelectList="$MapsetMappings/MapsetMappings">
+												<NATIVE_FUNCTION ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_MapsetUtility" MethodName="populateMapsetInfo" AssignToVar="mapsetInfo">
+															<PARAM Var="PrototypeMapset"/>
+															<PARAM Var="currentMapping"/>
+												</NATIVE_FUNCTION>
+													<ADD_CHILDREN DocVar="mapsetsInfo" FromDocVar="mapsetInfo" />
+													<SET DocVar="mapsetInfo" Attribute="STATE" FromValue="EXIST" />
+								</FOR_EACH>
+								<SET DocVar="mapsetsInfo" Attribute="TotalRowCount" FromValue="{$MapsetMappings/@TotalRowCount}" />
+								<ADD_CHILDREN DocVar="thisReturn" FromDocVar="mapsetsInfo" />	
+					</ACTION>
+		</RULE>		
+		</DEFINE_METHOD>
+
+		<DEFINE_METHOD Access="public" Name="GetMapsetUser">
+		<API_DOC>
+					<INPUT>
+								<REQUEST Name="GetMapsetUser" Comment="This API returns the SOURCE or TARGET dimensions of the given mapset">
+												<MAPSETID Value="string" />
+								</REQUEST>
+					</INPUT>
+					<OUTPUT>
+								<ON_SUCCESS>
+												<RESPONSE Status="Success" Comment="Returns the list of users with their access-rights.">
+														<RIGHTS>
+																	<LINE STATE="EXIST">
+																					<User Type="string" Value="string" />
+																					<AccessRights Value="string" />
+								                  </LINE>
+														</RIGHTS>
+												</RESPONSE>
+								</ON_SUCCESS>
+					</OUTPUT>
+		</API_DOC>
+		<RULE>
+					<ACTION>
+								<IF_TEST Test="($thisParam/MAPSETID/@Value = null) or (strlen($thisParam/MAPSETID/@Value) = 0)">
+								<THEN>
+												 <EXCEPTION Value="REQUIRED_FIELD_MISSING" />		
+								</THEN>
+								</IF_TEST>
+								<GET_DOCUMENT AssignToVar="userRights" Name="MapsetRights" ServiceName="BCM_MASTER">
+											<mapsetID Value="{$thisParam/MAPSETID/@Value}" />
+											<ENTITY_STATE Value="ACTIVE" />
+											<SELECT>
+														<name />
+														<type />
+														<accessRights />
+											</SELECT>
+											<ORDER_BY>
+														<name Sort="Ascending"/>
+											</ORDER_BY>
+								</GET_DOCUMENT>
+								<!--
+								@ Check the status of the response. Currently, I am assuming that it will always succeed in returning the value.
+								@ I am an optimistic in assuming that there will not be any System Error.
+                -->
+								<TO_DOCVAR AssignToVar="accessRights">
+											<RIGHTS />
+								</TO_DOCVAR>
+								<SET Var="userType" FromValue="User" />
+								<FOR_EACH CurrentElement="currentRights" SelectList="$userRights/MapsetRights">
+												<IF_TEST Test="$currentRights/type/@Value='U'">
+												<THEN>
+															<SET Var="userType" FromValue="User" />
+							          </THEN>
+												</IF_TEST>
+												<IF_TEST Test="$currentRights/type/@Value='UG'">
+												<THEN>
+															<SET Var="userType" FromValue="Group" />
+							          </THEN>
+												</IF_TEST>
+												<IF_TEST Test="$currentRights/accessRights/@Value='W'">
+												<THEN>
+															<SET Var="rights" FromValue="WRITE" />
+							          </THEN>
+												</IF_TEST>
+												<IF_TEST Test="$currentRights/accessRights/@Value='R'">
+												<THEN>
+															<SET Var="rights" FromValue="READ" />
+							          </THEN>
+												</IF_TEST>
+												<IF_TEST Test="$currentRights/accessRights/@Value='RW'">
+												<THEN>
+															<SET Var="rights" FromValue="READ WRITE" />
+							          </THEN>
+												</IF_TEST>
+												<TO_DOCVAR AssignToVar="data">
+																<LINE STATE="EXIST">
+																				<User Value="{$currentRights/name/@Value}"  Type="{$userType}" />
+																				<AccessRights Value="{$rights}" />
+																</LINE>
+												</TO_DOCVAR>
+												<ADD_CHILDREN DocVar="accessRights" FromDocVar="data" />	
+								</FOR_EACH>
+								<ADD_CHILDREN DocVar="thisReturn" FromDocVar="accessRights" />
+					</ACTION>
+	 </RULE>
+	 </DEFINE_METHOD>
+
+		<DEFINE_METHOD Access="public" Name="DeleteMappingsOfMapset">
+		<API_DOC>
+					<INPUT>
+								<REQUEST Name="DeleteMappingsOfMapset" Comment="This API returns the SOURCE or TARGET dimensions of the given mapset">
+												<MapID Value="string" Repeatable="true" />
+								</REQUEST>
+					</INPUT>
+					<OUTPUT>
+								<ON_SUCCESS>
+												<RESPONSE Status="Success" Comment="Returns" />
+								</ON_SUCCESS>
+					</OUTPUT>
+		</API_DOC>
+		<RULE>
+			<ACTION>
+						<IF_TEST Test="count($thisParam/MapID) = 0">
+						<THEN>
+										<EXCEPTION Value="REQUIRED_FIELD_MISSING" />
+						</THEN>
+						</IF_TEST>
+						<TO_DOCVAR AssignToVar="Maps2BeDeleted">
+									<MAPIDS />
+						</TO_DOCVAR>
+						<FOR_EACH CurrentElement="mapID" SelectList="$thisParam/MapID">
+										<IF_TEST Test="strlen(trim($mapID/@Value)) = 0">
+										<THEN>
+														<CONTINUE />
+										</THEN>
+										</IF_TEST>
+										<TO_DOCVAR AssignToVar="MapID2ADD">
+														<mapID Value="{$mapID/@Value}" MatchBy="EQUAL" />
+										</TO_DOCVAR>
+										<ADD_CHILDREN DocVar="Maps2BeDeleted" FromDocVar="MapID2ADD" />					          
+						</FOR_EACH>						
+						<MODIFY_DOCUMENT Name="MapsetMappings" ServiceName="BCM_MASTER">
+									<DOCUMENT_CONTEXT>
+												<OR>
+															<TO_XML  SelectList="$Maps2BeDeleted/*" />  
+												</OR>
+									</DOCUMENT_CONTEXT>
+									<UPDATE_PROPERTIES>
+													<ENTITY_STATE Value="DELETED" />
+													<LAST_MODIFIED_DATE Value="{date()}"/>
+									</UPDATE_PROPERTIES>
+						</MODIFY_DOCUMENT>
+			</ACTION>
+		</RULE>
+		</DEFINE_METHOD>
+
+	  <DEFINE_METHOD Access="public" Name="DeleteMapsetRights">
+		<API_DOC>
+					<INPUT>
+								<REQUEST Name="DeleteMapsetRights" Comment="This API returns the SOURCE or TARGET dimensions of the given mapset">
+												<MAPSETID Value="string" Repeatable="false" />
+												<RIGHTS>
+														<LINE STATE="REMOVE">
+																<User Type="string" Value="" />
+														</LINE>
+												</RIGHTS>
+								</REQUEST>
+					</INPUT>
+					<OUTPUT>
+								<ON_SUCCESS>
+												<RESPONSE Status="Success" Comment="Returns" />
+								</ON_SUCCESS>
+					</OUTPUT>
+		</API_DOC>
+		<RULE>
+					<ACTION>
+										<TO_DOCVAR AssignToVar="UsersRights2Delete">
+													<ROOT>
+														<TO_XML SelectList="$thisParam/RIGHTS/LINE[@STATE='REMOVE']/User" />
+													</ROOT>
+										</TO_DOCVAR>
+										<IF_TEST Test="count($UsersRights2Delete/User) = 0">
+										<THEN>
+														<EXIT />
+										</THEN>
+										</IF_TEST>
+				
+										<SET Var="MapsetID" FromValue="{$thisParam/MAPSETID/@Value}" />										
+										<TO_DOCVAR AssignToVar="uList">
+													<USERS />
+										</TO_DOCVAR>
+										<FOR_EACH CurrentElement="currentUser" SelectList="$UsersRights2Delete/User">
+															<TO_DOCVAR AssignToVar="tUser">
+																		<name Value="{$currentUser/@Value}" />
+															</TO_DOCVAR>
+															<ADD_CHILDREN DocVar="uList" FromDocVar="tUser" />
+										</FOR_EACH>
+										<MODIFY_DOCUMENT Name="MapsetRights" ServiceName="BCM_MASTER">
+													<DOCUMENT_CONTEXT>
+																<mapsetID Value="{$MapsetID}" />
+																<OR>
+																			<TO_XML SelectList="$uList/*" />  
+																</OR>
+													</DOCUMENT_CONTEXT>
+													<UPDATE_PROPERTIES>
+																	<ENTITY_STATE Value="DELETED" />
+																	<LAST_MODIFIED_DATE Value="{date()}"/>
+													</UPDATE_PROPERTIES>
+										</MODIFY_DOCUMENT>
+									 
+					</ACTION>
+		</RULE>
+		</DEFINE_METHOD>
+
+		<!--
+				@ Function : This function updates the modified properties of the Mapset.
+                           Description, User rights, and Mappings of the Mapset can be changed.
+                           The dimensionality of the given mapset can not be changed.
+    -->
+		<DEFINE_METHOD Access="public" Name="UpdateMapset">		
+		<API_DOC>
+					<INPUT>
+								<REQUEST Name="UpdateMapset" Comment="This API returns the SOURCE or TARGET dimensions of the given mapset">
+												<MAPSETID Value="string" />
+								</REQUEST>
+					</INPUT>
+					<OUTPUT>
+								<ON_SUCCESS>
+												<RESPONSE Status="Success" Comment="Returns the list of users with their access-rights.">
+												</RESPONSE>
+								</ON_SUCCESS>
+					</OUTPUT>
+		</API_DOC>		
+		<RULE>
+				<ACTION>
+				
+								<IF_TEST Test="($thisParam/MAPSET/MAPSETID/@Value = null) or (strlen($thisParam/MAPSET/MAPSETID/@Value) = 0)">
+								<THEN>
+												 <EXCEPTION Value="REQUIRED_FIELD_MISSING" />		
+								</THEN>
+								</IF_TEST>
+							
+							<SET Var="mapsetId" FromValue="{$thisParam/MAPSET/MAPSETID/@Value}" />
+						  <SET Var="Description" FromValue="{$thisParam/MAPSET/DESCRIPTION/@Value}" />
+							<IF_TEST Test="$Description = ''">
+							<THEN>
+										<SET Var="Description" FromValue="{$thisParam/MAPSET/NAME/@Value}" />
+							</THEN>
+							</IF_TEST>
+				
+				      <!--
+								 @ Modify the record (Description, mappings and user access-rights can be changed) in the Mapsetmaster table 
+							-->
+							<MODIFY_DOCUMENT Name="MapsetMaster" ServiceName="BCM_MASTER">
+										<DOCUMENT_CONTEXT>
+													<mapsetID Value="{$mapsetId}" />
+										</DOCUMENT_CONTEXT>
+										<UPDATE_PROPERTIES>
+										  		<description Value="{$Description}" />
+												<ENTITY_STATE Value="{$thisParam/MAPSET/STATUS/@Value}" />
+												<LAST_MODIFIED_DATE Value="{date()}"/>
+										</UPDATE_PROPERTIES>
+							</MODIFY_DOCUMENT>
+				
+						<TO_DOCVAR AssignToVar="Mapset">
+									<TO_XML SelectList="$thisParam/MAPSET" />
+						</TO_DOCVAR>
+				
+						<TO_DOCVAR AssignToVar="MapsetDims">
+									<MAPSETDIMS />
+						</TO_DOCVAR>
+				
+
+										
+				      <!--
+								 @ Since, the dimensionality can be changed, therefore, there will be no change in the MapsetDims table.
+								 @ The following loops take care if the user has added any new Mappings in already existing mapset mappings.
+								 @ But before looping, I am just making sure if the user has really added any additional new Mappings.
+							-->
+							<REQUEST AssignToVar="addMappingsResponse" Name="AddMappingsToMapset">
+										<TO_XML DocVar="Mapset" />
+							</REQUEST>
+				
+							<REQUEST AssignToVar="modifyMappingsResponse" Name="ModifyMappingsToMapset">
+										<TO_XML DocVar="Mapset" />
+							</REQUEST>
+
+							<TO_DOCVAR AssignToVar="deleteMappings">
+										<ROOT>
+												<TO_XML SelectList="$Mapset/EXISTING_MAPPING/MAP_INFO[@STATE='REMOVE']/MapID" />
+										</ROOT>
+							</TO_DOCVAR>
+							<IF_TEST Test="count($deleteMappings/MapID) > 0">
+							<THEN>
+											<REQUEST AssignToVar="deleteMappingsResponse" Name="DeleteMappingsOfMapset">
+														<TO_XML SelectList="$deleteMappings/MapID" />
+											</REQUEST>
+							</THEN>
+							</IF_TEST>
+												
+				     <REQUEST AssignToVar="rights" Name="AddMapsetRights">
+										<MAPSETID Value="{$mapsetId}" />
+										<TO_XML SelectList="$thisParam/USERLIST" />
+										<TO_XML SelectList="$thisParam/RIGHTS" />
+										<!-- <TO_XML SelectList="$thisParam/RIGHTS/LINE[@STATE='CREATE']" /> -->
+						</REQUEST>
+				     <REQUEST AssignToVar="rights" Name="UpdateMapsetRights">
+										<MAPSETID Value="{$mapsetId}" />
+										<TO_XML SelectList="$thisParam/RIGHTS" />
+						</REQUEST>
+				     <REQUEST AssignToVar="rights" Name="DeleteMapsetRights">
+										<MAPSETID Value="{$mapsetId}" />
+										<TO_XML SelectList="$Mapset/RIGHTS" />
+						</REQUEST>
+				
+				</ACTION>	
+		</RULE>
+		</DEFINE_METHOD>		
+
+	  <DEFINE_METHOD Access="public" Name="UpdateMapsetRights">
+		<API_DOC>
+					<INPUT>
+								<REQUEST Name="UpdateMapsetRights" Comment="This API returns the SOURCE or TARGET dimensions of the given mapset">
+												<MAPSETID Value="string" Repeatable="false" />
+												<RIGHTS>
+														<LINE STATE="MODIFY">
+																<User Type="string" Value="" />
+														</LINE>
+												</RIGHTS>
+								</REQUEST>
+					</INPUT>
+					<OUTPUT>
+								<ON_SUCCESS>
+												<RESPONSE Status="Success" Comment="Returns" />
+								</ON_SUCCESS>
+					</OUTPUT>
+		</API_DOC>
+		<RULE>
+					<ACTION>
+										<TO_DOCVAR AssignToVar="UsersRights2Modify">
+													<USERS>
+														<TO_XML SelectList="$thisParam/RIGHTS/LINE[@STATE='MODIFY']" />
+													</USERS>
+										</TO_DOCVAR>
+										<IF_TEST Test="count($UsersRights2Modify/LINE) = 0">
+										<THEN>
+														<EXIT />
+										</THEN>
+										</IF_TEST>
+				
+				
+										<SET Var="MapsetID" FromValue="{$thisParam/MAPSETID/@Value}" />										
+										<FOR_EACH CurrentElement="currentUser" SelectList="$UsersRights2Modify/LINE">
+															<SET Var="accessRights" FromValue="{normalize-space($currentUser/AccessRights/@Value)}" />
+															<IF_TEST Test="($accessRights = 'READ WRITE') or ($accessRights = 'WRITE READ')">
+															<THEN>
+																				<SET Var="accessRights" FromValue="RW" />
+															</THEN>
+															</IF_TEST>															
+															<IF_TEST Test="$accessRights = 'WRITE'">
+															<THEN>
+																				<SET Var="accessRights" FromValue="W" />
+															</THEN>
+															</IF_TEST>															
+															<IF_TEST Test="$accessRights = 'READ'">
+															<THEN>
+																				<SET Var="accessRights" FromValue="R" />
+															</THEN>
+															</IF_TEST>															
+															<MODIFY_DOCUMENT Name="MapsetRights" ServiceName="BCM_MASTER">
+																		<DOCUMENT_CONTEXT>
+																					<mapsetID Value="{$MapsetID}" />
+																					<name Value="{$currentUser/User/@Value}" />
+																		</DOCUMENT_CONTEXT>
+																		<UPDATE_PROPERTIES>
+																						<accessRights Value="{$accessRights}" />
+																						<ENTITY_STATE Value="ACTIVE" />
+																						<LAST_MODIFIED_DATE Value="{date()}"/>
+																		</UPDATE_PROPERTIES>
+															</MODIFY_DOCUMENT>
+										</FOR_EACH>
+									 
+					</ACTION>
+		</RULE>
+		</DEFINE_METHOD>
+
+	  <DEFINE_METHOD Access="public" Name="AddMappingsToMapset">
+		<API_DOC>
+					<INPUT>
+								<REQUEST Name="AddMappingsToMapset" Comment="This API returns the SOURCE or TARGET dimensions of the given mapset">
+												<MAPSET Value="xml" Repeatable="false" />
+								</REQUEST>
+					</INPUT>
+					<OUTPUT>
+								<ON_SUCCESS>
+												<RESPONSE Status="Success" Comment="Returns" />
+								</ON_SUCCESS>
+					</OUTPUT>
+		</API_DOC>
+		<RULE>
+					<ACTION>
+								<TO_DOCVAR AssignToVar="defineMappings">
+										<ROOT>
+												<TO_XML SelectList="$thisParam/MAPSET/EXISTING_MAPPING/MAP_INFO[@STATE='CREATE']" />
+										</ROOT>
+								</TO_DOCVAR>
+								<IF_TEST Test="count($defineMappings/MAP_INFO) = 0">
+								<THEN>
+													<EXIT />	
+								</THEN>
+								</IF_TEST>
+
+								<!-- Generate the records for the mapset dims table -->
+								<SET Var="Count" FromValue="0" />
+								<SET Var="Incrementer" FromValue="1" />
+								<TO_DOCVAR AssignToVar="tp">
+										<TP />
+								</TO_DOCVAR>
+						
+								<TO_DOCVAR AssignToVar="Mapset">
+											<TO_XML SelectList="$thisParam/MAPSET" />
+								</TO_DOCVAR>
+				
+								<TO_DOCVAR AssignToVar="MapsetInfo">
+											<MAPSET_INFO />
+								</TO_DOCVAR>
+								<CLONE_XML AssignToVar="finalMapsetInfo" DocVar="MapsetInfo" />
+										
+						      <!--
+										 @ While editing the user has added new set of Mappings. The following conditional check ensures
+										 @ that the user has added new mappings. Then it adds the mappings for the mapsets..
+									-->
+												<FOR_EACH CurrentElement="currentDimension" SelectList="$Mapset/SOURCE/*">
+																		<SET Var="Count" FromValue="{int($Count + $Incrementer)}" />
+																		<SET Var="colLvlName" FromValue="{concat('L_COL', $Count)}" />
+																		<SET Var="colMemName" FromValue="{concat('M_COL', $Count)}" />
+																		<SET Var="srcLevel" FromValue="{concat('SourceLevel', $Count)}" />
+																		<SET Var="srcMember" FromValue="{concat('SourceMember', $Count)}" />
+						
+																		<!-- The following Native call will make the levelCoumnxxx as the Element tag with TP as the child which need to be removed -->
+																		<NATIVE_FUNCTION AssignToVar="GetColumn" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																							<PARAM Value="{$colLvlName}" />
+																							<PARAM  Var="tp" />
+																		</NATIVE_FUNCTION>
+																		<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+																		<TO_DOCVAR AssignToVar="element">
+																					<TO_XML SelectList="$GetColumn/ROOT/*" />
+																		</TO_DOCVAR>
+																		<DELETE_ALL_CHILDREN Select="$element" >
+																						<TP/>
+																		</DELETE_ALL_CHILDREN>
+																		<SET DocVar="element" Attribute="Value" FromValue="{$srcLevel}" />
+																		<ADD_CHILDREN DocVar="MapsetInfo" FromDocVar="element" />
+											
+																		<!-- The following Native call will make the levelCoumnxxx as the Element tag with TP as the child which need to be removed -->
+																		<NATIVE_FUNCTION AssignToVar="GetColumn" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																							<PARAM Value="{$colMemName}" />
+																							<PARAM  Var="tp" />
+																		</NATIVE_FUNCTION>
+																		<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+																		<TO_DOCVAR AssignToVar="element">
+																					<TO_XML SelectList="$GetColumn/ROOT/*" />
+																		</TO_DOCVAR>
+																		<DELETE_ALL_CHILDREN Select="$element" >
+																						<TP/>
+																		</DELETE_ALL_CHILDREN>
+																		<SET DocVar="element" Attribute="Value" FromValue="{$srcMember}" />
+																		<ADD_CHILDREN DocVar="MapsetInfo" FromDocVar="element" />																
+												</FOR_EACH>
+										
+											  <SET Var="TargetCount" FromValue="0" />	
+												<FOR_EACH CurrentElement="currentDimension" SelectList="$Mapset/TARGET/*">
+																		<SET Var="Count" FromValue="{int($Count + $Incrementer)}" />
+																		<SET Var="colLvlName" FromValue="{concat('L_COL', $Count)}" />
+																		<SET Var="colMemName" FromValue="{concat('M_COL', $Count)}" />
+											
+																		<SET Var="TargetCount" FromValue="{int($TargetCount + $Incrementer)}" />
+																		<SET Var="srcLevel" FromValue="{concat('TargetLevel', $TargetCount)}" />
+																		<SET Var="srcMember" FromValue="{concat('TargetMember', $TargetCount)}" />
+						
+																		<NATIVE_FUNCTION ClassName="com.i2.xcore.util.UniqueIdGenerator" MethodName="getUniqueId" AssignToVar="mapsetDimId">
+																					<PARAM Value="MDIM"/>
+																		</NATIVE_FUNCTION>
+											
+																		<!-- The following Native call will make the levelCoumnxxx as the Element tag with TP as the child which need to be removed -->
+																		<NATIVE_FUNCTION AssignToVar="GetColumn" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																							<PARAM Value="{$colLvlName}" />
+																							<PARAM  Var="tp" />
+																		</NATIVE_FUNCTION>
+																		<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+																		<TO_DOCVAR AssignToVar="element">
+																					<TO_XML SelectList="$GetColumn/ROOT/*" />
+																		</TO_DOCVAR>
+																		<DELETE_ALL_CHILDREN Select="$element" >
+																						<TP/>
+																		</DELETE_ALL_CHILDREN>
+																		<SET DocVar="element" Attribute="Value" FromValue="{$srcLevel}" />
+																		<ADD_CHILDREN DocVar="MapsetInfo" FromDocVar="element" />
+											
+																		<!-- The following Native call will make the levelCoumnxxx as the Element tag with TP as the child which need to be removed -->
+																		<NATIVE_FUNCTION AssignToVar="GetColumn" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																							<PARAM Value="{$colMemName}" />
+																							<PARAM  Var="tp" />
+																		</NATIVE_FUNCTION>
+																		<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+																		<TO_DOCVAR AssignToVar="element">
+																					<TO_XML SelectList="$GetColumn/ROOT/*" />
+																		</TO_DOCVAR>
+																		<DELETE_ALL_CHILDREN Select="$element" >
+																						<TP/>
+																		</DELETE_ALL_CHILDREN>
+																		<SET DocVar="element" Attribute="Value" FromValue="{$srcMember}" />
+																		<ADD_CHILDREN DocVar="MapsetInfo" FromDocVar="element" />
+												 </FOR_EACH>
+								
+												<SET Var="Count" FromValue="0" />
+												<SET Var="mapsetId" FromValue="{$thisParam/MAPSET/MAPSETID/@Value}" />
+												<FOR_EACH CurrentElement="currentMapInfo" SelectList="$defineMappings/MAP_INFO">					
+																		<NATIVE_FUNCTION ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_MapsetUtility" MethodName="populateMapsetInfo" AssignToVar="mapsetInfo">
+																					<PARAM Var="MapsetInfo"/>
+																					<PARAM Var="currentMapInfo"/>
+																		</NATIVE_FUNCTION>
+																		<ADD_CHILDREN DocVar="finalMapsetInfo" FromSelectList="$mapsetInfo/*" />
+																	 <SET DocVar="finalMapsetInfo" Property="mapsetID" FromValue="{$mapsetId}" />
+																		<ADD_DOCUMENT AssignToVar="response" Name="MapsetMappings" ServiceName="BCM_MASTER">
+																			<mapID Value="{$currentMapInfo/MapID/@Value}" />
+																			<TO_XML SelectList="$finalMapsetInfo/*" />
+																			<CREATION_DATE Value="{date()}"/>
+																			<LAST_MODIFIED_DATE Value="{date()}"/>
+																			<ENTITY_STATE Value="ACTIVE" />
+																			<SOURCE Value="UI"/>
+																		</ADD_DOCUMENT>
+										<REMOVE_CHILDREN DocVar="finalMapsetInfo" />
+												 </FOR_EACH>
+					</ACTION>
+		</RULE>
+		</DEFINE_METHOD>
+						
+	  <DEFINE_METHOD Access="public" Name="ModifyMappingsToMapset">
+		<API_DOC>
+					<INPUT>
+								<REQUEST Name="AddMappingsToMapset" Comment="This API returns the SOURCE or TARGET dimensions of the given mapset">
+												<MAPSET Value="xml" Repeatable="false" />
+								</REQUEST>
+					</INPUT>
+					<OUTPUT>
+								<ON_SUCCESS>
+												<RESPONSE Status="Success" Comment="Returns" />
+								</ON_SUCCESS>
+					</OUTPUT>
+		</API_DOC>
+		<RULE>
+					<ACTION>
+								<TO_DOCVAR AssignToVar="modifyMappings">
+										<ROOT>
+												<TO_XML SelectList="$thisParam/MAPSET/EXISTING_MAPPING/MAP_INFO[@STATE='MODIFY']" />
+										</ROOT>
+								</TO_DOCVAR>
+								<IF_TEST Test="count($modifyMappings/MAP_INFO) = 0">
+								<THEN>
+													<EXIT />	
+								</THEN>
+								</IF_TEST>
+				
+								<!-- Generate the records for the mapset dims table -->
+								<SET Var="Count" FromValue="0" />
+								<SET Var="Incrementer" FromValue="1" />
+								<TO_DOCVAR AssignToVar="tp">
+										<TP />
+								</TO_DOCVAR>
+								
+								<TO_DOCVAR AssignToVar="Mapset">
+											<TO_XML SelectList="$thisParam/MAPSET" />
+								</TO_DOCVAR>
+
+								<TO_DOCVAR AssignToVar="MapsetInfo">
+											<MAPSET_INFO />
+								</TO_DOCVAR>
+								<CLONE_XML AssignToVar="finalMapsetInfo" DocVar="MapsetInfo" />
+										
+				      <!--
+								 @ While editing the user has added new set of Mappings. The following conditional check ensures
+								 @ that the user has added new mappings. Then it adds the mappings for the mapsets..
+							-->
+							<FOR_EACH CurrentElement="currentDimension" SelectList="$Mapset/SOURCE/*">
+													<SET Var="Count" FromValue="{int($Count + $Incrementer)}" />
+													<SET Var="colLvlName" FromValue="{concat('L_COL', $Count)}" />
+													<SET Var="colMemName" FromValue="{concat('M_COL', $Count)}" />
+													<SET Var="srcLevel" FromValue="{concat('SourceLevel', $Count)}" />
+													<SET Var="srcMember" FromValue="{concat('SourceMember', $Count)}" />
+	
+													<!-- The following Native call will make the levelCoumnxxx as the Element tag with TP as the child which need to be removed -->
+													<NATIVE_FUNCTION AssignToVar="GetColumn" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																		<PARAM Value="{$colLvlName}" />
+																		<PARAM  Var="tp" />
+													</NATIVE_FUNCTION>
+													<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+													<TO_DOCVAR AssignToVar="element">
+																<TO_XML SelectList="$GetColumn/ROOT/*" />
+													</TO_DOCVAR>
+													<DELETE_ALL_CHILDREN Select="$element" >
+																	<TP/>
+													</DELETE_ALL_CHILDREN>
+													<SET DocVar="element" Attribute="Value" FromValue="{$srcLevel}" />
+													<ADD_CHILDREN DocVar="MapsetInfo" FromDocVar="element" />
+						
+													<!-- The following Native call will make the levelCoumnxxx as the Element tag with TP as the child which need to be removed -->
+													<NATIVE_FUNCTION AssignToVar="GetColumn" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																		<PARAM Value="{$colMemName}" />
+																		<PARAM  Var="tp" />
+													</NATIVE_FUNCTION>
+													<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+													<TO_DOCVAR AssignToVar="element">
+																<TO_XML SelectList="$GetColumn/ROOT/*" />
+													</TO_DOCVAR>
+													<DELETE_ALL_CHILDREN Select="$element" >
+																	<TP/>
+													</DELETE_ALL_CHILDREN>
+													<SET DocVar="element" Attribute="Value" FromValue="{$srcMember}" />
+													<ADD_CHILDREN DocVar="MapsetInfo" FromDocVar="element" />
+											
+							</FOR_EACH>
+					
+						  <SET Var="TargetCount" FromValue="0" />	
+							<FOR_EACH CurrentElement="currentDimension" SelectList="$Mapset/TARGET/*">
+													<SET Var="Count" FromValue="{int($Count + $Incrementer)}" />
+													<SET Var="colLvlName" FromValue="{concat('L_COL', $Count)}" />
+													<SET Var="colMemName" FromValue="{concat('M_COL', $Count)}" />
+						
+													<SET Var="TargetCount" FromValue="{int($TargetCount + $Incrementer)}" />
+													<SET Var="srcLevel" FromValue="{concat('TargetLevel', $TargetCount)}" />
+													<SET Var="srcMember" FromValue="{concat('TargetMember', $TargetCount)}" />
+	
+													<!-- The following Native call will make the levelCoumnxxx as the Element tag with TP as the child which need to be removed -->
+													<NATIVE_FUNCTION AssignToVar="GetColumn" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																		<PARAM Value="{$colLvlName}" />
+																		<PARAM  Var="tp" />
+													</NATIVE_FUNCTION>
+													<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+													<TO_DOCVAR AssignToVar="element">
+																<TO_XML SelectList="$GetColumn/ROOT/*" />
+													</TO_DOCVAR>
+													<DELETE_ALL_CHILDREN Select="$element" >
+																	<TP/>
+													</DELETE_ALL_CHILDREN>
+													<SET DocVar="element" Attribute="Value" FromValue="{$srcLevel}" />
+													<ADD_CHILDREN DocVar="MapsetInfo" FromDocVar="element" />
+						
+													<!-- The following Native call will make the levelCoumnxxx as the Element tag with TP as the child which need to be removed -->
+													<NATIVE_FUNCTION AssignToVar="GetColumn" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Utility" MethodName="getColumn">
+																		<PARAM Value="{$colMemName}" />
+																		<PARAM  Var="tp" />
+													</NATIVE_FUNCTION>
+													<!-- Delete the TP from the GetColumn and add the attribute Value to it -->
+													<TO_DOCVAR AssignToVar="element">
+																<TO_XML SelectList="$GetColumn/ROOT/*" />
+													</TO_DOCVAR>
+													<DELETE_ALL_CHILDREN Select="$element" >
+																	<TP/>
+													</DELETE_ALL_CHILDREN>
+													<SET DocVar="element" Attribute="Value" FromValue="{$srcMember}" />
+													<ADD_CHILDREN DocVar="MapsetInfo" FromDocVar="element" />
+							 </FOR_EACH>
+			
+							<SET Var="Count" FromValue="0" />
+							<SET Var="mapsetId" FromValue="{$thisParam/MAPSET/MAPSETID/@Value}" />
+							<FOR_EACH CurrentElement="currentMapInfo" SelectList="$modifyMappings/MAP_INFO">
+													<NATIVE_FUNCTION ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_MapsetUtility" MethodName="populateMapsetInfo" AssignToVar="mapsetInfo">
+																<PARAM Var="MapsetInfo"/>
+																<PARAM Var="currentMapInfo"/>
+													</NATIVE_FUNCTION>
+													<ADD_CHILDREN DocVar="finalMapsetInfo" FromSelectList="$mapsetInfo/*" />
+												 <SET DocVar="finalMapsetInfo" Property="mapsetID" FromValue="{$mapsetId}" />
+													<ADD_DOCUMENT AssignToVar="response" Name="MapsetMappings" HandleException="true" ServiceName="BCM_MASTER">
+																						<mapID Value="{$currentMapInfo/MapID/@Value}" />	
+																						<TO_XML SelectList="$finalMapsetInfo/*" />
+																						<ENTITY_STATE Value="ACTIVE" />
+																							<LAST_MODIFIED_DATE Value="{date()}"/>
+																						<SOURCE Value="UI"/>
+													</ADD_DOCUMENT>
+													<IF_TEST Test="$response/@Status='Error'">
+													<THEN>	
+													<MODIFY_DOCUMENT AssignToVar="response" Name="MapsetMappings" ServiceName="BCM_MASTER">
+																	<DOCUMENT_CONTEXT>
+																				<mapID Value="{$currentMapInfo/MapID/@Value}" />
+																				<mapsetID Value="{$mapsetId}" />
+																	</DOCUMENT_CONTEXT>
+																	<UPDATE_PROPERTIES>
+																						<TO_XML SelectList="$finalMapsetInfo/*" />
+																						<LAST_MODIFIED_DATE Value="{date()}"/>
+																	</UPDATE_PROPERTIES>
+													</MODIFY_DOCUMENT>
+													</THEN>
+													</IF_TEST>	
+
+													<REMOVE_CHILDREN DocVar="finalMapsetInfo" />
+							 </FOR_EACH>
+					</ACTION>
+		</RULE>
+		</DEFINE_METHOD>
+	
+	<DEFINE_METHOD Access="public" Name="GetBaseDimensionName">
+		<RULE>
+		<ACTION>
+						<GET_DOCUMENT AssignToVar="tempDim" Name="Dimension" ServiceName="BCM_MASTER">
+										<Name Value="{$thisParam/DIMENSION/@Value}" MatchBy="EQUAL" />
+										<SELECT>
+													<Id />
+													<Name />
+													<Type />
+													<baseDimensionID />													
+						        </SELECT>
+						  </GET_DOCUMENT>							
+							<IF_TEST Test="$tempDim/Dimension/Type/@Value = 'ALIAS'">
+							<THEN>
+							<GET_DOCUMENT AssignToVar="tempDim1" Name="Dimension" ServiceName="BCM_MASTER">
+										<Id Value="{$tempDim/Dimension/baseDimensionID/@Value}" MatchBy="EQUAL" />
+										<SELECT>
+													<Id />
+													<Name />
+													<Type />													
+						        </SELECT>
+						  </GET_DOCUMENT>	
+							
+							<TO_DOCVAR AssignToVar="thisReturn">
+											<IN_DIM>
+												<BASE_DIMENSION Value="{$tempDim1/Dimension/Name/@Value}"/>
+												<BASE_DIMENSION_ID Value="{$tempDim1/Dimension/Id/@Value}" />
+											</IN_DIM>
+							</TO_DOCVAR>					
+							</THEN>
+							<ELSE>
+								<TO_DOCVAR AssignToVar="thisReturn">
+											<IN_DIM>
+												<BASE_DIMENSION Value="{$tempDim/Dimension/Name/@Value}"/>
+												<BASE_DIMENSION_ID Value="{$tempDim/Dimension/Id/@Value}" />
+											</IN_DIM>
+							</TO_DOCVAR>	
+							</ELSE>							
+							</IF_TEST>	
+		</ACTION>
+		</RULE>
+		</DEFINE_METHOD>
+</DOCUMENTS>

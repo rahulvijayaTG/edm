@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:identity="http://www.i2.com/identity" xmlns:i18n="http://www.i2.com/i18n" description="_">
+    <!-- **********************************************************************
+  *********************************************************************** -->
+
+    <x2:command public="yes" description="_" name="getLinks">
+        <x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+        <x2:param name="solution" select="$this/SOLUTION/@Value"/>
+        <xapl:print>PRINTING ACTIVITY INSIDE SOLUTIONS GETLINKS <xapl:value-of select="$selectedActivity"/>
+        </xapl:print>
+        <!-- Show dropdown of instances only when multiple instances are enabled -->
+        <xapl:variable name="comboPad">
+            <xapl:if test="$appInstanceEnabled = 'true' ">
+                <!-- Fetch all instances available for current user -->
+                <xapl:variable name="userId">
+                    <identity:get-user-id/>
+                </xapl:variable>
+                <xapl:if test="count($currentUsersInstances/*) = 0">
+                    <xapl:set-variable name="currentUsersInstances">
+                        <USER_INSTANCES>
+                            <xcore:execute-method name="//UserSecurity/getInstancesForUser" entireResponse="false">
+                                <userId Value="{$userId}"/>
+                            </xcore:execute-method>
+                        </USER_INSTANCES>
+                    </xapl:set-variable>
+                </xapl:if>
+                <xapl:print select="$currentUsersInstances"/>
+                <PAD DisplayText="Instances" Name="multipleInstances" Scrollable="yes">
+                    <xapl:for-each select="$currentUsersInstances/instanceID" varName="child">
+                        <COMBO_ITEM DisplayText="{$child/@Value}" Selected="{$child/@Value = $currentInstance}"/>
+                    </xapl:for-each>
+                </PAD>
+            </xapl:if>
+        </xapl:variable>
+        <xapl:print select="{$comboPad}"/>
+                      
+         <xapl:variable name="sol_path">
+              <x2:execute command="bcm.framework.util:createXMLFromString">
+	          <x2:with-param name="string" select="{$otherSolutions}"/>
+	          <x2:with-param name="delimeter" select="']'"/>
+	          <x2:with-param name="tagname" select="'NAME'"/>
+	      </x2:execute>
+	 </xapl:variable>
+	
+  
+           <xapl:print select="'Trying to print sol_path'"/>
+           <xapl:print select="$sol_path"/>
+        
+        <xapl:variable name="pad">
+            <PAD DisplayText="Solutions QA1A" Name="solutions" Scrollable="yes" Type="solution">
+                <!-- Data Management -->
+                <SOLUTION Value="{$this/SOLUTION/@Value}"/>
+                        
+             <xapl:if test="count($sol_path/NAME) &gt; 0">
+                 <xapl:for-each select="$sol_path/*" varName="child">
+                                    
+                    <xapl:variable name="name">
+                      <xapl:value-of select="substring-after($child/@Value,'[')"/>
+                    </xapl:variable>   
+                    <xapl:print select="'Trying to print name'"/>
+                    <xapl:print select="$name"/>
+                    
+		     <PAD_ITEM Other="true" OnClick="{$name}" DisplayText="{$name}" Selected="{$selectedActivity = $name}"/>
+		    
+                </xapl:for-each>
+            </xapl:if>
+            <PAD_ITEM  OnClick="{concat('home.jsp?ACTIVITY=', 'bcmDataManagement','&amp;Auth_Enabled=true')}" DisplayText="Data Management" Selected="{$selectedActivity = 'bcmDataManagement'}"/>  
+           </PAD>
+        </xapl:variable>
+        
+        <xapl:return>
+            <xapl:if test="count($pad/PAD_ITEM)  >0">
+                <xapl:value-of select="$pad"/>
+            </xapl:if>
+            <xapl:if test="count($comboPad/COMBO_ITEM) > 0">
+                <xapl:value-of select="$comboPad"/>
+            </xapl:if>
+
+            <xapl:choose>
+		<xapl:when test="$appInstanceEnabled = 'true' and string-length($currentInstance) = 0">
+			<xapl:print>************$appInstanceEnabled = 'true' yes************</xapl:print>
+			<perm:is-allowed document="TASKS" action="bcmManageEnterprise">
+			<PAD Name="instances" DisplayText="TASKS" Scrollable="yes">
+
+				<PAD_ITEM DisplayText="Enterprise Model">
+				    <perm:is-allowed document="TASKS" action="bcmManageUserGroups">
+					<PAD_ITEM OnClick="{concat($pages:user_admin_group_search,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Manage User Groups"/>
+				    </perm:is-allowed>
+				    <perm:is-allowed document="TASKS" action="bcmManageUsers">
+					<PAD_ITEM OnClick="{concat($pages:user_search_view,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Manage Users"/>
+				    </perm:is-allowed>
+				    <perm:is-allowed document="TASKS" action="bcmManageRoles">
+					<PAD_ITEM OnClick="{concat($pages:user_role_search,'&amp;MODE=START','&amp;Auth_Enabled=true')}" DisplayText="Manage Roles"/>
+				    </perm:is-allowed>
+				</PAD_ITEM>
+			</PAD>
+			</perm:is-allowed>                    
+                </xapl:when>
+                
+                <xapl:when test="$fromLogin = 'yes' and $securityCheck ='yes' and $chooseAuthID='yes'">
+                    
+                    <xapl:print>************fromLogin yes************</xapl:print>
+                </xapl:when>
+
+                <xapl:otherwise>
+                   <!-- Return all these only if an instance has been selected -->
+                    
+                        <x2:execute command="core.navigation.instances:getLinks">
+                            <x2:with-param name="selectedActivity" select="$selectedActivity"/>
+                            <x2:with-param name="solution" Value="{$solution}"/>
+                        </x2:execute>
+                        <x2:execute command="core.navigation.functions:getLinks">
+                            <x2:with-param name="selectedActivity" select="$selectedActivity"/>
+                        </x2:execute>
+                        <x2:execute command="core.navigation.tools:getLinks">
+                            <x2:with-param name="selectedActivity" select="$selectedActivity"/>
+                        </x2:execute>
+                        <!-- get the Extension PAD (from inv opt or others)-->
+                        <x2:execute command="core.navigation.solutions:getPadExtension">
+                            <x2:with-param name="selectedActivity" select="$selectedActivity"/>
+                        </x2:execute>
+     			<x2:execute command="core.navigation.favorites:getLinks">
+                            <x2:with-param name="selectedActivity" select="$selectedActivity"/>
+                        </x2:execute>         
+                   
+                </xapl:otherwise>
+            </xapl:choose>
+            
+        </xapl:return>
+    </x2:command>
+    <!-- **********************************************************************
+  *********************************************************************** -->
+    <x2:command public="yes" description="_" name="getPadExtension">
+        <x2:param name="selectedActivity" select="$this/ACTIVITY/@Value"/>
+        <!-- left bank so that others/invopt etc can define it -->
+    </x2:command>
+    <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

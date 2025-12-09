@@ -1,0 +1,183 @@
+<DOCUMENTS>
+				<DEFINE_METHOD Name="TestSort">
+				<RULE>
+				<ACTION>
+							<TO_DOCVAR AssignToVar="params">
+											<PARAMS>
+													<COUNTRY>
+																<NAME Value="France"/>
+																<CAPITAL Value="Paris"/>
+													</COUNTRY>
+													<COUNTRY>
+																<NAME Value="Spain"/>
+																<CAPITAL Value="Madrid"/>
+													</COUNTRY>
+													<COUNTRY>
+																<NAME Value="UK"/>
+																<CAPITAL Value="London"/>
+													</COUNTRY>
+													<COUNTRY>
+																<NAME Value="Germany"/>
+																<CAPITAL Value="Berlin"/>
+													</COUNTRY>
+											</PARAMS>
+							</TO_DOCVAR>
+							<SORT SelectList="$params/COUNTRY" DataType="string" Key="NAME" SortOrder="descending"/>
+							<PRINTLN DocVar="params" />
+				</ACTION>
+				</RULE>
+				</DEFINE_METHOD>
+	
+				<DEFINE_METHOD Name="SortMapsetData">
+				<RULE>
+				<ACTION>
+							<SET Var="Key" FromValue="{$thisParam/KEY/@Value}" />
+							<SET Var="Order" FromValue="{$thisParam/ORDER/@Value}" />	
+							<IF_TEST Test="($Key = 'MapsetName') and ($Order = 'descending')">
+					    <THEN>
+											<SORT SelectList="$thisParam/DATA/LINE" DataType="string" Key="MapsetName" SortOrder="descending"/>
+											<ADD_CHILDREN DocVar="thisReturn" FromSelectList="$thisParam/DATA" />
+											<EXIT />
+						 </THEN>
+					  </IF_TEST>
+					   <IF_TEST Test="($Key = 'MapsetName') and ($Order = 'ascending')">
+					    <THEN>
+											<SORT SelectList="$thisParam/DATA/LINE" DataType="string" Key="MapsetName" SortOrder="ascending"/>
+											<ADD_CHILDREN DocVar="thisReturn" FromSelectList="$thisParam/DATA" />
+											<EXIT />
+						 </THEN>
+					  </IF_TEST>
+							<IF_TEST Test="($Key = 'SourceDimension') and ($Order = 'descending')">
+					    <THEN>
+											<SORT SelectList="$thisParam/DATA/LINE" DataType="string" Key="SourceDimension" SortOrder="descending"/>
+											<ADD_CHILDREN DocVar="thisReturn" FromSelectList="$thisParam/DATA" />
+											<EXIT />
+						 </THEN>
+					  </IF_TEST>
+					   <IF_TEST Test="($Key = 'SourceDimension') and ($Order = 'ascending')">
+					    <THEN>
+											<SORT SelectList="$thisParam/DATA/LINE" DataType="string" Key="SourceDimension" SortOrder="ascending"/>
+											<ADD_CHILDREN DocVar="thisReturn" FromSelectList="$thisParam/DATA" />
+											<EXIT />
+						 </THEN>
+					  </IF_TEST>
+							<IF_TEST Test="($Key = 'TargetDimension') and ($Order = 'descending')">
+					    <THEN>
+											<SORT SelectList="$thisParam/DATA/LINE" DataType="string" Key="TargetDimension" SortOrder="descending"/>
+											<ADD_CHILDREN DocVar="thisReturn" FromSelectList="$thisParam/DATA" />
+											<EXIT />
+						 </THEN>
+					  </IF_TEST>
+					   <IF_TEST Test="($Key = 'TargetDimension') and ($Order = 'ascending')">
+					    <THEN>
+											<SORT SelectList="$thisParam/DATA/LINE" DataType="string" Key="TargetDimension" SortOrder="ascending"/>
+											<ADD_CHILDREN DocVar="thisReturn" FromSelectList="$thisParam/DATA" />
+											<EXIT />
+						 </THEN>
+					  </IF_TEST>
+				</ACTION>
+				</RULE>
+				</DEFINE_METHOD>
+
+	<DEFINE_METHOD Name="mapset_sortdoc_formation">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="sort_doc">
+          <sort/>
+        </TO_DOCVAR>
+        <SET Var="THISPARAM" FromSelect="$thisParam"/>
+				<IF_TEST Test="($THISPARAM/SORT_BY/@Value='ID')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="sort_doc">
+               <sort>
+                  <name Sort="Ascending"/>
+               </sort>
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="($THISPARAM/SORT_BY/@Value='MapsetName')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="sort_doc">             
+                <sort>
+                  <name Sort="{$THISPARAM/SORT_ORDER/@Value}"/>
+                </sort>              
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="($THISPARAM/SORT_BY/@Value='SourceDimension')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="sort_doc">
+              <sort>
+                  <SRC_DIM_NAME Sort="{$THISPARAM/SORT_ORDER/@Value}"/>
+              </sort>
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="($THISPARAM/SORT_BY/@Value='TargetDimension')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="sort_doc">
+              	<sort>
+                  <TGT_DIM_NAME Sort="{$THISPARAM/SORT_ORDER/@Value}"/>
+                </sort>            
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>       
+        <TO_DOCVAR AssignToVar="thisReturn">
+					<sort>
+						<TO_XML SelectList="$sort_doc" />											
+					</sort>	
+				</TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+	
+  	<DEFINE_METHOD Name="setPaginationAndSortingDefaults">
+		<RULE>
+			<ACTION>
+		
+              <SET Var="sortByName" FromValue="{ifElse($thisParam/TABLE_ID/@Value = null, 'SORT_BY', concat($thisParam/TABLE_ID/@Value,'_SORT_BY'))}"/>
+              <SET Var="sortOrderName" FromValue="{ifElse($thisParam/TABLE_ID/@Value = null, 'SORT_ORDER', concat($thisParam/TABLE_ID/@Value,'_SORT_ORDER'))}"/>
+              <SET Var="maxRowsName" FromValue="{ifElse($thisParam/TABLE_ID/@Value = null, 'MAX_ROWS', concat($thisParam/TABLE_ID/@Value,'_MAX_ROWS'))}"/>
+              <SET Var="startCountName" FromValue="{ifElse($thisParam/TABLE_ID/@Value = null, 'START_COUNT', concat($thisParam/TABLE_ID/@Value,'_START_COUNT'))}"/>
+
+             <TO_DOCVAR AssignToVar="defaults">
+                <ROOT>                   
+                </ROOT>
+                </TO_DOCVAR>
+                <!-- Page Defaults-->
+                <SET DocVar="defaults" Property="START_COUNT" FromValue="{ifElse($thisParam/*[name() = $startCountName]/@Value = null, $thisParam/DEFAULTS/START_COUNT/@Value, $thisParam/*[name() = $startCountName]/@Value)}"/>
+                <SET DocVar="defaults" Property="MAX_ROWS" FromValue="{ifElse($thisParam/*[name() = $maxRowsName]/@Value = null, $thisParam/DEFAULTS/MAX_ROWS/@Value, $thisParam/*[name() = $maxRowsName]/@Value)}"/>
+                <SET DocVar="defaults" Property="SORT_BY" FromValue="{ifElse($thisParam/*[name() = $sortByName]/@Value = null, $thisParam/DEFAULTS/SORT_BY/@Value, $thisParam/*[name() = $sortByName]/@Value)}"/>
+                <SET DocVar="defaults" Property="SORT_ORDER" FromValue="{ifElse($thisParam/*[name() = $sortOrderName]/@Value = null, $thisParam/DEFAULTS/SORT_ORDER/@Value, $thisParam/*[name() = $sortOrderName]/@Value)}"/>
+
+ 
+                <!-- Global Defaults-->
+                <SET DocVar="defaults" Property="START_COUNT" FromValue="{ifElse($defaults/START_COUNT/@Value = null, '0', $defaults/START_COUNT/@Value)}"/>
+                <SET DocVar="defaults" Property="MAX_ROWS" FromValue="{ifElse($defaults/MAX_ROWS/@Value = null, '10', $defaults/MAX_ROWS/@Value)}"/>
+                <SET DocVar="defaults" Property="SORT_BY" FromValue="{ifElse($defaults/SORT_BY/@Value = null, 'ID', $defaults/SORT_BY/@Value)}"/>
+                <SET DocVar="defaults" Property="SORT_ORDER" FromValue="{ifElse($defaults/SORT_ORDER/@Value = null, 'Ascending', $defaults/SORT_ORDER/@Value)}"/>
+
+                <MAKE_INSTANCE_DOCUMENT Name="{$defaults/SORT_BY/@Value}" AssignToVar="sortByTag"/>
+                <SET DocVar="sortByTag" Attribute="Sort" FromValue="{$defaults/SORT_ORDER/@Value}"/>
+                <MAKE_INSTANCE_DOCUMENT Name="ORDER_BY" AssignToVar="orderBy"/>
+                <ADD_CHILDREN DocVar="orderBy" FromValue="{$sortByTag}"/>
+                <ADD_CHILDREN DocVar="defaults" FromValue="{$orderBy}"/>
+                <TO_DOCVAR AssignToVar="thisReturn">
+                <ROOT>
+                <DEFAULTS>
+                    <TO_XML SelectList="$defaults/*"/>
+                 </DEFAULTS>
+                </ROOT>
+                <IF_TEST Test="$thisParam/TABLE_ID/@Value != null">
+                <THEN> 
+                    <SET DocVar="thisReturn" Attribute="TableId" FromValue="{$thisParam/TABLE_ID/@Value}"/>
+                </THEN>
+                </IF_TEST>
+                </TO_DOCVAR>
+
+			</ACTION>
+		</RULE>
+	</DEFINE_METHOD>
+    
+
+</DOCUMENTS>

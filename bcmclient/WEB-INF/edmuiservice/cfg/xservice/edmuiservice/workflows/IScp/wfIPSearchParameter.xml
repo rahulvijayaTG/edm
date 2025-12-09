@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="133" ShowInBreadCrumbs="true" Version="1.0" Name="wfIPSearchParameter" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="ParameterClassMnemonicValue" Type="string" Comment=""/>
+    <variable Name="fieldName" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+        <action>
+          <SET DocVar="fieldName" FromValue="{$thisParam/FIELD_NAME/@Value}"/>
+          <SET DocVar="ParameterClassMnemonicValue" FromValue="{$thisParam/ParameterClassMnemonicValue/@Value}"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Select Parameter" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Select Parameter" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE" Template="iscpIPSearchParameter.pgl">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$userAction='search_button'">
+            <THEN>
+              <SET Var="paginateStart" FromValue="0"/>
+            </THEN>
+            <ELSE>
+              <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="pgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '10', $thisParam/MAX_ROWS/@Value)}"/>
+          <GET_DOC_SMART Name="P_ParameterClass" AssignToVar="paramclass" HandleException="true" ServiceName="PEDM_MASTER">
+            <ParameterClassMnemonicValue Value="{$ParameterClassMnemonicValue}"/>
+          </GET_DOC_SMART>
+          <SET DocVar="thisReturn" Property="ParameterMnemonicValue" FromValue="{upperCase($thisParam/ParameterMnemonicValue/@Value)}"/>
+          <SET DocVar="thisReturn" Property="ParameterDescription" FromValue="{upperCase($thisParam/ParameterDescription/@Value)}"/>
+          <SET Var="sortOrder" FromValue="{ifElse((($thisParam/SORT_ORDER/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID')), 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+          <FORM_SEARCH_FILTER Value="{$thisReturn}" AssignToVar="searchParamFilter">
+            <ParameterMnemonicValue MultiValued="true"/>
+            <ParameterDescription MultiValued="false"/>
+          </FORM_SEARCH_FILTER>
+          <TO_DOCVAR AssignToVar="ParameterNames">
+            <PARAMS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="ParameterDesc">
+            <DESC/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="ParameterDesc1">
+            <TO_XML SelectList="$searchParamFilter/FILTER[@Name='ParameterMnemonicValue']/*"/>
+          </TO_DOCVAR>
+          <IF_TEST Test="count($ParameterDesc1/ParameterMnemonicValue)>0">
+            <THEN>
+              <FOR_EACH SelectList="$ParameterDesc1/ParameterMnemonicValue" CurrentElement="curELE">
+                <APPEND_TO_XML DocVar="ParameterNames">
+                  <ParameterMnemonicValue Value="{$curELE/@Value}" MatchBy="{$curELE/@MatchBy}" ScalarFn="upperCase"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="strlen($ParameterDesc1/@Value)>0">
+                <THEN>
+                  <APPEND_TO_XML DocVar="ParameterNames">
+                    <ParameterMnemonicValue Value="{$ParameterDesc1/@Value}" MatchBy="{$ParameterDesc1/@MatchBy}" ScalarFn="upperCase"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <FOR_EACH SelectList="$searchParamFilter/FILTER[@Name='ParameterDescription']/ParameterDescription" CurrentElement="curELE">
+            <APPEND_TO_XML DocVar="ParameterDesc">
+              <ParameterDescription Value="{$curELE/@Value}" MatchBy="{$curELE/@MatchBy}" ScalarFn="upperCase"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <GET_DOC_SMART Name="P_Parameter" AssignToVar="parameterLst" HandleException="true" ServiceName="PEDM_MASTER" MaxRows="{$pgMaxRows/@Value}" StartAtRow="{$paginateStart/@Value}" ReturnRowCount="yes">
+            <AND>
+              <ParameterClassIdentifier Value="{$paramclass/P_ParameterClass/ParameterClassIdentifier/@Value}"/>
+              <OR>
+                <TO_XML SelectList="$ParameterNames/*"/>
+              </OR>
+              <OR>
+                <TO_XML SelectList="$ParameterDesc/*"/>
+              </OR>
+            </AND>
+            <QUERY_DOCUMENT_LINK Name="REL_2483">
+              <SELECT>
+                <UnitOfMeasureMnemonicValue/>
+              </SELECT>
+            </QUERY_DOCUMENT_LINK>
+            <ORDER_BY>
+              <ParameterMnemonicValue Sort="{$sortOrder/@Value}"/>
+            </ORDER_BY>
+          </GET_DOC_SMART>
+          <SET DocVar="prevSel" FromValue=""/>
+          <FOR_EACH SelectList="$thisParam/*" CurrentElement="curElem">
+            <IF_TEST Test="name($curElem) = 'SELECTED_ITEM'">
+              <THEN>
+                <SET DocVar="prevSel" FromValue="{ifElse(contains(prevSel,$curElem/@Value),'',concat($prevSel,',',$curElem/@Value))}"/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="ParameterList">
+            <PARAMETER_DETAILS/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$parameterLst/P_Parameter" CurrentElement="id">
+            <APPEND_TO_XML DocVar="ParameterList">
+              <ROW_DATA>
+                <PARAMETER_NAME Value="{$id/ParameterMnemonicValue/@Value}"/>
+                <PARAMETER_DESC Value="{$id/ParameterDescription/@Value}"/>
+                <PARAMETER_UOM Value="{$id/UnitOfMeasureMnemonicValue/@Value}"/>
+              </ROW_DATA>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <PRINTLN Value="Parameters{$ParameterList}"/>
+          <SET DocVar="ParameterList" Property="FIELD_NAME" FromValue="{$fieldName}"/>
+          <SET DocVar="ParameterList" Property="USER_ID" FromValue="{$userId}"/>
+          <SET DocVar="ParameterList" Property="ParameterMnemonicValue" FromValue="{$thisParam/ParameterMnemonicValue/@Value}"/>
+          <SET DocVar="ParameterList" Property="ParameterDescription" FromValue="{$thisParam/ParameterDescription/@Value}"/>
+          <SET DocVar="ParameterList" Property="TotalRowCount" FromValue="{$parameterLst/@TotalRowCount}"/>
+          <SET DocVar="ParameterList" Property="PREV_SEL" FromValue="{substringAfter($prevSel,',')}"/>
+          <SET DocVar="pglFormInput" FromDocVar="ParameterList"/>
+        </action>
+      </pre_actions>
+      <if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select Parameter" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='select'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select Parameter" Description=""/>
+          <next_node Name="Select Parameter" Description=""/>
+          <next_node Name="done4" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done4">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="136,218" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <mgcnode Name="Select Parameter" location="330,222" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Select Parameter" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done4 location="509,427" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done4" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done4>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="168,240" endpoint="330,244" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="287,238,4,4" ctrlRect2="206,242,4,4"/>
+      </start2>
+      <mgcnode Name="Select Parameter">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="362,244" endpoint="362,244" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="435,242,4,4" ctrlRect2="566,82,4,4" textRect="424,160,157,9">
+          <textProps text="[$userAction ='search_button']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="346,222" endpoint="346,222" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="344,145,4,4" ctrlRect2="344,145,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="346,222" endpoint="346,222" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="344,145,4,4" ctrlRect2="344,145,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="346,267" endpoint="525,427" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="344,385,4,4" ctrlRect2="523,305,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="2" textAttrsKey0="ParameterClassMnemonicValue : string" textAttrsKey1="fieldName : string">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="ParameterClassMnemonicValue" Type="string" Comment=""/>
+        <variable Name="fieldName" Type="string" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

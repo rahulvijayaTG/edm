@@ -1,0 +1,118 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="TLSelectTransAsset.pgl" title="Select Items">
+  <ui:container id="srchCont" name="srchCont" scrollable="true" collapsable="true">
+    <ui:step id="srchStp" name="srchStp" displayText="{$root/SEARCH_FIELDS/CONT_DISPLAY_TEXT/@Value}" scrollable="true">
+      <ui:search displayText="{$root/SEARCH_FIELDS/STP_DISPLAY_TEXT/@Value}" exportSearch="false" saveSearch="false" collapsable="false">
+        <ui:field-group columns="2" select="$root/SEARCH_FIELDS">
+          <ui:entry-field name="SRCH_ITEM_ID" displayText="{$root/SEARCH_FIELDS/NUMBER_DISPLAY_TEXT/@Value}" />
+          <ui:entry-field name="SRCH_ITEM_NAME" displayText="{$root/SEARCH_FIELDS/DESC_DISPLAY_TEXT/@Value}" />
+          <!-- <ui:entry-field name="SRCH_ITEM_DESC" displayText="{$root/SEARCH_FIELDS/DESC_DISPLAY_TEXT/@Value}"/>-->
+          <ui:dropdown name="SRCH_ITEM_TYPE" displayText="Material Type" optionSrc="$root/ITEM_TYPES/*" selectAll="false" displayCondition="{$root/SEARCH_FIELDS/SOURCE/@Value = '0' or( $root/SEARCH_FIELDS/SOURCE/@Value != 'TransAsset' and $root/SEARCH_FIELDS/SOURCE/@Value != 'PI')}" />
+          <ui:hidden-field name="FIELD_NAME" id="FIELD_NAME" />
+          <ui:hidden-field name="PREV_SEL" id="PREV_SEL" />
+          <ui:hidden-field name="POP_ASST_DESC" id="POP_ASST_DESC" />
+          <ui:hidden-field name="POP_ITEMM_TYPE" id="POP_ITEMM_TYPE" />
+          <ui:hidden-field name="SRCH_LOC_ID" id="SRCH_LOC_ID" />
+          <ui:hidden-field name="SRCH_SGMNT_ID" id="SRCH_SGMNT_ID" />
+          <ui:hidden-field name="SRCH_GTIN_ID" id="SRCH_GTIN_ID" />
+          <ui:hidden-field name="SRCH_RPL_UOM" id="SRCH_RPL_UOM" />
+        </ui:field-group>
+      </ui:search>
+    </ui:step>
+  </ui:container>
+  <ui:container id="srchResCont" name="srchResCont" scrollable="true">
+    <ui:step id="srchResStep" name="srchResStep" displayText="{$root/SEARCH_FIELDS/SRCH_RES_DISPLAY_TEXT/@Value}" scrollable="true">
+      <ui:table id="taTable" maxRows="10" name="taTable" displayText="{$root/SEARCH_FIELDS/SRCH_RES_DISPLAY_TEXT/@Value}" displayTextNoRecords="No Records Found" rowSrc="P_Item" select="$root/ITEM_DETAILS" rowId="ItemId" postRowIdAs="SELECTED_ITEM_IDS" selectable="{$root/SELECT/@Value}" startAtRow="$root/START_AT_ROW/@Value" rememberSelections="true" collapsable="false">
+        <ui:field-group>
+          <ui:entry-field displayText="{$root/SEARCH_FIELDS/NUMBER_DISPLAY_TEXT/@Value}" name="ItemId" editable="false" sortable="true" />
+          <ui:hidden-field name="UOMIDrplCombo" id="UOMIDrplCombo" defaultValue="0" />
+          <ui:entry-field displayText="{$root/SEARCH_FIELDS/DESC_DISPLAY_TEXT/@Value}" name="ItemName" editable="false" />
+          <!--   <ui:entry-field displayText="{$root/SEARCH_FIELDS/DESC_DISPLAY_TEXT/@Value}" name="ItemDescription" editable="false"/>-->
+          <ui:entry-field displayText="{$root/SEARCH_FIELDS/TYPE_DISPLAY_TEXT/@Value}" name="ItemType" editable="false" />
+        </ui:field-group>
+        <ui:buttons id="buttons1" name="buttons1">
+          <ui:button displayText="Cancel" id="cancel" name="cancel" onClick="javascript:window.close();" />
+          <ui:button displayText="Select" id="select" name="select" enabledBySelections="true" onClick="javascript:selectTransAsset();" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>function selectTransAsset()
+    {
+		  var selectedIds =document.getElementsByName( 'SELECTED_ITEM_IDS' );
+		   var prevSelections =document.form.PREV_SEL.value;
+		  var selectedItemDesc =document.getElementsByName( 'ItemName' );
+				  var selectedItemType =document.getElementsByName( 'ItemType' );
+		//var selectedItemDesc =document.getElementsByName( 'ItemDescription' );		
+		  var length = selectedIds.length;
+      var items = null;
+      var itemDesc = null;		
+		      var itemType = null;		
+      var categoryCodes = null;
+		 var UOMIDrplCombo  =document.getElementsByName( 'UOMIDrplCombo' );
+		var selectedUOMIDrplCombo = null;
+      for(i=0; i &lt; length; i++)
+			{
+        var t = selectedIds[ i ];
+        var item = selectedItemDesc[ i ];		
+		var itemTypeSelVal = selectedItemType[ i ];
+        if ( t.checked )
+        {
+          if( items )
+            items += ',' + t.value;
+
+          else
+             items = t.value;
+		
+          if( itemDesc )
+            itemDesc += ',' +item.value;
+
+          else
+             itemDesc = item.value;		
+		 if( itemType )
+            itemType += ',' +itemTypeSelVal.value;
+
+          else
+             itemType = itemTypeSelVal.value;		
+		if(document.form.SRCH_RPL_UOM.value.length&gt;0){
+		selectedUOMIDrplCombo= UOMIDrplCombo[i].value;
+		}
+        }
+      }
+	    if(prevSelections.length &gt; 0)
+	       {
+		           if(items != null)
+		            	items= prevSelections+','+items;
+							else
+									items= prevSelections;
+	      }
+      if ( document.form.FIELD_NAME.value.length &gt; 0)
+        {
+
+          var fieldName = document.form.FIELD_NAME.value;
+          eval("parent.opener.form." + fieldName + ".value = items;");
+      }
+
+		 if ( document.form.POP_ASST_DESC.value.length &gt; 0)
+        {
+
+          var fieldName = document.form.POP_ASST_DESC.value;
+          eval("parent.opener.form." + fieldName + ".value = itemDesc;");
+      } 
+				if ( document.form.POP_ITEMM_TYPE.value.length &gt; 0)
+        {
+
+          var fieldName2 = document.form.POP_ITEMM_TYPE.value;
+          eval("parent.opener.form." + fieldName2 + ".value = itemType;");
+      }
+		
+				if(document.form.SRCH_RPL_UOM.value.length&gt;0){
+          parent.opener.rplUomOnItemSelect(selectedUOMIDrplCombo);
+	}
+		
+
+	
+
+      window.close();    
+      }</ui:script>
+</ui:page-group>
+

@@ -1,0 +1,590 @@
+<DOCUMENTS>
+  <DEFINE_METHOD Name="saveParameters">
+    <RULE>
+      <ACTION>
+        <!--This api is passed the outxml and updates workflow variable with them -->
+        <TO_DOCVAR AssignToVar="saveParameters">
+          <PARAMS>
+            <TO_XML SelectList="$thisParam/*"/>
+          </PARAMS>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getscreenHeader">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="measuredimensions">
+          <DIMENSION/>
+        </TO_DOCVAR>
+        <REQUEST Name="getAlldimensions" ServiceName="BCM_MASTER" AssignToVar="dimoptions">
+					<measureID Value="{$thisParam/measureID/@Value}"/> 
+					 <buttonAction Value="{$thisParam/buttonAction/@Value}"/>
+					</REQUEST>
+        <TO_DOCVAR AssignToVar="measuredimensions">
+          <DIMENSION>
+            <TO_XML SelectList="$dimoptions/DIMENSION/*"/>
+          </DIMENSION>
+        </TO_DOCVAR>
+        <ADD_CHILDREN DocVar="thisReturn" FromDocVar="measuredimensions"/>
+        <ADD_CHILDREN DocVar="thisReturn" FromSelectList="$leveloptions/*"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="modifymeasure">
+    <API_DOC>
+      <INPUT>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+        </ON_SUCCESS>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="measureVar">
+          <DIMENSIONS/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="measuretempVar">
+          <SCHEDULES>
+            <TO_XML SelectList="$thisParam/NEW/SCHEDULES/*"/>
+          </SCHEDULES>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="measuredimensions">
+          <SCHEDULES>
+            <TO_XML SelectList="$thisParam/OLD/RESPONSE/*"/>
+          </SCHEDULES>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="temp">
+          <abc/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$measuredimensions/*" CurrentElement="checkPresent">
+          <IF_TEST Test="($measuretempVar/SCHEDULE/ID/@Value=$checkPresent/ID/@Value)">
+            <THEN>
+              <SET Var="isPresent" FromValue="true"/>
+              <!--	 <SET_CHILD DocVar="measuredimensions" FromDocVar="measuretempVar"  /> -->
+              <!--	 <REMOVE_CHILDREN ChildName="SCHEDULE" DocVar="measuredimensions"/>
+							<APPEND_CHILDREN DocVar="measuredimensions"  FromDocVar="measuretempVar"/> -->
+              <ADD_CHILDREN DocVar="temp" FromSelectList="$measuretempVar/*"/>
+            </THEN>
+            <ELSE>
+              <ADD_CHILDREN DocVar="temp" FromDocVar="checkPresent"/>/>
+
+
+
+
+
+
+
+              <!--<EXIT/>-->
+            </ELSE>
+          </IF_TEST>
+        </FOR_EACH>
+        <IF_TEST Test="($isPresent/@Value!='true')">
+          <THEN>
+            <ADD_CHILDREN DocVar="temp" FromSelectList="$measuretempVar/*"/>
+          </THEN>
+        </IF_TEST>
+			
+			
+		 <TO_DOCVAR AssignToVar="temp1">
+				<SCHEDULES/>
+			</TO_DOCVAR>
+				<TO_DOCVAR AssignToVar="temp2">
+				<SCHEDULES/>
+			</TO_DOCVAR>
+			   <FOR_EACH SelectList="$temp/*" CurrentElement="checkTime">
+				
+				
+				   <GET_DOCUMENT Name="Dimension" AssignToVar="is_Dim_info" ServiceName="BCM_MASTER" ReturnRowCount="Yes">
+            <Name Value="{$checkTime/ID/@Value}" MatchBy="EQUAL"/>
+            <SELECT>
+              <isTime/>
+            </SELECT>
+          </GET_DOCUMENT>
+				
+				
+				     <IF_TEST Test="($is_Dim_info/Dimension/isTime/@Value='true')">
+            <THEN>
+						<ADD_CHILDREN DocVar="temp1" FromDocVar="checkTime"/>
+						</THEN>
+					<ELSE>
+						<ADD_CHILDREN DocVar="temp2" FromDocVar="checkTime"/>
+					</ELSE>
+					</IF_TEST>
+				</FOR_EACH>
+			 <ADD_CHILDREN DocVar="temp2" FromSelectList="$temp1/*"/>
+			
+        <TO_DOCVAR AssignToVar="measuredimensions">
+          <SCHEDULES>
+            <TO_XML SelectList="$temp2/*"/>
+          </SCHEDULES>
+        </TO_DOCVAR> 
+			<!--
+			 <TO_DOCVAR AssignToVar="measuredimensions">
+          <SCHEDULES>
+            <TO_XML SelectList="$temp/*"/>
+          </SCHEDULES>
+        </TO_DOCVAR>-->
+        <ADD_CHILDREN DocVar="thisReturn" FromSelectList="$measuredimensions/*"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="removemeasure1">
+    <API_DOC>
+      <INPUT>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+        </ON_SUCCESS>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="measureVar">
+          <DIMENSIONS/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="measuredimensions">
+          <SCHEDULES>
+            <TO_XML SelectList="$thisParam/OLD/RESPONSE/*"/>
+          </SCHEDULES>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="temp">
+          <abc/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$measuredimensions/*" CurrentElement="checkPresent">
+          <IF_TEST Test="($thisParam/dimensionID/@Value!=$checkPresent/ID/@Value)">
+            <THEN>
+              <SET Var="isPresent" FromValue="true"/>
+              <ADD_CHILDREN DocVar="temp" FromDocVar="checkPresent"/>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <ADD_CHILDREN DocVar="thisReturn" FromSelectList="$temp/*"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="removeIOLevel">
+    <API_DOC>
+      <INPUT>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+        </ON_SUCCESS>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="measureVar">
+          <DIMENSIONS/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="measuredimensions">
+          <LINES>
+            <TO_XML SelectList="$thisParam/CURRENT/*"/>
+          </LINES>
+        </TO_DOCVAR>
+			<TO_DOCVAR AssignToVar="measureTemp">
+				<LINES/>
+			</TO_DOCVAR>
+			<SET Var="idval" FromValue="{$thisParam/ID/@Value}"/>
+			<!--<REMOVE_CHILDREN ChildName="LINE" DocVar="measuredimensions" SelectList="$measuredimensions/LINE[ID/@Value='IO95']/*"/>-->
+         <FOR_EACH SelectList="$measuredimensions/*" CurrentElement="checkPresent">
+          <IF_TEST Test="($thisParam/ID/@Value=$checkPresent/ID/@Value)">
+            <THEN>
+        <!--      <REMOVE_CHILDREN ChildName="LINE" DocVar="measuredimensions" SelectList="$measuredimensions/LINE[ID/@Value=$thisParam/ID/@Value]/*"/>-->
+            </THEN>
+            <ELSE>
+          <ADD_CHILDREN DocVar="measureTemp" FromDocVar="checkPresent"/>
+            </ELSE>
+          </IF_TEST>
+        </FOR_EACH> 
+        <ADD_CHILDREN DocVar="thisReturn" FromSelectList="$measureTemp/*"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="modifymeasureorder">
+    <API_DOC>
+      <INPUT>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+        </ON_SUCCESS>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="measureVar">
+          <DIMENSIONS/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="measuretempVar">
+          <SCHEDULES>
+            <TO_XML SelectList="$thisParam/NEW/SCHEDULES/*"/>
+          </SCHEDULES>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="measuredimensions">
+          <SCHEDULES>
+            <TO_XML SelectList="$thisParam/OLD/RESPONSE/*"/>
+          </SCHEDULES>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="temp">
+          <abc/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$measuredimensions/*" CurrentElement="checkPresent">
+          <IF_TEST Test="($measuretempVar/SCHEDULE/ID/@Value=$checkPresent/ID/@Value)">
+            <THEN>
+              <SET Var="isPresent" FromValue="true"/>
+              <!--	<SET_CHILD DocVar="measuredimensions" FromDocVar="measuretempVar"		 />-->
+              <!--	 <REMOVE_CHILDREN ChildName="SCHEDULES" DocVar="measuredimensions"/>
+								<APPEND_CHILDREN DocVar="measuredimensions" FromDocVar="measuretempVar"/>-->
+            </THEN>
+            <ELSE>
+              <EXIT/>
+            </ELSE>
+          </IF_TEST>
+        </FOR_EACH>
+        <!-- <ADD_CHILDREN DocVar="thisReturn" FromDocVar="measuredimensions"/>-->
+        <CLONE_XML DocVar="measuredimensions" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getTreelayout">
+    <API_DOC>
+      <INPUT>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+        </ON_SUCCESS>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="listValues">
+          <PARAMETERS>
+            <TO_XML SelectList="$thisParam/PARAMETERS/*"/>
+          </PARAMETERS>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="currentnewVar">
+          <LOOKUPS/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="uboundVar">
+          <UBOUNDS/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="mainVar">
+          <OPTIONS/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="subVar">
+          <OPTIONS/>
+        </TO_DOCVAR>
+			 <TO_DOCVAR AssignToVar="mainRank">
+          <LINE/>
+        </TO_DOCVAR>
+			<!--modify for rank -->
+			<FOR_EACH SelectList="$thisParam/RANKS/*" CurrentElement="currentrank">
+				<IF_TEST Test="strlen($currentrank/level/@Value)=0">
+					<THEN>
+					 
+	<SET Var="result" FromValue="{$currentrank/@Value}"/>
+						
+						
+						
+					</THEN>
+						<ELSE>
+					
+				<SET Var="levels" FromValue="{$currentrank/level/@Value}"/>
+				<SET Var="ranks" FromValue="{$currentrank/rank/@Value}"/>
+				<SET Var="result" FromValue="{concat($levels/@Value,'(',$ranks/@Value,')')}"/>
+				</ELSE>
+					</IF_TEST>
+			<TO_DOCVAR AssignToVar="rankTemp">
+				<LINE>
+					<level Value="{$result/@Value}"/>
+				</LINE>
+			</TO_DOCVAR>
+				<ADD_CHILDREN  DocVar="mainRank" FromSelectList="$rankTemp/*"/>
+			</FOR_EACH>
+        <SET Var="lookupcount" FromValue="{count($listValues/level)}"/>
+        <SET Var="uboundcount" FromValue="{count($listValues/ubound)}"/>
+        <IF_TEST Test="($uboundcount/@Value > $lookupcount/@Value)">
+          <THEN>
+            <SET Var="max" FromValue="ubound"/>
+            <SET Var="mincount" FromValue="{$lookupcount/@Value}"/>
+            <ADD_CHILDREN DocVar="mainVar" FromSelectList="$listValues/*[name() = 'ubound']"/>
+            <ADD_CHILDREN DocVar="subVar" FromSelectList="$mainRank/*"/>
+            <!--  <ADD_CHILDREN DocVar="subVar" FromSelectList="$listValues/*[name() = 'rank']"/>-->
+          </THEN>
+          <ELSE>
+            <SET Var="max" FromValue="level"/>
+            <SET Var="mincount" FromValue="{$uboundcount/@Value}"/>
+            <ADD_CHILDREN DocVar="mainVar" FromSelectList="$mainRank/*"/>
+            <!--	   <ADD_CHILDREN DocVar="mainVar" FromSelectList="$listValues/*[(name() = 'rank') and @Value  !=null]"/>-->
+            <ADD_CHILDREN DocVar="subVar" FromSelectList="$listValues/*[name() = 'ubound']"/>
+          </ELSE>
+        </IF_TEST>
+        <SET Var="countmain" FromValue="0"/>
+        <FOR_EACH SelectList="$mainVar/*" CurrentElement="current">
+          <TO_DOCVAR AssignToVar="currentVar">
+            <LINES/>
+          </TO_DOCVAR>
+          <SET Var="countsub" FromValue="0"/>
+				<IF_TEST Test="(count($subVar/*)!=0)">
+					<THEN>
+          <FOR_EACH SelectList="$subVar/*" CurrentElement="current1">
+            <IF_TEST Test="(($countmain/@Value='0') and ($countsub/@Value='0'))">
+              <THEN>
+                <TO_DOCVAR AssignToVar="currentVar">
+                  <LINES>
+                    <LINE>
+                      <lbound Value="{$thisParam/PARAMETERS/lbound/@Value}"/>
+                  
+                      <TO_XML Select="$current"/>
+                      <TO_XML Select="$current1"/>
+                    </LINE>
+                  </LINES>
+                </TO_DOCVAR>
+              </THEN>
+              <ELSE>
+                <IF_TEST Test="($countmain/@Value=$countsub/@Value)">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="uboundVar">
+                      <LINES>
+                        <LINE>
+                          <TO_XML Select="$current"/>
+                          <TO_XML Select="$current1"/>
+                        </LINE>
+                      </LINES>
+                    </TO_DOCVAR>
+                    <ADD_CHILDREN DocVar="currentVar" FromSelectList="$uboundVar/*"/>
+                  </THEN>
+                </IF_TEST>
+              
+              </ELSE>
+            </IF_TEST>
+            <SET Var="countsub" FromValue="{int($countsub+1)}"/>
+          </FOR_EACH>
+						</THEN>
+					<ELSE>
+						  <IF_TEST Test="($countmain/@Value='0')">
+              <THEN>
+                <TO_DOCVAR AssignToVar="currentVar">
+                  <LINES>
+                    <LINE>
+                      <lbound Value="{$thisParam/PARAMETERS/lbound/@Value}"/>
+                    
+                      <TO_XML Select="$current"/>
+                   
+                    </LINE>
+                  </LINES>
+                </TO_DOCVAR>
+              </THEN>
+              <ELSE>
+             
+                    <TO_DOCVAR AssignToVar="uboundVar">
+                      <LINES>
+                        <LINE>
+                          <TO_XML Select="$current"/>
+                          
+                        </LINE>
+                      </LINES>
+                    </TO_DOCVAR>
+                    <ADD_CHILDREN DocVar="currentVar" FromSelectList="$uboundVar/*"/>
+                 
+                
+              </ELSE>
+            </IF_TEST>
+            <SET Var="countsub" FromValue="{int($countsub+1)}"/>
+					</ELSE>
+					</IF_TEST>
+				<IF_TEST Test="($mincount/@Value!=0)">
+					<THEN>
+          <IF_TEST Test="($countmain/@Value >= $mincount/@Value)">
+            <THEN>
+              <TO_DOCVAR AssignToVar="uboundVar">
+                <LINES>
+                  <LINE>
+                    <TO_XML Select="$current"/>
+                  </LINE>
+                </LINES>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="currentVar" FromSelectList="$uboundVar/*"/>
+            </THEN>
+          </IF_TEST>
+						</THEN>
+					</IF_TEST>
+					
+          <ADD_CHILDREN DocVar="currentnewVar" FromSelectList="$currentVar/*"/>
+          <SET Var="countmain" FromValue="{int($countmain+1)}"/>
+        </FOR_EACH>
+        <ADD_CHILDREN DocVar="thisReturn" FromDocVar="currentnewVar"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getlinelayout">
+    <API_DOC>
+      <INPUT>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+        </ON_SUCCESS>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="temps">
+          <LINES/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="parentVar">
+          <LINE/>
+        </TO_DOCVAR>
+			
+			<TO_DOCVAR AssignToVar="dimVar1">
+				<DIMS>
+					<TO_XML SelectList="$thisParam/DIMS/*"/>
+				</DIMS>
+			</TO_DOCVAR>
+				<TO_DOCVAR AssignToVar="dimVar2">
+				<DIMS/>
+					 
+				 
+			</TO_DOCVAR>
+		 	<FOR_EACH SelectList="$thisParam/CURRENT/*" CurrentElement="currdim">
+				 	<FOR_EACH SelectList="$dimVar1/*" CurrentElement="currdim1">
+				<SET Var="curr" FromValue="{$currdim/name()}"/>
+						 
+				<IF_TEST Test="($currdim1/name()=$curr/@Value)">
+					<THEN>
+						<ADD_CHILDREN DocVar="dimVar2" FromDocVar="currdim"/>
+					</THEN>
+				</IF_TEST>
+				</FOR_EACH>
+			
+					</FOR_EACH>
+        <TO_DOCVAR AssignToVar="listValues">
+          <MAIN>
+            <INPUT>
+						<TO_XML SelectList="$dimVar2/*"/>
+             <!-- <TO_XML SelectList="$thisParam/CURRENT/*[(name()='Product') or (name()='Manufacturing') or (name()='Access') or (name()='Time') or (name()='Retail') or (name()='CustProduct')]"/>-->
+						 <TO_XML SelectList="$thisParam/OLD/LINE/*[name()='ID']"/>
+						 <TO_XML SelectList="$thisParam/CURRENT/*[name()='Access']"/>
+            </INPUT>
+            <COLLATE_LIST Value="LINE">
+						<ID/>
+              <Access/>
+						<TO_XML SelectList="$thisParam/DIMS/*"/>
+           <!--   <Time/>
+              <Product/>
+              <Retail/>
+              <CustProduct/>
+              <Manufacturing/>-->
+            </COLLATE_LIST>
+          </MAIN>
+        </TO_DOCVAR>
+        <COLLATE_XML Var="listValues" AssignToVar="currentVar"/>
+			   
+        <FOR_EACH SelectList="$currentVar/*" CurrentElement="curr">
+          <FOR_EACH SelectList="$thisParam/OLD/*" CurrentElement="curr1">
+            <TO_DOCVAR AssignToVar="temps">
+              <LINE>
+               <!-- <ID Value="{$curr1/ID/@Value}"/>-->
+                <TO_XML SelectList="$curr/*"/>
+              </LINE>
+            </TO_DOCVAR>
+          </FOR_EACH>
+          <ADD_CHILDREN DocVar="parentVar" FromDocVar="temps"/>
+        </FOR_EACH>
+        <ADD_CHILDREN DocVar="thisReturn" FromSelectList="$parentVar/*"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getranklayout">
+    <API_DOC>
+      <INPUT>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+        </ON_SUCCESS>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="temps">
+          <LINES/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="parentVar">
+          <LINE/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="rankValues">
+          <MAIN/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$thisParam/PARAMETERS/rank" CurrentElement="curr1">
+          <IF_TEST Test="strlen($curr1/@Value) !=0">
+            <THEN>
+              <ADD_CHILDREN DocVar="rankValues" FromSelect="$curr1"/>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="listValues">
+          <MAIN>
+            <INPUT>
+              <!--
+											<TO_XML SelectList="$levelValues/*"/>-->
+              <TO_XML SelectList="$rankValues/*"/>
+              <TO_XML SelectList="$thisParam/PARAMETERS/*[(name()='level')]"/>
+              <!-- <TO_XML SelectList="$thisParam/PARAMETERS/*[(((name()='level') and (level/@Value!=null)) or ((name()='rank')  and (rank/@Value!=null)))]"/> -->
+            </INPUT>
+            <COLLATE_LIST Value="LINE">
+              <level/>
+              <rank/>
+            </COLLATE_LIST>
+          </MAIN>
+        </TO_DOCVAR>
+        <COLLATE_XML Var="listValues" AssignToVar="currentVar"/>
+        <ADD_CHILDREN DocVar="thisReturn" FromSelectList="$currentVar/*"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+<DEFINE_METHOD Name="removeexistLevels">
+	<RULE>
+		<ACTION>
+			
+	 	<TO_DOCVAR AssignToVar="mainVar">
+				<ALL>
+				<TO_XML SelectList="$thisParam/OLD/*"/>
+					</ALL>
+			</TO_DOCVAR> 
+	 
+			<REMOVE_CHILDREN DocVar="mainVar" ChildName="ORDERS"/>
+						<TO_DOCVAR AssignToVar="tempVar">
+				<ORDERS/>
+	 	</TO_DOCVAR>
+			<FOR_EACH SelectList="$thisParam/OLD/ORDERS/*" CurrentElement="CURR1">
+				
+				<FOR_EACH SelectList="$thisParam/NEW/LINE/ORDERS/*" CurrentElement="CURR2">
+					<IF_TEST Test="($CURR1/level/@Value=$CURR2/level/@Value)">
+						<THEN>
+						 
+								 <IF_TEST Test="count($tempVar/LINE[level/@Value=$CURR2/level/@Value])=0">
+								<THEN>
+							<ADD_CHILDREN DocVar="tempVar" FromDocVar="CURR2"/>
+											</THEN>
+								</IF_TEST>
+							
+					
+						</THEN>
+				 
+							
+					 
+					</IF_TEST>
+				</FOR_EACH>
+					 	 <IF_TEST Test="count($tempVar/LINE[level/@Value=$CURR1/level/@Value])=0">
+								<THEN>
+							<ADD_CHILDREN DocVar="tempVar" FromDocVar="CURR1"/>
+									</THEN>
+								</IF_TEST>
+			</FOR_EACH>
+			<ADD_CHILDREN DocVar="mainVar" FromDocVar="tempVar"/>
+					<ADD_CHILDREN DocVar="thisReturn" FromSelectList="$mainVar/*"/>
+			
+		</ACTION>
+	</RULE>
+</DEFINE_METHOD>
+</DOCUMENTS>

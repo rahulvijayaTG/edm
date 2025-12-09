@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:page-group xmlns:ui="http://www.i2.com/ui" displayText="Manage Favorites" source="core.search.select.searches:load">
+  <ui:container id="container" displayText="Manage Favorites" scrollable="false">
+    <ui:step id="search_programs">
+      <ui:search displayText="Search" exportSearch="false" saveSearch="false">
+        <ui:field-group columns="2" select="$this">
+          <ui:field-group>
+            <ui:hidden-field name="NAVRELOAD" value="{$this/NAVRELOAD/@Value}"/>
+            <ui:entry-field displayText="Name" name="NAME"/>
+          </ui:field-group>
+          <ui:field-group>
+      <ui:dropdown displayText="Category" name="PAGE_NAME_SEARCH" selectAll="true" optionSrc="$root/FAVORITE_CATEGORIES/*"/>
+          </ui:field-group>
+        </ui:field-group>
+      </ui:search>
+      <ui:table displayText="Favorites" displayTextNoRecords="No Favorites found" select="FAVORITES" selectable="All">
+        <ui:validation anyFieldIsRequired="false" successMessage="{$this/SUCCESS_MESSAGE/@Value}"/>
+        <ui:help url="{$pages:search_results_help}"/>
+        <ui:field-group>
+          <ui:image-link-field displayText="" src="/view_details.gif" name="ID" dataType="Constant">
+            <ui:url page="{$pages:core_search_view}">
+              <ID select="ID/@Value"/>
+              <NAME select="NAME/@Value"/>
+            </ui:url>
+          </ui:image-link-field>
+          <ui:display-field displayText="Name" name="NAME"/>
+          <ui:display-field displayText="Category" name="PAGE_NAME"/>
+          <ui:hidden-field name="STATUS"/>
+        </ui:field-group>
+        <ui:pagination/>
+        <ui:buttons>
+          <ui:button displayText="Delete" id="delete" enabledBySelections="true" submitTo="searches/delete.x2c"/>
+        </ui:buttons>
+      </ui:table>
+      <ui:script>
+        <![CDATA[
+          function onLoad( )
+          {
+            onLoadSuper( );
+            scrollHelper( );
+            var x = document.getElementById( 'NAVRELOAD' );
+            if( x.value == 'TRUE' ){
+              parent.navFrame.history.go( 0 );
+              x.value = 'FALSE';
+            }
+          }
+
+          function i2uiRowSelectionCallback( tableid )
+          {
+            if( tableid == null )
+              return;
+
+            if( tableid == 'result_form_table' ){
+              try
+              {
+                var activateSelection = 0;
+                var deactivateSelection = 0;
+
+                var selectedRows = i2uiGetSelectedRowNums( tableid );
+
+                var arr = document.getElementsByName( 'STATUS' );
+                for( var i = 0; i < selectedRows.length; ++i ){
+                  var rowIndx = selectedRows[ i ] - 1;
+                  var v = arr[ rowIndx ].value;
+                  if ( v == 'ACTIVE' )
+                    ++activateSelection;
+                  else
+                    ++deactivateSelection;
+                }
+                if( activateSelection && deactivateSelection == 0 )
+                  i2uiToggleButtonState( 'deactivate', 'enabled', 'Regular' );
+                else{
+                  i2uiToggleButtonState( 'deactivate','enabled' );
+                  i2uiToggleButtonState( 'deactivate','disabled' );
+                }
+                if( deactivateSelection && activateSelection == 0 )
+                  i2uiToggleButtonState( 'activate', 'enabled', 'Regular' );
+                else{
+                  i2uiToggleButtonState( 'activate', 'enabled' );
+                  i2uiToggleButtonState( 'activate', 'disabled' );
+                }
+                if( activateSelection + deactivateSelection )
+                  i2uiToggleButtonState( 'delete','enabled','Emphasized' );
+                else{
+                  i2uiToggleButtonState( 'delete', 'enabled', 'Emphasized' );
+                  i2uiToggleButtonState( 'delete', 'disabled' );
+                }
+              }
+              catch( e ){}
+            }
+          }
+        ]]>
+      </ui:script>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

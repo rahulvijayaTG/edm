@@ -1,0 +1,79 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="iscpRPLayersHistory.pgl">
+  <ui:container id="SearchContainer" displayText="RP Layers History">
+    <ui:step id="searchStep">
+      <ui:search displayText="Search" exportSearch="false" saveSearch="false" collapsable="false">
+        <ui:field-group id="fieldGroups" columns="2">
+          <ui:dropdown name="LIST_BOX" size="0" displayText="Segment " selectAll="true" select="Single">
+            <ui:option id="option1" value="480003800, Quaker Oats Foods" />
+            <ui:option id="option2" value="480004800, Gatorade" />
+            <ui:option id="option3" value="480005800, Tropicana" />
+            <ui:option id="option4" value="480006800, Quaker Oats Foods" />
+            <ui:option id="option5" value="480007800, Gatorade" />
+            <ui:option id="option6" value="480008800, Tropicana" />
+          </ui:dropdown>
+          <ui:entry-field displayText="Layer" id="SRCH_LAYER" name="SRCH_LAYER">
+            <ui:links>
+              <ui:link displayText="Select Layers" targetType="popup" targetName="orderPopup">
+                <ui:image src="pop_up_window.gif" />
+                <ui:url page="view.x2ps">
+                  <FIELD_NAME select="'SRCH_LAYER'" />
+                  <ENTITY_NAME select="'SRCH_LAYER'" />
+                  <SELECTABLE select="'All'" />
+                  <BUTTON_ID select="'selectLayers'" />
+                </ui:url>
+              </ui:link>
+            </ui:links>
+          </ui:entry-field>
+          <ui:dropdown name="LIST_BOX" size="0" displayText="Demand Type " selectAll="true" select="Single">
+            <ui:option id="option1" value="Sales Order" />
+            <ui:option id="option2" value="Forecast" />
+          </ui:dropdown>
+          <ui:entry-field id="SRCH_MOD_BY" name="SRCH_MOD_BY" displayText="Modified By" rowSpan="2" />
+        </ui:field-group>
+        <ui:field-group id="dateRange">
+          <ui:date-range displayText="Modified Date" name="SRCH_MOD_DATE" fromDate="{$root/FROM_DATE/@Value}" toDate="{$root/TO_DATE/@Value}" />
+        </ui:field-group>
+      </ui:search>
+      <ui:table id="bottomTable" displayText="RP Layers" select="$root/line" rowSrc="ROW_DATA" rowId="itemID" exportable="true">
+        <ui:field-group id="tableColumns">
+          <ui:display-field displayText="Segment" name="itemID" sortable="true" />
+          <ui:display-field displayText="Segment Description" name="name" />
+          <ui:display-field displayText="Layer" name="locationSpecificIndicator" />
+          <!--		<ui:dropdown name="locationSpecificIndicator" id="locationSpecificIndicator" displayText="Layer">
+						<ui:option id="Layer1" value="Layer1"/>
+						<ui:option id="Layer2" value="Layer2"/>
+						<ui:option id="Layer3" value="Layer3"/>
+						<ui:option id="Layer4" value="Layer4"/>
+						<ui:option id="Layer5" value="Layer5"/>																														
+					</ui:dropdown>-->
+          <!--									<ui:dropdown name="CREATION_DATE" id="CREATION_DATE" displayText="Priority">
+						<ui:option id="1" value="1"/>
+						<ui:option id="2" value="2"/>
+						<ui:option id="3" value="3"/>
+					</ui:dropdown>-->
+          <ui:display-field displayText="Priority" name="CREATION_DATE" sortable="true" />
+          <ui:display-field displayText="Demand Type" name="SOURCE" />
+          <!--					     										<ui:dropdown name="SOURCE" id="SOURCE" displayText="Demand Type">
+						<ui:option id="Sales Order" value="Sales Order"/>
+						<ui:option id="Forecast" value="Forecast"/>
+					</ui:dropdown>-->
+          <ui:display-field displayText="Start Day" name="START_DAY" dataType="Number" />
+          <ui:display-field displayText="End Day" name="END_DAY" dataType="Number" />
+          <ui:display-field id="SCENARIO_ID" name="SCENARIO_ID" displayText="Comments" required="true" />
+          <ui:display-field id="ALLOCATION_BANDS" name="ALLOCATION_BANDS" displayText="Allocation Bands" required="true" />
+          <!--								<ui:dropdown name="ALLOCATION_BANDS" id="ALLOCATION_BANDS" displayText="Allocation Bands">
+						<ui:option id="20,40,60,100" value="20,40,60,100"/>
+						<ui:option id="10,20,30,40" value="10,20,30,40"/>
+							<ui:option id="30,60,90,120" value="30,60,90,120"/>
+					</ui:dropdown>-->
+          <ui:display-field id="LAST_MODIFIED_DATE" name="LAST_MODIFIED_DATE" displayText="Date Modified" sortable="true" />
+          <ui:display-field id="isCapacity" name="isCapacity" displayText="Modified By" sortable="true" />
+        </ui:field-group>
+        <ui:buttons id="tableButtons">
+          <ui:button displayText="Return" id="return" name="return" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

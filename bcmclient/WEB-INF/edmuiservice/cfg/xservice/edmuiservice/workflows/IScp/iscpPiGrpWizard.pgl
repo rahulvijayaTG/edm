@@ -1,0 +1,473 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="uiwfPiGrpWizard.pgl">
+  <ui:container displayText="Product Interchangeability (PI) Basic Group Information" id="container">
+    <ui:step displayText="Basic Group Information" id="step1">
+      <ui:field-group id="fg" rows="3">
+        <ui:entry-field id="GrpId_pi" name="GrpId_pi" displayText="Group ID  " value="{$root/ROOT/grpid/@Value}" editable="false" />
+        <ui:entry-field id="GrpDesc_pi" name="GrpDesc_pi" displayText="Group Description" value="{$root/ROOT/grpdesc/@Value}" editable="false" />
+        <ui:entry-field id="GrpStatus_pi" name="GrpStatus_pi" displayText="Group Status  " value="{$root/ROOT/grpStatus/@Value}" editable="false" />
+      </ui:field-group>
+    </ui:step>
+  </ui:container>
+  <!--******************************* End of the first container *****************************-->
+  <!--******************************* First step starts here *****************************-->
+  <ui:container id="topContainer" type="Wizard" selectedStep="{$root/STEP_ID/@Value}" displayText="Item Grp" scrollable="true">
+    <ui:step id="grp" displayText="Add Group">
+      <ui:validation successMessage="{$root/succss/succssmsg/@Value}" />
+      <ui:field-group>
+        <ui:entry-field id="PIGID" displayText="Group ID" name="PIGID" value="{$root/editpopulate/grpid/@Value}" required="true" readOnly="true" />
+        <ui:textarea id="PIGDESC" displayText="Group Description" name="PIGDESC" required="true" value="{$root/editpopulate/grpdesc/@Value}" displayNoWrap="false" />
+        <ui:entry-field id="PIGSTATS" displayText="Group Status" name="PIGSTATS" defaultValue="IN PROCESS" value="{$root/editpopulate/grpStatus/@Value}" readOnly="true" />
+      </ui:field-group>
+      <ui:buttons>
+        <!--QC:20768, Venkat, 06/24/2008, Start-->
+        <!--<ui:button id="CLEAR" name="CLEAR" displayText="Clear" onClick="javascript:onTab('topContainer', 'topContainer')"/>-->
+        <ui:button id="CLEAR" name="CLEAR" displayText="Clear" onClick="javascript:onTab('topContainer', 'topContainer')" disabled="{$root/editpopulate/clearbutton/@Value}" />
+        <!--QC:20768, Venkat, 06/24/2008, End-->
+        <!-- onClick="javascript:onTab('topContainer', 'topContainer')"-->
+        <ui:button id="NEXT" name="NEXT" displayText="Next" onClick="javascript:onNext(0)" validate="true" disabled="{$root/editpopulate/nextbutton/@Value}" />
+        <!--QC:20768, Venkat, 06/24/2008, Start-->
+        <!--<ui:button id="SAVE" name="SAVE" displayText="Save" validate="true"/>-->
+        <!--<ui:button id="FINISH" name="FINISH" displayText="Save and Exit" validate="true"/>-->
+        <ui:button id="SAVE" name="SAVE" displayText="Save" validate="true" disabled="{$root/editpopulate/savebutton/@Value}" />
+        <ui:button id="FINISH" name="FINISH" displayText="Save and Exit" validate="true" disabled="{$root/editpopulate/saveandexitbutton/@Value}" />
+        <!--QC:20768, Venkat, 06/24/2008, End-->
+      </ui:buttons>
+    </ui:step>
+    <!--******************************* First step ends here *****************************-->
+    <!--******************************* Second step starts here *****************************-->
+    <ui:step id="SecondContainer" displayText="Add Group Lines (Products)" scrollable="true">
+      <ui:validation successMessage="{$root/succss/step2/succssmsg/@Value}" />
+      <ui:table displayTextNoRecords="no Records Found" collapsable="true" postRowIdAs="LineScreentwo" rowSrc="$root/ProdDetailsScreenTwo" rememberSelections="true" startAtRow="$root/StartAtRow/@Value" totalRowCount="$root/totalRowCount/@Value" maxRows="5" rowId="LineScreentwo" id="linetable">
+        <ui:field-group id="productgrp" rows="2" collapsable="true">
+          <ui:display-field id="LineScreentwo" name="LineScreentwo" displayText="Group Line ID" dataType="Number" align="left" />
+          <ui:display-field id="predprodScreentwo" name="predprodScreentwo" displayText="Predecessor Product" />
+          <ui:display-field id="predproddescScreentwo" name="predproddescScreentwo" displayText="Predecessor Product Description" />
+          <ui:display-field id="succssprodScreentwo" name="succssprodScreentwo" displayText="Successor Product" />
+          <ui:display-field id="succssproddescScreentwo" name="succssproddescScreentwo" displayText="Successor Product Description" />
+          <ui:display-field id="ConversionRatio" name="ConversionRatio" displayText="Conversion Factor" />
+          <ui:display-field id="InterchangeabilityReason" name="InterchangeabilityReason" displayText="Item Interchange Reason" />
+        </ui:field-group>
+      </ui:table>
+      <ui:field-group>
+     <!-- RIC#180998 DYanez.  Removed update capability from PI Group Line ID field -->
+     <!--   <ui:entry-field id="PIGLNID" displayText="Group Line ID" name="PIGLNID" required="true" value="{$root/grplinedetails/grplinenumber/@Value}" />
+        <ui:entry-field id="PREDID" displayText="Predecessor Product" name="PREDID" required="true" readOnly="false">
+      -->
+        <ui:entry-field id="PIGLNID" displayText="Group Line ID" name="PIGLNID" required="false" value="{$root/grplinedetails/grplinenumber/@Value}" editable="false" />
+        <ui:entry-field id="PREDID" displayText="Predecessor Product" name="PREDID" required="true" readOnly="false">
+          <ui:links>
+            <ui:link displayText="Select Predecessor Product" targetType="popup" targetName="planPopUp">
+              <ui:image src="pop_up_window.gif" />
+              <ui:url page="view.x2ps">
+                <FIELD_NAME select="'PREDID'" />
+                <POP_ASST_DESC select="'PREDDESC'" />
+                <ROW_ID_NAME select="'PREDID'" />
+                <SOURCE select="'PI'" />
+                <ITEM_TYPE select="'FIN'" />
+                <ROW_ID_VALUE select="'PREDID/@Value'" />
+                <SELECTABLE select="'Single'" />
+                <BUTTON_ID select="'SEARCH_PRODUCT_PRED'" />
+              </ui:url>
+            </ui:link>
+          </ui:links>
+        </ui:entry-field>
+        <ui:textarea id="PREDDESC" displayText="Predecessor Product Description" name="PREDDESC" readOnly="true" displayNoWrap="flase" />
+        <ui:entry-field id="SUCCSSID" displayText="Successor Product" name="SUCCSSID" required="true" readOnly="false">
+          <ui:links>
+            <ui:link displayText="Select Successor Product" targetType="popup" targetName="planPopUp">
+              <ui:image src="pop_up_window.gif" />
+              <ui:url page="view.x2ps">
+                <FIELD_NAME select="'SUCCSSID'" />
+                <POP_ASST_DESC select="'SUCCSSDESC'" />
+                <ROW_ID_NAME select="'SUCCSSID'" />
+                <ROW_ID_VALUE select="'SUCCSSID/@Value'" />
+                <SOURCE select="'PI'" />
+                <ITEM_TYPE select="'FIN'" />
+                <SELECTABLE select="'Single'" />
+                <BUTTON_ID select="'SEARCH_PRODUCT_SUCC'" />
+              </ui:url>
+            </ui:link>
+          </ui:links>
+        </ui:entry-field>
+        <ui:textarea id="SUCCSSDESC" displayText="Successor Product Description" name="SUCCSSDESC" readOnly="true" displayNoWrap="false" />
+        <ui:entry-field id="CONV_RATIO" displayText="Conversion Ratio" name="CONV_RATIO" decimals="4" defaultValue="1" />
+        <ui:dropdown id="ItemInterchangeReasonMnemonicValue" displayText="Product Interchange Reason" name="ItemInterchangeReasonMnemonicValue" optionSrc="$root/IntrchngRsn/ItemInterchangeReasonMnemonicValue" />
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="CLEAR_SC2" name="CLEAR_SC2" displayText="Clear" onClick="javascript:onTab('SecondContainer', 'SecondContainer')" />
+        <ui:button id="NEXT_SC2" name="NEXT_SC2" displayText="Next" onClick="javascript:onNext(1)" />
+        <ui:button id="SAVE_SC2" name="SAVE_SC2" displayText="Save" onClick="javascript:cv_test(1)" />
+        <ui:button id="FINISH_SC2" name="FINISH_SC2" displayText="Save and Exit" onClick="javascript:cv_test(2)" />
+      </ui:buttons>
+    </ui:step>
+    <!--******************************* Second step ends here *****************************-->
+    <!--******************************* Third step starts here *****************************-->
+    <ui:step id="Add_Locations" displayText="Add Line Locations" scrollable="true">
+      <ui:validation successMessage="{$root/succss/step3/succssmsg/@Value}" />
+      <ui:table displayTextNoRecords="no Records Found" maxRows="5" collapsable="true" rowSrc="$root/linelocdetailsscthree/details" postRowIdAs="grplinescreenthree" rememberSelections="true" startAtRow="$root/StartAtRow/@Value" totalRowCount="$root/totalRowCount/@Value" scrollable="true">
+        <ui:field-group id="linelocdetails" collapsable="true">
+          <ui:display-field id="grplinescreenthree" name="grplinescreenthree" displayText="Group Line ID" dataType="Number" align="left" />
+          <ui:display-field id="prodpredid" name="prodpredid" displayText="Predecessor Product" />
+          <ui:display-field id="prodpreddesc" name="prodpreddesc" displayText="Predecessor Product Description" />
+          <ui:display-field id="prodSuccssid" name="prodSuccssid" displayText="Successor Product" />
+          <ui:display-field id="prodSuccssdesc" name="prodSuccssdesc" displayText="Successor Product Description" />
+          <ui:display-field id="Locationscreenthree" name="Locationscreenthree" displayText="Location" />
+          <ui:display-field id="Locationdescscreenthree" name="Locationdescscreenthree" displayText="Location Description" />
+          <ui:display-field id="UseUpStrt" name="UseUpStrt" displayText="Use-Up Strategy" />
+          <ui:display-field id="IntrDir" name="IntrDir" displayText="Interchangeability Direction" />
+          <ui:display-field id="PredProdUseDt" name="PredProdUseDt" displayText="Predecessor Product Use Up Date" />
+          <ui:display-field id="Deploymentstartdate" name="Deploymentstartdate" displayText="Deployment Start Date" />
+          <ui:display-field id="DeploymentEnddate" name="DeploymentEnddate" displayText="Deployment End Date" />
+          <ui:display-field id="Productionstartdate" name="Productionstartdate" displayText="Production Start Date" />
+          <ui:display-field id="ProductionEnddate" name="ProductionEnddate" displayText="Production End Date" />
+          <ui:display-field id="CustomerShipmentstartdate" name="CustomerShipmentstartdate" displayText="Customer Shipment Start Date" />
+          <ui:display-field id="CustomerShipmentEnddate" name="CustomerShipmentEnddate" displayText="Customer Shipment End Date" />
+        </ui:field-group>
+      </ui:table>
+      <ui:field-group id="ItemLocationDetails" select="$root/linelocrec">
+        <ui:entry-field id="LineNumber" name="LineNumber" displayText="Group Line ID" required="true">
+          <ui:links>
+            <ui:link displayText="Select Line Number" targetType="popup" targetName="planPopUp">
+              <ui:image src="pop_up_window.gif" />
+              <ui:url page="view.x2ps">
+                <STEP_ID select="'Add_Locations'" />
+                <FIELD_NAME select="'LineNumber'" />
+                <ENTITY_NAME select="'LineNumber'" />
+                <GRP_ID select="'grpid/@Value'" />
+                <ROW_ID_NAME select="'LineNumber'" />
+                <ROW_ID_VALUE select="'LineNumber/@Value'" />
+                <SELECT select="'All'" />
+                <BUTTON_ID select="'SEARCH_LINE_NUM'" />
+              </ui:url>
+            </ui:link>
+          </ui:links>
+        </ui:entry-field>
+        <ui:entry-field id="LocationIdentification" name="LocationIdentification" displayText="Location" required="true" readOnly="true">
+          <ui:links>
+            <ui:link displayText="Select Location" onClick="javascript:linelocselection()">
+              <ui:image src="pop_up_window.gif" />
+            </ui:link>
+          </ui:links>
+        </ui:entry-field>
+        <ui:dropdown id="INT_DIR" displayText="Interchangeability Direction" name="INT_DIR" required="true" optionSrc="$root/dir/OPTION" />
+        <ui:dropdown id="Use_Stat" displayText="Use Up Strategy" name="Use_Stat" required="true" optionSrc="$root/useup/OPTION" />
+        <ui:entry-field id="Use_DT" displayText="Predecessor Product Use Up Date" name="Use_DT" required="true" dataType="Date" />
+        <ui:entry-field id="Dep_Strt_Dt" displayText="Deployment Start Date" name="Dep_Strt_Dt" dataType="Date" required="true" />
+        <ui:entry-field id="Dep_End_Dt" displayText="Deployment End Date" name="Dep_End_Dt" dataType="Date" />
+        <ui:entry-field id="Prdn_Strt_Dt" displayText="Production Start Date" name="Prdn_Strt_Dt" dataType="Date" />
+        <ui:entry-field id="Prdn_Endt_Dt" displayText="Production End Date" name="Prdn_Endt_Dt" dataType="Date" />
+        <ui:entry-field id="Cust_Ship_Strt_Dt" displayText="Customer Shipment Start Date" name="Cust_Ship_Strt_Dt" dataType="Date" />
+        <ui:entry-field id="Cust_Ship_End_Dt" displayText="Customer Shipment End Date" name="Cust_Ship_End_Dt" dataType="Date" />
+        <ui:entry-field id="Comments" displayText="Comments" name="Comments" />
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="CLEAR_SC3" name="CLEAR_SC3" displayText="Clear" onClick="javascript:onTab('Add_Locations', 'topContainer')" />
+        <ui:button id="NEXT_SC3" name="NEXT_SC3" displayText="Next" onClick="javascript:onNext(2)" />
+        <ui:button id="SAVE_SC3" name="SAVE_SC3" displayText="Save" onClick="javascript:onNext(33)" />
+        <ui:button id="FINISH_SC3" name="FINISH_SC3" displayText="Save and Exit" onClick="javascript:onNext(331)" />
+      </ui:buttons>
+    </ui:step>
+    <!--******************************* Third step ends here *****************************-->
+    <!--******************************* Fourth step starts here *****************************-->
+    <ui:step id="Promote" displayText="Promote To Released">
+      <ui:validation successMessage="{$root/succss/step4/succssmsg/@Value}" />
+      <ui:field-group id="fg_rows" rows="2">
+        <ui:field-group id="upper group" rows="1">
+          <ui:dropdown id="GroupStatus" name="GroupStatus" displayText="Group Status" optionSrc="$root/grpsts/OPTION" value="{$root/grpsts/currentstatus/@Value}" />
+          <ui:hidden-field id="linelocrec" name="linelocrec" value="{$root/checklinelocrec/@Value}" />
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="SAVE_SC4" name="SAVE_SC4" displayText="Save" onClick="javascript:checkonsave('SAVE_SC4')" />
+        <ui:button id="Finish4" name="Finish4" displayText="Save and Exit" onClick="javascript:checkonsave('Finish4')" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <!--******************************* Fourth step ends here *****************************-->
+  <!--******************************* JS functions start here *****************************-->
+  <ui:script id="cv_test">
+    <!--QC:20768, Venkat, 06/24/2008, Start-->
+    <!--function	cv_test(){  		           
+		                                 if(document.form.CONV_RATIO.value&lt;0)
+		                                   {
+		                                     core_alert("Error with the Conversion Ratio : Either Null or Negative");
+						     return;
+		                                   }
+		                                 else if(document.form.PREDID.value == '')
+		                                   {
+		                                     core_alert("Predecessor Product is a required field. Please select or enter a valid value");
+									document.form.PREDID.focus();
+						     return;
+		                                   }  
+		                                 else if(document.form.SUCCSSID.value == '')
+		                                   {
+		                                     core_alert("Successor Product is a required field. Please select or enter a valid value");
+							document.form.SUCCSSID.focus();
+						     return;
+		                                   }  
+		                                   else
+		                                   {
+						     document.form.BUTTON_ID.value ='SAVE_SC2';
+						     document.form.submit(); 
+						   }    
+
+		              }-->
+    function cv_test(input)
+{
+	if(input==1)
+	{
+		if(document.form.CONV_RATIO.value&lt;0)
+		{
+			core_alert("Error with the Conversion Ratio : Either Null or Negative");
+			return;
+		}
+		else if(document.form.PREDID.value == '')
+		{
+			core_alert("Predecessor Product is a required field. Please select or enter a valid value");
+			document.form.PREDID.focus();
+			return;
+		}  
+		else if(document.form.SUCCSSID.value == '')
+		{
+			core_alert("Successor Product is a required field. Please select or enter a valid value");
+			document.form.SUCCSSID.focus();
+			return;
+		}  
+		else
+		{
+			document.form.BUTTON_ID.value ='SAVE_SC2';
+			document.form.submit(); 
+		}    
+	}
+	if(input==2)
+	{
+		if(document.form.CONV_RATIO.value&lt;0)
+		{
+			core_alert("Error with the Conversion Ratio : Either Null or Negative");
+			return;
+		}
+		else if(document.form.PREDID.value == '')
+		{
+			core_alert("Predecessor Product is a required field. Please select or enter a valid value");
+			document.form.PREDID.focus();
+			return;
+		}  
+		else if(document.form.SUCCSSID.value == '')
+		{
+			core_alert("Successor Product is a required field. Please select or enter a valid value");
+			document.form.SUCCSSID.focus();
+			return;
+		}  
+		else
+		{
+			document.form.BUTTON_ID.value ='FINISH_SC2';
+			document.form.submit(); 
+		}    
+	}
+}
+    <!--QC:20768, Venkat, 06/24/2008, End-->
+  </ui:script>
+  <ui:script id="testontabe">
+    	function	ontab1(buttonid)
+	{
+		document.form.BUTTON_ID.value = buttonid;
+		form.submit();
+    	}
+		function checkonsave(buttonid)
+		{
+				var initialgroupstatus = document.form.GrpStatus_pi.value;
+				var changedgroupstatus = document.form.GroupStatus.value;
+				var existencecheck=document.form.linelocrec.value;
+		 
+				if(initialgroupstatus =='IN PROCESS' &amp;&amp; changedgroupstatus=='RELEASED' &amp;&amp; existencecheck==1)
+				{
+					var decision=core_confirm("At least one of the Line Location records in this Group has a deployment start date in the past. Do you want to RELEASE this group?");
+					<!-- QC:20815, 08/15/2008,Venkat, Start -->
+					if(decision=='yes')
+					{
+						document.form.BUTTON_ID.value = buttonid; 
+						document.form.action = 'view.x2ps';
+						document.form.submit();  
+				    	}
+					else
+				        {
+						document.form.SUBMIT_AS_XML.value = 'false';
+						return;
+					}
+					<!-- QC:20815, 08/15/2008,Venkat, End -->
+				}
+				else
+				{
+					document.form.BUTTON_ID.value = buttonid; 
+					document.form.action = 'view.x2ps';
+					document.form.submit();  
+				}
+		}
+		
+		function onNext(input)
+		{
+    <!-- ########for the first next button######### -->
+    if(input==0)
+																			 {
+																					if(document.form.GrpDesc_pi.value != document.form.PIGDESC.value) 
+																				 {
+																						var decision=core_confirm("Any unsaved changes will be lost. Do you still want to continue?");
+																						if(decision=='yes')
+																							onTab('SecondContainer','topContainer');
+																						else
+																							 return;
+																					}
+																					else
+																					{
+																						onTab('SecondContainer','topContainer');
+																					}
+																			  }
+    <!-- #######for the Second next button######### -->
+    if(input==1)
+																			{																				
+																				if((document.form.PREDID.value != '') || (document.form.SUCCSSID.value != ''))
+		                                    {
+																					 var decision=core_confirm("Any unsaved changes will be lost. Do you still want to continue?");
+																						if(decision=='yes')
+		                                         {
+																							document.form.BUTTON_ID.value='NEXT_SC2';
+																							onTab('Add_Locations','topContainer');
+																						 }
+																						else
+																							 return;
+																				}
+																				else
+																				{
+																					document.form.BUTTON_ID.value='NEXT_SC2';
+																					onTab('Add_Locations','topContainer')
+																				}
+																			 }
+    <!--##########for the third next button########-->
+    if(input==2)
+																			{														
+																				if((document.form.LineNumber.value != '') || (document.form.LocationIdentification.value != ''))
+		                                    {
+																					 var decision=core_confirm("Any unsaved changes will be lost. Do you still want to continue?");
+																						if(decision=='yes')
+																							onTab('Promote','topContainer');
+																						else
+																							 return;
+																				}
+																				else
+																				{
+																					document.form.BUTTON_ID.value='NEXT_SC3';
+																					onTab('Promote','topContainer');
+																				}
+																			}
+    <!--##########for the third Save button########-->
+    if(input==33)
+		
+			 {
+		
+	
+		if(document.form.LineNumber.value =='')
+			{
+					core_alert("Group Line ID is a required field. Please select or enter a valid value");
+					document.form.LineNumber.focus();
+						return;
+			}
+		else if(document.form.LocationIdentification.value =='')
+			{
+    <!--QC:20768, Venkat, 06/24/2008, Start-->
+    <!--core_alert(&quot;Location is a required field. Please select or enter a valid value&quot;);-->
+    core_alert("Location is a required field. Please select a valid value");
+    <!--QC:20768, Venkat, 06/24/2008, End-->
+    document.form.LocationIdentification.focus();
+					return;
+			}
+		else if(document.form.Use_DT.value =='')
+			{
+					core_alert("Predecessor Product Use Up Date is a required field. Please select or enter a valid value");
+					document.form.Use_DT.focus();
+					return;
+			}
+					else if(document.form.Dep_Strt_Dt.value =='')
+			{
+				core_alert("Deployment Start Date is a required field. Please select or enter a valid value");
+				document.form.Dep_Strt_Dt.focus();
+				return;
+			}												
+		
+		if(document.form.	Dep_End_Dt.value ==''||document.form.	Dep_End_Dt.value ==''||document.form.	Dep_End_Dt.value ==''||document.form.	Dep_End_Dt.value ==''||document.form.	Dep_End_Dt.value ==''||document.form.	Dep_End_Dt.value =='')
+																			{
+																				var response=core_confirm("Some of the Date Fields do not have values. Do you wish to use default dates for them?");
+		                                        if(response=='yes')
+																						{document.form.BUTTON_ID.value='SAVE_SC3';
+																							document.form.submit();
+																						}
+																						else{return;}
+																		   }
+																			else
+																			  {
+																							document.form.BUTTON_ID.value='SAVE_SC3';
+																							document.form.submit();
+																				}
+		                                 }
+    <!-- ################################finish3 button################-->
+    if(input==331)
+		 {
+		
+		if(document.form.LineNumber.value =='')
+			{
+					core_alert("Group Line ID is a required field. Please select or enter a valid value");
+					document.form.LineNumber.focus();
+						return;
+			}
+		else if(document.form.LocationIdentification.value =='')
+			{
+    <!--QC:20768, Venkat, 06/24/2008, Start-->
+    <!--core_alert(&quot;Location is a required field. Please select or enter a valid value&quot;);-->
+    core_alert("Location is a required field. Please select a valid value");
+    <!--QC:20768, Venkat, 06/24/2008, End-->
+    document.form.LocationIdentification.focus();
+					return;
+			}
+		else if(document.form.Use_DT.value =='')
+			{
+					core_alert("Predecessor Product Use Up Date is a required field. Please select or enter a valid value");
+					document.form.Use_DT.focus();
+					return;
+			}
+					else if(document.form.Dep_Strt_Dt.value =='')
+			{
+				core_alert("Deployment Start Date is a required field. Please select or enter a valid value");
+				document.form.Dep_Strt_Dt.focus();
+				return;
+			}
+	
+		if(document.form.	Dep_End_Dt.value ==''||document.form.	Dep_End_Dt.value ==''||document.form.	Dep_End_Dt.value ==''||document.form.	Dep_End_Dt.value ==''||document.form.	Dep_End_Dt.value ==''||document.form.	Dep_End_Dt.value =='')
+																			{
+																				var response=core_confirm("Some of the Date Fields do not have values. Do you wish to use default dates for them?");
+		                                        if(response=='yes')
+																						{document.form.BUTTON_ID.value='FINISH_SC3';
+																							document.form.submit();
+																						}
+																						else{return;}
+																		   }
+																			else
+																			  {
+																							document.form.BUTTON_ID.value='FINISH_SC3';
+																							document.form.submit();
+																				}
+		                                 }
+																		}
+	function linelocselection()
+																			{
+																			  var groupidentifier=document.form.GrpId_pi.value;
+																				var linenumbers=document.form.LineNumber.value;																			
+																				if(linenumbers =='')
+																				{ core_alert("Please select Group Line ID before proceeding ");  document.form.LineNumber.focus();   return;}
+																				else{																				
+																				window.open('view.x2ps?SERVICE_NAME=edmuiservice&amp;START_WORKFLOW=wfPiSelecLocation&amp;FIELD_NAME=LocationIdentification&amp;SELECTABLE=All&amp;POPUP=true&amp;GroupIdentifier='+groupidentifier+'&amp;GroupLineInfo='+linenumbers,null,'height=480,width=740,screenX=400,screenY=400,top=200,left=250,toolbar=yes,menubar=no');
+    																		}
+    <!--window.open(&quot;view.x2ps?SERVICE_NAME=edmuiservice&amp;START_WORKFLOW=wfPiSelecLocation&amp;FIELD_NAME=LocationIdentification&amp;SELECTABLE=All&amp;POPUP=true&amp;GroupIdentifier=&quot;+groupidentifier+&quot;&amp;GroupLineInfo=&quot;+linenumbers+null+&quot;&amp;height=480,width=740,screenX=200,screenY=200,top=150,left=200,toolbar=yes,menubar=no&quot;);-->
+    }
+  </ui:script>
+  <!--******************************* JS functions end here *****************************-->
+</ui:page-group>
+

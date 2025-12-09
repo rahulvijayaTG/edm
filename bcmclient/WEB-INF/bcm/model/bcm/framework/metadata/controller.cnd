@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:bcm="http://www.i2.com/bcm" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:identity="http://www.i2.com/identity" xmlns:i18n="http://www.i2.com/i18n" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="defineMetadata" public="yes" description="_">
+    <!-- xdocs-->
+    <xapl:variable name="metaData" resolver="application" global="true"/>
+    <!-- forms-->
+    <xapl:variable name="metaDataForms" resolver="application" global="true"/>
+    <!-- system properties-->
+    <xapl:variable name="systemProperties" resolver="application" global="true"/>
+    <!-- default presentations -->
+    <xapl:variable name="defaultPresentaion" resolver="application" global="true"/>
+    <xapl:variable name="defaultPresentaionForPk" resolver="application" global="true"/>
+    <!-- folders -->
+    <xapl:variable name="inputFolders" resolver="application" global="true"/>
+    <xapl:variable name="errorFolders" resolver="application" global="true"/>
+    <xapl:variable name="ncFolders" resolver="application" global="true"/>
+    <xapl:variable name="outboundFolders" resolver="application" global="true"/>
+    <xapl:variable name="masterFolders" resolver="application" global="true"/>
+    <xapl:variable name="masterAuditTrailFolders" resolver="application" global="true"/>
+    <xapl:variable name="adwFolders" resolver="application" global="true"/>
+
+    <!-- multiple instances -->
+    <xapl:variable name="appInstances" resolver="application" global="true"/>
+    <xapl:variable name="appInstanceEnabled" resolver="application" global="true"/>
+    <!-- set all sessionals-->
+    <xapl:set-variable name="metaData">
+      <META_DATA/>
+    </xapl:set-variable>
+    <xapl:set-variable name="metaDataForms">
+      <META_DATA_FORMS/>
+    </xapl:set-variable>
+    <xapl:set-variable name="systemProperties">
+      <SYSTEM_PROPERTIES/>
+    </xapl:set-variable>
+    <xapl:set-variable name="appInstances">
+      <ALL_INSTANCES/>
+    </xapl:set-variable>
+    <!-- get System Properties -->
+    <x2:execute command="bcm.framework.metadata.controller:getSystemProperties"/>
+    <!-- get default presentaion -->
+    <x2:execute command="bcm.framework.tableeditor.Table:getDefaultPresentation"/>
+    <x2:execute command="bcm.framework.tableeditor.Table:getDefaultPresentationForPrimaryKey"/>
+    <!-- Get FOLDERS/XDOC/FORMS/ for All Services -->
+    <!-- User Security : added by satish-->
+    <x2:execute command="bcm.framework.metadata.controller:getUserSecurityTables"/>
+    <x2:execute command="bcm.framework.metadata.controller:getUserSecurityForms"/>
+    <!-- Input Staging -->
+    <x2:execute command="bcm.framework.metadata.controller:getInputFolders"/>
+    <x2:execute command="bcm.framework.metadata.controller:getErrorFolders"/>
+    <x2:execute command="bcm.framework.metadata.controller:getInputStagingTables"/>
+    <x2:execute command="bcm.framework.metadata.controller:getInputStagingForms"/>
+    <x2:execute command="bcm.framework.metadata.controller:getE2ETables"/>
+    <x2:execute command="bcm.framework.metadata.controller:getE2EForms"/>
+
+    <!-- Master Service -->
+    <x2:execute command="bcm.framework.metadata.controller:getMasterFolders"/>
+    <x2:execute command="bcm.framework.metadata.controller:getMasterTables"/>
+    <x2:execute command="bcm.framework.metadata.controller:getMasterForms"/>
+    <!-- Net Change -->
+    <x2:execute command="bcm.framework.metadata.controller:getNcFolders"/>
+    <x2:execute command="bcm.framework.metadata.controller:getNCTables"/>
+    <x2:execute command="bcm.framework.metadata.controller:getNCForms"/>
+
+    <!-- Outbound Staging -->
+    <xapl:if test="$showOutputStaging='yes'">
+        <x2:execute command="bcm.framework.metadata.controller:getOutboundFolders"/>
+        <x2:execute command="bcm.framework.metadata.controller:getOutboundStagingTables"/>
+        <x2:execute command="bcm.framework.metadata.controller:getOutboundForms"/>
+    </xapl:if>
+    <!-- ADW Service -->
+    <!--x2:execute command="bcm.framework.metadata.controller:getAdwFolders"/>
+    <x2:execute command="bcm.framework.metadata.controller:getADWTables"/>
+    <x2:execute command="bcm.framework.metadata.controller:getADWForms"/-->
+    <!-- multiple instances -->
+    <x2:execute command="bcm.framework.metadata.controller:getInstanceEnabled"/>
+    <xapl:if test="$appInstanceEnabled = 'true' ">
+      <x2:execute command="bcm.framework.metadata.controller:getInstances"/>
+    </xapl:if>
+    <!-- Get Dava Validation Service Forms-->
+	<!--x2:execute command="bcm.framework.metadata.controller:getDataValidationForms"/-->
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getSystemProperties">
+    <docutil:set select="$systemProperties">
+      <xcore:execute-method name="//BCMINService/getSystemProperties" entireResponse="false"/>
+    </docutil:set>
+    <xapl:print>
+        SYSTEM PROPERTIES:::
+        <xapl:value-of select="$systemProperties"/>
+    </xapl:print>
+  </x2:command>
+  <!-- **********************************************************************
+  **************************  TABLES X-DOC *********************************** -->
+  <x2:command public="yes" description="_" name="getInputStagingTables">
+
+   <xapl:variable name="xCoreSrvcName">
+      <x2:get-xcore-service-name name="BCMINService"/>
+    </xapl:variable>
+
+     <docutil:add select="$metaData">
+      <SERVICE Name="BCMINService" xName="{$xCoreSrvcName}">
+        <xcore:execute-method name="//BCMINService/getTables" entireResponse="false"/>
+      </SERVICE>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getE2ETables">
+	 <xapl:variable name="xCoreSrvcName">
+      <x2:get-xcore-service-name name="E2EService"/>
+    </xapl:variable>
+
+	<docutil:add select="$metaData">
+      <SERVICE Name="E2EService" xName="{$xCoreSrvcName}">
+        <xcore:execute-method name="//E2EService/getTables" entireResponse="false"/>
+      </SERVICE>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getNCTables">
+	 <xapl:variable name="xCoreSrvcName">
+      <x2:get-xcore-service-name name="BCMNCService"/>
+    </xapl:variable>
+
+	<docutil:add select="$metaData">
+      <SERVICE Name="BCMNCService" xName="{$xCoreSrvcName}">
+        <xcore:execute-method name="//BCMNCService/getTables" entireResponse="false"/>
+      </SERVICE>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getOutboundStagingTables">
+ <xapl:variable name="xCoreSrvcName">
+      <x2:get-xcore-service-name name="BCMOutboundService"/>
+    </xapl:variable>
+    <docutil:add select="$metaData">
+      <SERVICE Name="BCMOutboundService"  xName="{$xCoreSrvcName}">
+        <xcore:execute-method name="//BCMOutboundService/getTables" entireResponse="false"/>
+      </SERVICE>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getMasterTables">
+    <xapl:variable name="xCoreSrvcName">
+      <x2:get-xcore-service-name name="BCMMasterService"/>
+    </xapl:variable>
+
+	<docutil:add select="$metaData">
+      <SERVICE Name="BCMMasterService"  xName="{$xCoreSrvcName}">
+        <xcore:execute-method name="//BCMMasterService/getTables" entireResponse="false"/>
+  	  </SERVICE>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getADWTables">
+      <xapl:variable name="xCoreSrvcName">
+      <x2:get-xcore-service-name name="ADWService"/>
+    </xapl:variable>
+
+    <docutil:add select="$metaData">
+      <SERVICE Name="ADWService" xName="{$xCoreSrvcName}">
+        <xcore:execute-method name="//ADWService/getTables" entireResponse="false"/>
+      </SERVICE>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+  **************************  FORMS ********************************** -->
+  <x2:command public="yes" description="_" name="getInputStagingForms">
+
+    <docutil:add select="$metaDataForms">
+      <SERVICE Name="BCMINService">
+        <xcore:execute-method name="//BCMINService/getForms"/>
+      </SERVICE>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getE2EForms">
+    <docutil:add select="$metaDataForms">
+      <SERVICE Name="E2EService">
+        <xcore:execute-method name="//E2EService/getForms"/>
+      </SERVICE>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getNCForms">
+    <docutil:add select="$metaDataForms">
+      <SERVICE Name="BCMNCService">
+        <xcore:execute-method name="//BCMNCService/getForms"/>
+      </SERVICE>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getMasterForms">
+    <docutil:add select="$metaDataForms">
+      <SERVICE Name="BCMMasterService">
+        <xcore:execute-method name="//BCMMasterService/getForms"/>
+      </SERVICE>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getADWForms">
+    <docutil:add select="$metaDataForms">
+      <SERVICE Name="ADWService">
+        <xcore:execute-method name="//ADWService/getForms"/>
+      </SERVICE>
+    </docutil:add>
+    <!--xapl:print>
+      inGetADWForms->metaDataForms
+      <xapl:value-of select="$metaDataForms"/>
+    </xapl:print-->
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getOutboundForms">
+    <docutil:add select="$metaDataForms">
+      <SERVICE Name="BCMOutboundService">
+        <xcore:execute-method name="//BCMOutboundService/getForms"/>
+      </SERVICE>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+  **************************  FOLDERS  ************************************ -->
+  <x2:command public="yes" description="_" name="getInputFolders">
+    <!--EQ:568412 Modified getFolders. Folder should contain documents that have Source =SOURCE and not of class TABLE_CLASS -->
+    <xapl:set-variable name="inputFolders">
+      <xcore:execute-method name="//BCMINService/getFolders" entireResponse="false">
+        <ROOT>
+			     <SOURCE Value="BACKEND"/>
+			     <SOURCE Value="BOTH"/>
+			     <TABLE_CLASS Value="TRANSACTION"/>
+			     <TABLE_CLASS Value="PLAN"/>
+			  </ROOT>
+      </xcore:execute-method>
+    </xapl:set-variable>
+  </x2:command>
+
+    <x2:command public="yes" description="_" name="getErrorFolders">
+      <xapl:set-variable name="errorFolders">
+        <xcore:execute-method name="//BCMINService/getErrorFolders" entireResponse="false">
+           <ROOT>
+					    <SOURCE Value="BACKEND"/>
+					    <SOURCE Value="BOTH"/>
+					 </ROOT>
+      </xcore:execute-method>
+      </xapl:set-variable>
+      <docutil:remove select="$errorFolders//DOCUMENT[@AuditTrail]"/>
+
+
+    <xapl:print> chandi Error folders <xapl:value-of select="$errorFolders"/>
+    </xapl:print>
+    </x2:command>
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getNcFolders">
+    <!--EQ:568412 Modified getFolders. Folder should contain documents that have Source =SOURCE and not of class TABLE_CLASS -->
+    <xapl:set-variable name="ncFolders">
+      <xcore:execute-method name="//BCMNCService/getFolders" entireResponse="false">
+        <ROOT>
+          <SOURCE Value="BACKEND"/>
+          <SOURCE Value="BOTH"/>
+          <TABLE_CLASS Value="TRANSACTION"/>
+          <TABLE_CLASS Value="PLAN"/>
+        </ROOT>
+      </xcore:execute-method>
+    </xapl:set-variable>
+    <docutil:remove select="$ncFolders//DOCUMENT[@AuditTrail]"/>
+
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getMasterFolders">
+    <xapl:variable name="masterFoldersAll">
+      <ROOT>
+        <xcore:execute-method name="//BCMMasterService/getFolders" entireResponse="false"/>
+      </ROOT>
+    </xapl:variable>
+    <xapl:variable name="masterFolders1">
+      <xapl:clone select="{$masterFoldersAll}"/>
+    </xapl:variable>
+    <docutil:remove select="$masterFolders1/ALL_FOLDERS/FOLDER/DOCUMENTS/DOCUMENT[@AuditTrail]"/>
+    <xapl:set-variable name="masterFolders">
+      <xapl:value-of select="{$masterFolders1/*}"/>
+    </xapl:set-variable>
+    <xapl:variable name="masterFolders2">
+      <xapl:clone select="{$masterFoldersAll}"/>
+    </xapl:variable>
+    <docutil:remove select="$masterFolders2/ALL_FOLDERS/FOLDER/DOCUMENTS/DOCUMENT[not(@AuditTrail)]"/>
+    <docutil:remove select="$masterFolders2/ALL_FOLDERS/FOLDER[count(DOCUMENTS/DOCUMENT[@AuditTrail]) = 0]"/>
+    <xapl:set-variable name="masterAuditTrailFolders">
+      <xapl:value-of select="{$masterFolders2/*}"/>
+    </xapl:set-variable>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getOutboundFolders">
+    <xapl:set-variable name="outboundFolders">
+      <xcore:execute-method name="//BCMOutboundService/getFolders" entireResponse="false">
+			       <ROOT>
+							 <SOURCE Value="BACKEND"/>
+							 <SOURCE Value="BOTH"/>
+							 <SOURCE Value="MASTER"/>
+							 <TABLE_CLASS Value="TRANSACTION"/>
+							 <TABLE_CLASS Value="PLAN"/>
+						  </ROOT>
+			</xcore:execute-method>
+    </xapl:set-variable>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getAdwFolders">
+    <xapl:set-variable name="adwFolders">
+      <xcore:execute-method name="//ADWService/getFolders" entireResponse="false"/>
+    </xapl:set-variable>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getUserSecurityForms">
+    <docutil:add select="$metaDataForms">
+      <SERVICE Name="UserSecurity">
+        <xcore:execute-method name="//UserSecurity/getForms"/>
+      </SERVICE>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+      *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getUserSecurityTables">
+      <xapl:variable name="xCoreSrvcName">
+      <x2:get-xcore-service-name name="UserSecurity"/>
+    </xapl:variable>
+
+    <docutil:add select="$metaData">
+      <SERVICE Name="UserSecurity" xName="{$xCoreSrvcName}">
+        <xcore:execute-method name="//UserSecurity/getTables" entireResponse="false"/>
+      </SERVICE>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+      *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getInstances">
+    <xapl:variable name="response">
+      <xcore:execute-method name="//BCMMasterService/getInstances" entireResponse="true"/>
+    </xapl:variable>
+    <xapl:for-each select="$response/RESPONSE/SQL_RESULT" varName="child">
+      <docutil:add select="$appInstances">
+        <instanceID Value="{$child/INSTANCE_ID/@Value}"/>
+      </docutil:add>
+    </xapl:for-each>
+    <xapl:print>PRINTING appInstances DURING RELOAD ... </xapl:print>
+    <xapl:print select="{$appInstances}"/>
+  </x2:command>
+  <!-- **********************************************************************
+      *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getInstanceEnabled">
+    <xapl:variable name="response">
+      <xcore:execute-method name="//BCMMasterService/isInstanceEnabled" entireResponse="false"/>
+    </xapl:variable>
+    <xapl:set-variable name="appInstanceEnabled" select="$response/@Value"/>
+    <xapl:print>PRINTING INSTANCEENABLED DURING RELOAD ... </xapl:print>
+    <xapl:print select="{$appInstanceEnabled}"/>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getDataValidationForms">
+    <docutil:add select="$metaDataForms">
+      <SERVICE Name="dataValidationService">
+        <xcore:execute-method name="//dataValidationService/getForms"/>
+      </SERVICE>
+    </docutil:add>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

@@ -1,0 +1,907 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" id="pg01" Id="fscSearchEdit.pgl">
+  <ui:container id="cntrSE" scrollable="true" collapsable="true">
+    <ui:step id="stpSE" displayText="Facility Storage Capacity Search and Edit">
+      <ui:validation anyFieldIsRequired="false" successMessage="{$root/SUCCESS_MESSAGE/@Value}" instructionMessage="Please validate after making any change(s) to value(s)." />
+      <ui:grid>
+        <ui:row>
+          <ui:cell>
+            <ui:container id="cntrPH" editable="false" height="100" width="445">
+              <ui:step displayText="Planning Horizon" id="stpPH" editable="true">
+                <ui:grid>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group id="leftFields11">
+                        <ui:display-field displayText="Starting Week" id="SWTXT" name="SWTXT" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields12">
+                        <ui:dropdown id="SWYEAR" name="SWYEAR" optionSrc="$root/YEARLIST/OPTIONS/OPTION" value="{$root/SWYEAR/@Value}" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields13">
+                        <ui:dropdown id="SWPERIOD" name="SWPERIOD" optionSrc="$root/PERIODLIST/OPTIONS/OPTION" value="{$root/SWPERIOD/@Value}" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields14">
+                        <ui:dropdown id="SWWEEK" required="true" name="SWWEEK" optionSrc="$root/WEEKLIST/OPTIONS/OPTION" value="{$root/SWWEEK/@Value}" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields15">
+                        <ui:entry-field editable="fasle" id="SWDATE" style="font-weight:Bold" value="{$root/STARTDATE/@Value}" defaultValue="MM/DD/YYYY" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group id="leftFields21">
+                        <ui:display-field displayText="Ending Week" id="SWTXT" name="SWTXT" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields22">
+                        <ui:dropdown id="EWYEAR" name="EWYEAR" optionSrc="$root/YEARLIST/OPTIONS/OPTION" value="{$root/EWYEAR/@Value}" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields23">
+                        <ui:dropdown id="EWPERIOD" name="EWPERIOD" optionSrc="$root/PERIODLIST/OPTIONS/OPTION" value="{$root/EWPERIOD/@Value}" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields24">
+                        <ui:dropdown id="EWWEEK" required="true" name="EWWEEK" optionSrc="$root/WEEKLIST/OPTIONS/OPTION" value="{$root/EWWEEK/@Value}" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields25">
+                        <ui:entry-field editable="fasle" id="EWDATE" style="font-weight:Bold;" value="{$root/ENDDATE/@Value}" defaultValue="MM/DD/YYYY" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                </ui:grid>
+                <ui:buttons id="appButton">
+                  <ui:button id="APPLY" name="APPLY" displayText="Apply" />
+                </ui:buttons>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+          <ui:cell rowSpan="2">
+            <ui:container editable="false" height="200" id="cntrL">
+              <ui:step displayText="Legends - for individual time buckets (Not across time buckets)" id="stpL" editable="true">
+                <ui:grid>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group showDivider="true">
+                        <ui:entry-field id="LGD11" name="LGD11" editable="false" displayText="Note" displayNoWrap="true" defaultValue="Please validate after making any change(s) to value(s)." style="font-weight:Bold" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group showDivider="false">
+                        <ui:entry-field id="LGD11" name="LGD11" editable="false" displayText="" displayNoWrap="true" defaultValue="" style="font-weight:Bold" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group showDivider="false">
+                        <ui:entry-field id="LGD11" name="LGD11" editable="false" displayText="" displayNoWrap="true" defaultValue="" style="font-weight:Bold" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group showDivider="true">
+                        <ui:entry-field id="LGD11" name="LGD11" editable="false" displayText="XX, XXX" displayNoWrap="true" defaultValue="(Location cell) Sum of effective segment(s) units &gt; location's effective units" style="font-weight:Bold;background:#BEC5E7" />
+                        <ui:entry-field id="LGD12" name="LGD12" editable="fasle" displayText="XX, XXX" displayNoWrap="true" defaultValue="(Segment cell) Sum of effective segment(s) units &gt; location's effective units" style="font-weight:Bold;color:red;background:yellow" />
+                        <ui:entry-field id="LGD13" name="LGD13" editable="fasle" displayText="XX, XXX" displayNoWrap="true" defaultValue="Segment's soft constraint effective units &gt; segment's hard constraint effective units" style="font-weight:Bold;color:red;background:#BEC5E7" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                </ui:grid>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+        </ui:row>
+        <ui:row>
+          <ui:cell>
+            <ui:container id="cntrSC" editable="false" height="100" width="445">
+              <ui:step displayText="Search Criteria" id="stpSC" editable="true">
+                <ui:grid>
+                  <ui:row>
+                    <!--<ui:cell>
+                      <ui:field-group id="leftFields">
+                        <ui:display-field id="LOCID" name="LOCID" displayText="Location"/>
+                      </ui:field-group>
+                    </ui:cell>-->
+                    <ui:cell colSpan="4">
+                      <ui:field-group id="leftFields">
+                        <ui:entry-field id="LOCID" name="LOCID" displayText="Location" value="{$root/LOCFRSRH/@Value}">
+                          <ui:links>
+                            <ui:link displayText="Select Location" targetType="popup" targetName="planPopUp">
+                              <ui:image src="pop_up_window.gif" />
+                              <ui:url page="view.x2ps">
+                                <FIELD_NAME select="'LOCID'" />
+                                <SELECTABLE select="'All'" />
+                                <BUTTON_ID select="'selectLocation'" />
+                              </ui:url>
+                            </ui:link>
+                          </ui:links>
+                        </ui:entry-field>
+                      </ui:field-group>
+                    </ui:cell>
+                    <!--<ui:cell>
+                      <ui:field-group id="leftFields">
+                        <ui:display-field id="HDNFLD1" name="HDNFLD1" displayText="L131i ID" style="font-weight:Bold;color:white"/>
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields">
+                        <ui:display-field id="HDNFLD2" name="HDNFLD2" displayText="Loi ID" style="font-weight:Bold;color:white"/>
+                      </ui:field-group>
+                    </ui:cell>-->
+                  </ui:row>
+                  <ui:row>
+                    <!--<ui:cell>
+                      <ui:field-group id="leftFields">
+                        <ui:display-field id="SEGID" name="SEGID" displayText="Segment"/>
+                      </ui:field-group>
+                    </ui:cell>-->
+                    <ui:cell colSpan="4">
+                      <ui:field-group id="leftFields">
+                        <ui:entry-field id="SEGID" name="SEGID" displayText="Segment" value="{$root/SGMFRSRH/@Value}">
+                          <ui:links>
+                            <ui:link displayText="Select Segment" targetType="popup" targetName="planPopUp">
+                              <ui:image src="pop_up_window.gif" />
+                              <ui:url page="start.x2ps">
+                                <FIELD_NAME select="'SEGID'" />
+                                <SELECTABLE select="'All'" />
+                                <BUTTON_ID select="'selectSegment'" />
+                              </ui:url>
+                            </ui:link>
+                          </ui:links>
+                        </ui:entry-field>
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                </ui:grid>
+                <ui:buttons id="srchButton">
+                  <ui:button id="SEARCH" name="SEARCH" displayText="Search" disabled="{$root/SRHENB/@Value}" />
+                </ui:buttons>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+          <!--          <ui:cell>
+            <ui:container editable="false" height="100" displayText="">
+              <ui:step id="MUP" displayText="Mass Update Panel">
+                <ui:field-group showDivider="true">
+                  <ui:dropdown id="EntryField" name="EntryField" displayText="Entry Attribute">
+										<ui:option id="Units (Rated Capacity)"/>
+										<ui:option id="Utilization %"/>
+									</ui:dropdown>
+                  <ui:entry-field id="EntryValue" name="EntryValue" displayText="Entry Value"/> 
+                  <ui:entry-field id="Comment" name="Comment" displayText="Comment"/>
+                </ui:field-group>
+								<ui:buttons>
+        <ui:button id="SAVE" name="SAVE" displayText="Save"/>
+        
+      </ui:buttons>
+              </ui:step>
+            </ui:container>
+          </ui:cell>-->
+        </ui:row>
+      </ui:grid>
+    </ui:step>
+  </ui:container>
+  <ui:container id="cntrSR">
+    <ui:step id="stpSR" displayText="Facility Storage Capacity Search Results">
+      <ui:pivot id="pivotTable" displayText="Search Results" select="$root/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS" subRowSrc="BUCKETS/ROWDATA" selectable="All" rowId="UNIQUEROW" scrollable="true" maxRows="2" totalRowCount="$root/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/@TotalRowCount" startAtRow="$root/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/@startRowCount" exportable="true">
+        <ui:table-row select="BUFFER_SLA">
+          <ui:table-row select="SEGMENT_SLAS/BUFFER_SLA" />
+        </ui:table-row>
+        <ui:pivot-field axis="row" id="UNIQUEROW" name="UNIQUEROW" displayText="Segment" displayCondition="false" />
+        <ui:pivot-field axis="row" id="LocationIdentifier" name="LocationIdentifier" displayText="Location" treeCell="true" collapsed="{ISCOLLAPSED/@Value}" dataType="String" />
+        <!--ui:pivot-field axis="row" id="LOCNAME" name="LOCNAME" displayText="Location Name" /-->
+        <ui:pivot-field axis="row" id="LocationCapacityType" name="LocationCapacityType" displayText="Location Type" />
+        <ui:pivot-field axis="row" id="OrganizationPartyIdentifier" name="OrganizationPartyIdentifier" displayText="Segment" dataType="String" />
+        <ui:pivot-field axis="row" id="SGMNAME" name="SGMNAME" displayText="Segment Name" />
+        <ui:pivot-field axis="row" id="OrganizationXLocationCapacityLimitClassIdentifier" name="OrganizationXLocationCapacityLimitClassIdentifier" displayText="Constraint" />
+        <ui:pivot-field axis="row" id="CapacityUnitOfMeasureIdentifier" name="CapacityUnitOfMeasureIdentifier" displayText="Unit of Measure" />
+        <ui:pivot-field axis="column" name="FROM_DATE" displayText="" />
+        <!--ui:entry-field name="OrganizationXAllocatedLocationCapacityMeasure" displayText="Units (Rated Capacity)" size="6" dataType="Number" align="left" editable="{FIELDEDITABLE/@Value = 'false'}"/>
+        <ui:entry-field name="OrganizationXLocationCapacityTargetUtilizationPercent" displayText="Utilization %" size="6" align="left" editable="{FIELDEDITABLE/@Value = 'false'}" dataType="Number"/-->
+        <!--ui:entry-field name="OrganizationXAllocatedLocationCapacityMeasure" displayText="Units (Rated Capacity)" size="6" dataType="Number" align="left"/>
+        <ui:entry-field name="OrganizationXLocationCapacityTargetUtilizationPercent" displayText="Utilization %" size="6" align="left" dataType="Number" decimals="2"/>
+        <ui:display-field name="EFFSTRGUNIT" displayText="Effective Units" size="6" dataType="Number" align="left" style="{STYLE/@Value}"/>
+        <ui:entry-field name="CMMNT" displayText="Comments" size="6" align="left" editable="{FIELDEDITABLE/@Value = 'false'}"/-->
+        <ui:compound-field displayText="Units (Rated Capacity)" align="left" name="OrganizationXAllocatedLocationCapacityMeasure">
+          <!--    <ui:entry-field id="OrganizationXAllocatedLocationCapacityMeasure" name="OrganizationXAllocatedLocationCapacityMeasure" size="6" dataType="Number" align="left" style="padding:0" onBlur="javascript:disableSave()"/>-->
+          <ui:choose-field id="OrganizationXAllocatedLocationCapacityMeasure" style="padding:0">
+            <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+              <ui:entry-field id="OrganizationXAllocatedLocationCapacityMeasure" name="OrganizationXAllocatedLocationCapacityMeasure" dataType="Number" align="left" style="padding:0" onBlur="javascript:disableSave()" />
+              <!--<ui:hidden-field id="origACM" name="origACM" value="{OrganizationXAllocatedLocationCapacityMeasure/@Value}"/>
+              <ui:hidden-field id="cntWklyBkt" name="cntWklyBkt" value="{$root/CNTWKLYBKT/@Value}"/>
+              <ui:hidden-field id="userAction" name="userAction" value="{$root/USER_ACTION/@Value}"/>-->
+            </ui:when>
+            <ui:otherwise>
+              <ui:display-field id="OrganizationXAllocatedLocationCapacityMeasure" name="OrganizationXAllocatedLocationCapacityMeasure" dataType="Number" align="left" style="padding:0" onBlur="javascript:disableSave()" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:hidden-field id="origACM" name="origACM" value="{OrganizationXAllocatedLocationCapacityMeasure/@Value}" />
+          <ui:hidden-field id="cntWklyBkt" name="cntWklyBkt" value="{$root/CNTWKLYBKT/@Value}" />
+          <ui:hidden-field id="userAction" name="userAction" value="{$root/USER_ACTION/@Value}" />
+          <!-- Multi User Enhancement Dt:02/11/2008 Venkat Mekala Code Start -->
+          <ui:hidden-field id="LAST_MODIFIED_DATE" name="LAST_MODIFIED_DATE" align="left" dataType="date" decimals="2" style="padding:0" onBlur="javascript:disableSave()" />
+          <!-- Multi User Enhancement Dt:02/11/2008 Venkat Mekala Code End -->
+          <!-- <ui:hidden-field id="origACM" name="origACM" value="{OrganizationXAllocatedLocationCapacityMeasure/@Value}"/>
+          <ui:hidden-field id="cntWklyBkt" name="cntWklyBkt" value="{$root/CNTWKLYBKT/@Value}"/>-->
+        </ui:compound-field>
+        <ui:compound-field displayText="Utilization %" name="OrganizationXLocationCapacityTargetUtilizationPercent">
+          <ui:choose-field id="OrganizationXLocationCapacityTargetUtilizationPercent" style="padding:0">
+            <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+              <ui:entry-field id="OrganizationXLocationCapacityTargetUtilizationPercent" name="OrganizationXLocationCapacityTargetUtilizationPercent" align="left" dataType="Number" decimals="2" style="padding:0" onBlur="javascript:disableSave()" />
+              <!--<ui:hidden-field id="origTUP" name="origTUP" value="{OrganizationXLocationCapacityTargetUtilizationPercent/@Value}"/>-->
+            </ui:when>
+            <ui:otherwise>
+              <ui:display-field id="OrganizationXLocationCapacityTargetUtilizationPercent" name="OrganizationXLocationCapacityTargetUtilizationPercent" dataType="Number" align="left" style="padding:0" onBlur="javascript:disableSave()" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:hidden-field id="origTUP" name="origTUP" value="{OrganizationXLocationCapacityTargetUtilizationPercent/@Value}" />
+        </ui:compound-field>
+        <!--ui:compound-field displayText="Effective Units" align="left"-->
+        <ui:display-field id="EFFSTRGUNIT" displayText="Effective Units" name="EFFSTRGUNIT" size="6" dataType="Number" align="left" style="{STYLE/@Value}" />
+        <!--/ui:compound-field-->
+        <ui:compound-field displayText="Comments" name="CMMNT" displayNoWrap="false">
+          <ui:choose-field id="CMMNT" style="padding:0">
+            <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+              <!--   <ui:entry-field name="CMMNT" id="CMMNT" size="6" align="left" editable="{FIELDEDITABLE/@Value = 'false'}" maxlength="255" style="padding:0" displayNoWrap="false"/>-->
+              <!--<ui:entry-field name="CMMNT" id="CMMNT"  style="padding:0" align="left" editable="{FIELDEDITABLE/@Value = 'false'}"  displayNoWrap="false" />-->
+              <ui:textarea name="CMMNT" id="CMMNT" editable="{FIELDEDITABLE/@Value = 'false'}" style="padding:0" />
+              <!--  <ui:hidden-field id="origCT" name="origCT" value="{ORIGCMMNT/@Value}"/>-->
+            </ui:when>
+            <ui:otherwise>
+              <!-- <ui:entry-field id="CMMNT" name="CMMNT" size="6" align="left" editable="false" maxlength="255" displayNoWrap="false"/>-->
+              <ui:textarea name="CMMNT" id="CMMNT" style="padding:0" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:hidden-field id="origCT" name="origCT" value="{ORIGCMMNT/@Value}" />
+        </ui:compound-field>
+      </ui:pivot>
+      <ui:buttons>
+        <ui:button id="ADD_SEG" name="ADD_SEG" displayText="Add Segment(s)" displayCondition="{contains($root/AccessLevel/@Value,'Add')}" disabled="true" />
+        <ui:divider displayCondition="{contains($root/AccessLevel/@Value,'Add')}" />
+        <ui:button id="DEL" displayText="Delete" name="DEL" onClick="javascript:on_DEL()" disabled="true" displayCondition="{contains($root/AccessLevel/@Value,'Remove')}" />
+        <ui:divider displayCondition="{contains($root/AccessLevel/@Value,'Remove')}" />
+        <ui:button displayText="Mass Update " id="MU" name="MU" disabled="true" displayCondition="{contains($root/AccessLevel/@Value,'Update')}" />
+        <ui:divider displayCondition="{contains($root/AccessLevel/@Value,'Update')}" />
+        <ui:button displayText="Copy" id="CPY" name="CPY" onClick="javascript:on_CPY()" disabled="true" displayCondition="{contains($root/AccessLevel/@Value,'Add')}" />
+        <ui:divider displayCondition="{contains($root/AccessLevel/@Value,'Add')}" />
+        <ui:button id="VALIDATE" name="VALIDATE" displayText="Validate" disabled="true" displayCondition="{contains($root/AccessLevel/@Value,'Add')}" />
+        <ui:divider displayCondition="{contains($root/AccessLevel/@Value,'Add')}" />
+        <ui:button id="SAVE" name="SAVE" displayText="Save" disabled="{$root/SB/@Value}" displayCondition="{contains($root/AccessLevel/@Value,'Add')}" />
+        <!--ui:button id="SAVE" name="SAVE" displayText="Save"/-->
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>//registerButton('DEL','Emphasized','pivotTable');
+		//registerButton('MU','Emphasized','pivotTable');
+		//registerButton('CPY','Emphasized','pivotTable');
+		//registerButton('VALIDATE','Emphasized','pivotTable');
+		function disableSave(){
+			i2uiToggleButtonState('SAVE', 'disabled');
+		}
+
+		function replaceAll(str, searchTerm, replaceWith){
+		   var regex = "/"+searchTerm+"/g";
+		   regex += "i";
+		   return str.replace(eval(regex), replaceWith);
+		}		
+
+		function isInteger(s){
+			return s.length &gt; 0 &amp;&amp; !(/[^0-9]/).test(s);
+		}	
+
+		var selectedIds = document.getElementsByName('UNIQUEROW');
+		var count = 0;
+		var usrActions = document.getElementsByName('userAction');	
+				var usrAction;
+				if(usrActions.length &gt; 0)	{
+				usrAction = usrActions[0].value;
+				}
+				else{
+				usrAction = "";
+				}
+
+					var isSelected;
+					var locArray = new Array(); //location array
+					var locIndex = 0;
+		
+				    for(i=0; i &lt; selectedIds.length; i++){
+				        var t = selectedIds[ i ];
+				        if ( t.checked ){
+				          count += 1;
+									var locIdStr = t.value;
+									var offSet = locIdStr.indexOf("|");//alert("location offset "+offSet);
+									if(offSet == -1){	//inner if start
+										locArray[locIndex] = locIdStr;
+										locIndex++;
+									} //inner if ends
+				        }
+				    }//	alert("count is "+count);
+
+					if(count &gt; 0){
+						isSelected = true;
+						i2uiToggleButtonState('DEL', 'enabled');
+			      //i2uiToggleButtonState('MU', 'enabled');
+			      i2uiToggleButtonState('CPY', 'enabled');
+			      i2uiToggleButtonState('VALIDATE', 'enabled');
+					}else{
+						isSelected = false;						
+						i2uiToggleButtonState('DEL', 'disabled');
+			      i2uiToggleButtonState('MU', 'disabled');
+			      i2uiToggleButtonState('CPY', 'disabled');
+			      i2uiToggleButtonState('VALIDATE', 'disabled');
+						i2uiToggleButtonState('SAVE', 'disabled');
+						//i2uiToggleButtonState('ADD_SEG', 'disabled');
+					}
+
+					if(isSelected){
+						var bktNumer =  document.getElementsByName('cntWklyBkt');
+						var bktCnt = bktNumer[0].value;
+						if(bktCnt == 1){
+							i2uiToggleButtonState('MU', 'disabled');
+						}else{
+							i2uiToggleButtonState('MU', 'enabled');
+						}			      
+					}	
+		if(locArray.length == 1 &amp;&amp; count == 1){
+			i2uiToggleButtonState('ADD_SEG', 'enabled');
+		} else {//outer if ends and else starts
+			i2uiToggleButtonState('ADD_SEG', 'disabled');
+		}//else ends	
+		  if(usrAction == 'VALIDATE')
+				{
+				i2uiToggleButtonState('ADD_SEG', 'disabled');
+					i2uiToggleButtonState('MU', 'disabled');
+				 i2uiToggleButtonState('CPY', 'disabled');
+		    i2uiToggleButtonState('DEL', 'disabled');		
+				}
+
+		
+		function on_DEL(){
+		  var selectedIds = document.getElementsByName('UNIQUEROW');
+		  var locArray = new Array(); //location array
+		  var segmentArray = new Array(); //Segment Array
+		  var locIndex = 0;
+		  var segmentIndex = 0;
+			var locHasSeg = false;
+	    for(i=0; i &lt; selectedIds.length; i++){	//for Start
+	        var t = selectedIds[ i ];
+	        if ( t.checked ){	//outer if start
+						var locIdStr = t.value;
+            var offSet = locIdStr.indexOf("|");
+						if(offSet == -1){	//inner if start
+							locArray[locIndex] = locIdStr;
+							locIndex++;
+						} //inner if ends
+	        } //outer if ends
+	    }	 //for ends
+		
+			if(locArray.length &gt; 0){//outer if starts
+			  for (i=0; i &lt; selectedIds.length; i++){//for starts
+			  	var selectedIdsValue = selectedIds[ i ].value;
+					var offSet = selectedIdsValue.indexOf("|");
+					if(offSet != -1){//inner if starts
+						segmentArray[segmentIndex] = selectedIdsValue.substring(0,offSet);
+						segmentIndex++;
+					}//inner if ends
+			  }//for ends
+		
+		
+				for (i=0; i &lt; locArray.length; i++){//location for loop start
+					for(j=0; j &lt; segmentArray.length; j++){//segment for loop starts
+						if(locArray[i]==segmentArray[j]){//if0 starts
+							locHasSeg = true;
+							break;
+						}else{//if0 ends else0 starts
+							locHasSeg = false;
+						}//else0 ends
+					}//segment for loop ends
+					if(locHasSeg == true){//if1 starts
+						deleteStatus = false; //records cannot be deleted
+						break;
+					}else{//if1ends else1 starts
+						deleteStatus = true; //records can be deleted
+					}//else1 ends 
+				}//location for loop ends
+		
+		
+		
+		
+		
+			}	else{//outer if ends and else starts
+				deleteStatus = true; //records can be deleted
+		  }//else ends
+		
+		if(deleteStatus){//if starts for deleting
+			usrChoice = core_confirm("Are you sure you want to delete the selected record(s)?");
+		  if (usrChoice=='yes'){//if of yes starts
+				 var bIsValid = true;
+				 document.form.SUBMIT_AS_XML.value = 'false';				
+				 bIsValid = (isValid_stpSR());
+				 
+				 if( bIsValid == false ){
+				 	validation_alert('stpSR');
+				 }
+		
+				 if ( bIsValid == true){
+				  disableButtons(); 
+				  trapExcelPivotChanges(); 
+				 	document.form.BUTTON_ID.value = 'DEL'; 
+				 	document.form.action = 'view.x2ps';
+				 	document.form.submit();  
+				 }				
+					onResize();  
+					return; 
+			}else{//if of yes ends else of yes starts
+				return;
+			}//else of yes ends
+		}else{//if ends else starts for deleting
+			core_alert("Location records having segment records cannot be deleted!");
+			return
+		}//else ends for deleting
+		}
+		
+				 function on_CPY(){
+					var selectedIds = document.getElementsByName('UNIQUEROW');
+					var count = 0;
+				    for(i=0; i &lt; selectedIds.length; i++){
+				        var t = selectedIds[ i ];
+				        if ( t.checked ){
+				          count += 1;
+				        }
+				    }	
+					
+					if(count &gt; 1){
+						core_alert('Please select only one line item for Copy!');
+						return;
+					}else{
+						var bIsValid = true;
+						document.form.SUBMIT_AS_XML.value = 'false';
+				
+						bIsValid = (isValid_stpSR());
+				 
+						if( bIsValid == false ){
+							validation_alert('stpSR');
+						}
+						if ( bIsValid == true){
+							disableButtons(); 
+							trapExcelPivotChanges(); 
+							document.form.BUTTON_ID.value = 'CPY'; 
+							document.form.action = 'view.x2ps';
+							document.form.submit();  
+						}
+				
+						onResize();  
+						return; 
+					}
+				}
+		
+		 function on_MU(){
+					var selectedIds = document.getElementsByName('UNIQUEROW');
+					var count = 0;
+				    for(i=0; i &lt; selectedIds.length; i++){
+				        var t = selectedIds[ i ];
+				        if ( t.checked ){
+				          count += 1;
+				        }
+				    }	
+					
+					if(count &gt; 1){
+						core_alert('Please select only one line item for Mass Update!');
+						return;
+					}else{
+						var bIsValid = true;
+						document.form.SUBMIT_AS_XML.value = 'false';
+				
+						bIsValid = (isValid_stpSR());
+				 
+						if( bIsValid == false ){
+							validation_alert('stpSR');
+						}
+						if ( bIsValid == true){
+							disableButtons(); 
+							trapExcelPivotChanges(); 
+							document.form.BUTTON_ID.value = 'MU'; 
+							document.form.action = 'view.x2ps';
+							document.form.submit();  
+						}
+				
+						onResize();  
+						return; 
+					}
+				}
+				
+		
+				function on_VALIDATE(){
+					var selectedIds = document.getElementsByName('UNIQUEROW');
+					var count = 0;
+					for(i=0; i &lt; selectedIds.length; i++){
+						var t = selectedIds[ i ];
+						if ( t.checked ){
+						  count += 1;
+						}
+					}
+					if(count &gt; 1){
+						core_alert('Please select only one record for Update!');
+						isValid = false;
+						return;
+					}else{
+						var searchStr = ",";
+						var replaceStr = "";
+						var origAllocVal = document.getElementsByName('origACM');
+						var origTUtilVal = document.getElementsByName('origTUP');
+						var origComments = document.getElementsByName('origCT');
+							
+						var currAllocVal = document.getElementsByName('OrganizationXAllocatedLocationCapacityMeasure');
+	  		  	var currTUtilVal = document.getElementsByName('OrganizationXLocationCapacityTargetUtilizationPercent');
+	
+						var currComments = document.getElementsByName('CMMNT');
+						var selectedIds = document.getElementsByName('UNIQUEROW');
+
+						var bktNumer =  document.getElementsByName('cntWklyBkt');
+						var bktCnt = bktNumer[0].value;
+
+							for(i=0; i &lt; selectedIds.length; i++){	//outer for Start 
+								var t = selectedIds[ i ];
+								if ( t.checked ){	//outer if start
+									for(j=(i*bktCnt); j &lt; ((i+1)*bktCnt); j++){	//inner for Start
+		  						if(origAllocVal[j].value != replaceAll(trimString(currAllocVal[j].value), searchStr, replaceStr) ){//outerif starts
+											if( parseInt(replaceAll(trimString(currAllocVal[j].value), searchStr, replaceStr)) &lt; 0 || isNaN( parseInt(replaceAll(trimString(currAllocVal[j].value), searchStr, replaceStr)) ) || strlen(replaceAll(trimString(currAllocVal[j].value), searchStr, replaceStr)) == 0){//inner if starts
+												core_alert("Please enter a positive value for Allocated Capacity!");
+												isValid = false;
+												return;
+											}else if( !isInteger(replaceAll(trimString(currAllocVal[j].value), searchStr, replaceStr)) ){//inner if starts
+												core_alert("Please provide integer values for Units!");
+												isValid = false;
+												return;
+											}else if( strlen(replaceAll(trimString(currAllocVal[j].value), searchStr, replaceStr)) &gt; 18){//inner if starts
+												core_alert("Allocated capacity units can not be more than 18 digits!");
+												isValid = false;
+												return;
+											}else{//inner if ends inner else start
+												isValid = true;
+											}
+										} else {//outer if ends outer else start
+								    	isValid = true;
+										}
+
+// RIC 230571 ZRehman 9/28/09
+		
+										if( parseFloat(origTUtilVal[j].value) != parseFloat(currTUtilVal[j].value) ){//outerif starts
+											if(parseFloat(currTUtilVal[j].value) &gt; 999 || parseFloat(currTUtilVal[j].value) &lt; 0 || strlen(trimString(currTUtilVal[j].value)) == 0 || isNaN( parseFloat(trimString(currTUtilVal[j].value)) ) ){//inner if starts
+												core_alert("Please enter utilization percentage between 0 and 999!");
+												isValid = false;
+												return;
+											}else{//inner if ends inner else start
+												isValid = true;
+											}
+										} else {//outer if ends outer else start
+											isValid = true;
+										}
+		
+		
+										if( parseInt(origAllocVal[j].value) != parseInt(replaceAll(trimString(currAllocVal[j].value), searchStr, replaceStr)) || parseFloat(origTUtilVal[j].value) != parseFloat(currTUtilVal[j].value) ){//outerif starts
+											if(origComments[j].value == trimString(currComments[j].value)){//inner if starts
+												core_alert("Please enter new comments for update!");
+												isValid = false;
+												return;
+											}else if(strlen(trimString(currComments[j].value)) &gt; 2000){//inner if starts
+												core_alert("Comments should be less than 2000 character!!");
+												isValid = false;
+												return;
+											}else{//inner if ends inner else start
+												isValid = true;
+											}
+										} else {//outer if ends outer else start
+											isValid = true;
+										}
+									}//inner for ends
+								} //outer if ends
+							}//outer for ends
+					}//else end
+	// RIC 230571 ZRehman 9/28/09						
+					if(isValid){//if starts		
+						var bIsValid = true;
+						document.form.SUBMIT_AS_XML.value = 'false';
+
+						bIsValid = (isValid_stpSR());
+
+						if( bIsValid == false ){
+							validation_alert('stpSR');
+						}
+						if ( bIsValid == true) {
+							disableButtons(); 
+							trapExcelPivotChanges(); 
+							document.form.BUTTON_ID.value = 'VALIDATE'; 
+							document.form.action = 'view.x2ps';
+							document.form.submit();  
+						}
+
+						onResize();  
+						return;
+					}//if ends
+				}
+		//fff
+		function i2uiToggleRowSelectionState(obj, originalstate, tableid, treecell, multiSelect){
+		  // NS4 browser not supported
+		
+					var selectedIds = document.getElementsByName('UNIQUEROW');
+					var count = 0;
+					var isSelected;
+					var locArray = new Array(); //location array
+					var locIndex = 0;
+
+					for(i=0; i &lt; selectedIds.length; i++){//for starts
+						var t = selectedIds[ i ];
+						if ( t.checked ){//outer if start
+						  count += 1;
+							var locIdStr = t.value;
+							var offSet = locIdStr.indexOf("|");//alert("location offset "+offSet);
+							if(offSet == -1){	//inner if start
+								locArray[locIndex] = locIdStr;
+								locIndex++;
+							} //inner if ends		
+						}//outer if ends
+					}//for ends
+		
+					if(count &gt; 0){
+						isSelected = true;
+						i2uiToggleButtonState('DEL', 'enabled');
+			      //i2uiToggleButtonState('MU', 'enabled');
+			      i2uiToggleButtonState('CPY', 'enabled');
+			      i2uiToggleButtonState('VALIDATE', 'enabled');
+					}else{
+						isSelected = false;						
+						i2uiToggleButtonState('DEL', 'disabled');
+			      i2uiToggleButtonState('MU', 'disabled');
+			      i2uiToggleButtonState('CPY', 'disabled');
+			      i2uiToggleButtonState('VALIDATE', 'disabled');
+						i2uiToggleButtonState('SAVE', 'disabled');
+					}
+
+					if(isSelected){
+						var bktNumer =  document.getElementsByName('cntWklyBkt');
+						var bktCnt = bktNumer[0].value;
+						if(bktCnt == 1){
+							i2uiToggleButtonState('MU', 'disabled');
+						}else{
+							i2uiToggleButtonState('MU', 'enabled');
+						}			      
+					}	
+		
+		if(locArray.length == 1 &amp;&amp; count == 1){
+			i2uiToggleButtonState('ADD_SEG', 'enabled');
+		} else {//outer if ends and else starts
+			i2uiToggleButtonState('ADD_SEG', 'disabled');
+		}//else ends
+						
+		  if (document.layers != null)
+		    return;
+		
+		  if (i2uiActiveRowSelector != null)
+		    obj = i2uiActiveRowSelector;
+		  else{
+		    // turn off any global selector
+		    var globalselector = document.getElementById(tableid+"_globalrowselector");
+		    if (globalselector != null)
+		      globalselector.checked = false;
+		  }
+		  
+		  //pglalert( 'i2uiToggleRowSelectionState() tableId=' + tableid );
+		
+		  // if single select, turn off previous row
+		  if (multiSelect == false){
+		    // test for scrollable table
+		    var table = document.getElementById(tableid+"_data");
+		    if (table == null)
+		      table = document.getElementById(tableid);
+		
+		    var len = table.rows.length;
+		    for (var i=0; i&lt;len; i++){
+		      if (table.rows[i].lastClassName != null){
+		        table.rows[i].className = table.rows[i].lastClassName;
+		        if (table.rows[i].cells[0].childNodes &amp;&amp;
+		            table.rows[i].cells[0].childNodes.length &gt; 0 &amp;&amp;
+		            table.rows[i].cells[0].childNodes[0].style != null)
+		          table.rows[i].cells[0].childNodes[0].style.backgroundColor = "";
+		        table.rows[i].lastClassName = null;
+		      }
+		    }
+		  }
+		
+		  // find owning row
+		  var rowobj = obj;
+		  while (rowobj != null &amp;&amp; rowobj.tagName != "TR"){
+		    if (rowobj.parentElement){
+		      rowobj = rowobj.parentElement;
+		    }
+		    else{
+		      rowobj = rowobj.parentNode;
+		    }
+		  }
+		  var rowIndex = -1;
+		  
+		  if (rowobj != null){
+		    var rowTable = null;
+		    
+		    if (rowobj.parentElement){
+		      rowTable = rowobj.parentElement;
+		    }
+		    else{
+		      rowTable = rowobj.parentNode;		    
+		    }
+		    //pglalert( 'rowTable.id = ' + rowTable.id + ', tableid=' + tableid );
+		    
+		    if( rowTable.id == tableid ){
+		      //pglalert( 'rowTable.id == tableid' );
+		    }
+		    else{  
+		      //pglalert( 'rowTable.id != tableid, searching for table' );
+		      var rowIndex = -1;
+		      
+		      for( var i=0; i &lt; rowTable.rows.length; i++ ){
+		        if( rowTable.rows[i] == rowobj ){
+		          rowIndex = i;
+		          break;          
+		        }
+		      }
+		      
+		      //pglalert( 'rowIndex = ' + rowIndex );
+		      
+		      if( rowIndex &gt; -1 ){
+		        var otherTable = document.getElementById(tableid+"_data");
+		        if (otherTable == null){
+		          otherTable = document.getElementById(tableid);
+		        }		        
+		        rowobj = otherTable.rows[rowIndex];
+		      }
+		      else {
+		        //pglalert( 'could not find matching row' );
+		      }
+		    }
+		  
+		  
+		    rowobj.className = obj.checked?"rowHighlight":originalstate;
+		    rowobj.lastClassName = originalstate;
+		    //rowobj.cells[0].childNodes[0].style.backgroundColor = "";
+		  }
+		
+		  // handle treetable
+		  if (treecell != null &amp;&amp; treecell != '' &amp;&amp; i2uiActiveRowSelector == null){
+		    var cellname = rowobj.cells[treecell].id.substring(9);
+		    var depth1 = Math.floor(cellname);
+		    var table = document.getElementById(tableid);
+		    var len = table.rows.length;
+		    for (var i=0; i&lt;len; i++){
+		      // locate desired row in table
+		      if (table.rows[i].cells[treecell].id == "TREECELL_"+cellname){
+		        // now process rest of table with respect to located
+		        for (var j=i+1; j&lt;len; j++){
+		          var newcell = table.rows[j].cells[treecell].id.substr(9);
+		          var depth2 = Math.floor(newcell);
+		          if ((depth2 == depth1 + 10 || depth2 == depth1 + 15) || (depth2 &gt; depth1 + 5)){
+		            table.rows[j].cells[0].childNodes[0].checked = obj.checked;
+		            if (obj.checked){
+		              table.rows[j].className = "rowHighlight";
+		              table.rows[j].cells[0].childNodes[0].style.backgroundColor = "";
+		            }
+		            else{
+		              var onclickhandler = table.rows[j].cells[0].childNodes[0].onclick+"!!!";
+		              var from = onclickhandler.indexOf("{");
+		              onclickhandler = onclickhandler.substring(from+1);
+		              var to = onclickhandler.lastIndexOf("}");
+		              onclickhandler = onclickhandler.substring(0,to);
+		              i2uiActiveRowSelector = table.rows[j].cells[0].childNodes[0];
+		              eval(onclickhandler);
+		              i2uiActiveRowSelector = null;
+		            }
+		          }
+		          if (depth2 &lt;= depth1){
+		            break;
+		          }
+		        }
+		
+		        var handle = depth1 - 10;
+		        // now set partial state of all parents of selected node
+		        for (var j=i-1; j&gt;-1; j--)
+		        {
+		          var newcell = table.rows[j].cells[treecell].id.substr(9);
+		          var depth2 = Math.floor(newcell);
+		          if (depth2 == handle || depth2 == handle-5)
+		          {
+		            var selectedcount = 0;
+		            var nonselectedcount = 0;
+		            for (var k=j+1; k&lt;len; k++)
+		            {
+		              var newcell2 = table.rows[k].cells[treecell].id.substr(9);
+		              var depth3 = Math.floor(newcell2);
+		              if ((depth3 == depth2 + 10 || depth3 == depth2 + 15) ||
+		                  (depth3 &gt; depth2 + 5))
+		              {
+		                if (table.rows[k].cells[0].childNodes[0].checked)
+		                  selectedcount++;
+		                else
+		                  nonselectedcount++;
+		              }
+		              if (depth3 &lt;= depth2)
+		              {
+		                break;
+		              }
+		            }
+		
+		            if (selectedcount &gt; 0)
+		            {
+		              if (nonselectedcount &gt; 0)
+		              {
+		                table.rows[j].cells[0].childNodes[0].checked=false;
+		                var onclickhandler = table.rows[j].cells[0].childNodes[0].onclick+"!!!";
+		                var from = onclickhandler.indexOf("{");
+		                onclickhandler = onclickhandler.substring(from+1);
+		                var to = onclickhandler.lastIndexOf("}");
+		                onclickhandler = onclickhandler.substring(0,to);
+		                i2uiActiveRowSelector = table.rows[j].cells[0].childNodes[0];
+		                eval(onclickhandler);
+		                i2uiActiveRowSelector = null;
+		                table.rows[j].cells[0].childNodes[0].style.backgroundColor = "#fff6a6";
+		              }
+		              else
+		              {
+		                table.rows[j].cells[0].childNodes[0].checked = true;
+		                table.rows[j].className = "rowHighlight";
+		                table.rows[j].cells[0].childNodes[0].style.backgroundColor = "";
+		              }
+		            }
+		            else
+		            {
+		              table.rows[j].cells[0].childNodes[0].checked=false;
+		              table.rows[j].cells[0].childNodes[0].style.backgroundColor = "";
+		
+		              if (nonselectedcount &gt; 0)
+		              {
+		              var onclickhandler = table.rows[j].cells[0].childNodes[0].onclick+"!!!";
+		              var from = onclickhandler.indexOf("{");
+		              onclickhandler = onclickhandler.substring(from+1);
+		              var to = onclickhandler.lastIndexOf("}");
+		              onclickhandler = onclickhandler.substring(0,to);
+		              i2uiActiveRowSelector = table.rows[j].cells[0].childNodes[0];
+		              eval(onclickhandler);
+		              i2uiActiveRowSelector = null;
+		              }
+		            }
+		            // look up one more level
+		            handle -= 10;
+		            if (handle &lt; 0)
+		              break;
+		          }
+		        }
+		
+		        break;
+		      }
+		    }
+		  }
+						
+		
+		if (i2uiInvokeCallback)
+		    try{
+				i2uiRowSelectionCallback(tableid)
+				}catch(e){}
+		}
+		//fff</ui:script>
+</ui:page-group>
+

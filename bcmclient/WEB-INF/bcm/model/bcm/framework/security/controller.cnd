@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands
+             xmlns:x2="http://www.i2.com/x2"
+             xmlns:core="http://www.i2.com/core"
+             xmlns:xcore="http://www.i2.com/xcore"
+             xmlns:xcore-db="http://www.i2.com/xcore-db"
+             xmlns:xapl="http://www.i2.com/xapl"
+             xmlns:web="http://www.i2.com/web"
+             xmlns:docutil="http://www.i2.com/docutil"
+             xmlns:util="http://www.i2.com/util"
+             xmlns:xudl="http://www.i2.com/xudl"
+             xmlns:cfg="http://www.i2.com/configurability"
+             xmlns:perm="http://www.i2.com/permissibility"
+             xmlns:omx="http://www.i2.com/omx"
+             xmlns:authorization="http://www.i2.com/authorization"
+             xmlns:identity="http://www.i2.com/identity" description="_">
+
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="init">
+	<xapl:print>
+	###################THIS IS INIT *****####################
+	</xapl:print>
+	<xapl:variable name="firstAuthDoc" resolver="session" global="true"/>
+    <xapl:variable name="inputAuthDetails" resolver="session" global="true"/>
+    <xapl:variable name="selectedAuthDetails" resolver="session" global="true"/>
+    <xapl:variable name="selectedAuthDoc" resolver="session" global="true"/>
+    <xapl:variable name="selectedAuthID" resolver="session" global="true"/>
+    <x2:execute command="bcm.framework.security.controller:initSessionVars"/>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="initSessionVars">
+    <xapl:set-variable name="selectedAuthDetails">
+      <AUTHORIZATION/>
+    </xapl:set-variable>
+	<xapl:print>
+	################### initSessionVars *****####################
+	</xapl:print>
+    <xapl:print select="$selectedAuthDetails"/>
+  </x2:command>
+  <!-- **********************************************************************
+     *********************************************************************** -->
+
+	<x2:command public="yes" description="_" name="initializeSelectedAuthDetails">
+		<x2:param name="this"/>
+
+		<xapl:print>
+		initializeSelectedAuthDetails 1111
+		</xapl:print>
+
+		<xapl:for-each select ="$inputAuthDetails/RESPONSE/AUTH_DOC" varName="authDocs">
+			<xapl:set-variable name="selectedAuthDoc">
+				<xapl:value-of select="$authDocs/@Name"/>
+			</xapl:set-variable>
+
+			<xapl:set-variable name="selectedAuthID">
+				<xapl:value-of select="$authDocs/AUTH_ID[1]/*[name()!='name']/@Value"/>
+			</xapl:set-variable>
+
+			<docutil:set select="$this">
+				<selectedDoc Value = "{$selectedAuthDoc}"/>
+				<selectedID Value = "{$selectedAuthID}"/>
+			</docutil:set>
+
+			<x2:execute command="bcm.framework.security.controller:updateSelectedAuthDetailsInSession">
+				<x2:with-param name="this" select="$this"/>
+			</x2:execute>
+		</xapl:for-each>
+
+		<docutil:remove select="$this/selectedDoc"/>
+		<docutil:remove select="$this/selectedID"/>
+	</x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+
+	<x2:command public="yes" description="_" name="updateSelectedAuthDetailsInSession">
+		<x2:param name="this"/>
+		<xapl:print>
+		************************** $THIS in updateSelectedAuthDetailsInSession 1111111*******************
+		</xapl:print>
+
+		<xapl:if test="string-length($this/selectedDoc/@Value) &gt; 0">
+			<xapl:choose>
+					<xapl:when test= "string-length($selectedAuthDetails/*/@Name) &gt; 0">
+						<xapl:print>
+						Select authdetails contains =
+						<xapl:value-of select="count($selectedAuthDetails/*[@Name=$this/selectedDoc/@Value])"/>
+						</xapl:print>
+						<xapl:variable name="docFound" select="'falsee'"/>
+						<xapl:for-each select ="$selectedAuthDetails/DOCELEMENT" varName="docElems">
+							<xapl:choose>
+								<xapl:when test= "$docElems/@Name=$this/selectedDoc/@Value">
+									<docutil:set select="$selectedAuthDetails/*[@Name=$this/selectedDoc/@Value]">
+										<AuthID Value="{$selectedAuthID}"/>
+									</docutil:set>
+									<xapl:set-variable name="docFound">
+										<xapl:value-of select="'yess'"/>
+									</xapl:set-variable>
+									<xapl:print>
+									the doc name :
+									</xapl:print>
+									<xapl:print select="$docElems/@Name"/>
+								</xapl:when>
+								<xapl:otherwise>
+									<xapl:print>
+									Just a otherwise clause
+									</xapl:print>
+								</xapl:otherwise>
+							</xapl:choose>
+						</xapl:for-each>
+
+						<xapl:print select="$docFound"/>
+						<xapl:if test="$docFound='falsee'">
+							<xapl:print>
+							DOCUMENT NOT FOUND
+							</xapl:print>
+
+							<docutil:add select="$selectedAuthDetails">
+								<DOCELEMENT Name="{$selectedAuthDoc}">
+									<AuthID Value="{$selectedAuthID}"/>
+								</DOCELEMENT>
+							</docutil:add>
+						</xapl:if>
+					</xapl:when>
+					<xapl:otherwise>
+						<xapl:print>
+						First time adding the AUTHORIZATION tag
+						</xapl:print>
+						<xapl:set-variable name="selectedAuthDetails">
+							<AUTHORIZATION>
+  							  <DOCELEMENT Name="{$selectedAuthDoc}">
+								<AuthID Value="{$selectedAuthID}"/>
+							  </DOCELEMENT>
+							</AUTHORIZATION>
+						</xapl:set-variable>
+					</xapl:otherwise>
+			</xapl:choose>
+		</xapl:if>
+
+
+    <xapl:variable name="permNonAuthMasterSecurity"/>
+        <perm:is-allowed document="TASKS" action="bcmManageNonAuthMasterSecurity">
+          <xapl:set-variable name="permNonAuthMasterSecurity">
+              <xapl:value-of select="'yes'"/>
+          </xapl:set-variable>
+        </perm:is-allowed>
+        <xapl:print>ACTIVITY AUTH
+						<xapl:value-of select="$permNonAuthMasterSecurity"/>
+						</xapl:print>
+    <xapl:if test="string-length($permNonAuthMasterSecurity) = 0">
+    <xapl:print>
+						REMOVING
+						</xapl:print>
+      <docutil:remove select="$selectedAuthDetails/DOCELEMENT[@Name != 'AuthorizationMaster']"/>
+    </xapl:if>
+    <xapl:print>
+						<xapl:value-of select="$selectedAuthDetails"/>
+						</xapl:print>
+		<docutil:set select="$this">
+	        <xapl:value-of select="$selectedAuthDetails"/>
+		</docutil:set>
+
+
+
+		<xapl:print>
+		************************** $THIS in updateSelectedAuthDetailsInSession 222222 *******************
+		</xapl:print>
+		<xapl:print select="{$selectedAuthDetails}"/>
+		<xapl:print select="{$this}"/>
+	</x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="display">
+    <web:display-page>
+      <web:get-page name="manage_security_no_start">
+      	<xapl:value-of select="$this/*"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+     *********************************************************************** -->
+  <x2:command public="yes" description="_" name="setSelectedID">
+	<xapl:print>********* setSelectedID *********</xapl:print>
+	<xapl:print select="{$this}"/>
+
+		<xapl:set-variable name="selectedAuthDoc">
+			<xapl:value-of select="$this/selectedDoc/@Value"/>
+		</xapl:set-variable>
+
+		<xapl:set-variable name="selectedAuthID">
+			<xapl:value-of select="$this/selectedID/@Value"/>
+		</xapl:set-variable>
+
+		<x2:execute command="bcm.framework.security.controller:updateSelectedAuthDetailsInSession">
+			<x2:with-param name="this" select="$this"/>
+		</x2:execute>
+
+		<x2:execute command="bcm.framework.security.controller:display">
+			<x2:with-param name="this" select="$this"/>
+		</x2:execute>
+  </x2:command>
+  <!-- **********************************************************************
+     *********************************************************************** -->
+  <x2:command public="yes" description="_" name="setInputAuthDetails">
+		<x2:param name="this"/>
+		<xapl:variable name="loginUserId">
+			<identity:get-user-id/>
+		</xapl:variable>
+		<xapl:print select="{$loginUserId}"/>
+		<xapl:set-variable name="inputAuthDetails">
+			<xcore:execute-method name="//BCMMasterService/getAuthorizingDocumets" UserId="{$loginUserId}" entireResponse="true">
+			</xcore:execute-method>
+		</xapl:set-variable>
+		<docutil:set select="$this">
+	        <xapl:value-of select="$inputAuthDetails/RESPONSE"/>
+		</docutil:set>
+  </x2:command>
+  <!-- **********************************************************************
+     *********************************************************************** -->
+  <x2:command public="yes" description="_" name="onSaveSecurityContext">
+  	<xapl:print>PRINTING INSIDE onSaveSecurityContext</xapl:print>
+
+
+	<xapl:set-variable name="fromLogin" select="'no'"/>
+	<xapl:print select="{$selectedAuthDetails/*}"/>
+	<authorization:set-authorization-context>
+	<xapl:value-of select="$selectedAuthDetails/*"/>
+	</authorization:set-authorization-context>
+	<xapl:print>
+	authorization context: <authorization:get-authorization-context/>
+	</xapl:print>
+
+
+    <web:display-page>
+      <web:get-page name="solutionIndex">
+        <ACTIVITY Value="bcmReferenceStaging"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+     *********************************************************************** -->
+
+  <x2:command public="yes" description="_" name="onSecurityCancel">
+  	<xapl:set-variable name="fromLogin" select="'no'"/>
+    <web:display-page>
+      <web:get-page name="solutionIndex">
+        <ACTIVITY Value="bcmReferenceStaging"/>
+      </web:get-page>
+    </web:display-page>
+
+  </x2:command>
+  <!-- **********************************************************************
+     *********************************************************************** -->
+
+  <x2:command public="yes" description="_" name="setAuthContextForOneAuthEntitiy">
+		<x2:param name="this"/>
+
+		<authorization:set-authorization-context>
+			<xapl:value-of select="$selectedAuthDetails/*"/>
+		</authorization:set-authorization-context>
+  </x2:command>
+  <!-- **********************************************************************
+     *********************************************************************** -->
+
+
+</x2:commands>

@@ -1,0 +1,647 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands description="_" 
+             xmlns:FUNCTION="http://www.i2.com/FUNCTION"  xmlns:REMOVE="http://www.i2.com/REMOVE" 
+             xmlns:cfg="http://www.i2.com/configurability"  xmlns:core="http://www.i2.com/core" 
+             xmlns:omx="http://www.i2.com/omx"  xmlns:perm="http://www.i2.com/permissibility" 
+             xmlns:util="http://www.i2.com/util"   xmlns:web="http://www.i2.com/web" 
+             xmlns:x2="http://www.i2.com/x2"    xmlns:xapl="http://www.i2.com/xapl" 
+             xmlns:xcore="http://www.i2.com/xcore"   xmlns:xcore-db="http://www.i2.com/xcore-db" 
+             xmlns:docutil="http://www.i2.com/docutil"  xmlns:xudl="http://www.i2.com/xudl"
+             xmlns:identity="http://www.i2.com/identity" xmlns:i18n="http://www.i2.com/i18n">  
+ 
+  <!--************************************************************************
+    ************************************************************************-->
+  <x2:command public="yes" description="_" name="load">
+    <xapl:print select="$this"/>
+
+    <xapl:if test="$this/MODE/@Value  = 'INIT'">
+      <x2:execute command="bcm.framework.ContextController:cleanContext"/>
+      <docutil:remove select="$this/MODE"/>
+    </xapl:if>    
+    
+    
+    <x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+      <x2:with-param name="display" select="'User Details'"/>
+      <x2:with-param name="page" select="'users_edit'"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+    
+    <xapl:variable name="userId"/>
+    <xapl:choose>
+        <xapl:when test="$this/WHERE/@Value = 'USER_DETAILS' and string-length($this/SELECTED_USER_ID/@Value) &gt; 0">
+            <xapl:set-variable name="userId">
+                 <xapl:value-of select="$this/SELECTED_USER_ID/@Value"/>
+            </xapl:set-variable>    
+        </xapl:when>
+        <!-- while coming from the 'updateUserProfile' method of this cnd file -->
+        <xapl:when test="$this/WHERE/@Value = 'USER_DETAILS' and string-length($this/ID/@Value) &gt; 0">
+            <xapl:set-variable name="userId">
+                <xapl:value-of select="$this/ID/@Value"/>
+            </xapl:set-variable>    
+        </xapl:when>
+        <!-- while coming from the 'addUserProfile' method of this cnd file -->
+        <xapl:when test="$this/WHERE/@Value = 'NEW_USERS' and string-length($this/ID/@Value) &gt; 0">
+            <xapl:set-variable name="userId">
+                <xapl:value-of select="$this/ID/@Value"/>
+            </xapl:set-variable>    
+        </xapl:when>
+    </xapl:choose>
+        
+    <xapl:variable name="userInfo">
+      <xapl:choose>
+        <xapl:when test=" $this/WHERE/@Value = 'USER_DETAILS'">
+          <ROOT>
+            <x2:execute command="omx.user_admin.users_edit:getUserAdminUsers">
+              <x2:with-param name="this" select="$this"/>
+              <x2:with-param name="pId" select="$userId"/>
+            </x2:execute>
+          </ROOT>
+        </xapl:when>
+        <!-- When the 'load' was called from the 'addUserProfile' method of this cnd file -->
+        <xapl:when test=" $this/WHERE/@Value = 'NEW_USERS'  and 
+                        ( string-length($this/REFRESH/@Value) &gt; 0  or 
+                            string-length($this/ID/@Value) &gt; 0)">
+          <ROOT>
+            <x2:execute command="omx.user_admin.users_edit:getUserAdminUsers">
+              <x2:with-param name="this" select="$this"/>
+              <x2:with-param name="pId" select="$userId"/>
+            </x2:execute>
+          </ROOT>
+        </xapl:when>
+        <xapl:when test=" ($this/WHERE/@Value = 'NEW_USERS') and (string-length($this/ID/@Value) = 0) and (string-length($this/REFRESH/@Value) = 0)">
+          <ROOT>
+            <USER_PROFILE>
+              <ORG_FULL_NAME Value="{$this/ORG_FULL_NAME/@Value}"/>
+              <USER_GRP_NAME Value="{$this/GRP_NAME/@Value}"/>
+              <USER_GRP_ID Value="{$this/USER_GROUP_ID/@Value}"/>
+              <ORG_ID Value="{$this/ORG_ID/@Value}"/>
+            </USER_PROFILE>
+          </ROOT>
+        </xapl:when>
+      </xapl:choose>
+    </xapl:variable>
+    
+    <xapl:variable name="userDetailsContainer">
+      <x2:execute command="omx.user_admin.users_edit:getUserDetailsContainer">
+        <x2:with-param name="pId" select="$userId"/>
+        <x2:with-param name="pStatus" select="$userInfo/USER_PROFILE/STATUS/@Value"/>
+        <x2:with-param name="pViewMode" select="$this/VIEW_MODE/@Value"/>
+        <x2:with-param name="pWhere" select="$this/WHERE/@Value"/>
+      </x2:execute>
+    </xapl:variable>
+    
+    <!-- setting the user country as default -->
+    <docutil:set select="$this">
+      <xapl:value-of select="$userInfo/USER_PROFILE/COUNTRY"/>
+    </docutil:set>
+
+    <xapl:variable name="viewUgpDetails">
+      <perm:is-allowed document="TASKS" action="bcmViewUserGroupDetails">yes</perm:is-allowed>
+    </xapl:variable>
+
+    <xapl:variable name="breadcrumbs">
+        <x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>
+    </xapl:variable>
+    
+    <xapl:return>
+      <xapl:value-of select="$breadcrumbs"/>    
+      <xapl:value-of select="$userDetailsContainer"/>
+      <VIEW_USER_GROUP_DETAILS Value="{$viewUgpDetails}"/>
+      <xapl:if test="string-length($this/WHERE/@Value) &gt; 0">
+        <WHERE Value="{$this/WHERE/@Value}"/>
+      </xapl:if>
+      <xapl:if test="string-length($this/fromPage/@Value) &gt; 0">
+        <fromPage Value="{$this/fromPage/@Value}"/>
+      </xapl:if>
+      <xapl:value-of select="$userInfo/*"/>
+      <xapl:value-of select="$this/VIEW_MODE"/>
+      <x2:execute command="omx.cm:getStatesForCountry">
+        <x2:with-param name="pCountry" select="$this/COUNTRY/@Value"/>
+      </x2:execute>
+      <x2:execute command="omx.cm:getCountries">
+        <x2:with-param name="pDefaultCountry" select="$this/COUNTRY/@Value"/>
+      </x2:execute>
+      <x2:execute command="omx.cm:getDesignations"/>
+      <x2:execute command="omx.cm:getLocales"/>
+    </xapl:return>
+  </x2:command>
+  
+ <!--************************************************************************
+    *************************************************************************-->
+  <x2:command public="yes" description="_" name="getUserAdminUsers">
+    <xapl:print select="$this"/>
+
+    <x2:param name="pId" select="{$this/ID/@Value}"/>
+    <x2:param name="pRefresh" select="{$this/REFRESH/@Value}"/>
+
+    <xapl:variable name="identityId">  <identity:get-user-id/>  </xapl:variable>
+    <xapl:variable name="identityOrgId">  <identity:get-user-org/>  </xapl:variable>
+
+    <xapl:variable name="userInfo">
+      <xapl:choose>
+        <xapl:when test=" ($pRefresh = 'true') ">
+          <USER_PROFILE>
+            <xapl:value-of select="{$this/ID}"/>
+            <xapl:value-of select="{$this/STATUS}"/>
+            <xapl:value-of select="{$this/LOGIN_NAME}"/>
+            <xapl:value-of select="{$this/FIRST_NAME}"/>
+            <xapl:value-of select="{$this/LAST_NAME}"/>
+            <xapl:value-of select="{$this/LOCALE}"/>
+            <xapl:value-of select="{$this/ADDRESS1}"/>
+            <xapl:value-of select="{$this/ADDRESS2}"/>
+            <xapl:value-of select="{$this/ADDRESS3}"/>
+            <xapl:value-of select="{$this/ABSENTEE_ID}"/>
+            <xapl:value-of select="{$this/ORG_ID}"/>
+            <xapl:value-of select="{$this/CITY}"/>
+            <xapl:value-of select="{$this/PHONE}"/>
+            <xapl:value-of select="{$this/FAX}"/>
+            <xapl:value-of select="{$this/EMAIL_ADDRESS}"/>
+            <xapl:value-of select="{$this/STATE}"/>
+            <xapl:value-of select="{$this/POSTAL_CODE}"/>
+            <xapl:value-of select="{$this/MANAGER_ID}"/>
+            <xapl:value-of select="{$this/ROLE_ID}"/>
+            <xapl:value-of select="{$this/COUNTRY}"/>
+            <xapl:value-of select="{$this/DESIGNATION}"/>
+            <xapl:value-of select="{$this/WEB}"/>
+            <xapl:value-of select="{$this/WEB_DELIVERY_DETAILS}"/>
+            <xapl:value-of select="{$this/EMAIL}"/>
+            <xapl:value-of select="{$this/EMAIL_DELIVERY_DETAILS}"/>
+            <xapl:value-of select="{$this/USER_GRP_ID}"/>
+            <xapl:value-of select="{$this/USER_GRP_NAME}"/>
+            <xapl:value-of select="{$this/ORG_FULL_NAME}"/>
+          </USER_PROFILE>
+        </xapl:when>
+        <xapl:when test=" (string-length($pId) &gt; 0) ">
+          <xcore:execute-method name="//UserSecurity/getUser">
+            <ID Value="{$pId}"/>
+          </xcore:execute-method>
+        </xapl:when>
+        <xapl:otherwise>
+          <USER_PROFILE/>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+        
+    <xapl:variable name="userOrg">
+      <xapl:choose>
+        <xapl:when test=" (string-length($pId) &gt; 0) or ($pRefresh = 'true') ">
+          <x2:execute command="omx.user_admin.users_edit:getOrganization">
+            <x2:with-param name="pId" select="$userInfo/ORG_ID/@Value"/>
+          </x2:execute>
+        </xapl:when>
+        <xapl:when test=" (string-length($this/ORG_ID/@Value) &gt; 0) ">
+          <x2:execute command="omx.user_admin.users_edit:getOrganization">
+            <x2:with-param name="pId" select="$this/ORG_ID/@Value"/>
+          </x2:execute>
+        </xapl:when>
+        <xapl:otherwise>
+          <x2:execute command="omx.user_admin.users_edit:getOrganization">
+            <x2:with-param name="pId" select="identity-user-org()"/>
+          </x2:execute>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+
+    <xapl:variable name="validUsers">
+      <xcore:execute-method name="//UserSecurity/getUsers">
+        <USER_ID Value="{identity-user-id()}"/>
+        <FILTER Name="ORG_ID">
+          <ORG_ID Value="{$userOrg/ID/@Value}"/>
+        </FILTER>
+      </xcore:execute-method>
+    </xapl:variable>
+        
+    <xapl:variable name="inDomain">
+      <xapl:choose>
+        <xapl:when test="isAllowed('USER_ADMIN', '*', 'add_user_for_all_orgs')">All</xapl:when>
+        <xapl:when test="isAllowed('USER_ADMIN', '*', 'add_user_for_customer_org')">Self</xapl:when>
+        <xapl:when test="isAllowed('USER_ADMIN', '*', 'add_user_for_seller_org')">Self</xapl:when>
+        <xapl:otherwise>All</xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+
+    <xapl:return>
+      <xapl:value-of select="$this/SUCCESS_MESSAGE"/>
+      <xapl:value-of select="$this/ERROR_MESSAGE"/>
+      <IN_DOMAIN Access="All"/>
+      <IDENTITY_ORG_ID Value="{identity-user-org()}"/>
+      <xapl:value-of select="{$userInfo}"/>
+      <xapl:value-of select="{$validUsers}"/>
+      <xapl:value-of select="{$userOrg}"/>
+    </xapl:return>
+  </x2:command>
+
+  <!-- **************************************************************************
+    ************************************************************************** -->
+  <x2:command public="yes" description="_" name="getUserDetailsContainer">
+    <x2:param name="pWhere" select="$this/WHERE/@Value"/>
+    <x2:param name="pViewMode" select="$this/VIEW_MODE/@Value"/>
+    <x2:param name="pId" select="$this/ID/@Value"/>
+    <x2:param name="pStatus"/>
+    
+    <xapl:variable name="disableReset">
+        <xapl:if test="$pWhere = 'NEW_USERS'">yes</xapl:if>
+        <xapl:otherwise>no</xapl:otherwise>
+    </xapl:variable>
+    <xapl:return>
+        <CONTAINER Scrollable="no">
+            <xapl:choose>
+              <xapl:when test="$pWhere = 'NEW_USERS'">
+                  <HELP Url="{$pages:create_user_detail_help}"/>
+              </xapl:when>
+              <xapl:otherwise>
+                  <HELP Url="{$pages:user_detail_help}"/>
+              </xapl:otherwise>
+            </xapl:choose>
+            <STEP OnClick="{$pages:users_edit}" Selected="true" DisplayText="User Details">
+                <BUTTONS>
+                  <xapl:if test="string-length($pViewMode) = 0">
+              <BUTTON DisplayText="Cancel" OnClick="javascript:onCancel();"/>
+              <DIVIDER/>
+            </xapl:if>
+                  <xapl:if test="$pViewMode = 'PREFERENCE' ">
+                      <BUTTON DisplayText="Change Password" OnClick="javascript:changePassword(user_form);" Disabled="no"/>
+                  </xapl:if>                  
+                  <BUTTON DisplayText="Reset" OnClick="javascript:resetUserDetails();" Disabled="{$disableReset}"/>
+                  <xapl:if test=" (string-length($pId) > 0) ">
+                      <xapl:if test=" $pId != identity-user-id() ">
+                        <DIVIDER/>
+                        <xapl:choose>
+                          <xapl:when test=" $pStatus = 'INACTIVE' ">
+                            <BUTTON DisplayText="Activate" OnClick="javascript:activate();" Emphasized="false" Disabled="no"/>
+                          </xapl:when>
+                          <xapl:when test=" $pStatus = 'ACTIVE' ">
+                            <BUTTON DisplayText="Deactivate" OnClick="javascript:deactivate();" Emphasized="false" Disabled="no"/>
+                          </xapl:when>
+                        </xapl:choose>
+                      </xapl:if>
+                      <xapl:if test=" ($pStatus = 'ACTIVE') and ( ($pViewMode != 'PREFERENCE') or (string-length($pViewMode) = 0) ) ">
+                        <DIVIDER/>
+                      </xapl:if>
+                      <xapl:if test=" $pStatus = 'ACTIVE' ">
+                        <BUTTON DisplayText="Update" OnClick="javascript:save();" Emphasized="true" Disabled="no"/>
+                      </xapl:if>
+                  </xapl:if>
+                  <xapl:if test=" (string-length($pId) = 0) ">
+                      <BUTTON DisplayText="Save" OnClick="javascript:saveAs();" Emphasized="true" Disabled="no"/>
+                  </xapl:if>
+                </BUTTONS>
+            </STEP>
+        </CONTAINER>        
+    </xapl:return>
+  </x2:command>
+    
+ <!--************************************************************************
+    ************************************************************************-->
+  <x2:command public="yes" description="_" name="resetPasswordForUser">
+    <xapl:print select="{$this}"/>
+
+    <xapl:variable name="userId">
+      <xapl:value-of select="$this/SELECTED_USER_ID/@Value"/>
+    </xapl:variable>
+    
+    <xapl:variable name="response">
+      <xcore:execute-method name="//UserSecurity/resetPasswordForUser" entireResponse="true">
+        <ID Value="{$userId}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+
+    <xapl:variable name="successMessage1">PASSWORD_RESET_SUCCESS</xapl:variable>    
+    
+    <docutil:add select="$this">
+      <x2:execute command="bcm.framework.util:getResponseStatus">
+        <x2:with-param name="response" select="$response"/>        
+        <x2:with-param name="successMessage" select="{$successMessage1}"/>
+      </x2:execute>
+    </docutil:add>
+
+    <web:display-page>
+      <web:get-page name="user_search_view">
+        <xapl:value-of select="$this/*[string-length(@Value) &gt; 0]"/>
+      </web:get-page>
+    </web:display-page>
+    
+  </x2:command>
+
+  <!--************************************************************************
+    ************************************************************************-->
+  <x2:command public="yes" description="_" name="addUserProfile">
+    <xapl:print select="$this"/>
+    
+    <xapl:variable name="addUserInfo">
+      <xcore:execute-method name="//UserSecurity/addUser" entireResponse="true">
+        <xapl:value-of select="{$this/LOGIN_NAME}"/>
+        <xapl:value-of select="{$this/FIRST_NAME}"/>
+        <xapl:value-of select="{$this/LAST_NAME}"/>
+        <xapl:value-of select="{$this/LOCALE}"/>
+        <xapl:value-of select="{$this/ADDRESS1}"/>
+        <xapl:value-of select="{$this/ADDRESS2}"/>
+        <xapl:value-of select="{$this/ADDRESS3}"/>
+        <xapl:value-of select="{$this/ABSENTEE_ID}"/>
+        <xapl:value-of select="{$this/ORG_ID}"/>
+        <xapl:value-of select="{$this/CITY}"/>
+        <xapl:value-of select="{$this/PHONE}"/>
+        <xapl:value-of select="{$this/FAX}"/>
+        <xapl:value-of select="{$this/STATE}"/>
+        <xapl:value-of select="{$this/POSTAL_CODE}"/>
+        <xapl:value-of select="{$this/MANAGER_ID}"/>
+        <xapl:value-of select="{$this/COUNTRY}"/>
+        <xapl:value-of select="{$this/DESIGNATION}"/>
+        <xapl:value-of select="{$this/USER_GRP_ID}"/>
+        <EMAIL_ADDRESS Value="{$this/EMAIL_ADDRESS/@Value}"/>
+        <xapl:value-of select="{$this/PASSWORD}"/>
+        <xapl:value-of select="{$this/FORCE_PASSWORD_CHANGE}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    
+    <xapl:print select="$addUserInfo"/>
+		<xapl:if test="$addUserInfo/RESPONSE/@Status = 'Error'">
+		      <web:display-page>
+		        <web:get-page name="users_edit">
+		          <ERROR_MESSAGE Value="{$addUserInfo/RESPONSE/@Description}"/>
+		          <xapl:value-of select="$this/*[string-length(@Value) != 0]"/>
+		          <REFRESH Value="true"/>
+		        </web:get-page>
+		      </web:display-page>
+    </xapl:if>
+    
+    <!-- Options WEB and EMAIL have been removed from the ui; So, setting EMAIL to 'true' if EMAIL_ADDRESS has been sent; Ignoring WEB option for time being -->
+    <xapl:variable name="web">
+      <xapl:choose>
+        <xapl:when test=" string-length($this/WEB/@Value) &gt; 0 ">
+          <xapl:value-of select="$this/WEB/@Value"/>
+        </xapl:when>
+        <xapl:otherwise>false</xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+
+    <xapl:variable name="email">
+      <xapl:choose>
+        <xapl:when test=" string-length($this/EMAIL_ADDRESS/@Value) &gt; 0 ">true</xapl:when>
+        <xapl:otherwise>false</xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+
+    <xapl:variable name="updateMsgOpt">
+      <MSG_OPTIONS>
+        <MSG_OPTION>
+          <ID Value="WEB"/>
+          <SELECTED Value="{$web}"/>
+          <DELIVERY_DETAILS Value="{$this/WEB_DELIVERY_DETAILS/@Value}"/>
+        </MSG_OPTION>
+        <MSG_OPTION>
+          <ID Value="EMAIL"/>
+          <SELECTED Value="{$email}"/>
+          <DELIVERY_DETAILS Value="{$this/EMAIL_ADDRESS/@Value}"/>
+        </MSG_OPTION>
+      </MSG_OPTIONS>
+    </xapl:variable>
+
+    <xcore:execute-method name="//UserSecurity/setMessagingPreferences">
+      <ENTITY_ID Value="{$addUserInfo/RESPONSE/ID[1]/@Value}"/>
+      <ENTITY_TYPE Value="USER"/>
+      <xapl:value-of select="{$updateMsgOpt}"/>
+      <!-- Add parameter to denote the user is being created -->
+      <OPERATION Value="CREATE"/>
+    </xcore:execute-method>
+
+    <web:display-page>
+      <web:get-page name="users_edit">
+        <ID Value="{$addUserInfo/RESPONSE/ID[1]/@Value}"/>
+        <SUCCESS_MESSAGE Value="New user created successfully"/>
+        <WHERE Value="{$this/WHERE/@Value}"/>
+        <fromPage Value="{$this/fromPage/@Value}"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+
+ <!--************************************************************************
+    ************************************************************************-->
+  <x2:command public="yes" description="_" name="updateUserProfile">
+    <xapl:print select="$this"/>
+        
+    <xapl:variable name="updateUserInfo">
+      <xcore:execute-method name="//UserSecurity/modifyUser" entireResponse="true">
+        <ID Value="{$this/ID[1]/@Value}"/>
+        <xapl:value-of select="{$this/LOGIN_NAME}"/>
+        <xapl:value-of select="{$this/FIRST_NAME}"/>
+        <xapl:value-of select="{$this/LAST_NAME}"/>
+        <xapl:value-of select="{$this/LOCALE}"/>
+        <xapl:value-of select="{$this/ADDRESS1}"/>
+        <xapl:value-of select="{$this/ADDRESS2}"/>
+        <xapl:value-of select="{$this/ADDRESS3}"/>
+        <xapl:value-of select="{$this/ABSENTEE_ID}"/>
+        <xapl:value-of select="{$this/ORG_ID}"/>
+        <xapl:value-of select="{$this/CITY}"/>
+        <xapl:value-of select="{$this/PHONE}"/>
+        <xapl:value-of select="{$this/FAX}"/>
+        <xapl:value-of select="{$this/STATE}"/>
+        <xapl:value-of select="{$this/POSTAL_CODE}"/>
+        <xapl:value-of select="{$this/MANAGER_ID}"/>
+        <xapl:value-of select="{$this/COUNTRY}"/>
+        <xapl:value-of select="{$this/DESIGNATION}"/>
+        <EMAIL_ADDRESS Value="{$this/EMAIL_ADDRESS/@Value}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    
+    <xapl:if test="string-length($updateUserInfo/RESPONSE/_RESULT/_ERROR/@Value) != 0">
+      <web:display-page>
+        <web:get-page name="users_edit">
+          <ERROR_MESSAGE Value="{$updateUserInfo/RESPONSE/_RESULT/_ERROR/@Value}"/>
+          <REFRESH Value="true"/>
+          <xapl:value-of select="$this/*"/>
+        </web:get-page>
+      </web:display-page>
+    </xapl:if>
+    
+    <xapl:variable name="identityUserId">
+      <identity:get-user-id/>
+    </xapl:variable>
+    
+    <xapl:variable name="web">
+      <xapl:choose>
+        <xapl:when test=" string-length($this/WEB/@Value) &gt; 0 ">
+          <xapl:value-of select="$this/WEB/@Value"/>
+        </xapl:when>
+        <xapl:otherwise>false</xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+
+    <xapl:variable name="email">
+      <xapl:choose>
+        <xapl:when test=" string-length($this/EMAIL_ADDRESS/@Value) &gt; 0 ">true</xapl:when>
+        <xapl:otherwise>false</xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+
+    <xapl:variable name="updateMsgOpt">
+      <MSG_OPTIONS>
+        <MSG_OPTION>
+          <ID Value="WEB"/>
+          <SELECTED Value="{$web}"/>
+          <DELIVERY_DETAILS Value="{$this/WEB_DELIVERY_DETAILS/@Value}"/>
+        </MSG_OPTION>
+        <MSG_OPTION>
+          <ID Value="EMAIL"/>
+          <SELECTED Value="{$email}"/>
+          <DELIVERY_DETAILS Value="{$this/EMAIL_ADDRESS/@Value}"/>
+        </MSG_OPTION>
+      </MSG_OPTIONS>
+    </xapl:variable>
+
+    <xcore:execute-method name="//UserSecurity/setMessagingPreferences">
+      <ENTITY_ID Value="{$this/ID[1]/@Value}"/>
+      <ENTITY_TYPE Value="USER"/>
+      <xapl:value-of select="{$updateMsgOpt}"/>
+      <!-- Send a flag to denote it is an update -->
+      <OPERATION Value="UPDATE"/>
+    </xcore:execute-method>
+
+    <web:display-page>
+      <web:get-page name="users_edit">
+        <ID Value="{$this/ID[1]/@Value}"/>
+        <SUCCESS_MESSAGE Value="The User Profile has been successfully saved!"/>
+        <VIEW_MODE Value="{$this/VIEW_MODE/@Value}"/>
+        <WHERE Value="{$this/WHERE/@Value}"/>
+        <fromPage Value="{$this/fromPage/@Value}"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+
+  <!--**********************************************************************
+    ************************************************************************-->
+  <x2:command public="yes" description="_" name="getOrganization">
+    <x2:param name="pId"/>
+    <xapl:variable name="org">
+      <xcore:execute-method name="//UserSecurity/getOrganization">
+        <ID Value="{$pId}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    <xapl:return>
+      <xapl:value-of select="$org"/>
+    </xapl:return>
+  </x2:command>
+
+  <!--************************************************************************
+    ************************************************************************-->    
+  <x2:command public="yes" description="_" name="activateUser">    
+
+    <xcore:execute-method name="//UserSecurity/setUserStatus">
+      <ID Value="{$this/ID[1]/@Value}"/>
+      <STATUS Value="ACTIVE"/>
+    </xcore:execute-method>
+    
+    <web:display-page>
+      <web:get-page name="users_edit">
+        <ID Value="{$this/ID[1]/@Value}"/>
+        <SUCCESS_MESSAGE Value="Activation Successful!"/> 
+        <xapl:if test="string-length($this/WHERE/@Value) &gt; 0">
+          <WHERE Value="{$this/WHERE/@Value}" />
+        </xapl:if>
+        <xapl:if test="string-length($this/fromPage/@Value) &gt; 0">
+          <fromPage Value="{$this/fromPage/@Value}" />
+        </xapl:if>
+      </web:get-page>
+    </web:display-page>    
+  </x2:command>
+
+  <!--************************************************************************
+    ************************************************************************-->
+  <x2:command public="yes" description="_" name="deactivateUser">
+    <xcore:execute-method name="//UserSecurity/setUserStatus">
+      <ID Value="{$this/ID[1]/@Value}"/>
+      <STATUS Value="INACTIVE"/>
+    </xcore:execute-method>    
+    
+    <web:display-page>
+      <web:get-page name="users_edit">
+        <ID Value="{$this/ID[1]/@Value}"/>
+        <SUCCESS_MESSAGE Value="Deactivation Successful"/>
+        <xapl:if test="string-length($this/WHERE/@Value) &gt; 0">
+          <WHERE Value="{$this/WHERE/@Value}" />
+        </xapl:if>
+        <xapl:if test="string-length($this/fromPage/@Value) &gt; 0">
+          <fromPage Value="{$this/fromPage/@Value}" />
+        </xapl:if>
+      </web:get-page>
+    </web:display-page>    
+  </x2:command>
+
+  <!--************************************************************************
+    ************************************************************************-->
+  <x2:command public="yes" description="_" name="resetUserDetails">
+    <web:display-page>
+      <web:get-page name="users_edit">
+        <ID Value="{$this/ID[1]/@Value}"/>
+        <xapl:if test="string-length($this/WHERE/@Value) &gt; 0">
+          <WHERE Value="{$this/WHERE/@Value}" />
+        </xapl:if>
+        <xapl:if test="string-length($this/fromPage/@Value) &gt; 0">
+          <fromPage Value="{$this/fromPage/@Value}" />
+        </xapl:if>
+        <VIEW_MODE Value="{$this/VIEW_MODE/@Value}"/>
+      </web:get-page>
+    </web:display-page>    
+  </x2:command>
+
+  <!--************************************************************************
+    ************************************************************************-->
+  <x2:command public="yes" description="_" name="view">
+    <xapl:print select="{$this}"/>
+    <xapl:if test="$this/MODE/@Value  = 'INIT'">
+      <x2:execute command="bcm.framework.ContextController:cleanContext"/>
+      <docutil:remove select="$this/MODE"/>
+    </xapl:if>    
+    <xapl:if test=" $this/VIEW_MODE/@Value = 'PREFERENCE' ">
+      <docutil:set select="$this">
+        <ID Value="{identity-user-id()}"/>
+        <WHERE Value="USER_DETAILS"/>
+      </docutil:set>
+    </xapl:if>
+    <web:display-page>
+      <web:get-page name="users_edit">
+        <xapl:value-of select="$this/*"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+
+  <!--************************************************************************
+    ************************************************************************-->
+  <x2:command public="yes" description="_" name="onCancel">
+    <!-- no session clean-up activity here as nothing 
+           stored in sesison for the user details page -->
+    <x2:execute command="bcm.framework.breadcrumb.controller:back"/>
+  </x2:command>
+
+ <!--************************************************************************
+    ************************************************************************-->
+  <x2:command public="yes" description="_" name="changePasswordFromMyProfile">
+    <xapl:print select="$this"/>
+    <xapl:variable name="destPage"/>
+    <xapl:choose>
+        <xapl:when test="$this/CHANGE_PASSWD/@Value='yes' and $this/MY_PROFILE/@Value='yes'">
+            <xapl:set-variable name="destPage">change_passwd_inner</xapl:set-variable>
+        </xapl:when>
+        <xapl:otherwise>
+            <xapl:if test="$this/CHANGE_PASSWD/@Value='yes'">
+                <xapl:set-variable name="destPage">change_passwd</xapl:set-variable>
+            </xapl:if>
+        </xapl:otherwise>
+    </xapl:choose>    
+    <web:display-page>
+        <web:get-page name="{$destPage}">
+          <CHANGE_PASSWORD Value="yes"/>
+          <USER_NAME Value="{$this/LOGIN_NAME/@Value}"/>
+          <MY_PROFILE Value="yes"/>
+        </web:get-page>
+      </web:display-page>    
+  </x2:command>
+
+  <!--************************************************************************
+    ************************************************************************-->  
+  <x2:command public="yes" description="_" name="i18n">
+    <i18n:text name="PASSWORD_RESET_SUCCESS">Password reset successful. The new password has been mailed to the user.</i18n:text>
+  </x2:command>
+
+
+</x2:commands>

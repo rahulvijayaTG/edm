@@ -1,0 +1,661 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands 
+             xmlns:x2="http://www.i2.com/x2" 
+             xmlns:core="http://www.i2.com/core" 
+             xmlns:xcore="http://www.i2.com/xcore" 
+             xmlns:xcore-db="http://www.i2.com/xcore-db" 
+             xmlns:xapl="http://www.i2.com/xapl" 
+             xmlns:web="http://www.i2.com/web" 
+             xmlns:docutil="http://www.i2.com/docutil" 
+             xmlns:util="http://www.i2.com/util" 
+             xmlns:FUNCTION="http://www.i2.com/FUNCTION" 
+             xmlns:REMOVE="http://www.i2.com/REMOVE" 
+             xmlns:xudl="http://www.i2.com/xudl" 
+             xmlns:cfg="http://www.i2.com/configurability" 
+             xmlns:perm="http://www.i2.com/permissibility" 
+             xmlns:omx="http://www.i2.com/omx" 
+             xmlns:identity="http://www.i2.com/identity" description="_"> 
+  
+<!-- ********************************************************************** 
+  *********************************************************************** -->    
+  <x2:command name="init" public="yes" description="_">
+    <x2:execute command="omx.add_book.org.pages:defineCore"/>
+  </x2:command>
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="defineCore">
+    
+		<!-- organization view -->
+		<web:define-page name="addrbook_view_org" url="/omx/add_book/org/viewOrg.jsp"/>
+		<web:define-xsl name="addrbook_view_org_xsl" url="/omx/add_book/org/xsl/pageViewOrg.xsl"/>
+		
+		<!-- organization edit -->
+		<web:define-page name="org_edit" url="/omx/add_book/org/editOrg.jsp"/>
+		<web:define-xsl name="org_edit_xsl" url="/omx/add_book/org/xsl/pageEditOrg.xsl"/>
+		
+		<!-- organization tree view -->
+		<web:define-page name="org_tree_view" url="/omx/add_book/org/orgTreeView.jsp"/>
+		<web:define-xsl name="org_tree_view_xsl" url="/omx/add_book/org/xsl/orgTreeView.xsl"/>
+		
+		<!-- organization terms -->
+		<web:define-page name="org_terms" url="/omx/add_book/terms/terms.jsp"/>
+		<web:define-xsl name="org_terms_xsl" url="/omx/add_book/terms/xsl/terms.xsl"/>
+		
+		<!--
+		
+		<web:define-page name="org_buying_limits" url="/omx/add_book/org/orgBuyingLimits.jsp"/>
+		<web:define-xsl name="org_buying_limits_xsl" url="/omx/add_book/org/xsl/orgBuyingLimits.xsl"/>
+		
+		
+		<web:define-page name="org_contacts" url="/omx/add_book/org/orgContacts.jsp"/>
+		<web:define-xsl name="org_contacts_xsl" url="/omx/add_book/org/xsl/orgContacts.xsl"/>
+		
+		
+		<web:define-page name="org_nexus" url="/omx/add_book/org/orgNexus.jsp"/>
+		<web:define-xsl name="org_nexus_xsl" url="/omx/add_book/org/xsl/pageViewOrgNexus.xsl"/>
+		-->
+		
+	  <!-- organization search -->
+	  <web:define-page name="org_search" url="/omx/add_book/org/select/org.jsp"/>
+	  <web:define-page name="org_search_view" url="/omx/search/search.jsp?PAGE=org_search&amp;OBJECT_TYPE=ORGANIZATION&amp;DIRECTORY=omx.add_book.org&amp;FILE=orgSearch&amp;JSCRIPT=omx/add_book/org/js/org.js"/>
+	
+	  <!-- organization search -->
+    <web:define-page name="customer_org_search" url="/omx/search/search.jsp?PAGE=customer_org_search&amp;OBJECT_TYPE=ORGANIZATION&amp;DIRECTORY=omx.add_book.org&amp;FILE=customerOrgSearch&amp;JSCRIPT=omx/add_book/org/js/org.js"/>
+	  <web:define-page name="customer_org_details" url="/omx/add_book/org/pages/redirectToCustomerOrgDetails.cmd"/>
+	
+	<!-- organization sharing -->
+	<web:define-page name="sharing_orgs" url="/omx/add_book/org/orgSharing.jsp"/>
+	<web:define-xsl name="sharing_orgs_xsl" url="/omx/add_book/org/xsl/orgSharing.xsl"/>
+	<web:define-page name="org_sharing_search" url="/omx/search/search.jsp?PAGE=sharing_orgs&amp;OBJECT_TYPE=ORGANIZATION&amp;DIRECTORY=omx.add_book.org&amp;FILE=orgSharing&amp;JSCRIPT=omx/add_book/org/js/org.js"/>
+    
+  </x2:command>
+
+  <!--************************************************************************-->  
+  
+  <x2:command public="yes" description="_" name="defineActions">
+    
+    <xapl:return>
+    
+      <define-actions>
+        <!-- global actions -->
+        <define-action 
+                       name="reset" 
+                       displayText="Reset" 
+                       permAction="edit_global" 
+                       permContext="ORGANIZATION" />
+        
+        <define-action 
+                       name="manage_org" 
+                       displayText="Organization Overview" 
+                       contextNode="ID" 
+                       nodeValue="" 
+                       matchBy="NOT_EQUAL" 
+                       permAction="view" 
+                       permContext="ORGANIZATION" />
+
+        <define-action 
+                       name="global_save_as_new" 
+                       displayText="Save As New" 
+                       contextNode="ID" 
+                       nodeValue="" 
+                       matchBy="NOT_EQUAL" 
+                       permAction="edit_global" 
+                       permContext="ORGANIZATION" />
+        
+        <define-action 
+                       name="global_update" 
+                       displayText="Update" 
+                       contextNode="ID" 
+                       nodeValue="" 
+                       matchBy="NOT_EQUAL" 
+                       permAction="edit_global" 
+                       permContext="ORGANIZATION" />
+        
+        <define-action 
+                       name="global_save" 
+                       displayText="Save" 
+                       contextNode="ID" 
+                       nodeValue="" 
+                       matchBy="EQUAL" 
+                       permAction="edit_global" 
+                       permContext="ORGANIZATION" />
+        
+        <define-action 
+                       name="nexus_update" 
+                       displayText="Update" 
+                       contextNode="ID" 
+                       nodeValue="" 
+                       matchBy="NOT_EQUAL" 
+                       permAction="edit" 
+                       permContext="ORG_NEXUS" />
+        
+        <define-action 
+                       name="buying_limits_reset" 
+                       displayText="Reset" 
+                       contextNode="ID" 
+                       nodeValue="" 
+                       matchBy="NOT_EQUAL" 
+                       permAction="view" 
+                       permContext="ORGANIZATION" />
+					   
+		<define-action 
+                       name="remove_share_orgs" 
+                       displayText="Remove" 
+                       contextNode="ID" 
+                       nodeValue="" 
+                       matchBy="NOT_EQUAL" 
+                       permAction="view" 
+                       permContext="ORGANIZATION" />
+		
+		<define-action 
+                       name="share_org" 
+                       displayText="Add" 
+                       contextNode="ID" 
+                       nodeValue="" 
+                       matchBy="NOT_EQUAL" 
+                       permAction="view" 
+                       permContext="ORGANIZATION" />
+		<define-action 
+                       name="add_share_org" 
+                       displayText="Share" 
+                       contextNode="ID" 
+                       nodeValue="" 
+                       matchBy="NOT_EQUAL" 
+                       permAction="view" 
+                       permContext="ORGANIZATION" />
+		
+		<define-action 
+                       name="cancel_share_org" 
+                       displayText="Cancel" 
+                       contextNode="ID" 
+                       nodeValue="" 
+                       matchBy="NOT_EQUAL" 
+                       permAction="view" 
+                       permContext="ORGANIZATION" />
+
+        <define-action 
+                       name="buying_limits_save" 
+                       displayText="Save" 
+                       contextNode="ID" 
+                       nodeValue="" 
+                       matchBy="NOT_EQUAL" 
+                       permAction="view" 
+                       permContext="ORGANIZATION" />
+
+        <!-- end of global actions -->
+        
+        <!-- local actions -->
+        <define-action 
+                       name="save_local"
+                       displayText="Save" 
+                       contextNode="ID" 
+                       nodeValue="" 
+                       matchBy="NOT_EQUAL" 
+                       permAction="edit_global" 
+                       permContext="ORGANIZATION" />
+        <!-- end of local actions -->
+        
+      </define-actions>
+      
+    </xapl:return>
+    
+  </x2:command>
+  
+  <!--************************************************************************-->  
+  
+  <x2:command public="yes" description="_" name="getTabs">
+    <x2:param name="page" select="$this/PAGE/@Value"/>
+    <x2:param name="orgId" select="$this/ORG_ID/@Value"/>
+    <x2:param name="searchMode"/>
+		
+	  <xapl:variable name="identityOrg"><identity:get-org/></xapl:variable>
+    
+    <xapl:variable name="organization">
+      <xcore:execute-method name="//UserSecurity/getOrganization">
+        <ID Value="{$orgId}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    
+    <xapl:variable name="pages">
+      <TABS>
+        
+        <xapl:variable name="helpUrl">
+          <xapl:choose>
+              <xapl:when test="{$page = 'details'}">
+                <web:get-page name="add_book_orgdetails_help"/>
+              </xapl:when>
+              <xapl:when test="{$page = 'tree_view'}">
+                <web:get-page name="add_book_orgdetails_help"/>
+              </xapl:when>
+              <xapl:when test="{$page = 'customer'}">
+                <web:get-page name="add_book_orgdetails_help"/>
+              </xapl:when>
+              <xapl:when test="{$page = 'terms'}">
+                <web:get-page name="add_book_terms_help"/>
+              </xapl:when>
+              <xapl:when test="{$page = 'contacts'}">
+                <web:get-page name="add_book_contacts_help"/>
+              </xapl:when>
+              <xapl:when test="{$page = 'nexus'}">
+                <web:get-page name="add_book_nexus_help"/>
+              </xapl:when>
+              <xapl:when test="{$page = 'children'}">
+                <web:get-page name="add_book_childorg_help"/>
+              </xapl:when>
+              <xapl:when test="{$page = 'seller'}">
+                <web:get-page name="add_book_sellerentity_help"/>
+              </xapl:when>
+              <xapl:when test="{$page = 'buying_limits'}">
+                <web:get-page name="add_book_buying_limits_help"/>
+              </xapl:when>
+              <xapl:when test="{$page = 'account_codes_edit'}">
+                <web:get-page name="add_book_orgdetails_help"/>
+              </xapl:when>
+              <xapl:otherwise>                
+                <web:get-page name="add_book_details_help"/>
+              </xapl:otherwise>
+          </xapl:choose>
+        </xapl:variable>
+        
+        <HELP Url="{$helpUrl}"/>
+
+        <xapl:variable name="tabUrl"/>
+        
+        <xapl:choose>
+          
+          <xapl:when test=" (string-length($orgId) = 0) and (string-length($searchMode) &gt; 0) and ($searchMode = 'false')">
+            <TAB
+                 DisplayText="Organization Details"
+                 OnClick="javascript:void(0)"
+                 Selected="true" >
+                 
+              <xapl:variable name="buttonsForPage">
+                <page-buttons>
+                  <page-button name="reset" onclick="reset(orgForm)"/>
+                  <page-button name="divider"/>    
+                  <page-button name="global_save" onclick="saveOrgAs()"/>
+                </page-buttons>
+              </xapl:variable>
+              
+              <x2:execute command="omx.common:prepareButtonXml">
+                <x2:with-param name="pPageButtons" select="$buttonsForPage"/>
+                <x2:with-param name="pFilePath" select="'omx.add_book.org'"/>
+                <x2:with-param name="pContextValue" select="$organization"/>
+              </x2:execute>
+              
+            </TAB>
+          </xapl:when>
+          
+          <xapl:when test=" (string-length($orgId) = 0) and (string-length($searchMode) = 0)">
+            <TAB
+                 DisplayText="Search Enterprise Model"
+                 OnClick="javascript:void(0)"
+                 Selected="true" >
+                 
+              <BUTTONS>
+                <BUTTON 
+                        Name="Organization Overview" 
+                        DisplayText="Organization Overview" 
+                        OnClick="javascript:redirectToManageOrg();" 
+                        Disabled="report"/>					
+                
+                <perm:is-allowed document="ORGANIZATION" action="edit_global">              
+                  <BUTTON 
+                          Name="Add Organization" 
+                          DisplayText="Add New Organization" 
+                          OnClick="javascript:redirectToAddOrg();" 
+                          Disabled="no"/>
+                </perm:is-allowed>		
+              </BUTTONS>
+              
+            </TAB>
+          </xapl:when>
+          
+          <xapl:otherwise>
+            
+            <xapl:set-variable name="tabUrl">
+              <web:get-page name="addrbook_view_org">
+                <ORG_ID Value="{$orgId}"/>
+                <CUSTOMER_ORG_ID Value="{$orgId}"/>
+              </web:get-page>   
+            </xapl:set-variable>
+            
+            <TAB
+                 DisplayText="Organization Details"
+                 OnClick="{$tabUrl}"
+                 Selected="{$page = 'details'}" >
+              
+              <xapl:variable name="buttonsForPage">
+                <page-buttons>
+                  <page-button name="reset" onclick="reset(orgForm)"/>
+                  <page-button name="global_save_as_new" onclick="saveOrgAs()"/>
+                  <page-button name="global_update" onclick="saveOrg()"/>
+                  <page-button name="global_save" onclick="saveOrgAs()"/>
+                </page-buttons>
+              </xapl:variable>
+              
+              <x2:execute command="omx.common:prepareButtonXml">
+                <x2:with-param name="pPageButtons" select="$buttonsForPage"/>
+                <x2:with-param name="pFilePath" select="'omx.add_book.org'"/>
+                <x2:with-param name="pContextValue" select="$organization"/>
+              </x2:execute>
+              
+            </TAB>
+            
+            <xapl:set-variable name="tabUrl">
+              <web:get-page name="org_tree_view">
+                <ORG_ID Value="{$orgId}"/>
+                <CUSTOMER_ORG_ID Value="{$orgId}"/>
+				<IN_PRIMARY_DOMAIN Value="{$s_inPrimaryDomain}"/>
+              </web:get-page>
+            </xapl:set-variable>
+            
+            <TAB
+                 DisplayText="Organization View"
+                 OnClick="{$tabUrl}"
+                 Selected="{$page = 'tree_view'}" >
+            </TAB>
+			
+            <xapl:if test="isAllowed('ORGANIZATION', 'customers')">
+              <xapl:set-variable name="tabUrl">
+                <web:get-page name="customer_org_search">
+                  <SELLING_ORG_ID Value="{$orgId}"/>
+                  <ORG_ID Value="{$orgId}"/>
+                </web:get-page>
+              </xapl:set-variable>
+              
+              <xapl:if test="($organization/SELLER_STATUS/@Value != 'NONE') and ($organization/SELLER_STATUS/@Value != 'DORMANT') and ($organization/SELLER_STATUS/@Value != 'INACTIVE') ">
+                <TAB
+                     DisplayText="Customers"
+                     OnClick="{$tabUrl}"
+                     Selected="{$page = 'customer_org_search'}" >
+                  
+                  <xapl:variable name="buttonsForPage">
+                    <page-buttons>
+                      <page-button name="customer_search" onclick="customerForm.submit()"/>
+                    </page-buttons>
+                  </xapl:variable>
+                  
+                  <x2:execute command="omx.common:prepareButtonXml">
+                    <x2:with-param name="pPageButtons" select="$buttonsForPage"/>
+                    <x2:with-param name="pFilePath" select="'omx.add_book.org'"/>
+                    <x2:with-param name="pContextValue" select="$organization"/>
+                  </x2:execute>
+                  
+                </TAB>
+              </xapl:if>
+            </xapl:if>
+            
+            <xapl:if test="isAllowed('ORGANIZATION', 'terms')">
+              <xapl:if test="($organization/SELLER_STATUS/@Value != 'NONE') and ($organization/SELLER_STATUS/@Value != 'DORMANT') and ($organization/SELLER_STATUS/@Value != 'INACTIVE') ">
+                <xapl:set-variable name="tabUrl">
+                  <web:get-page name="org_terms">
+                    <ORG_ID Value="{$orgId}"/>
+                  </web:get-page>
+                </xapl:set-variable>
+                
+                <TAB
+                     DisplayText="Payment Terms"
+                     OnClick="{$tabUrl}"
+                     Selected="{$page = 'terms'}" >
+                </TAB>
+                
+              </xapl:if>	
+            </xapl:if>					
+            <xapl:variable name="localCust">
+				<x2:execute command="omx.add_book.org.data:getLocalCustomer">
+				        <x2:with-param name="orgId"><xapl:value-of select="$orgId" /></x2:with-param>
+				</x2:execute>
+			</xapl:variable>
+            <xapl:if test="isAllowed('ORGANIZATION', 'buying_limits') and $localCust/STATUS/@Value = 'ACTIVE'">
+              <xapl:set-variable name="tabUrl">
+                <web:get-page name="org_buying_limits">
+                  <ORG_ID Value="{$orgId}"/>
+                </web:get-page>
+              </xapl:set-variable>
+            
+              <TAB
+                   DisplayText="Buying Limits"
+                   OnClick="{$tabUrl}"
+                   Selected="{$page = 'buying_limits'}" >
+
+              <xapl:variable name="buttonsForPage">
+                <page-buttons>
+                  <page-button name="buying_limits_reset" onclick="reset()" emphasized="false"/>
+                  <page-button name="buying_limits_save" onclick="save()"/>
+                </page-buttons>
+              </xapl:variable>
+              
+              <x2:execute command="omx.common:prepareButtonXml">
+                <x2:with-param name="pPageButtons" select="$buttonsForPage"/>
+                <x2:with-param name="pFilePath" select="'omx.add_book.org'"/>
+                <x2:with-param name="pContextValue" select="$organization"/>
+              </x2:execute>
+              </TAB>
+            </xapl:if>
+			
+      			<xapl:if test="isAllowed('ORGANIZATION', 'shared_orgs')">
+      			  <xapl:if test="($organization/CUSTOMER_STATUS/@Value != 'NONE') and ($organization/CUSTOMER_STATUS/@Value != 'DORMANT') and ($organization/CUSTOMER_STATUS/@Value != 'INACTIVE') ">
+      			    <xapl:set-variable name="tabUrl">
+                  <web:get-page name="sharing_orgs">
+                    <ORG_ID Value="{$orgId}"/>
+                  </web:get-page>
+                </xapl:set-variable>
+                <TAB
+                     DisplayText="Shared Organizations"
+                     OnClick="{$tabUrl}"
+                     Selected="{$page = 'sharing_orgs'}" >
+                  
+                  <xapl:variable name="buttonsForPage">
+                    <page-buttons>
+      					  <xapl:choose>
+      					    <xapl:when test="{$this/IS_SHARING_SEARCH/@Value = 'TRUE'}">
+      						  <page-button name="cancel_share_org" onclick="cancelShareOrg()" emphasized="false"/>
+      						  <page-button name="add_share_org" onclick="addShareOrg()"/>
+      					    </xapl:when>
+      					    <xapl:otherwise>
+      						  <xapl:variable name="sharedOrgs">
+      						    <SHARED>
+      						      <xcore:execute-method name="//UserSecurity/getOrgsInSharingMap">
+      							    <SOURCE_ORG_ID Value="{$orgId}"/>
+      							  </xcore:execute-method>
+      							</SHARED>
+      						  </xapl:variable>
+      						  <xapl:if test="{count($sharedOrgs/*) > 0}">
+                                  <page-button name="remove_share_orgs" onclick="removeSharedOrgs()"  emphasized="false"/>
+      						  </xapl:if>
+      					      <page-button name="share_org" onclick="shareOrg()"/>
+      					    </xapl:otherwise>
+      					  </xapl:choose>
+                    </page-buttons>
+                  </xapl:variable>
+                  
+                  <x2:execute command="omx.common:prepareButtonXml">
+                    <x2:with-param name="pPageButtons" select="$buttonsForPage"/>
+                    <x2:with-param name="pFilePath" select="'omx.add_book.org'"/>
+                    <x2:with-param name="pContextValue" select="$organization"/>
+                  </x2:execute>
+                  
+                </TAB>
+      			  </xapl:if>
+			      </xapl:if>
+
+            <xapl:if test="isAllowed('ORGANIZATION', 'contacts')">
+              <xapl:set-variable name="tabUrl">
+                <web:get-page name="org_contacts">
+                  <ORG_ID Value="{$orgId}"/>
+                </web:get-page>
+              </xapl:set-variable>
+              
+              <TAB
+                   DisplayText="Contacts"
+                   OnClick="{$tabUrl}"
+                   Selected="{$page = 'contacts'}" >
+                
+              </TAB>
+            </xapl:if>
+            
+            <xapl:if test="isAllowed('ORGANIZATION', 'nexus_states')">
+              <xapl:if test="(string-length($organization/TAX_ID/@Value) != 0) and ($organization/COUNTRY/@Value='USA') and ($organization/SELLER_STATUS/@Value != 'NONE') and ($organization/SELLER_STATUS/@Value != 'DORMANT') and ($organization/SELLER_STATUS/@Value != 'INACTIVE')">
+                <xapl:set-variable name="tabUrl">
+                  <web:get-page name="org_nexus">
+                    <ORG_ID Value="{$orgId}"/>
+                  </web:get-page>
+                </xapl:set-variable>
+                <TAB
+                     DisplayText="Nexus States"
+                     OnClick="{$tabUrl}"
+                     Selected="{$page = 'nexus'}" >
+                  
+                  <xapl:variable name="buttonsForPage">
+                    <page-buttons>
+                      <page-button name="nexus_update" onclick="nexusForm.submit()"/>
+                    </page-buttons>
+                  </xapl:variable>
+                  
+                  <x2:execute command="omx.common:prepareButtonXml">
+                    <x2:with-param name="pPageButtons" select="$buttonsForPage"/>
+                    <x2:with-param name="pFilePath" select="'omx.add_book.org'"/>
+                    <x2:with-param name="pContextValue" select="$organization"/>
+                  </x2:execute>
+                  
+                </TAB>
+              </xapl:if>
+            </xapl:if>
+            
+            <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+            <!--  Account Codes                                                      -->
+            <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+            <xapl:if test="isAllowed('ORGANIZATION', 'account_codes')">
+              <xapl:if test="($organization/CUSTOMER_STATUS/@Value != 'NONE') and ($organization/CUSTOMER_STATUS/@Value != 'DORMANT') and ($organization/CUSTOMER_STATUS/@Value != 'INACTIVE') ">
+  
+                <xapl:set-variable name="tabUrl">
+                  <web:get-page name="account_codes_edit">
+                    <ORG_ID Value="{$orgId}"/>
+                  </web:get-page>
+                </xapl:set-variable>
+                
+                <TAB
+                  DisplayText="Account Codes"
+                  OnClick="{$tabUrl}"
+                  Selected="{$page = 'account_codes_edit'}" >
+                </TAB>
+  
+              </xapl:if>
+            </xapl:if>
+
+          </xapl:otherwise>
+        </xapl:choose>
+        <PAGINATION/>
+      </TABS>
+    </xapl:variable>
+        
+    <xapl:return>
+      <xapl:value-of select="{$pages}" />
+    </xapl:return>
+    
+  </x2:command>
+  
+  <!--************************************************************************-->  
+  
+  <x2:command public="yes" description="_" name="getHeader">
+    <xapl:variable name="origHeader"/>
+	<xapl:variable name="finalHeader"/>
+
+	<xapl:choose>
+	  <xapl:when test="string-length($addBookCurrOrgId/@Value)">
+
+	    <xapl:set-variable name="origHeader">
+          <x2:execute command="omx.add_book.breadcrumbs:getOrgHeader">
+          </x2:execute>
+        </xapl:set-variable>
+
+  		<xapl:set-variable name="finalHeader">
+	  	  <xapl:value-of select="$origHeader"/>
+		  </xapl:set-variable>
+	  </xapl:when>
+	  <xapl:otherwise>
+	    <xapl:set-variable name="origHeader">
+          <x2:execute command="omx.index:getHeader">
+          </x2:execute>
+        </xapl:set-variable>
+
+	    <xapl:set-variable name="finalHeader">
+      <HEADER>	
+		    <HEADING Value="Enterprise Model"/>
+        <xapl:value-of select="$origHeader/*"/>
+      </HEADER>  
+
+	    	</xapl:set-variable>
+        
+	  </xapl:otherwise>
+    </xapl:choose>
+    <xapl:return>
+      <xapl:value-of select="$finalHeader"/>
+    </xapl:return>
+
+  </x2:command>
+
+  <!--************************************************************************-->  
+	
+	<x2:command public="yes" description="_" name="redirectToManageOrg">
+	
+	  <xapl:set-variable name="s_inPrimaryDomain">
+	    <xapl:value-of select="{$this/IN_PRIMARY_DOMAIN[position()=$this/SELECTED_INDEX/@Value]/@Value}"/>
+	  </xapl:set-variable>
+	  <xapl:print select="{$this/IN_PRIMARY_DOMAIN[position()=$this/SELECTED_INDEX/@Value]/@Value}"/>
+	  
+	  <web:display-page>    
+	    <web:get-page name="org_tree_view">
+		  <ORG_ID Value="{$this/ID/@Value}"/>
+		  <IN_PRIMARY_DOMAIN Value="{$this/IN_PRIMARY_DOMAIN[position()=$this/SELECTED_INDEX/@Value]/@Value}"/>
+		</web:get-page>
+	  </web:display-page>	
+
+  </x2:command>
+  
+  <!--************************************************************************-->  
+	
+	<x2:command public="yes" description="_" name="redirectToOrgTreeView">
+		
+    <xapl:print select="$addBookCurrOrgId"/>
+		<web:display-page>
+			<web:get-page name="org_tree_view">
+				<xapl:value-of select="$addBookCurrOrgId"/>
+			</web:get-page>
+		</web:display-page>	
+
+  </x2:command>
+  
+  <!--************************************************************************-->  
+	
+  <x2:command public="yes" description="_" name="redirectToOrgDetails">
+	
+	<xapl:set-variable name="s_inPrimaryDomain">
+	  <xapl:value-of select="{$this/IN_PRIMARY_DOMAIN/@Value}"/>
+	</xapl:set-variable>
+	  
+	<web:display-page>
+	  <web:get-page name="addrbook_view_org">
+        <ORG_ID Value="{$this/ID/@Value}"/>
+	  </web:get-page>
+	</web:display-page>	
+
+  </x2:command>
+  
+  <!--************************************************************************-->  
+	
+	<x2:command public="yes" description="_" name="redirectToCustomerOrgDetails">
+		
+		<web:display-page>
+			<web:get-page name="addrbook_view_org">
+				<ORG_ID Value="{$this/CUSTOMER_ORG_ID/@Value}"/>
+			</web:get-page>
+		</web:display-page>	
+
+  </x2:command>
+
+  <!--************************************************************************-->  
+  
+</x2:commands>

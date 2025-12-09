@@ -1,0 +1,1124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="710" ShowInBreadCrumbs="true" Version="1.0" Name="wfIPSegParamManageParam" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="addParamValues" Type="xml" Comment=""/>
+    <variable Name="enteredSearchCriteria" Type="xml" Comment=""/>
+    <variable Name="manageValidValueParamName" Type="string" Comment=""/>
+    <variable Name="paramCreationErrors" Type="xml" Comment=""/>
+    <variable Name="paramCreationSuccess" Type="xml" Comment=""/>
+    <variable Name="parameterClassIdentifier" Type="string" Comment=""/>
+    <variable Name="parameterDataType" Type="string" Comment=""/>
+    <variable Name="parameterIdentifier" Type="string" Comment=""/>
+    <variable Name="parameterSearchResults" Type="xml" Comment=""/>
+    <variable Name="roleAccessLevel" Type="string" Comment=""/>
+    <variable Name="rwCt" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <ui_form2 Name="Inventory Policy Manage Parameters" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="iscpIPSegParamManageParam.pgl">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root>
+            </root>
+          </TO_DOCVAR>
+          <REQUEST Name="getAccessLevel" ServiceName="BCM_MASTER" AssignToVar="roleAccessPerm">
+            <ACTIVITY_ID Value="iscpIPManageParams"/>
+            <USER_ID Value="{$userId}"/>
+          </REQUEST>
+          <!--       <REQUEST AssignToVar="resUOM" Name="getUOM" ServiceName="PEDM_MASTER">
+          </REQUEST>-->
+          <GET_DOC_SMART Name="P_UnitOfMeasure" AssignToVar="resUOM" ReturnRowCount="true" Distinct="true" ServiceName="PEDM_MASTER">
+            <SELECT>
+              <UnitOfMeasureMnemonicValue/>
+            </SELECT>
+            <QUERY_DOCUMENT_LINK Name="RELN_2501">
+              <UnitOfMeasureClassMnemonicValue Value="{$iscpUOMCls/@Value}" MatchBy="EQUAL"/>
+            </QUERY_DOCUMENT_LINK>
+            <ORDER_BY>
+              <UnitOfMeasureMnemonicValue/>
+            </ORDER_BY>
+          </GET_DOC_SMART>
+          <SET Var="roleAccessLevel" FromValue="{$roleAccessPerm/SQL_RESULT/ACCESS_LEVEL/@Value}"/>
+          <SET Var="chkState" FromValue="1"/>
+          <SET Var="chkStateActive" FromValue="1"/>
+          <IF_TEST Test="$userAction='back'">
+            <THEN>
+              <IF_TEST Test="$enteredSearchCriteria/ENTITYSTATE/@Value='INACTIVE'">
+                <THEN>
+                  <SET Var="chkStateActive" FromValue="0"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$enteredSearchCriteria/ENTITYSTATE/@Value='ACTIVE'">
+                <THEN>
+                  <SET Var="chkState" FromValue="0"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+          <IF_TEST Test="$thisParam/ENTITYSTATE/@Value='INACTIVE'">
+            <THEN>
+              <SET Var="chkStateActive" FromValue="0"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/ENTITYSTATE/@Value='ACTIVE'">
+            <THEN>
+              <SET Var="chkState" FromValue="0"/>
+            </THEN>
+          </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="count($thisParam/*[name()='START_WORKFLOW'])&lt;=0 and $userAction!='validValue' and $userAction!='back' and $userAction!='Clear' and $userAction!='Add' and $thisParam/BUTTON_ID/@Value!=null ">
+            <THEN>
+              <IF_TEST Test="$userAction!='Save'">
+                <THEN>
+                  <REMOVE_CHILDREN DocVar="thisParam" ChildName="selectedParameterName"/>
+                </THEN>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="enteredSearchCriteria">
+                <ROOT>
+                  <ParameterMnemonicValue Value="{$thisParam/ParameterMnemonicValue/@Value}"/>
+                  <ENTITYSTATE Value="{$thisParam/ENTITYSTATE/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="parameterSearchResults">
+                <line/>
+              </TO_DOCVAR>
+              <REQUEST AssignToVar="resParameterClass" Name="getParameterClassIdentifier" ServiceName="PEDM_MASTER">
+                <ParameterClassMnemonicValue Value="IP"/>
+              </REQUEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'SYS_RELOAD'">
+                <THEN>
+                  <IF_TEST Test="count($thisParam/*[name()='FILTER_ID']) > 0">
+                    <THEN>
+                      <SET Property="START_COUNT" FromValue="0" DocVar="thisParam"/>
+                      <SET Property="MAX_ROWS" FromValue="65536" DocVar="thisParam"/>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                </THEN>
+                <ELSE/>
+              </IF_TEST>
+              <IF_TEST Test="$userAction='search_button' or $userAction='Deactivate' or $userAction='Activate' or $userAction='Delete'">
+                <THEN>
+                  <SET Var="paginateStart" FromValue="0"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="parameterClassIdentifier" FromValue="{$resParameterClass/ParameterClassIdentifier/@Value}"/>
+              <SET Var="pgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '8', $thisParam/MAX_ROWS/@Value)}"/>
+              <SET Var="sortOrder" FromValue="{ifElse((($thisParam/SORT_ORDER/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID')), 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="searchParamFilter">
+                <ParameterMnemonicValue MultiValued="true"/>
+                <ENTITYSTATE MultiValued="false"/>
+              </FORM_SEARCH_FILTER>
+              <REQUEST AssignToVar="searchResults" Name="readParametersIP" ServiceName="PEDM_MASTER" MaxRows="{$pgMaxRows/@Value}" StartAtRow="{$paginateStart/@Value}" ReturnRowCount="yes">
+                <TO_XML SelectList="$searchParamFilter/*"/>
+                <TO_XML SelectList="$thisParam/*"/>
+                <FILTER Name="ParameterClass">
+                  <ParameterClass Value="IP"/>
+                </FILTER>
+                <ORDER_BY>
+                  <ParameterMnemonicValue Sort="{$sortOrder/@Value}"/>
+                </ORDER_BY>
+              </REQUEST>
+              <TO_DOCVAR AssignToVar="rwCt">
+                <root>
+                  <startAtRow Value="{$paginateStart/@Value}"/>
+                  <ROWCNT Value="{$searchResults/SGMNT_PARM_DETAILS/@TotalRowCount}"/>
+                </root>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$searchResults/SGMNT_PARM_DETAILS/P_Parameter" CurrentElement="id">
+                <TO_DOCVAR AssignToVar="row">
+                  <ROW_DATA>
+                    <PARAMETER_NAME Value="{$id/ParameterMnemonicValue/@Value}"/>
+                    <PARAMETER_DESC Value="{$id/ParameterDescription/@Value}"/>
+                    <PARAMETER_DESC_Hidden Value="{$id/ParameterDescription/@Value}"/>
+                    <PARAMETER_UOM Value="{$id/UnitOfMeasureMnemonicValue/@Value}"/>
+                    <PARAMETER_UOM_Hidden Value="{$id/UnitOfMeasureMnemonicValue/@Value}"/>
+                    <ParameterValueFreeFormIndicator Value="{$id/ParameterValueFreeFormIndicator/@Value}"/>
+                    <ParameterDatatypeName Value="{$id/ParameterDatatypeName/@Value}"/>
+                    <COMMENT Value="{$id/SYS_NOTES/@Value}"/>
+                    <ENTITY_STATE Value="{$id/ENTITY_STATE/@Value}"/>
+                    <ModifiedBy Value="{$id/LAST_MODIFIED_BY/@Value}"/>
+                  </ROW_DATA>
+                </TO_DOCVAR>
+                <IF_TEST Test="($thisReturn/_RESULT/@Value!='SEVERE_ERROR')">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="row">
+                      <LAST_MODIFIED_DATE Value="{$id/LAST_MODIFIED_DATE/@Value}"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                </IF_TEST>
+                <APPEND_TO_XML DocVar="parameterSearchResults">
+                  <TO_XML Select="$row"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <!--<TO_DOCVAR AssignToVar="uom">
+    <UOM>
+    </UOM>
+  </TO_DOCVAR>
+  <REQUEST AssignToVar="uomResults" Name="getUOMListforIPLOC" ServiceName="PEDM_MASTER">
+  </REQUEST>
+  <FOR_EACH SelectList="$uomResults/P_UnitOfMeasure" CurrentElement="id">
+    <TO_DOCVAR AssignToVar="uomid">
+      <ID Value="{$id/UnitOfMeasureMnemonicValue/@Value}"/>
+    </TO_DOCVAR>
+    <APPEND_TO_XML DocVar="uom">
+      <TO_XML Select="$uomid"/>
+    </APPEND_TO_XML>
+  </FOR_EACH>
+  <APPEND_TO_XML DocVar="pglFormInput">
+    <TO_XML Select="$uom"/>
+  </APPEND_TO_XML>-->
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML Select="$paramCreationErrors"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML Select="$paramCreationSuccess"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML Select="$parameterSearchResults"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <AccessLevel Value="{$roleAccessPerm/SQL_RESULT/ACCESS_LEVEL/@Value}"/>
+            <chkState Value="{$chkState/@Value}"/>
+            <chkStateActive Value="{$chkStateActive/@Value}"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$rwCt/*"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$enteredSearchCriteria/*"/>
+            <IF_TEST Test="$userAction!='Clear'">
+              <THEN>
+                <TO_XML SelectList="$addParamValues/*"/>
+              </THEN>
+            </IF_TEST>
+            <UOM>
+              <DROP_DOWN_OPTIONS SelectList="$resUOM/P_UnitOfMeasure" Id="UnitOfMeasureMnemonicValue" Value="UnitOfMeasureMnemonicValue"/>
+            </UOM>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="paramCreationErrors">
+            <_ERRORS>
+            </_ERRORS>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="paramCreationSuccess">
+            <SUCCESSMSG>
+            </SUCCESSMSG>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='Save'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="xyz">
+                <MYDOCUMENT>
+                  <INPUT>
+                    <TO_XML SelectList="$pglFormOutput/*"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="PARAM_DETAILS">
+                    <PARAMETER_NAME/>
+                    <PARAMETER_DESC/>
+                    <PARAMETER_DESC_Hidden/>
+                    <PARAMETER_UOM_Hidden/>
+                    <PARAMETER_UOM/>
+                    <ParameterDatatypeName/>
+                    <ParameterValueFreeFormIndicator/>
+                    <LAST_MODIFIED_DATE/>
+                  </COLLATE_LIST>
+                </MYDOCUMENT>
+              </TO_DOCVAR>
+              <COLLATE_XML DocVar="xyz" AssignToVar="collatedDoc"/>
+              <FOR_EACH CurrentElement="cur" SelectList="$collatedDoc/PARAM_DETAILS">
+                <IF_TEST Test="$cur/PARAMETER_NAME/@Value=$pglFormOutput/selectedParameterName/@Value and (($cur/PARAMETER_DESC/@Value!=$cur/PARAMETER_DESC_Hidden/@Value) or ($cur/PARAMETER_UOM/@Value!=$cur/PARAMETER_UOM_Hidden/@Value))">
+                  <THEN>
+                    <SET Var="validValue" FromValue="Y"/>
+                    <IF_TEST Test="$cur/ParameterValueFreeFormIndicator/@Value='Y'">
+                      <THEN>
+                        <SET Var="validValue" FromValue="N"/>
+                      </THEN>
+                      <ELSE>
+                        <SET Var="validValue" FromValue="Y"/>
+                      </ELSE>
+                    </IF_TEST>
+                    <REQUEST AssignToVar="thisReturn" Name="updateParameterInPedm" ServiceName="PEDM_MASTER" HandleException="true">
+                      <ParameterMnemonicValue Value="{$pglFormOutput/selectedParameterName/@Value}"/>
+                      <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                      <UnitOfMeasureMnemonicValue Value="{$cur/PARAMETER_UOM/@Value}"/>
+                      <ParameterDescription Value="{upperCase($cur/PARAMETER_DESC/@Value)}"/>
+                      <ParameterDatatypeName Value="{$cur/ParameterDatatypeName/@Value}"/>
+                      <FromSource Value="UIUPD"/>
+                      <SYS_TYPE Value="UPDATE"/>
+                      <SOURCE Value="UI"/>
+                      <ENTITY_STATE Value="ACTIVE"/>
+                      <ValidValue Value="{$validValue/@Value}"/>
+                      <ValidateMultiUserEdit Value="Yes"/>
+                      <LastModifiedDate Value="{$cur/LAST_MODIFIED_DATE/@Value}"/>
+                    </REQUEST>
+                    <IF_TEST Test="($thisReturn/_RESULT/@Value='SEVERE_ERROR')">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="paramCreationErrors">
+                          <_ERRORS>
+                            <_ERROR Value="{$thisReturn/_RESULT/_ERROR/@Value}"/>
+                          </_ERRORS>
+                        </TO_DOCVAR>
+                      </THEN>
+                      <ELSE>
+                        <APPEND_TO_XML DocVar="paramCreationSuccess">
+                          <MSG Value="Records Successfully Updated"/>
+                        </APPEND_TO_XML>
+                        <!--     <SET_PROPS Select="$parameterSearchResults/*[PARAMETER_NAME[@Value=$pglFormOutput/selectedParameterName/@Value]]">
+                  <PARAMETER_DESC Value="{$cur/PARAMETER_DESC/@Value}"/>
+                  <PARAMETER_UOM Value="{$cur/PARAMETER_UOM/@Value}"/>
+                </SET_PROPS>-->
+                      </ELSE>
+                    </IF_TEST>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Deactivate'">
+            <THEN>
+              <DO_TRANSACTION>
+                <IF_TEST Test="(($pglFormOutput/selectedParameterName/@Value='Default Forecast Error') or ($pglFormOutput/selectedParameterName/@Value='Default PRP') or ($pglFormOutput/selectedParameterName/@Value='Default ROQ') or ($pglFormOutput/selectedParameterName/@Value='Default Keep Inventory Flag') or ($pglFormOutput/selectedParameterName/@Value='Keep Inventory Flag'))">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="paramCreationErrors">
+                      <_ERROR Value="Selected Parameter Can not be Deactivated"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE>
+                    <REQUEST AssignToVar="thisReturn" Name="updateParameterValidValueInPedm" ServiceName="PEDM_MASTER" HandleException="true">
+                      <ParameterName Value="{$pglFormOutput/selectedParameterName/@Value}"/>
+                      <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                      <ENTITY_STATE Value="INACTIVE"/>
+                      <ENTITY_STATE_CURRENT Value="ACTIVE"/>
+                      <FromSource Value="UIACT"/>
+                      <SYS_TYPE Value="UPDATE"/>
+                      <SOURCE Value="UI"/>
+                    </REQUEST>
+                    <IF_TEST Test="($thisReturn/_RESULT/@Value !='SEVERE_ERROR')">
+                      <THEN>
+                        <REQUEST AssignToVar="thisReturn" Name="updateIPSegParam" ServiceName="BCM_MASTER">
+                          <DOCUMENT_CONTEXT>
+                            <ParameterName Value="{$pglFormOutput/selectedParameterName/@Value}"/>
+                          </DOCUMENT_CONTEXT>
+                          <UPDATE_PROPERTIES>
+                            <SOURCE Value="UI"/>
+                            <ENTITY_STATE Value="INACTIVE"/>
+                            <SYS_TYPE Value="UPDATE"/>
+                          </UPDATE_PROPERTIES>
+                          <FromSource Value="UIACT"/>
+                          <DOCUMENTNAME Value="E_InventoryPolicySegmentParameter"/>
+                          <ACTIONTOBDONE Value="UPDATE"/>
+                        </REQUEST>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="($thisReturn/_RESULT/@Value !='SEVERE_ERROR')">
+                      <THEN>
+                        <REQUEST AssignToVar="thisReturn" Name="updateParameterInPedm" ServiceName="PEDM_MASTER" HandleException="true">
+                          <ParameterMnemonicValue Value="{$pglFormOutput/selectedParameterName/@Value}"/>
+                          <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                          <ENTITY_STATE Value="INACTIVE"/>
+                          <FromSource Value="UIACT"/>
+                          <SYS_TYPE Value="UPDATE"/>
+                          <SOURCE Value="UI"/>
+                        </REQUEST>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="($thisReturn/_RESULT/@Value ='SEVERE_ERROR')">
+                      <THEN>
+                        <SET Var="tweakedErrMsg" FromValue="{$thisReturn/_RESULT/_ERROR/@Value}"/>
+                        <TO_DOCVAR AssignToVar="error">
+                          <_ERROR Value="{$tweakedErrMsg/@Value}"/>
+                        </TO_DOCVAR>
+                        <SET Var="tp" FromValue="0"/>
+                        <APPEND_TO_XML DocVar="paramCreationErrors">
+                          <TO_XML Select="$error"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                      <ELSE>
+                        <APPEND_TO_XML DocVar="paramCreationSuccess">
+                          <MSG Value="Records Successfully Deactivated"/>
+                        </APPEND_TO_XML>
+                      </ELSE>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+              </DO_TRANSACTION>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Activate'">
+            <THEN>
+              <DO_TRANSACTION>
+                <REQUEST AssignToVar="thisReturn" Name="updateParameterInPedm" ServiceName="PEDM_MASTER" HandleException="true">
+                  <ParameterMnemonicValue Value="{$pglFormOutput/selectedParameterName/@Value}"/>
+                  <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                  <ENTITY_STATE Value="ACTIVE"/>
+                  <FromSource Value="UIACT"/>
+                  <SYS_TYPE Value="UPDATE"/>
+                  <SOURCE Value="UI"/>
+                </REQUEST>
+                <IF_TEST Test="($thisReturn/_RESULT/@Value !='SEVERE_ERROR')">
+                  <THEN>
+                    <REQUEST AssignToVar="thisReturn" Name="updateParameterValidValueInPedm" ServiceName="PEDM_MASTER" HandleException="true">
+                      <ParameterName Value="{$pglFormOutput/selectedParameterName/@Value}"/>
+                      <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                      <ENTITY_STATE Value="ACTIVE"/>
+                      <ENTITY_STATE_CURRENT Value="INACTIVE"/>
+                      <FromSource Value="UIACT"/>
+                      <SYS_TYPE Value="UPDATE"/>
+                      <SOURCE Value="UI"/>
+                    </REQUEST>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="($thisReturn/_RESULT/@Value !='SEVERE_ERROR')">
+                  <THEN>
+                    <REQUEST AssignToVar="thisReturn" Name="updateIPSegParam" ServiceName="BCM_MASTER">
+                      <DOCUMENT_CONTEXT>
+                        <ParameterName Value="{$pglFormOutput/selectedParameterName/@Value}"/>
+                      </DOCUMENT_CONTEXT>
+                      <UPDATE_PROPERTIES>
+                        <SOURCE Value="UI"/>
+                        <!--												QC:20760 Lakshmi Anasapurapu CD 11 P 1-->
+                        <!--   <ENTITY_STATE Value="ACTIVE"/>-->
+                        <ENTITY_STATE Value="NEW"/>
+                        <SYS_TYPE Value="UPDATE"/>
+                        <ParameterValue/>
+                      </UPDATE_PROPERTIES>
+                      <FromSource Value="UIACT"/>
+                      <DOCUMENTNAME Value="E_InventoryPolicySegmentParameter"/>
+                      <ACTIONTOBDONE Value="UPDATE"/>
+                    </REQUEST>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="($thisReturn/_RESULT/@Value ='SEVERE_ERROR')">
+                  <THEN>
+                    <SET Var="tweakedErrMsg" FromValue="{$thisReturn/_RESULT/_ERROR/@Value}"/>
+                    <TO_DOCVAR AssignToVar="error">
+                      <_ERROR Value="{$tweakedErrMsg/@Value}"/>
+                    </TO_DOCVAR>
+                    <SET Var="tp" FromValue="0"/>
+                    <APPEND_TO_XML DocVar="paramCreationErrors">
+                      <TO_XML Select="$error"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE>
+                    <APPEND_TO_XML DocVar="paramCreationSuccess">
+                      <MSG Value="Records Successfully Activated"/>
+                    </APPEND_TO_XML>
+                  </ELSE>
+                </IF_TEST>
+              </DO_TRANSACTION>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Delete'">
+            <THEN>
+              <DO_TRANSACTION>
+                <IF_TEST Test="(($pglFormOutput/selectedParameterName/@Value='Default Forecast Error') or ($pglFormOutput/selectedParameterName/@Value='Default PRP') or ($pglFormOutput/selectedParameterName/@Value='Default ROQ') or ($pglFormOutput/selectedParameterName/@Value='Default Keep Inventory Flag') or ($pglFormOutput/selectedParameterName/@Value='Keep Inventory Flag'))">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="paramCreationErrors">
+                      <_ERROR Value="Selected Parameter Can not be Deleted"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE>
+                    <REQUEST AssignToVar="thisReturn" Name="deleteIPSegParam" ServiceName="BCM_MASTER">
+                      <ParameterName Value="{$pglFormOutput/selectedParameterName/@Value}"/>
+                      <DOCUMENTNAME Value="E_InventoryPolicySegmentParameter"/>
+                      <ACTIONTOBDONE Value="DELETE"/>
+                      <FromSource Value="UI"/>
+                    </REQUEST>
+                    <IF_TEST Test="($thisReturn/_RESULT/@Value !='SEVERE_ERROR')">
+                      <THEN>
+                        <REQUEST AssignToVar="thisReturn" Name="deleteParameterValidValueInPedm" ServiceName="PEDM_MASTER">
+                          <ParameterName Value="{$pglFormOutput/selectedParameterName/@Value}"/>
+                          <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                          <FromSource Value="UI"/>
+                          <ENTITY_STATE_CURRENT Value="INACTIVE"/>
+                        </REQUEST>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="($thisReturn/_RESULT/@Value !='SEVERE_ERROR')">
+                      <THEN>
+                        <REQUEST AssignToVar="thisReturn" Name="deleteParameterInPedm" ServiceName="PEDM_MASTER" HandleException="true">
+                          <ParameterMnemonicValue Value="{$pglFormOutput/selectedParameterName/@Value}"/>
+                          <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                          <FromSource Value="UI"/>
+                        </REQUEST>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="($thisReturn/_RESULT/@Value ='SEVERE_ERROR')">
+                      <THEN>
+                        <SET Var="tweakedErrMsg" FromValue="{$thisReturn/_RESULT/_ERROR/@Value}"/>
+                        <TO_DOCVAR AssignToVar="error">
+                          <_ERROR Value="{$tweakedErrMsg/@Value}"/>
+                        </TO_DOCVAR>
+                        <SET Var="tp" FromValue="0"/>
+                        <APPEND_TO_XML DocVar="paramCreationErrors">
+                          <TO_XML Select="$error"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                      <ELSE>
+                        <APPEND_TO_XML DocVar="paramCreationSuccess">
+                          <MSG Value="Records Successfully Deleted"/>
+                        </APPEND_TO_XML>
+                      </ELSE>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+              </DO_TRANSACTION>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Add'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="addParamValues">
+                <ROOT>
+                  <ADD_PARAM_NAME Value="{upperCase($pglFormOutput/ADD_PARAM_NAME/@Value)}"/>
+                  <ADD_PARAM_UOM Value="{$pglFormOutput/ADD_PARAM_UOM/@Value}"/>
+                  <ADD_COMMENTS Value="{$pglFormOutput/ADD_COMMENTS/@Value}"/>
+                  <ADD_PARAM_DESC Value="{upperCase($pglFormOutput/ADD_PARAM_DESC/@Value)}"/>
+                  <ADD_DATATYPE Value="{$pglFormOutput/ADD_DATATYPE/@Value}"/>
+                  <ADD_ISVALIDVALUE Value="{$pglFormOutput/ADD_ISVALIDVALUE/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <IF_TEST Test="strlen($pglFormOutput/ADD_PARAM_NAME/@Value)>0">
+                <THEN>
+                  <!--      <IF_TEST Test="strlen(trim($pglFormOutput/ADD_COMMENTS/@Value))>0">
+            <THEN>-->
+                      <IF_TEST Test="strlen(trim($pglFormOutput/ADD_COMMENTS/@Value))&lt;255">
+                    <THEN>
+                        <REQUEST AssignToVar="resParameterClass" Name="getParameterClassIdentifier" ServiceName="PEDM_MASTER">
+                          <ParameterClassMnemonicValue Value="IP"/>
+                        </REQUEST>
+                        <SET Var="parameterClassIdentifier" FromValue="{$resParameterClass/ParameterClassIdentifier/@Value}"/>
+                        <SET DocVar="abc" FromDocVar="pglFormOutput"/>
+                        <SET Var="tp" FromValue="1"/>
+                          <GET_DOCUMENT Name="P_Parameter" AssignToVar="resParam" ServiceName="PEDM_MASTER">
+                        <ParameterMnemonicValue Value="{upperCase($pglFormOutput/ADD_PARAM_NAME/@Value)}"/>
+                            <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                            <ENTITY_STATE Value="DELETED"/>
+                          </GET_DOCUMENT>
+                          <IF_TEST Test="count($resParam/P_Parameter)>0">
+                            <THEN>
+                              <DO_TRANSACTION>
+                                <REQUEST AssignToVar="thisReturn" Name="updateParameterInPedm" ServiceName="PEDM_MASTER" HandleException="true">
+                              <ParameterMnemonicValue Value="{upperCase($pglFormOutput/ADD_PARAM_NAME/@Value)}"/>
+                                  <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                                  <UnitOfMeasureMnemonicValue Value="{$pglFormOutput/ADD_PARAM_UOM/@Value}"/>
+                              <ParameterDescription Value="{upperCase($pglFormOutput/ADD_PARAM_DESC/@Value)}"/>
+                              <ParameterDatatypeName Value="{$pglFormOutput/ADD_DATATYPE/@Value}"/>
+                              <ValidValue Value="{ifElse($pglFormOutput/ADD_ISVALIDVALUE/@Value != null,'N','Y')}"/>
+                              <ENTITY_STATE Value="ACTIVE"/>
+                              <FromSource Value="UIUPD"/>
+                              <SYS_TYPE Value="ACTIVATE"/>
+                              <SOURCE Value="UI"/>
+                            </REQUEST>
+                            <!--    <IF_TEST Test="($thisReturn/_RESULT/@Value !='SEVERE_ERROR')">
+                              <THEN>
+                                <REQUEST AssignToVar="thisReturn" Name="updateParameterValidValueInPedm" ServiceName="PEDM_MASTER" HandleException="true">
+                                  <ParameterName Value="{upperCase($pglFormOutput/ADD_PARAM_NAME/@Value)}"/>
+                                  <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                                  <ENTITY_STATE Value="ACTIVE"/>
+                                  <FromSource Value="UIACT"/>
+                                  <SYS_TYPE Value="ACTIVATE"/>
+                                  <SOURCE Value="UI"/>
+                                </REQUEST>
+                              </THEN>
+                            </IF_TEST>-->
+                            <IF_TEST Test="($thisReturn/_RESULT/@Value !='SEVERE_ERROR')">
+                              <THEN>
+                                <REQUEST AssignToVar="thisReturn" Name="updateIPSegParam" ServiceName="BCM_MASTER">
+                                  <DOCUMENT_CONTEXT>
+                                    <ParameterName Value="{upperCase($pglFormOutput/ADD_PARAM_NAME/@Value)}"/>
+                                      </DOCUMENT_CONTEXT>
+                                      <UPDATE_PROPERTIES>
+                                        <SOURCE Value="UI"/>
+                                    <ENTITY_STATE Value="NEW"/>
+                                    <ParameterValue/>
+                                        <SYS_TYPE Value="ACTIVATE"/>
+                                    <ParameterValueCommentText Value="{$pglFormOutput/ADD_COMMENTS/@Value}"/>
+                                      </UPDATE_PROPERTIES>
+                                      <FromSource Value="UIACT"/>
+                                      <DOCUMENTNAME Value="E_InventoryPolicySegmentParameter"/>
+                                      <ACTIONTOBDONE Value="UPDATE"/>
+                                    </REQUEST>
+                                  </THEN>
+                                </IF_TEST>
+                                <IF_TEST Test="($thisReturn/_RESULT/@Value ='SEVERE_ERROR')">
+                                  <THEN>
+                                    <SET Var="tweakedErrMsg" FromValue="{$thisReturn/_RESULT/_ERROR/@Value}"/>
+                                    <TO_DOCVAR AssignToVar="error">
+                                      <_ERROR Value="{$tweakedErrMsg/@Value}"/>
+                                    </TO_DOCVAR>
+                                    <SET Var="tp" FromValue="0"/>
+                                    <APPEND_TO_XML DocVar="paramCreationErrors">
+                                      <TO_XML Select="$error"/>
+                                    </APPEND_TO_XML>
+                                  </THEN>
+                                  <ELSE>
+                                    <APPEND_TO_XML DocVar="paramCreationSuccess">
+                                      <MSG Value="Records Successfully Created"/>
+                                    </APPEND_TO_XML>
+                                  </ELSE>
+                                </IF_TEST>
+                              </DO_TRANSACTION>
+                            </THEN>
+                            <ELSE>
+                              <DO_TRANSACTION>
+                        <TO_DOCVAR AssignToVar="record">
+                          <RECORD>
+                                <ParameterName Value="{upperCase($pglFormOutput/ADD_PARAM_NAME/@Value)}"/>
+                            <ParameterMnemonicValue Value="{$pglFormOutput/ADD_PARAM_NAME/@Value}"/>
+                            <ParameterValue/>
+                            <Comments Value="{$pglFormOutput/ADD_COMMENTS/@Value}"/>
+                            <UnitOfMeasureMnemonicValue Value="{$pglFormOutput/ADD_PARAM_UOM/@Value}"/>
+                            <ParameterDatatypeName Value="{$pglFormOutput/ADD_DATATYPE/@Value}"/>
+                            <ValidValue Value="{$pglFormOutput/ADD_ISVALIDVALUE/@Value}"/>
+                            <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                                <ParameterDescription Value="{upperCase($pglFormOutput/ADD_PARAM_DESC/@Value)}"/>
+                            <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal/@Value}"/>
+                            <SourceKeyName Value="PARM_ID"/>
+                            <SourceObjectMnemonicValue Value="P_M_PARM"/>
+                            <PartyIdentificationValue Value=""/>
+                            <FromSource Value="UI"/>
+                            <FromUI Value="YES"/>
+                            <SYS_TYPE Value="INSERT"/>
+                            <SOURCE Value="UI"/>
+                          </RECORD>
+                        </TO_DOCVAR>
+                        <REQUEST AssignToVar="thisReturn" Name="createParameterInPedm" ServiceName="PEDM_MASTER" HandleException="true">
+                          <TO_XML SelectList="$record/*"/>
+                        </REQUEST>
+                        <PRINTLN Value="Value is  {$thisReturn}"/>
+                        <PRINTLN Value="Value is Kamal {$thisReturn/@Status}"/>
+                        <IF_TEST Test="($thisReturn/_RESULT/@Value !='SEVERE_ERROR') and $thisReturn/@Status!='Error'">
+                          <THEN>
+                            <REQUEST AssignToVar="thisReturn" Name="getSegments" ServiceName="PEDM_MASTER" HandleException="true">
+                              <TO_XML SelectList="$record/*"/>
+                            </REQUEST>
+                            <PRINTLN Value="Value is  {$thisReturn}"/>
+                          </THEN>
+                          <ELSE>
+                            <IF_TEST Test="$thisReturn/@Status='Error'">
+                              <THEN>
+                                <SET Var="tweakedErrMsg" FromValue="{substringBefore($thisReturn/@Description,'=')}"/>
+                              </THEN>
+                              <ELSE>
+                                <SET Var="tweakedErrMsg" FromValue="{$thisReturn/_RESULT/_ERROR/@Value}"/>
+                              </ELSE>
+                            </IF_TEST>
+                            <TO_DOCVAR AssignToVar="error">
+                              <_ERROR Value="{$tweakedErrMsg/@Value}"/>
+                            </TO_DOCVAR>
+                            <SET Var="tp" FromValue="0"/>
+                            <APPEND_TO_XML DocVar="paramCreationErrors">
+                              <TO_XML Select="$error"/>
+                            </APPEND_TO_XML>
+                          </ELSE>
+                        </IF_TEST>
+                        <IF_TEST Test="($thisReturn/_RESULT/@Value !='SEVERE_ERROR' and $thisReturn/@Status!='Error')">
+                          <THEN>
+                            <SET DocVar="segments" FromDocVar="thisReturn"/>
+                            <FOR_EACH SelectList="$segments/P_PartyIdentification" CurrentElement="id">
+                              <SET DocVar="record" Property="PartyIdentificationValue" FromValue="{$id/PartyIdentificationValue/@Value}"/>
+                              <TO_DOCVAR AssignToVar="input">
+                                <INPUT>
+                                  <ParameterValue Value="{$record/ParameterValue/@Value}"/>
+                                      <ParameterName Value="{upperCase($record/ParameterMnemonicValue/@Value)}"/>
+                                      <ParameterDescription Value="{upperCase($record/ParameterDescription/@Value)}"/>
+                                  <ParameterUnitOfMeasure Value="{$record/UnitOfMeasureMnemonicValue/@Value}"/>
+                                      <BusinessOrganizationValue Value="{$record/PartyIdentificationValue/@Value}"/>
+                                  <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal/@Value}"/>
+                                  <FromSource Value="UI"/>
+                                  <FromUI Value="YES"/>
+                                      <ParameterValueCommentText Value="{$pglFormOutput/ADD_COMMENTS/@Value}"/>
+                                  <SYS_TYPE Value="INSERT"/>
+                                  <SOURCE Value="UI"/>
+                                </INPUT>
+                              </TO_DOCVAR>
+                              <REQUEST AssignToVar="thisReturn" Name="createIPSegParam" ServiceName="BCM_MASTER">
+                                <DOCUMENTNAME Value="E_InventoryPolicySegmentParameter"/>
+                                <ACTIONTOBDONE Value="INSERT"/>
+                                <TO_XML SelectList="$input/*"/>
+                              </REQUEST>
+                              <PRINTLN Value="Value is  {$thisReturn}"/>
+                              <IF_TEST Test="($thisReturn/_RESULT/@Value='SEVERE_ERROR' or $thisReturn/@Status ='Error')">
+                                <THEN>
+                                  <SET Var="tp" FromValue="0"/>
+                                  <IF_TEST Test="$thisReturn/@Status='Error'">
+                                    <THEN>
+                                      <TO_DOCVAR AssignToVar="paramCreationErrors">
+                                        <_ERRORS>
+                                          <_ERROR Value="{substringBefore($thisReturn/@Description,'=')}"/>
+                                        </_ERRORS>
+                                      </TO_DOCVAR>
+                                    </THEN>
+                                    <ELSE>
+                                  <TO_DOCVAR AssignToVar="paramCreationErrors">
+                                    <_ERRORS>
+                                      <_ERROR Value="{$thisReturn/_RESULT/_ERROR/@Value}"/>
+                                    </_ERRORS>
+                                  </TO_DOCVAR>
+                                    </ELSE>
+                                  </IF_TEST>
+                                </THEN>
+                              </IF_TEST>
+                            </FOR_EACH>
+                          </THEN>
+                        </IF_TEST>
+                        <IF_TEST Test="($tp/@Value='1')">
+                          <THEN>
+                            <APPEND_TO_XML DocVar="paramCreationSuccess">
+                              <MSG Value="Records Successfully Created"/>
+                            </APPEND_TO_XML>
+                            <TO_DOCVAR AssignToVar="addParamValues">
+                              <ROOT/>
+                            </TO_DOCVAR>
+                          </THEN>
+                        </IF_TEST>
+                      </DO_TRANSACTION>
+                            </ELSE>
+                          </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="paramCreationErrors">
+                            <_ERROR Value="Comments should not be greater than 255 characters"/>
+                          </APPEND_TO_XML>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="paramCreationErrors">
+                    <_ERROR Value="Parameter Name cannot be null"/>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='validValue'">
+            <THEN>
+              <SET DocVar="abc" FromDocVar="pglFormOutput"/>
+              <SET Var="manageValidValueParamName" FromValue="{$pglFormOutput/selectedParameterName/@Value}"/>
+              <TO_DOCVAR AssignToVar="xyz">
+                <MYDOCUMENT>
+                  <INPUT>
+                    <TO_XML SelectList="$pglFormOutput/*"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="PARAM_DETAILS">
+                    <ParameterDatatypeName/>
+                    <PARAMETER_NAME/>
+                  </COLLATE_LIST>
+                </MYDOCUMENT>
+              </TO_DOCVAR>
+              <COLLATE_XML DocVar="xyz" AssignToVar="collatedDoc"/>
+              <TO_DOCVAR AssignToVar="enteredSearchCriteria">
+                <ROOT>
+                  <ParameterMnemonicValue Value="{$pglFormOutput/ParameterMnemonicValue/@Value}"/>
+                  <ENTITYSTATE Value="{$pglFormOutput/ENTITYSTATE/@Value}"/>
+                  <selectedParameterName Value="{$pglFormOutput/selectedParameterName/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <FOR_EACH CurrentElement="curELE" SelectList="$collatedDoc/PARAM_DETAILS">
+                <IF_TEST Test="$curELE/PARAMETER_NAME/@Value=$pglFormOutput/selectedParameterName/@Value">
+                  <THEN>
+                    <SET Var="parameterDataType" FromValue="{$curELE/ParameterDatatypeName/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Inventory Policy Manage Parameters" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Delete'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Inventory Policy Manage Parameters" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Clear'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Inventory Policy Manage Parameters" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Add'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Inventory Policy Manage Parameters" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='selectParameter'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select Parameter" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='validValue'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Valid Values" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Activate'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Inventory Policy Manage Parameters" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Deactivate'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Inventory Policy Manage Parameters" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Inventory Policy Manage Parameters" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Inventory Policy Manage Parameters" Description=""/>
+          <next_node Name="Inventory Policy Manage Parameters" Description=""/>
+          <next_node Name="done5" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <start Name="start4">
+      <actions>
+      </actions>
+      <next_nodes>
+        <next_node Name="Inventory Policy Manage Parameters" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done5">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <sub_workflow Name="Select Parameter" InputVar="{nodeInXml,xml}" Workflow="wfIPSearchParameter">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutXml,xml}"/>
+      <input>
+        <SET DocVar="thisParam" Property="ParameterClassMnemonicValue" FromValue="IP"/>
+        <TO_XML SelectList="$thisParam/*"/>
+      </input>
+    </sub_workflow>
+    <ui_form2 Name="Manage Valid Values" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="iscpIPManageValidValues.pgl">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <SAMPLE_XML>
+              <FIELD_NAME Value="{$manageValidValueParamName/@Value}"/>
+            </SAMPLE_XML>
+          </TO_DOCVAR>
+          <GET_DOC_SMART Name="P_Parameter" AssignToVar="res" ReturnRowCount="True" ServiceName="PEDM_MASTER">
+            <ParameterMnemonicValue Value="{$manageValidValueParamName/@Value}" MatchBy="EQUAL"/>
+            <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}" MatchBy="EQUAL"/>
+            <SELECT>
+              <ParameterIdentifier/>
+            </SELECT>
+          </GET_DOC_SMART>
+          <GET_DOC_SMART Name="P_ParameterValueList" AssignToVar="res1" ReturnRowCount="True" ServiceName="PEDM_MASTER">
+            <ParameterIdentifier Value="{$res/P_Parameter/ParameterIdentifier/@Value}" MatchBy="EQUAL"/>
+            <SELECT>
+              <ParameterValueListValue/>
+            </SELECT>
+            <ORDER_BY>
+              <ParameterValueListValue/>
+            </ORDER_BY>
+          </GET_DOC_SMART>
+          <SET Var="parameterIdentifier" FromValue="{$res/P_Parameter/ParameterIdentifier/@Value}"/>
+          <SET Var="totalrwCnt" FromValue="{$res1/@TotalRowCount}"/>
+          <TO_DOCVAR AssignToVar="line">
+            <LINE TotalRowCount="{$totalrwCnt/@Value}" startRowCount="0">
+            </LINE>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$res1/P_ParameterValueList/ParameterValueListValue" CurrentElement="id">
+            <TO_DOCVAR AssignToVar="row">
+              <ROWDATA>
+                <validvalue Value="{$id/@Value}"/>
+              </ROWDATA>
+            </TO_DOCVAR>
+            <APPEND_TO_XML DocVar="line">
+              <TO_XML Select="$row"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML Select="$line"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML Select="$paramCreationErrors"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML Select="$paramCreationSuccess"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <AccessLevel Value="{$roleAccessLevel/@Value}"/>
+            <parameterDataType Value="{$parameterDataType/@Value}"/>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="paramCreationErrors">
+            <_ERRORS>
+            </_ERRORS>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="paramCreationSuccess">
+            <SUCCESSMSG>
+            </SUCCESSMSG>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='add'">
+            <THEN>
+              <IF_TEST Test="strlen($pglFormOutput/NewValue/@Value)>0 and $pglFormOutput/NewValue/@Value!='NaN'">
+                <THEN>
+                  <SET DocVar="abc" FromDocVar="pglFormOutput"/>
+                  <TO_DOCVAR AssignToVar="input">
+                    <INPUT>
+                      <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                      <ParameterIdentifier Value="{$parameterIdentifier/@Value}"/>
+                      <ParamValidValue Value="{$pglFormOutput/NewValue/@Value}"/>
+                      <ParameterValueListLineNumber Value=""/>
+                      <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal/@Value}"/>
+                      <SourceKeyName Value="PARM_VAL_LIST_LN_NUM|PARM_ID"/>
+                      <SourceObjectMnemonicValue Value="P_M_PARM_VAL_LIST"/>
+                      <SOURCE Value="UI"/>
+                      <SYS_TYPE Value="INSERT"/>
+                    </INPUT>
+                  </TO_DOCVAR>
+                  <GET_DOCUMENT Name="P_ParameterValueList" ServiceName="PEDM_MASTER" AssignToVar="res" ReturnRowCount="true">
+                    <ParameterValueListValue Value="{$pglFormOutput/NewValue/@Value}"/>
+                    <ParameterIdentifier Value="{$parameterIdentifier/@Value}"/>
+                    <ENTITY_STATE Value="DELETED"/>
+                  </GET_DOCUMENT>
+                  <IF_TEST Test="$res/@TotalRowCount>0">
+                    <THEN>
+                      <REQUEST AssignToVar="thisReturn" Name="updateParameterValidValueInPedm" ServiceName="PEDM_MASTER" HandleException="true">
+                        <ParameterName Value="{$manageValidValueParamName/@Value}"/>
+                        <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                        <ParameterValueListValue Value="{$pglFormOutput/NewValue/@Value}"/>
+                        <ENTITY_STATE Value="ACTIVE"/>
+                        <FromSource Value="UIDEL"/>
+                        <SYS_TYPE Value="UPDATE"/>
+                        <SOURCE Value="UI"/>
+                      </REQUEST>
+                    </THEN>
+                    <ELSE>
+                  <REQUEST AssignToVar="thisReturn" Name="createParameterValidValueInPedm" ServiceName="PEDM_MASTER" HandleException="true">
+                    <TO_XML SelectList="$input/*"/>
+                  </REQUEST>
+                    </ELSE>
+                  </IF_TEST>
+                  <IF_TEST Test="($thisReturn/_RESULT/@Value !='SEVERE_ERROR' and $thisReturn/@Status !='Error' )">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="paramCreationSuccess">
+                        <MSG Value="Records Successfully Created"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$thisReturn/@Status='Error'">
+                        <THEN>
+                          <TO_DOCVAR AssignToVar="paramCreationErrors">
+                            <_ERRORS>
+                              <_ERROR Value="{substringBefore($thisReturn/@Description,'=')}"/>
+                            </_ERRORS>
+                          </TO_DOCVAR>
+                        </THEN>
+                        <ELSE>
+                          <TO_DOCVAR AssignToVar="paramCreationErrors">
+                            <_ERRORS>
+                              <_ERROR Value="{$thisReturn/_RESULT/_ERROR/@Value}"/>
+                            </_ERRORS>
+                          </TO_DOCVAR>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="paramCreationErrors">
+                    <_ERROR Value="Parameter Value cannot be null"/>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='delete'">
+            <THEN>
+              <SET DocVar="abc" FromDocVar="pglFormOutput"/>
+              <FOR_EACH SelectList="$pglFormOutput/SELECTED_ITEM" CurrentElement="id">
+                <TO_DOCVAR AssignToVar="input">
+                  <INPUT>
+                    <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                    <ParameterName Value="{$manageValidValueParamName/@Value}"/>
+                    <ParameterIdentifier Value="{$parameterIdentifier/@Value}"/>
+                    <ParameterValueListValue Value="{$id/@Value}"/>
+                    <ParameterValueListLineNumber Value=""/>
+                    <!--    <SourceSystemMnemonicValue Value="default"/>
+            <SourceKeyName Value="default"/>
+            <SourceKeyValue Value="default"/>
+            <SourceObjectMnemonicValue Value="default"/>-->
+                    <SOURCE Value="UI"/>
+                    <SYS_TYPE Value="INSERT"/>
+                  </INPUT>
+                </TO_DOCVAR>
+                <REQUEST AssignToVar="thisReturn" Name="deleteParameterValidValueInPedm" ServiceName="PEDM_MASTER">
+                  <TO_XML SelectList="$input/*"/>
+                </REQUEST>
+                <PRINTLN Value="Value is  {$thisReturn}"/>
+                <IF_TEST Test="($thisReturn/_RESULT/@Value='SEVERE_ERROR')">
+                  <THEN>
+                    <SET Var="tp" FromValue="false"/>
+                    <APPEND_TO_XML DocVar="paramCreationErrors">
+                      <_ERROR Value="{$thisReturn/_RESULT/_ERROR/@Value}"/>
+                    </APPEND_TO_XML>
+                    <BREAK/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <PRINTLN Value="Value is  {$thisReturn}"/>
+              <IF_TEST Test="($thisReturn/_RESULT/@Value !='SEVERE_ERROR')">
+                <THEN>
+                  <APPEND_TO_XML DocVar="paramCreationSuccess">
+                    <MSG Value="Records Successfully Deleted"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='add'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Valid Values" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='delete'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Valid Values" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Inventory Policy Manage Parameters" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Valid Values" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <mgcnode Name="Inventory Policy Manage Parameters" location="320,160" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Inventory Policy Manage Parameters" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <start4 location="132,177" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start4" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start4>
+      <done5 location="449,228" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done5" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done5>
+      <mgcnode Name="Select Parameter" location="684,68" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Select Parameter" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Manage Valid Values" location="323,415" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Manage Valid Values" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <mgcnode Name="Inventory Policy Manage Parameters">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="352,183" endpoint="352,183" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="425,181,4,4" ctrlRect2="541,169,4,4" textRect="464,173,43,8">
+          <textProps text="SEARCH" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="352,183" endpoint="352,183" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="425,181,4,4" ctrlRect2="513,146,4,4" textRect="463,161,16,8">
+          <textProps text="Del" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="320,183" endpoint="320,183" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="243,181,4,4" ctrlRect2="287,162,4,4" textRect="211,169,112,9">
+          <textProps text="[$userAction ='Clear']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="352,183" endpoint="352,183" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="425,181,4,4" ctrlRect2="495,119,4,4" textRect="410,148,105,9">
+          <textProps text="[$userAction ='Add']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="336,160" endpoint="684,90" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="true" ctrlRect1="432,84,4,4" ctrlRect2="421,88,4,4" textRect="491,96,88,8">
+          <textProps text="'selectParameter'" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="336,206" endpoint="339,415" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="334,360,4,4" ctrlRect2="217,243,4,4" textRect="208,299,138,9">
+          <textProps text="[$userAction ='validValue']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="320,183" endpoint="320,183" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="243,181,4,4" ctrlRect2="269,159,4,4" textRect="247,168,22,8">
+          <textProps text="ACT" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="320,183" endpoint="320,183" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="243,181,4,4" ctrlRect2="207,98,4,4" textRect="209,137,37,8">
+          <textProps text="DEACT" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="336,160" endpoint="336,160" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="334,83,4,4" ctrlRect2="334,83,4,4" textRect="281,81,110,9">
+          <textProps text="[$userAction ='Save']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="352,183" endpoint="352,183" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="425,181,4,4" ctrlRect2="425,181,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="336,160" endpoint="336,160" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="334,83,4,4" ctrlRect2="334,83,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="352,183" endpoint="449,250" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="422,181,4,4" ctrlRect2="374,248,4,4"/>
+      </mgcnode>
+      <start4>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="164,199" endpoint="320,183" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="279,197,4,4" ctrlRect2="201,181,4,4"/>
+      </start4>
+      <mgcnode Name="Manage Valid Values">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="339,461" endpoint="339,461" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="337,534,4,4" ctrlRect2="255,504,4,4" textRect="290,517,17,8">
+          <textProps text="add" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="339,461" endpoint="339,461" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="337,534,4,4" ctrlRect2="428,508,4,4" textRect="376,519,16,8">
+          <textProps text="Del" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="339,415" endpoint="336,206" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="337,257,4,4" ctrlRect2="463,325,4,4" textRect="366,277,109,9">
+          <textProps text="[$userAction ='back']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="355,438" endpoint="355,438" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="428,436,4,4" ctrlRect2="428,502,4,4" textRect="413,467,35,9">
+          <textProps text="[true()]" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="9,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="11" textAttrsKey0="addParamValues : xml" textAttrsKey1="enteredSearchCriteria : xml" textAttrsKey2="manageValidValueParamName : string" textAttrsKey3="paramCreationErrors : xml" textAttrsKey4="paramCreationSuccess : xml" textAttrsKey5="parameterClassIdentifier : string" textAttrsKey6="parameterDataType : string" textAttrsKey7="parameterIdentifier : string" textAttrsKey8="parameterSearchResults : xml" textAttrsKey9="roleAccessLevel : string" textAttrsKey10="... and 1 more">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="addParamValues" Type="xml" Comment=""/>
+        <variable Name="enteredSearchCriteria" Type="xml" Comment=""/>
+        <variable Name="manageValidValueParamName" Type="string" Comment=""/>
+        <variable Name="paramCreationErrors" Type="xml" Comment=""/>
+        <variable Name="paramCreationSuccess" Type="xml" Comment=""/>
+        <variable Name="parameterClassIdentifier" Type="string" Comment=""/>
+        <variable Name="parameterDataType" Type="string" Comment=""/>
+        <variable Name="parameterIdentifier" Type="string" Comment=""/>
+        <variable Name="parameterSearchResults" Type="xml" Comment=""/>
+        <variable Name="roleAccessLevel" Type="string" Comment=""/>
+        <variable Name="rwCt" Type="xml" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

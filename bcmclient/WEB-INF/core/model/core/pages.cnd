@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" description="_">
+  <!-- ********************************************************************** 
+     *********************************************************************** -->
+  <x2:command name="init" public="yes" description="_">
+    <x2:execute command="core.pages:defineCore"/>
+  </x2:command>
+  <!-- ********************************************************************** 
+     *********************************************************************** -->
+  <x2:command public="yes" description="_" name="defineCore">
+    <!-- Login -->
+    <web:define-page name="core_login" url="/core/login.jsp"/>
+    <web:define-xsl name="core_login" url="/core/xsl/login.xsl"/>
+
+    <!-- Logout -->
+    <web:define-page name="core_logout" url="/core/login/controller/logout.x2c"/>
+
+    <!-- Shell -->
+    <web:define-page name="core_shell_pgl" url="/core/shell/shell.x2p"/>
+    <web:define-page name="core_shell" url="/core/shell.jsp"/>
+    <web:define-xsl name="core_shell" url="/core/xsl/shell.xsl"/>
+    <web:define-page name="core_shell_display" url="/core/shell/controller/display.x2c"/>
+    <web:define-page name="core_shell_help" url="/core/help/onlinehelp.html"/>
+    <web:define-page name="core_shell_about" url="/i2/images/about_bpe.gif"/>
+
+    <web:define-page name="core_application" url="/core/middle.jsp"/>
+    
+    <!-- Change Password -->
+    <web:define-page name="core_change_passwd" url="/core/change_passwd.jsp"/>
+    <web:define-xsl name="core_change_passwd" url="/core/xsl/change_passwd.xsl"/>
+
+    <!-- SSO login -->
+    <web:define-page name="ssologin" url="/core/ssologin.jsp"/>
+    <web:define-xsl name="ssologin" url="/core/xsl/ssologin.xsl"/>
+
+    <!-- SSO logout -->
+    <web:define-page name="ssologout" url="/core/sso/logout.x2c"/>
+
+    <!-- Home -->
+    <web:define-page name="core_home" url="/core/home.jsp"/>
+    <web:define-xsl name="core_home" url="/core/xsl/home.xsl"/>
+    <web:define-page name="home_page" url="/core/home.jsp"/>
+    <web:define-xsl name="home_page" url="/core/xsl/home.xsl"/>
+<!-- 
+    <web:define-page name="omx_home" url="/core/home.jsp"/>
+    <web:define-xsl name="omx_home" url="/core/xsl/home.xsl"/>
+ -->
+    <!-- Nav -->
+    
+    <web:define-page name="core_nav" url="/core/nav.jsp"/>
+    <web:define-xsl name="core_nav" url="/core/xsl/nav.xsl"/>
+    <web:define-page name="nav_page" url="/core/nav.jsp"/>
+    <web:define-xsl name="nav_page" url="/core/xsl/nav.xsl"/>
+
+    <!-- Page Header -->
+    <web:define-xsl name="core_page_header" url="/core/xsl/page_header.xsl"/>
+
+    <!-- Solutions -->
+    <web:define-page name="configure_system_shell" url="/core/shell/controller/display.x2c?ACTIVITY=configure_system"/>
+    <web:define-page name="financial_collaboration_shell" url="/core/shell/controller/display.x2c?ACTIVITY=financial_collaboration"/>
+    <web:define-page name="manage_enterprise_shell" url="/core/shell/controller/display.x2c?ACTIVITY=manage_enterprise"/>
+    <web:define-page name="manage_inventory_shell" url="/core/shell/controller/display.x2c?ACTIVITY=manage_inventory"/>
+    <web:define-page name="manage_orders_shell" url="/core/shell/controller/display.x2c?ACTIVITY=manage_orders"/>
+    <web:define-page name="manage_pricing_shell" url="/core/shell/controller/display.x2c?ACTIVITY=manage_pricing"/>
+    <web:define-page name="manage_events_shell" url="/core/shell/controller/display.x2c?ACTIVITY=manage_events"/>
+    <web:define-page name="manage_events_admin_shell" url="/core/shell/controller/display.x2c?ACTIVITY=manage_events_admin"/>
+    <web:define-page name="manage_events_order_shell" url="/core/shell/controller/display.x2c?ACTIVITY=manage_events_order"/>
+        
+    <web:define-page name="administerEvents" url="/core/pages/goToIndex.x2c?ACTIVITY=manage_events_admin"/>
+    <web:define-page name="manageEventsOrder" url="/core/pages/goToIndex.x2c?ACTIVITY=manage_events_order"/>
+      
+    <!-- Prompt -->
+    <web:define-page name="core_prompt" url="/core/prompt.jsp"/>
+    <web:define-xsl name="core_prompt" url="/core/xsl/prompt.xsl"/>
+
+    <!-- Search -->
+    <web:define-page name="core_search_view" url="/core/search/controller/view.x2c"/>
+    <web:define-page name="core_search_select_saved_search_display" url="/core/search/select/saved_search/controller/display.x2c"/>
+    <web:define-page name="core_search_select_saved_search_view" url="/core/search/select/saved_search/controller/view.x2c"/>
+    <web:define-page name="core_search_select_saved_search" url="/core/search/select/saved_search.jsp"/>
+    <web:define-xsl name="core_search_select_saved_search" url="/core/search/select/xsl/saved_search.xsl"/>
+    <web:define-page name="core_search_select_name_display" url="/core/search/select/name/controller/display.x2c"/>
+    <web:define-page name="core_search_select_name_view" url="/core/search/select/name/controller/view.x2c"/>
+    <web:define-page name="core_search_select_name" url="/core/search/save.x2p"/>
+    <web:define-xsl name="core_search_select_name" url="/core/search/select/xsl/name.xsl"/>
+
+    <!-- Search Help -->
+    <web:define-page name="select_form_help" url="/omx/help/search.htm"/>
+    <web:define-page name="select_report_help" url="/omx/help/search_results.html"/>
+    <!-- Deprecated Search Help -->
+    <web:define-page name="select_help" url="/omx/help/search_results.html"/>
+
+    <!-- Alert -->
+    <web:define-page name="core_login_alert" url="/core/login_alert.jsp"/>
+    <web:define-page name="core_alert" url="/core/alert.jsp"/>
+    <web:define-xsl name="core_alert" url="/core/xsl/alert.xsl"/>
+
+    <!-- Utilities -->
+    <web:define-page name="core_download" url="/core/download.jsp"/>
+    <web:define-page name="core_error_page" url="/core/error_page.jsp"/>
+    <web:define-page name="core_close_and_refresh" url="/core/close_and_refresh.jsp"/>
+    <web:define-page name="xml" url="/core/xml.jsp"/>
+    <web:define-xsl name="xml" url="/core/xsl/xml_tree.xsl"/>
+
+    <!-- Message box -->
+    <web:define-page name="core_message" url="/core/message_box/message.jsp"/>
+    <web:define-xsl name="core_message" url="/core/message_box/xsl/message.xsl"/>
+    <web:define-page name="core_message_container" url="/core/message_box/message_container.jsp"/>
+    <web:define-xsl name="core_message_container" url="/core/message_box/xsl/message_container.xsl"/>
+
+
+
+    <web:define-page name="core_download" url="/core/download.jsp"/>
+    <web:define-page name="core_history_back" url="/core/history/back.x2c"/>
+    
+        
+    
+  </x2:command>
+
+</x2:commands>

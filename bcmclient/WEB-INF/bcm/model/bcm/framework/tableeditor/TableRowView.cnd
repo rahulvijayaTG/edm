@@ -1,0 +1,624 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="init" public="yes" description="_">
+    <xapl:variable name="groupeditrows" resolver="session" global="true"/>
+    <xapl:variable name="truncatedColumnName" resolver="session" global="true"/>
+  </x2:command>
+  <!-- **********************************************************************
+       *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+    <xapl:print select="$this"/>
+    <xapl:print select="$sessionData"/>     
+    <!-- reset the sessionData in case of ERROR MESSAGE-->
+    <xapl:if test="$this/USE_SESSIONDATA/@Value = 'TRUE'">
+      <xapl:print>
+        ::::resetting in $this all the old values from sessionData:::
+        <xapl:value-of select="$sessionData"/>
+      </xapl:print>
+      <xapl:choose>
+        <xapl:when test="$this/FROM_SELECT_FOREIGN_KEY/@Value = 'true'">
+          <docutil:add select="$this">
+            <xapl:value-of select="$sessionData/*[name() = $this/FROM_TABLE/@Value]/*"/>
+          </docutil:add>
+        </xapl:when>
+        <xapl:otherwise>
+          <docutil:add select="$this">
+            <xapl:value-of select="$sessionData/*[name() = $this/TABLE_NAME/@Value]/*"/>
+          </docutil:add>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:if>
+   
+    <!--xapl:print select="$this"/-->
+      
+    <!-- BREADCRUMBS AT TOP OR AFTER CLEAN-CONTEXT-->
+    <xapl:variable name="pageName">
+      <xapl:choose>
+        <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'ADD' "><i18n:text>Add Page</i18n:text></xapl:when>
+        <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'COPY' "><i18n:text>Copy Page</i18n:text></xapl:when>
+        <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'EDIT' "><i18n:text>Edit Page</i18n:text></xapl:when>
+        <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'GROUP_EDIT' "><i18n:text>Group Edit Page</i18n:text></xapl:when>
+      </xapl:choose>
+    </xapl:variable>
+    <xapl:variable name="tableName">
+      <i18n:text>
+        <xapl:value-of select="$this/TABLE_NAME[1]/@Value"/>
+      </i18n:text>
+    </xapl:variable>
+    <x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+      <x2:with-param name="display" select=" concat($tableName, ' ', $pageName)"/>
+      <x2:with-param name="page" select="'tablerow'"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+    <!-- re-create the currentdbtable in session if its not there -->
+    <xapl:choose>
+      <xapl:when test="($currentDbTable/TABLE_NAME/@Value = $this/TABLE_NAME[1]/@Value and $currentDbTable/TABLE_NAME/@Service = $this/SERVICE[1]/@Value)"/>
+      <xapl:otherwise>
+        <!-- create table in session adding default presentation from metadata -->
+        <x2:execute command="bcm.framework.tableeditor.Table:create">
+          <x2:with-param name="this" select="{$this}"/>
+          <x2:with-param name="pTableName" select="{$this/TABLE_NAME[1]/@Value}"/>
+        </x2:execute>
+      </xapl:otherwise>
+    </xapl:choose>
+
+    <xapl:variable name="row">
+      <xapl:choose>
+        <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'ADD' ">
+          <ROWS>
+            <x2:execute command="bcm.framework.tableeditor.Table:getEmptyRow">
+              <x2:with-param name="this" select="$this"/>
+            </x2:execute>
+          </ROWS>
+        </xapl:when>
+        <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'COPY' ">
+          <xapl:choose>
+            <xapl:when test="$this/ERROR_MESSAGE">
+              <ROWS>
+                <x2:execute command="bcm.framework.tableeditor.Table:getEmptyRow">
+                  <x2:with-param name="this" select="$this"/>
+                </x2:execute>
+              </ROWS>
+            </xapl:when>
+            <xapl:otherwise>
+              <docutil:set select="$this">
+                <x2:execute command="bcm.framework.tableeditor.Table:createXMLFromSelectedId">
+                  <x2:with-param name="selectedId" select="$this/SELECTED_ID/@Value"/>
+                </x2:execute>
+              </docutil:set>
+              <ROWS>
+                <xapl:choose>
+                  <xapl:when test="count($this/SELECTED_ID) > 0 and string-length($this/SELECTED_ID/@Value) > 0">
+                    <x2:execute command="bcm.framework.tableeditor.Row:getOrCreateRow">
+                      <x2:with-param name="this" select="$this"/>
+                    </x2:execute>
+                  </xapl:when>
+                  <xapl:otherwise>
+                    <x2:execute command="bcm.framework.tableeditor.Table:getEmptyRow">
+                      <x2:with-param name="this" select="$this"/>
+                    </x2:execute>
+                  </xapl:otherwise>
+                </xapl:choose>
+              </ROWS>
+            </xapl:otherwise>
+          </xapl:choose>
+        </xapl:when>
+        <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'EDIT' ">
+          <xapl:print select="{$this}"/>
+          <ROWS>
+            <xapl:choose>
+              <xapl:when test="$this/FROM_SELECT_FOREIGN_KEY/@Value = 'true' or $this/ERROR_MESSAGE">
+                <xapl:for-each varName="id" select="$this/SELECTED_ID">
+                  <x2:execute command="bcm.framework.tableeditor.Table:getEmptyRow">
+                    <x2:with-param name="this" select="{$this}"/>
+                    <x2:with-param name="pTableName" select="{$this/TABLE_NAME[1]/@Value}"/>
+                  </x2:execute>
+                </xapl:for-each>
+              </xapl:when>
+              <xapl:otherwise>
+                <xapl:for-each varName="id" select="$this/SELECTED_ID">
+                  <xapl:variable name="selecteIdXMLTree">
+                    <x2:execute command="bcm.framework.tableeditor.Table:createXMLFromSelectedId">
+                      <x2:with-param name="selectedId" select="$id/@Value"/>
+                    </x2:execute>
+                  </xapl:variable>
+                  <docutil:set select="$this">
+                    <xapl:value-of select="$selecteIdXMLTree"/>
+                  </docutil:set>
+                  <x2:execute command="bcm.framework.tableeditor.Row:getOrCreateRow">
+                    <x2:with-param name="this" select="$this"/>
+                  </x2:execute>
+                </xapl:for-each>
+              </xapl:otherwise>
+            </xapl:choose>
+          </ROWS>
+        </xapl:when>
+      </xapl:choose>
+    </xapl:variable>
+    <xapl:print select="$row"/>
+    <xapl:if test=" $this/TABLE_ROW_OPERATION/@Value = 'COPY' ">
+      <xapl:for-each varName="field" select="$row/ROW/FIELD">
+        <xapl:if test=" $field/@PrimaryKey = 'yes' ">
+          <docutil:remove select="$field/@Value"/>
+        </xapl:if>
+      </xapl:for-each>
+    </xapl:if>
+    <!-- START Group Edit related part -->
+    <xapl:if test=" $this/TABLE_ROW_OPERATION/@Value = 'GROUP_EDIT' ">
+      <xapl:if test="not($this/FROM_SELECT_FOREIGN_KEY) or $this/FROM_SELECT_FOREIGN_KEY/@Value != 'true'">
+        <xapl:set-variable name="groupeditrows">
+          <ROWS>
+            <xapl:for-each varName="id" select="$this/SELECTED_ID">
+              <xapl:variable name="selecteIdXMLTree">
+                <x2:execute command="bcm.framework.tableeditor.Table:createXMLFromSelectedId">
+                  <x2:with-param name="selectedId" select="$id/@Value"/>
+                </x2:execute>
+              </xapl:variable>
+              <docutil:set select="$this">
+                <xapl:value-of select="$selecteIdXMLTree"/>
+              </docutil:set>
+              <xapl:value-of select="$selecteIdXMLTree"/>
+            </xapl:for-each>
+            <x2:execute command="bcm.framework.tableeditor.Table:getEmptyRow">
+              <x2:with-param name="this" select="$this"/>
+            </x2:execute>
+          </ROWS>
+        </xapl:set-variable>
+        <!--xapl:print>
+                     groupeditrows:::
+              <xapl:value-of select="$groupeditrows"/>
+        </xapl:print-->
+      </xapl:if>
+    </xapl:if>
+    <xapl:variable name="totalRecordCount"/>
+    <xapl:choose>
+      <xapl:when test="$this/UPDATE_ALL/@Value = 'NO'">
+        <xapl:set-variable name="totalRecordCount" select="round(count($this/SELECTED_ID))"/>
+      </xapl:when>
+      <xapl:otherwise>
+        <xapl:set-variable name="totalRecordCount" select="$this/RECORD_COUNT/@Value"/>
+      </xapl:otherwise>
+    </xapl:choose>
+    <!-- END Group Edit related part -->
+    <xapl:variable name="dateFormat">
+      <identity:get-date-format format="common"/>
+    </xapl:variable>
+    <xapl:variable name="dateTimeFormat">
+      <identity:get-date-format format="datetime"/>
+    </xapl:variable>
+     <xapl:print select="$this"/>
+    <xapl:if test="string-length($this/SELECTED_FK_ID/@Value) > 0 ">
+       <x2:execute command="bcm.framework.tableeditor.TableRowView:getSelectedIDData">
+       <x2:with-param name="this" select="{$this}"/>
+       </x2:execute>
+    </xapl:if>
+    <xapl:return>
+      <!-- Page Header-->
+      <x2:execute command="bcm.framework.tableeditor.TableRowView:getHeader">
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+      <!-- Top Level Container -->
+      <x2:execute command="bcm.framework.tableeditor.TableRowView:getContainer">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+      <xapl:choose>
+        <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'GROUP_EDIT' ">
+          <xapl:value-of select="$groupeditrows"/>
+          <TOTAL_RECORD_COUNT Value="{$totalRecordCount}"/>
+        </xapl:when>
+        <xapl:otherwise>
+          <xapl:value-of select="$row"/>
+        </xapl:otherwise>
+      </xapl:choose>
+      <xapl:value-of select="$this/*"/>
+      <FORMAT Date="{$dateFormat}"/>
+      <DATETIMEFORMAT Date="{$dateTimeFormat}"/>
+      <xapl:choose>
+        <xapl:when test="$currentDbTable/TABLE_NAME/@SurrogateKey='yes' and count($currentDbTable/TABLE_NAME/COLUMNS/PROPERTY[@PrimaryKey = 'yes' and @Name!='SCENARIO_ID']) = 1 ">
+            <SurrogateKey Value="yes"/>
+        </xapl:when>
+        <xapl:otherwise>
+            <SurrogateKey Value="no"/>
+        </xapl:otherwise>
+      </xapl:choose>
+      <xapl:value-of select="$currentTablesOptionData/SERVICE[@Name =
+      $this/SERVICE[1]/@Value]/TABLE[@Name = $this/TABLE_NAME[1]/@Value]/OPTION_TYPES"/>
+      <xapl:print>
+        ANISH OPTIONS:::
+              <xapl:value-of select="$currentTablesOptionData/SERVICE[@Name =
+      $this/SERVICE[1]/@Value]/TABLE[@Name = $this/TABLE_NAME[1]/@Value]/OPTION_TYPES"/>
+        </xapl:print>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+    <xapl:return>
+      <x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <xapl:variable name="onClickPage">
+      <xapl:choose>
+        <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'ADD'
+        or $this/TABLE_ROW_OPERATION/@Value = 'COPY'">adddbrow</xapl:when>
+        <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'EDIT' ">editdbrow</xapl:when>
+        <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'GROUP_EDIT' ">groupeditdbrow</xapl:when>
+      </xapl:choose>
+    </xapl:variable>
+
+    <!-- need to pick help file from XDOC -->
+<!-- ONLINE HELP Commenting -->
+<!--
+    <xapl:variable name="helpFile">
+        <xapl:choose>
+          <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'ADD' ">
+            <xapl:choose>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='Dimension'">
+                <xapl:value-of select="'../../help/create_dimension_help.htm'"/>
+              </xapl:when>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='Hierarchy'">
+                <xapl:value-of select="'../../help/create_hierarchy_help.htm'"/>
+              </xapl:when>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='Level'">
+                <xapl:value-of select="'../../help/create_level_help.htm'"/>
+              </xapl:when>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='LevelHierarchy'">
+                <xapl:value-of select="'../../help/create_levelhierarchy_help.htm'"/>
+              </xapl:when>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='Member'">
+                <xapl:value-of select="'../../help/create_member_help.htm'"/>
+              </xapl:when>
+              <xapl:otherwise>
+                <xapl:value-of select="'../../help/table_editor_add_help.htm'"/>
+              </xapl:otherwise>
+            </xapl:choose>
+          </xapl:when>
+          <xapl:when test="$this/TABLE_ROW_OPERATION/@Value = 'COPY'">
+            <xapl:choose>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='Dimension'">
+                <xapl:value-of select="'../../help/copy_dimension_help.htm'"/>
+              </xapl:when>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='Hierarchy'">
+                <xapl:value-of select="'../../help/copy_hierarchy_help.htm'"/>
+              </xapl:when>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='Level'">
+                <xapl:value-of select="'../../help/copy_level_help.htm'"/>
+              </xapl:when>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='LevelHierarchy'">
+                <xapl:value-of select="'../../help/copy_levelhierarchy_help.htm'"/>
+              </xapl:when>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='Member'">
+                <xapl:value-of select="'../../help/copy_member_help.htm'"/>
+              </xapl:when>
+              <xapl:otherwise>
+                <xapl:value-of select="'../../help/copy_record.html'"/>
+              </xapl:otherwise>
+            </xapl:choose>
+          </xapl:when>
+          <xapl:otherwise>
+            <xapl:choose>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='Dimension'">
+                <xapl:value-of select="'../../help/edit_dimension_help.htm'"/>
+              </xapl:when>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='Hierarchy'">
+                <xapl:value-of select="'../../help/edit_hierarchy_help.htm'"/>
+              </xapl:when>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='Level'">
+                <xapl:value-of select="'../../help/edit_level_help.htm'"/>
+              </xapl:when>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='LevelHierarchy'">
+                <xapl:value-of select="'../../help/edit_levelhierarchy_help.htm'"/>
+              </xapl:when>
+              <xapl:when test="$this/TABLE_NAME[1]/@Value='Member'">
+                <xapl:value-of select="'../../help/edit_member_help.htm'"/>
+              </xapl:when>
+              <xapl:when test="$this/TABLE_ROW_OPERATION/@Value='GROUP_EDIT'">
+                <xapl:value-of select="'../../help/mass_update.html'"/>
+              </xapl:when>
+              <xapl:otherwise>
+                <xapl:value-of select="'../../help/table_editor_edit_help.htm'"/>
+              </xapl:otherwise>
+            </xapl:choose>
+          </xapl:otherwise>
+        </xapl:choose>
+    </xapl:variable>
+
+
+-->
+
+<!-- ONLINE HELP -->
+
+    <xapl:variable name="helpDirectory">
+        <xapl:value-of select="{$helpFileDirectory}"/>
+    </xapl:variable>
+    <xapl:print select="$helpDirectory"/>
+
+    <xapl:variable name="helpFile">
+      <xapl:choose>
+        <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'EDIT' ">
+        <xapl:choose>
+	        <xapl:when test="$helpFileName/TABLE_HELPFILE_MAP/*[@Name=$this/TABLE_NAME[1]/@Value] and string-length($helpFileName/TABLE_HELPFILE_MAP/*[@Name=$this/TABLE_NAME[1]/@Value]/@editHelpFile) > 0">
+	              <xapl:value-of select="concat($helpDirectory,'/',$helpFileName/TABLE_HELPFILE_MAP/*[@Name=$this/TABLE_NAME[1]/@Value]/@editHelpFile)"/>
+	        </xapl:when>
+	        <xapl:otherwise>
+	  	      <xapl:value-of select="concat($helpDirectory,'/',$helpFileName/DEFAULT_HELP_FILENAME/@editHelpFile)"/>
+	        </xapl:otherwise>
+
+	</xapl:choose>
+        </xapl:when>
+
+        <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'ADD' ">
+        <xapl:choose>
+        	<xapl:when test="$helpFileName/TABLE_HELPFILE_MAP/*[@Name=$this/TABLE_NAME[1]/@Value] and string-length($helpFileName/TABLE_HELPFILE_MAP/*[@Name=$this/TABLE_NAME[1]/@Value]/@createHelpFile) > 0">
+          <xapl:print>INSIDE IFTEST</xapl:print>
+          <xapl:print><xapl:value-of select="$helpFileName/TABLE_HELPFILE_MAP/*[@Name=$this/TABLE_NAME[1]/@Value]/@createHelpFile"/></xapl:print>
+
+        	      <xapl:value-of select="concat($helpDirectory,'/',$helpFileName/TABLE_HELPFILE_MAP/*[@Name=$this/TABLE_NAME[1]/@Value]/@createHelpFile)"/>
+        	</xapl:when>
+	        <xapl:otherwise>
+          <xapl:print>INSIDE ELSETEST</xapl:print>
+	  	      <xapl:value-of select="concat($helpDirectory,'/',$helpFileName/DEFAULT_HELP_FILENAME/@createHelpFile)"/>
+	        </xapl:otherwise>
+	</xapl:choose>
+	</xapl:when>
+
+        <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'COPY' ">
+        <xapl:choose>
+        	<xapl:when test="$helpFileName/TABLE_HELPFILE_MAP/*[@Name=$this/TABLE_NAME[1]/@Value] and string-length($helpFileName/TABLE_HELPFILE_MAP/*[@Name=$this/TABLE_NAME[1]/@Value]/@copyHelpFile)>0">
+        	      <xapl:value-of select="concat($helpDirectory,'/',$helpFileName/TABLE_HELPFILE_MAP/*[@Name=$this/TABLE_NAME[1]/@Value]/@copyHelpFile)"/>
+        	</xapl:when>
+	        <xapl:otherwise>
+	  	      <xapl:value-of select="concat($helpDirectory,'/',$helpFileName/DEFAULT_HELP_FILENAME/@copyHelpFile)"/>
+	        </xapl:otherwise>
+	</xapl:choose>
+	</xapl:when>
+
+ <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'GROUP_EDIT' ">
+  <xapl:choose>
+        	<xapl:when test="$helpFileName/TABLE_HELPFILE_MAP/*[@Name=$this/TABLE_NAME[1]/@Value] and string-length($helpFileName/TABLE_HELPFILE_MAP/*[@Name=$this/TABLE_NAME[1]/@Value]/@massUpdateHelpFile)>0">
+        	      <xapl:value-of select="concat($helpDirectory,'/',$helpFileName/TABLE_HELPFILE_MAP/*[@Name=$this/TABLE_NAME[1]/@Value]/@massUpdateHelpFile)"/>
+        	</xapl:when>
+	        <xapl:otherwise>
+	  	      <xapl:value-of select="concat($helpDirectory,'/',$helpFileName/DEFAULT_HELP_FILENAME/@massUpdateHelpFile)"/>
+	        </xapl:otherwise>
+	</xapl:choose>
+ </xapl:when>
+
+        <!-- <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'GROUP_EDIT' ">
+        	<xapl:value-of select="concat($helpDirectory,'/','mass_update.html')"/>
+        </xapl:when>
+
+        <xapl:otherwise>
+  	      <xapl:value-of select="concat($helpDirectory,'/',$helpFileName/DEFAULT_HELP_FILENAME/@editHelpFile)"/>
+        </xapl:otherwise> -->
+      </xapl:choose>
+
+    </xapl:variable>
+    <xapl:print select="$helpFile"/>
+<!-- ONLINE HELP -->
+
+    <xapl:return>
+	  <!-- EQ 521502 -->
+      <CONTAINER Scrollable="no">
+        <HELP Url="{$helpFile}"/>
+        <STEP Name="EditTable" DisplayText="{$this/TABLE_NAME[1]/@Value}" OnClick="{concat('$pages:', $onClickPage)}" Selected="true">
+          <BUTTONS>
+            <BUTTON Id="back_button" Name="Back" DisplayText="Cancel" OnClick="javascript:onTableEditor()"/>
+            <xapl:choose>
+              <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'EDIT' ">
+                <xapl:choose>
+                  <xapl:when test="count($this/SELECTED_ID) > 1 ">
+                    <BUTTON Id="commit_button" Name="Commit" DisplayText="Save And Return" OnClick="javascript:onEditCommitAll()" Emphasized="true"/>
+                  </xapl:when>
+                  <xapl:otherwise>
+                    <BUTTON Id="commit_button" Name="Commit" DisplayText="Save And Return" OnClick="javascript:onEditCommitOne()" Emphasized="true"/>
+                  </xapl:otherwise>
+                </xapl:choose>
+              </xapl:when>
+              <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'GROUP_EDIT' ">
+                <xapl:choose>
+                  <xapl:when test="$this/UPDATE_ALL/@Value = 'YES' ">
+                    <BUTTON Id="commit_button" Name="Commit" DisplayText="Save And Return" OnClick="javascript:onGroupEditCommitAll()" Emphasized="true"/>
+                  </xapl:when>
+                  <xapl:otherwise>
+                    <BUTTON Id="commit_button" Name="Commit" DisplayText="Save And Return" OnClick="javascript:onGroupEditCommit()" Emphasized="true"/>
+                  </xapl:otherwise>
+                </xapl:choose>
+              </xapl:when>
+              <xapl:otherwise>
+                <xapl:if test="$this/TABLE_ROW_OPERATION/@Value = 'ADD' ">
+                  <BUTTON Id="save_button" Name="Save" DisplayText="Save" OnClick="javascript:onSaveAndReturn(false)"/>
+                </xapl:if>
+                <BUTTON Id="save_and_return_button" Name="Save" DisplayText="Save And Return" OnClick="javascript:onSaveAndReturn(true)" Emphasized="true"/>
+              </xapl:otherwise>
+            </xapl:choose>
+          </BUTTONS>
+        </STEP>
+      </CONTAINER>
+    </xapl:return>
+  </x2:command>
+<!--*********************************************************************************
+  *********************************************************************************-->
+ <x2:command public="yes" description="_" name="getSelectedIDData">
+     <xapl:variable name="selectedTableData">
+     <SELECTED_DATA/>
+     </xapl:variable>
+     <xapl:variable name="val"/>
+     <xapl:variable name="colVal"/>
+     <!--xapl:print select="$currentDbTable"/-->
+     <xapl:print select="$pk"/>
+     <!--xapl:print select="$this"/>
+     <xapl:print select="$metaData/SERVICE[@Name=$this/SERVICE[1]/@Value]/DOCUMENTS/DOCUMENT[@Name = $this/REFERRED_TABLE[1]/@Value]"/-->
+     
+     <xapl:for-each varName="column" select="$currentDbTable/TABLE_NAME/COLUMNS/PROPERTY">
+       <xapl:set-variable name="colVal" select="$column/@Name"/>
+       <xapl:if test="string-length($column/@ToProperty)>0">
+        <xapl:set-variable name="colVal" select="$column/@ToProperty"/>
+       </xapl:if>
+       <xapl:print>Col val is <xapl:value-of select="$colVal"/></xapl:print>
+       <xapl:choose>
+         <xapl:when test="$column/@PrimaryKey = 'yes'">
+            <xapl:for-each varName="pkElement" select="$pk/NAME">
+            <xapl:if test="$pkElement/@Value = $colVal">
+              <xapl:if test="$column/@Refers = $this/REFERRED_TABLE/@Value">
+                <xapl:print select="$column/@Name"/>
+                <xapl:print select="$column/@Refers"/>
+                <xapl:set-variable name="val">
+                <x2:execute command="bcm.framework.queryform.Form:getValueFromSelectedId">
+                 <x2:with-param name="selectedId" select="$this/SELECTED_FK_ID/@Value"/>
+                 <x2:with-param name="key" select="$colVal"/>
+                </x2:execute>
+               </xapl:set-variable>
+               <docutil:add select="$selectedTableData">
+                <docutil:element name="{$pkElement/@Value}" Value="{$val}"/>
+               </docutil:add>
+               <docutil:remove select="$this/*[name() = $pkElement/@Value]"/>
+              </xapl:if>
+            </xapl:if>
+            </xapl:for-each>
+         </xapl:when>
+        <xapl:when test="$colVal = $this/FROM_COLUMN/@Value or $colVal = $this/REFERRED_COLUMN/@Value">
+        <!--EQ:571483 TO get the value of the composite keys (which is not the primary keys in the 
+            FROM _TABLE) in different table -->
+          <xapl:variable name="docLinks">
+                <DOC_LINKS>
+                  <xcore:execute-method name="{concat('//', $this/SERVICE/@Value, '/getLinks')}" entireResponse="false">
+                    <TABLE_NAME Value="{$currentDbTable/TABLE_NAME/@Value}"/>
+                  </xcore:execute-method>
+                </DOC_LINKS>
+           </xapl:variable>
+           
+           <!--xapl:print>
+           <xapl:value-of select="$docLinks"/>
+           </xapl:print-->
+           
+           <xapl:variable name="docLink">
+            <ALL_LINKS>
+             <xapl:value-of select = "$docLinks/DOCUMENTLINK[@Name = $this/REFERRED_TABLE/@Value ] "/>
+            </ALL_LINKS>
+           </xapl:variable>
+           
+           
+           
+           <!--xapl:print>
+           <xapl:value-of select="{substring-before($this/FROM_COLUMN/@Value, '_1' )}"/>
+           <xapl:value-of select="$this/FROM_COLUMN/@Value"/>
+           </xapl:print-->
+           
+           <!-- Eq: 575168 truncating from_column to get string before last underscore -->
+           <x2:execute command="bcm.framework.tableeditor.TableRowView:getTruncatedColumnName">
+	     <x2:with-param name="columnName" select="$this/FROM_COLUMN/@Value"/>
+           </x2:execute>
+           
+           
+           <!-- Eq: 575168 Getting the remaining string after the last underscore from  From_Coulmn-->
+           <xapl:variable name="remainingString">
+	   	<xapl:value-of select="{substring-after($this/FROM_COLUMN/@Value, $truncatedColumnName )}"/>
+	   </xapl:variable>  
+           
+           <xapl:variable name="referedLink"/>
+            
+           <xapl:choose>
+           <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'EDIT' ">          
+		           
+		  <xapl:set-variable name="referedLink">
+			<REFERED_LINK>
+			 <xapl:value-of select = "$docLink/DOCUMENTLINK[MAP_PROPERTY/@From = $truncatedColumnName] "/>
+			</REFERED_LINK>
+		  </xapl:set-variable>     
+		  
+           </xapl:when>
+           
+           <xapl:otherwise>
+           
+		   <xapl:set-variable name="referedLink">
+		     <REFERED_LINK>
+		      <xapl:value-of select = "$docLink/DOCUMENTLINK[MAP_PROPERTY/@From = $this/FROM_COLUMN/@Value] "/>
+		     </REFERED_LINK>
+		    </xapl:set-variable>
+            
+           </xapl:otherwise>
+           </xapl:choose>
+           <xapl:print select="$truncatedColumnName"/> 
+           <xapl:print select="$docLink"/>
+           <xapl:print select="$referedLink"/>
+           <xapl:for-each varName="referedTo" select="$referedLink/DOCUMENTLINK/MAP_PROPERTY">
+              <xapl:set-variable name="val">
+                <x2:execute command="bcm.framework.queryform.Form:getValueFromSelectedId">
+                  <x2:with-param name="selectedId" select="$this/SELECTED_FK_ID/@Value"/>
+                  <x2:with-param name="key" select="$referedTo/@To"/>
+                </x2:execute>
+              </xapl:set-variable>
+              <docutil:add select="$selectedTableData"> 
+              <xapl:choose>
+                  <xapl:when test=" $this/TABLE_ROW_OPERATION/@Value = 'EDIT' ">
+                   <!-- Eq : 575168 concatenating underscore and the index that gets added in case of Edit ex For Edit _1 gets concatenated and for multiple edit _1 ,_2 gets concatenated -->
+                      <docutil:element name="{concat($referedTo/@From, $remainingString)}" Value="{$val}"/>
+                  </xapl:when>
+                  <xapl:otherwise>
+                      <docutil:element name="{$referedTo/@From}" Value="{$val}"/>
+                  </xapl:otherwise>
+               </xapl:choose>               
+              </docutil:add>
+              </xapl:for-each>
+            </xapl:when>
+        <!--EQ:571483 TO get the value of the composite keys (which is not the primary keys in the 
+            FROM _TABLE) in different table -->
+            
+        </xapl:choose>
+      </xapl:for-each> 
+      <docutil:remove select="$this/*[name() = $this/FROM_COLUMN/@Value]"/>
+      <xapl:print select="$selectedTableData"/>
+      <docutil:add select="$this">
+        <xapl:value-of select="$selectedTableData/*" />
+      </docutil:add>
+   </x2:command>
+   <!--*********************************************************************************
+  *********************************************************************************-->
+   <!-- used to set session variable truncatedColumnName to contain  substring before the last underscore in the given string -->
+   <x2:command public="yes" description="_" name="getTruncatedColumnName">
+      <x2:param name="columnName"/>
+      <xapl:variable name="exitFroLoop" select="'false'"/>
+      <xapl:set-variable name="truncatedColumnName"/>
+      <xapl:print>
+            inside    getTruncatedMemberName
+            <xapl:value-of select="$exitFroLoop"/>
+            <xapl:value-of select="$columnName"/>
+      </xapl:print>
+      <xapl:variable name="substrAfter"/>
+      <xapl:variable name="substrBefore"/>
+      <xapl:while test="$exitFroLoop = 'false'">
+      <xapl:print>
+            inside    while getTruncatedMemberName
+            <xapl:value-of select="$exitFroLoop"/>
+      </xapl:print>
+
+        <xapl:set-variable name="substrAfter" select="substring-after($columnName, '_')"/>
+        <xapl:print select="$substrAfter"/>
+
+        <xapl:set-variable name="substrBefore" select="substring-before($columnName, '_')"/>
+        <xapl:print select="$substrBefore"/>
+
+        <xapl:set-variable name="columnName" select="$substrAfter"/>
+        <xapl:choose>
+            <xapl:when test="string-length($substrBefore ) > 0">
+                <xapl:set-variable name="truncatedColumnName" select="concat($truncatedColumnName,'_',$substrBefore)"/>
+                <xapl:print select="$truncatedColumnName"/>
+            </xapl:when>
+            <xapl:otherwise>
+                <xapl:set-variable name="exitFroLoop" select="'true'"/>
+            </xapl:otherwise>
+        </xapl:choose>
+
+      </xapl:while>
+
+      <xapl:set-variable name="truncatedColumnName" select="substring-after($truncatedColumnName, '_')"/>
+      <xapl:print select="$truncatedColumnName"/>
+    </x2:command>     <!--*********************************************************************************
+  *********************************************************************************-->
+</x2:commands>

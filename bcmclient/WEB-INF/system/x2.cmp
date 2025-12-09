@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<x2:components description="Core library of components" 
+               xmlns:x2="http://www.i2.com/x2" 
+               xmlns:web="http://www.i2.com/web" 
+               xmlns:xapl="http://www.i2.com/xapl">
+    
+  <!-- component DEFINITIONS -->           
+  <x2:component name="command" 
+                description="Encapsulates a command of one to many components.">
+    <x2:class value="com.i2.x2.components.core.Command"/>
+    <x2:type value="System"/>
+    <x2:input name="name" description="Name of the command." />
+    <x2:input name="public" description="Sets the view policy of the command." />
+    <x2:input name="description" description="Documents the functionality of the command." />
+    <x2:body>
+      <x2:include-component type="ANY"/>
+    </x2:body>
+
+    <x2:example type="description">
+      Below is a code snippet showing a simple command in x2.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="printHello" description="_">
+        <xapl:variable name="name">
+          John Doe
+        </xapl:variable>
+        <xapl:print> 
+          Hello, 
+          <xapl:value-of select="$name"/>  
+          !      
+        </xapl:print>
+      </x2:command>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results:
+    </x2:example>
+    <x2:example type="code">
+      Hello, John Doe!
+    </x2:example>
+
+  </x2:component>        
+  
+ <x2:component name="execute" 
+                description="Executes another command from within a command.">
+    <x2:class value="com.i2.x2.components.core.Execute"/>
+    <x2:type value="System"/>
+    <x2:input name="command" description="Fully-qualified path and name of the command to execute." />
+    <x2:body>
+      <x2:include-component type="ANY"/>
+    </x2:body>
+
+    <x2:example type="description">
+      Below is a code snippet showing how to execute a command within another command.
+    </x2:example>
+    <x2:example type="code">
+      <!--Assumption is that the command file is named simple.cnd and it is located in directory, examples. -->
+      <x2:command name="printHello" description="_">
+        <xapl:print> 
+          Hello, 
+          <x2:execute name="examples.simple:getName"/>  
+          !      
+        </xapl:print>
+      </x2:command>
+      <x2:command name="getName" description="_">
+        <xapl:return>
+          John Doe
+        </xapl:return>
+      </x2:command>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results:
+    </x2:example>
+    <x2:example type="code">
+      Hello, John Doe!
+    </x2:example>
+
+  </x2:component>
+    
+  <x2:component name="execute-on-error" 
+                 description="If a component returns false and the onError method of this component is called then it will execute another command from this command.">
+    <x2:class value="com.i2.x2.components.core.OnErrorExecute"/>
+    <x2:type value="Error"/>
+    <x2:input name="command" description="A command to execute on error."/>
+  </x2:component>
+  
+  <x2:component name="text" 
+                description="Wraps node text so that they maybe expressions.">
+    <x2:class value="com.i2.x2.components.core.Text"/>
+    <x2:type value="System"/>
+    <x2:input name="text" description="The node text this component is wrapping." />
+    <x2:body>
+      <x2:include-component type="ANY"/>
+    </x2:body>
+  </x2:component>  
+  
+  <x2:component name="undefined" 
+                description="Component for handling the case when a component that is undefined (not found in the component library) is used as part of a command.">
+    <x2:class value="com.i2.x2.components.core.Undefined"/>
+    <x2:type value="System"/>
+    <x2:body>
+      <x2:include-component type="ANY"/>
+    </x2:body>
+  </x2:component>
+  
+  <x2:component name="with-param" description="Defines a parameter to be passed to a command.  When a command is invoked, values can be passed in as a parameter.">
+    <x2:class value="com.i2.x2.components.core.WithParam"/>
+	
+  	<x2:input name="name" description="Name of the parameter." required="true"/>
+  	<x2:input name="select" description="An XPath expression that defines the value of the parameter." required="false"/>	
+  	<x2:body>
+  	  <x2:include-component type="ANY" minOccur="0"/>
+  	</x2:body>	
+
+    <x2:example type="description">
+      Below is a code snippet showing how to pass a parameter to a command.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="executeAnotherParam" description="_">
+        <xapl:print>
+          In first command:
+        </xapl:print>
+        
+        <x2:execute name="examples:otherCommandParam">
+          <x2:with-param name="pName" select="'John Doe'"/>
+        </x2:execute>
+      </x2:command>
+      
+      <x2:command name="otherCommandParam" description="_">
+        <x2:param name="pName"/>        
+        <xapl:print>
+          Hello, <web:url-decode select="$pName"/>!
+        </xapl:print>
+      </x2:command>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results:
+    </x2:example>
+    <x2:example type="code">
+      In first command:
+    </x2:example>
+    <x2:example type="code">
+      Hello, John Doe!
+    </x2:example>
+  </x2:component>
+
+  <x2:component name="param" description="Defines the name and value of a parameter to be used by a command.  The value of the parameter can be defaulted by the select attribute.">
+    <x2:class value="com.i2.x2.components.core.Param"/>	
+  	<x2:input name="name" description="Name of the parameter." required="true"/>
+  	<x2:input name="select" description="An XPath expression that defines the default value of the parameter." required="false"/>	
+
+    <x2:example type="description">
+      Below is a code snippet showing how define how parameters can be passed to a command and how to handle default data.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="executeAnotherParam" description="_">
+        <xapl:print>
+          Passing the parameter:
+        </xapl:print>
+        <x2:execute name="examples:otherCommandParam">
+          <x2:with-param name="pName" select="'John Doe'"/>
+        </x2:execute>
+        <xapl:print>
+          Using the default value:
+        </xapl:print>
+        <x2:execute name="examples:otherCommandParam"/>
+      </x2:command>
+      
+      <x2:command name="otherCommandParam" description="_">
+        <x2:param name="pName" select="'World'"/>        
+        <xapl:print>
+          Hello, <web:url-decode select="$pName"/>!
+        </xapl:print>
+      </x2:command>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results:
+    </x2:example>
+    <x2:example type="code">
+      Passing the parameter:
+    </x2:example>
+    <x2:example type="code">
+      Hello, John Doe!
+    </x2:example>
+    <x2:example type="code">
+      Using the default value:
+    </x2:example>
+    <x2:example type="code">
+      Hello, World!
+    </x2:example>
+  </x2:component>
+
+  <x2:component name="reload-engine" description="Reloads the commands in the x2 engine.">
+    <x2:class value="com.i2.x2.components.core.ReloadEngine"/>	
+  </x2:component>
+  
+  <!-- x2:component name="debug" description="Enables symbolic debugging of the x2 engine.">
+    <x2:class value="com.i2.x2.debug.impl.EnableDebugger"/>	
+    <x2:input name="enabled" description="A true value enables the debugger and a false value disables the debugger." required="true"/>
+  </x2:component -->
+  
+   <x2:component name="get-xcore-service-name" description="Returns the mapped xCore service name">
+      <x2:class value="com.i2.bcm.x2.components.services.ServiceMapHandler"/>	
+      <x2:input name="name" description="Name of the x2 service name" required="true"/>
+    </x2:component>
+  
+
+</x2:components>
+

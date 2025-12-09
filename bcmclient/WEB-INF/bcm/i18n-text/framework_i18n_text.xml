@@ -1,0 +1,81 @@
+<!-- Table Editor -->
+<i18n:text>Search</i18n:text>
+<i18n:text>Cancel</i18n:text>
+<i18n:text>Save</i18n:text>
+<i18n:text>Save And Return</i18n:text>
+<i18n:text>Delete</i18n:text>
+<i18n:text>Create</i18n:text>
+<i18n:text>Audit</i18n:text>
+<i18n:text>ENTITY_STATE</i18n:text>
+<i18n:text>AT_MILLIS</i18n:text>
+<i18n:text>AT_ACTION</i18n:text>
+<i18n:text>SOURCE</i18n:text>
+<i18n:text>LAST_MODIFIED_BY</i18n:text>
+<i18n:text>CREATED_BY</i18n:text>
+<i18n:text>LAST_MODIFIED_DATE</i18n:text>
+<i18n:text>AT_MODIFIED_BY</i18n:text>
+<i18n:text>CREATION_DATE</i18n:text>
+<i18n:text>SCENARIO_ID</i18n:text>
+<i18n:text>SYS_TYPE</i18n:text>
+<i18n:text>AT_MODIFIED_ON</i18n:text>
+<i18n:text>Create Scenario</i18n:text>
+
+<i18n:text name="PAGINATION_ALERT">Enter a page number that is less than total no. of pages.</i18n:text>
+<i18n:text name="PLEASE_SELECT_TRANSACTION">Please select a row</i18n:text>
+<i18n:text name="PLEASE_SELECT_ONLY_ONE_TRANSACTION">At most one row can be selected!</i18n:text>
+<i18n:text name="PLEASE_SELECT_ATLEAST_ONE_TRANSACTION">You must select at least one row</i18n:text>
+<i18n:text name="WARNING_THRESHOLD_ALERT">Total number of selected records are exceeding the Warning Threshold!</i18n:text>
+<i18n:text name="EXCEPTION_THRESHOLD_WARNING">Total number of selected records are exceeding the Exception Threshold! Please narrow down your search criteria!</i18n:text>
+<i18n:text name="CONFIRM_ON_DELETE">Are you sure you want to delete the selected record(s)?</i18n:text>
+<i18n:text name="PROMPT_FILTER_NAME">Please specify a name for filter</i18n:text>
+<i18n:text name="CANNOT_HIDE_ONLY_COLUMN">Cannot hide when there is only one column in the table</i18n:text>
+<i18n:text>text</i18n:text>
+<i18n:text>date</i18n:text>
+<i18n:text>number</i18n:text>
+<i18n:text name="PWD_VERIFY">You must enter the exact same values in the "Password" and "Verify Password" fields.</i18n:text>
+<i18n:text name="LOCALE_ALERT">You are changing your locale settings. You must login again for the new locale settings to take effect.</i18n:text>
+<i18n:text name="PWD_RESET">Are you sure you really want to reset the password?</i18n:text>
+<i18n:text name="SELECT_ONE_ROW">At least one row must be selected</i18n:text>
+<i18n:text name="THRESHOLD_ALERT">Total number of selected records exceeding the Exception Threshold! Please narrow down your search criteria.</i18n:text>
+<i18n:text name="FILTER_NAME_ALERT">You must specify a name for filter.</i18n:text>
+<!-- Hierarchy alerts-->
+<i18n:text name="RESOURCE_EXISTS">Cannot Delete the Resource.There is an existing BOR with the current resource attached.</i18n:text>
+<i18n:text name="SELECT_MEMBER_ALERT">Please select at least one member.</i18n:text>
+<i18n:text name="SELECT_ONE_PARENT_MEMBER_ALERT">Please select one parent.</i18n:text>
+<i18n:text name="OPERATION_NOT_ALLOWED_CORRESPONDING_ITEM_PRESENT_IN_ITEM_MASTER">Cannot delete the Member. Related record exists.</i18n:text>
+<i18n:text name="HIERARCHY_DOES_NOT_EXIST">Hierarchy does not exists.</i18n:text>
+<i18n:text name="INVALID_LEVEL_ID">Invalid level id.</i18n:text>
+<i18n:text name="LEVEL_AND HIERARCHY_SHOULD_BELONG_TO_SAME_DIMENSION">Level and Hierarchy should belong to same dimension.</i18n:text>
+<i18n:text name="LEVEL_WIDTH_SHOULD_BE_MORE_THAN_EXISTING_MEMBER_LENGTH">LevelWidth should be more than existing member length.</i18n:text>
+<i18n:text name="DUPLICATE_LEVEL_IN_LEVEL_HIERARCHY">Duplicate level in Hierarchy.</i18n:text>
+<i18n:text name="NO_SUCH_PARENT_LEVEL_PRESENT">No such parent level is present.</i18n:text>
+<i18n:text name="DUPLICATE_PARENT_LEVEL">Duplicate parent level.</i18n:text>
+
+<i18n:text name="BASE_SCENARIO_CANNOT_BE_DELETED">Base scenario cannot be deleted.</i18n:text>
+<i18n:text name="CURRENT_SCENARIO_CANNOT_BE_DELETED">Current scenario cannot be deleted.</i18n:text>
+<i18n:text name="SCENARIO_DELETED_SUCCESSFULLY">Scenario submitted for deletion. Please check status after some time by clicking on 'Search' button.</i18n:text>
+<i18n:text name="SCENARIO_CREATED_SUCCESSFULLY">Scenario submitted for creation.  Please check status after some time by clicking on 'Search' button.</i18n:text>
+<i18n:text name="SCENARIO_COPIED_SUCCESSFULLY">Scenario submitted for copying.  Please check status after some time by clicking on 'Search' button.</i18n:text>
+<i18n:text name="SCENARIO_SET_TO">Scenario set to</i18n:text>
+<i18n:text name="SCENARIO_COULD_NOT_BE_SET">Scenario could not be set.</i18n:text>
+<i18n:text name="SCENARIO_COMMENT_SAVED_SUCCESSFULLY">Comment saved.</i18n:text>
+<i18n:text name="INVALID_LOGICAL_TABLE_NAME">Invalid Logical Table Name</i18n:text>
+<i18n:text name="INVALID_LOGICAL_COLUMN_NAME">Invalid Logical Column Name</i18n:text>
+<i18n:text name="ENTITY_NOT_ATTACHED_WITH_LEVEL">Entity is not attached with specified level</i18n:text>
+<i18n:text name="MEMBER_HIERARCHY_EXISTS">Cannot modify level becasue member hierarchy exists</i18n:text>
+<i18n:text name="DELETION_NOT_ALLOWED_MEMBER_PRESENT_IN_MEMBER_RELATIONSHIP">Member present in member relationship.</i18n:text>
+<i18n:text name="ALL_MEMBERS_SELECTED">Do you want to Select all the records ({0}) in the table? If you select 'No', only the displayed records ({1}) will be selected.</i18n:text>
+<i18n:text name="ENTER_START_DATE">Please enter Effective Start Date</i18n:text>
+<i18n:text name="START_DATE_LESS_END_DATE">Effective Start Date should be less than Effective End Date </i18n:text>
+<i18n:text name="NET_CHANGE_SPOOL_SUCCEEDED">Net change spool succeeded </i18n:text>
+<i18n:text name="START_DATE_GREATER_THAN_END_DATE">Effective Start Date should not be greater than Effective End Date </i18n:text>
+<i18n:text> Total number of selected records ({0}) are exceeding the Exception Threshold ({1})! Please narrow down your search criteria</i18n:text>
+<i18n:text name="INVALID_CODEWIDTH">Member name length should not be more than level width</i18n:text>
+
+
+<i18n:text name="FIXED_CAL_START_DATE_CANNOT_BE_NULL">Enter a valid start date</i18n:text>
+<i18n:text name="FIXED_CAL_END_DATE_CANNOT_BE_NULL">Enter a valid end date</i18n:text>
+<i18n:text name="FIXED_CAL_MUST_SELECT_CALENDAR_ATTRIBUTE">Calendar attribute must be selected</i18n:text>
+<i18n:text name="FIXED_CAL_ENTRY_VALUE_CANNOT_BE_NULL">Attribute Value must be entered</i18n:text>
+<i18n:text name="FIXED_CAL_DATE_IS_NULL_OR_INVALID">Enter a valid start date</i18n:text>
+<i18n:text name="Favorite">Favorite</i18n:text>

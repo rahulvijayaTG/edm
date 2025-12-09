@@ -1,0 +1,147 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" title="Select Parameters" Id="iscpRPSegParamSearch.pgl">
+  <ui:container id="container2" name="container2">
+    <ui:step id="top_container" displayText="">
+      <ui:search displayText="Search" exportSearch="false" saveSearch="false" collapsable="true">
+        <ui:validation id="tst" displayCondition="asdf" />
+        <ui:field-group id="fieldGroups" columns="2">
+          <ui:dropdown name="PartyIdentificationValue" size="2" displayText="Segment" selectAll="true" selectOne="false" optionSrc="$root/Segment/ID" />
+          <ui:entry-field displayText="Parameter Name" id="ParameterMnemonicValue" name="ParameterMnemonicValue">
+            <ui:links>
+              <ui:link displayText="Select Parameters" targetType="popup" targetName="orderPopup">
+                <ui:image src="pop_up_window.gif" />
+                <ui:url page="view.x2ps">
+                  <FIELD_NAME select="'ParameterMnemonicValue'" />
+                  <ENTITY_NAME select="'ParameterMnemonicValue'" />
+                  <SELECTABLE select="'All'" />
+                  <BUTTON_ID select="'selectParameter'" />
+                </ui:url>
+              </ui:link>
+            </ui:links>
+          </ui:entry-field>
+          <ui:dropdown name="ENTITYSTATE" displayText="State" selectOne="false" selectAll="true" defaultValue="ACTIVE">
+            <ui:option id="NEW" value="NEW" />
+            <ui:option id="ACTIVE" value="ACTIVE" />
+            <ui:option id="INACTIVE" value="INACTIVE" />
+            <!--   <ui:option id="DELETED" value="DELETED"/>-->
+          </ui:dropdown>
+          <!--   <ui:entry-field id="SRCH_MOD_BY" name="SRCH_MOD_BY" displayText="Modified By" rowSpan="2"/>-->
+        </ui:field-group>
+        <ui:field-group id="dateRange">
+          <!-- <ui:date-range displayText="Modified Date" name="SRCH_MOD_DATE" fromDate="{$root/FROM_DATE/@Value}" toDate="{$root/TO_DATE/@Value}" required="true"/>-->
+          <!--          <ui:date-range displayText="Modified Date" name="SRCH_MOD_DATE"/>-->
+        </ui:field-group>
+      </ui:search>
+      <ui:table displayText="Search Results" rowSrc="$root/SEGMENT_LISTS/SEGMENT_DETAILS" rowSubTreeSrc="PARAMETER_LISTS/ PARAMETER_DETAILS" collapsable="true" totalRowCount="$root/ROWCNT/@Value" startAtRow="$root/SEGMENT_LISTS/@startRowCount" maxRows="5" selectable="All" rowId="SegmentIdentification" exportable="true" postRowIdAs="SelectedSegment" doPaging="true">
+        <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" anyFieldIsRequired="false" />
+        <ui:field-group>
+          <ui:treecell displayText="Segment" id="SegmentIdentification" name="SegmentIdentification" noChildren="{count(PARAMETER_LISTS/PARAMETER_DETAILS) = 0}" depth="{count(ancestor::node()[name()='PARAMETER_LISTS'])}" column="0" />
+          <ui:entry-field editable="false" displayText="Segment Description" name="SegmentDesc" />
+          <ui:hidden-field name="SegmentIdentification_Hidden" />
+          <ui:entry-field editable="false" displayText="Parameter Name" name="ParameterName" />
+          <ui:display-field displayText="Parameter Description" name="ParameterDesc" />
+          <ui:hidden-field name="ParameterValueFreeFormIndicator" id="ParameterValueFreeFormIndicator" />
+          <ui:choose-field name="ParameterValue" displayText="Parameter Value">
+            <ui:when test="count(ParameterValue) &gt; 0  and ParameterValueFreeFormIndicator/@Value='N'">
+              <ui:dropdown name="ParameterValue" defaultValue="" id="ParameterValue" optionSrc="ParamValidValue/*" selectOne="true" />
+            </ui:when>
+            <ui:when test="count(ParameterValue) &gt; 0  and ParameterValueFreeFormIndicator/@Value='Y'">
+              <ui:entry-field displayText="Parameter Value" id="ParameterValue" name="ParameterValue" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:entry-field displayText="Parameter Value" name="ParameterValue" editable="false" id="ParameterValue" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:hidden-field id="ParameterValue_Hidden" name="ParameterValue_Hidden" />
+          <!-- <ui:choose-field name="ParameterUOM" displayText="Parameter UOM">
+            <ui:display-field displayText="Parameter UOM" name="ParameterUOM"/>
+            <ui:when test="BASE_TAG/@Value = 'true'">
+              <ui:display-field displayText="" name="ParameterUOM"/>
+            </ui:when>
+            <ui:otherwise>
+              <ui:display-field id="SCENARIO_ID" name="ParameterUOM" displayText="Comment"/>
+            </ui:otherwise>
+          </ui:choose-field>-->
+          <ui:display-field displayText="Parameter UOM" name="ParameterUOM" />
+          <!--     <ui:choose-field name="LAST_MODIFIED_DATE" displayText="Date Modified">
+            <ui:display-field displayText="Date Modified" name="LAST_MODIFIED_DATE"/>
+            <ui:when test="BASE_TAG/@Value = 'true'">
+              <ui:display-field displayText="" name="LAST_MODIFIED_DATE"/>
+            </ui:when>
+            <ui:otherwise>
+              <ui:entry-field id="LAST_MODIFIED_DATE" name="LAST_MODIFIED_DATE" displayText="Date Modified" sortable="true" dataType="Date"/>
+            </ui:otherwise>
+          </ui:choose-field>-->
+          <!-- 
+          <ui:entry-field id="LAST_MODIFIED_DATE" name="LAST_MODIFIED_DATE" displayText="Date Modified" sortable="false" editable="false" dataType="Date"/>
+        -->
+          <ui:entry-field id="LAST_MODIFIED_DATE" name="LAST_MODIFIED_DATE" displayText="Date Modified" sortable="false" editable="false" />
+          <ui:display-field id="ModifiedBy" name="ModifiedBy" displayText="Modified By" sortable="false" />
+          <ui:choose-field name="ENTITY_STATE" displayText="State">
+            <ui:dropdown id="ENTITY_STATE" name="ENTITY_STATE" displayText="State" sortable="flase" editable="false">
+              <ui:option id="ACTIVE" value="ACTIVE" />
+              <ui:option id="NEW" value="NEW" />
+              <ui:option id="DELETED" value="DELETED" />
+              <ui:option id="INACTIVE" value="INACTIVE" />
+              <ui:option id="null" value="" />
+            </ui:dropdown>
+            <!--     <ui:when test="BASE_TAG/@Value = 'true'">-->
+            <ui:when test="ENTITY_STATE/@Value = 'DELETED'">
+              <ui:dropdown id="ENTITY_STATE" name="ENTITY_STATE" displayText="State" sortable="flase" editable="true">
+                <ui:option id="ACTIVE" value="ACTIVE" />
+                <ui:option id="DELETED" value="DELETED" />
+              </ui:dropdown>
+            </ui:when>
+            <ui:when test="ENTITY_STATE/@Value = 'ACTIVE'">
+              <ui:dropdown id="ENTITY_STATE" name="ENTITY_STATE" displayText="State" sortable="flase" editable="true">
+                <ui:option id="ACTIVE" value="ACTIVE" />
+                <ui:option id="INACTIVE" value="INACTIVE" />
+                <!--    <ui:option id="DELETED" value="DELETED"/>-->
+              </ui:dropdown>
+            </ui:when>
+            <ui:when test="ENTITY_STATE/@Value = 'NEW'">
+              <ui:dropdown id="ENTITY_STATE" name="ENTITY_STATE" displayText="State" sortable="flase" editable="false">
+                <ui:option id="ACTIVE" value="ACTIVE" />
+                <ui:option id="NEW" value="NEW" />
+              </ui:dropdown>
+            </ui:when>
+            <ui:when test="ENTITY_STATE/@Value = 'INACTIVE'">
+              <ui:dropdown id="ENTITY_STATE" name="ENTITY_STATE" displayText="State" sortable="flase" editable="true">
+                <ui:option id="ACTIVE" value="ACTIVE" />
+                <ui:option id="INACTIVE" value="INACTIVE" />
+                <ui:option id="DELETED" value="DELETED" />
+              </ui:dropdown>
+            </ui:when>
+            <!--<ui:when test="ENTITY_STATE/@Value = ''">
+              <ui:dropdown id="ENTITY_STATE" name="ENTITY_STATE" displayText="State" sortable="flase">
+                <ui:option id="null" value=""/>
+              </ui:dropdown>
+            </ui:when>-->
+            <ui:otherwise>
+              <ui:entry-field name="ENTITY_STATE" value="" editable="false" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <!-- DYanez RIC#203560 Added Hidden field -->
+          <ui:hidden-field id="ENTITY_STATE_Hidden" name="ENTITY_STATE_Hidden" />
+          <!-- DYanez RIC#203560 End -->
+          <ui:choose-field name="ParameterValueCommentText" displayText="Comments">
+            <ui:when test="count(ParameterValue) &gt; 0 ">
+              <ui:textarea id="ParameterValueCommentText" name="ParameterValueCommentText" displayText="Comment" />
+              <!--            <ui:entry-field displayText="Comment" id="ParameterValueCommentText" name="ParameterValueCommentText"/>-->
+            </ui:when>
+            <ui:otherwise>
+              <ui:entry-field displayText="Comments" name="ParameterValueCommentText" editable="false" id="ParameterValueCommentText" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <!-- DYanez RIC#203560 Added Hidden field -->
+          <ui:hidden-field id="ParameterValueCommentText_Hidden" name="ParameterValueCommentText_Hidden" />
+          <!-- DYanez RIC#203560 End -->
+        </ui:field-group>
+        <ui:buttons id="tableButtons">
+          <ui:button displayText="Save" id="Save" name="Save" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'Update')}" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script />
+</ui:page-group>
+

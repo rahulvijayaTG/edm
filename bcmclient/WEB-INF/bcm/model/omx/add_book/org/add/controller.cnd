@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="reset">
+	<web:display-page>
+	  <web:get-page name="add_org">
+	  </web:get-page>
+	</web:display-page>
+  </x2:command>
+	
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="add">
+	
+	<xapl:variable name="response">
+	  <x2:execute command="omx.add_book.org.controller:addEditOrg">
+	    <x2:with-param name="this" select="{$this}"/>
+	  </x2:execute>
+	</xapl:variable>
+	
+	<xapl:if test="string-length($response/RESPONSE/_RESULT/_ERROR/@Value) != 0">      
+      <web:display-page>
+        <web:get-page name="add_org">
+          <REFRESH Value="true"/>
+          <ORG_ID Value="{$this/ORG_ID/@Value}"/>
+          <PARENT_ORG_ID  Value="{$this/PARENT_ORG_ID/@Value}"/>
+          <ERROR Value="{$response/RESPONSE/_RESULT/_ERROR/@Value}"/>
+        </web:get-page>
+      </web:display-page> 
+    </xapl:if>
+    
+    <xapl:print>RESPONSE!!!<xapl:value-of select="$response"/></xapl:print>
+    
+    <xapl:variable name="result">
+      <ROOT>
+        <xapl:choose>
+          <xapl:when test="{$this/IS_NEW/@Value = 'true'}">
+            <ORG_ID Value="{$response/RESPONSE/ID/@Value}"/>
+            <STATUS_MSG Value="Save Successful."/>
+          </xapl:when>
+          <xapl:otherwise>
+            <ORG_ID Value="{$this/ORG_ID/@Value}"/>
+            <STATUS_MSG Value="Save Successful."/>
+          </xapl:otherwise>
+        </xapl:choose>
+     </ROOT>
+    </xapl:variable>
+
+    <x2:execute command="omx.add_book.messaging:setMessagingOptions">
+      <x2:with-param name="entityType">Org</x2:with-param>
+      <x2:with-param name="entityId"><xapl:value-of select="$result/ORG_ID/@Value"/></x2:with-param>
+      <x2:with-param name="request"><xapl:value-of select="$this"/></x2:with-param>              
+    </x2:execute>
+    
+    <xapl:set-variable name="s_inPrimaryDomain">
+    	<xapl:value-of select="'true'"/>
+    </xapl:set-variable>
+    
+    <web:display-page>
+      <web:get-page name="edit_org">
+        <xapl:value-of select="$result/*"/>   
+      </web:get-page>
+    </web:display-page>
+	
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="activateSeller">
+  
+	<x2:execute command="omx.add_book.org.model:activateSeller">
+	  <x2:with-param name="this" select="$this"/>
+	</x2:execute>	
+	
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="removeSeller">
+  
+	<x2:execute command="omx.add_book.org.model:removeSeller">
+	  <x2:with-param name="this" select="$this"/>
+	</x2:execute>	
+	
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="activateCustomer">
+  
+	<x2:execute command="omx.add_book.org.model:activateCustomer">
+	  <x2:with-param name="this" select="$this"/>
+	</x2:execute>	
+	
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="removeCustomer">
+  
+	<x2:execute command="omx.add_book.org.model:removeCustomer">
+	  <x2:with-param name="this" select="$this"/>
+	</x2:execute>	
+	
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="refreshOrg">
+  
+	<x2:execute command="omx.add_book.org.model:refreshOrg">
+	  <x2:with-param name="this" select="$this"/>
+	</x2:execute>	
+	
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  
+</x2:commands>

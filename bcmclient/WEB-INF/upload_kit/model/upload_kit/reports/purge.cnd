@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+    <!--************************************************************************-->
+    <x2:command public="yes" description="purge all selected records from a report" name="purge">
+        <xapl:variable name="result">
+            <xcore:execute-method name="//DataUploadService/purge" entireResponse="true">
+                <FILTER>
+                    <xapl:value-of select="$this/ID"/>
+                </FILTER>
+            </xcore:execute-method>
+        </xapl:variable>
+
+        <xapl:variable name="msg">
+            <xapl:choose>
+                <xapl:when test="$result/RESPONSE/_RESULT/@Status='Success'">
+                    <xapl:value-of select="'Selected Reports were purged'"/>
+                </xapl:when>
+                <xapl:otherwise>
+                    <xapl:value-of select="'The System was unable to purge the selected reports, please check the log files on the server'"/>
+                </xapl:otherwise>
+            </xapl:choose>
+        </xapl:variable>
+
+        <web:display-page>
+            <web:get-page name="core_message">
+                <MESSAGE Value="{$msg}"/>
+                <TITLE Value="Purge Message"/>
+                <OK Value="true"/>
+                <OK_LINK Value="{$pages:upload_reports}"/>
+            </web:get-page>
+        </web:display-page>
+
+    </x2:command>
+</x2:commands>

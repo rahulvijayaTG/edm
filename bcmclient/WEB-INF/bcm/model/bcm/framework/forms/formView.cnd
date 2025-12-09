@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+ 
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+
+    <xapl:print>
+     THIS inside generic formView:::
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+
+    <xapl:if test="$this/MODE/@Value = 'START'">
+      <x2:execute command="bcm.context.controller:cleanContext"/>
+      <x2:execute command="bcm.framework.forms.formController:initRequestParams"/>
+      <x2:execute command="bcm.framework.forms.formController:initGroupEditMetaData"/>
+    </xapl:if>
+
+
+   
+    <!-- BREADCRUMBS AT TOP OR AFTER CLEAN-CONTEXT-->
+    <x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+      <x2:with-param name="display" select="$this/DISPLAY/@Value"/>
+      <x2:with-param name="page" select="'form'"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+
+    <xapl:print>
+     THIS inside generic formView AFTER BREADCRUMBS:::
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+
+   <xapl:variable name="pGetContainer" select="'bcm.framework.forms.formView:getContainer'"/>
+   <xapl:variable name="pSearchReportConfigSource" select="'bcm.framework.forms.formView:getReportConfig'"/>
+   <xapl:variable name="pReportDataSource" select="'bcm.framework.forms.formView:getReportData'"/>
+
+
+    <xapl:if test="string-length($this/DIRECTORY/@Value) > 0 and string-length($this/FILE/@Value) > 0">
+       <xapl:set-variable name="pGetContainer" select="concat($this/DIRECTORY/@Value, '.' ,  $this/FILE/@Value , ':' , 'getContainer' )"/>
+       <xapl:set-variable name="pSearchReportConfigSource" select="concat($this/DIRECTORY/@Value, '.' , $this/FILE/@Value , ':' , 'getReportConfig' )"/>
+      <xapl:set-variable name="pReportDataSource" select="concat($this/DIRECTORY/@Value, '.' , $this/FILE/@Value , ':' , 'getReportData' )"/>
+    </xapl:if>
+
+   <xapl:print>
+      pGetContainer:::<xapl:value-of select="$pGetContainer"/>
+      pSearchReportConfigSource:::<xapl:value-of select="$pSearchReportConfigSource"/>
+      pReportDataSource:::<xapl:value-of select="$pReportDataSource"/>
+   </xapl:print>
+
+
+    <xapl:variable name="form">
+      <x2:execute command="bcm.framework.queryform.Form:getFormContainer">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="pSearchParam" select="$searchParam"/>
+        <x2:with-param name="pFormName" select=" $this/FORM_NAME[1]/@Value "/>
+        <x2:with-param name="pServiceName" select="$this/SERVICE[1]/@Value"/>
+        <x2:with-param name="pSearchReportConfigSource" select="$pSearchReportConfigSource"/>
+        <x2:with-param name="pReportDataSource" select="$pReportDataSource"/>
+      </x2:execute>
+    </xapl:variable>
+    
+    <xapl:return>
+    
+      <!-- Page Header-->
+      <x2:execute command="bcm.framework.forms.formView:getHeader">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+      
+      <!-- Container-->
+      <x2:execute command="{$pGetContainer}">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="pPage" select="$this/PAGE/@Value"/>
+      </x2:execute>
+      
+      <!-- Search / Form and Report -->
+      <xapl:value-of select="$form"/>
+      
+      <!-- return parameters-->
+      <xapl:value-of select="$this/*"/>
+      
+    </xapl:return>
+    
+    
+  </x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+    <xapl:return>
+      <x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pPage"/>
+    <xapl:return>
+      <CONTAINER Scrollable="no">
+        <HELP Url="{concat('../../../' , $currentForm/@Help) }"/>
+        <EXPRESSION_FILTER Value="yes"/>
+        <STEP Name="ViewForm" DisplayText="{$this/DISPLAY/@Value}" Selected="true"/>
+      </CONTAINER>
+    </xapl:return>
+    
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportConfig">
+   
+   
+
+    <xapl:return>
+    
+      <REPORT Title="{$this/DISPLAY/@Value}" Action="form.jsp" Method="POST" Selectable="All" Scrollable="yes" ScrollableContainer="no" Id="#" ShowFilter="yes" SelectedId="SELECTED_ID" PagingTitle="yes">
+        <FIELDS>
+
+          <!--get form's report fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+          <!-- get Hidden Fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportHiddenFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+          <!-- additional hidden fields-->
+          <FIELD Name="DISPLAY" DisplayType="Hidden" Value="{$this/DISPLAY[position() = 1]/@Value}"/>
+          <FIELD Name="HELP" DisplayType="Hidden" Value="{$this/HELP[position() = 1]/@Value}"/>
+        </FIELDS>
+        <BUTTONS>
+
+          <xapl:if test="count($currentForm/RESULT_PROPERTIES/RESULT_PROPERTY/PRESENTATION/GROUP_EDITABLE) > 0 ">
+            <BUTTON Id="groupEdit" DisplayText="Update" OnClick="javascript:onGroupEdit();" DisableOnClick="true" Disabled="report"/>
+          </xapl:if>
+
+          <BUTTON Id="Export" Name="Export" DisplayText="Export to Excel" OnClick="javascript:onExportToExcelGlobal('formview','xls')" DisableOnClick="true" Disabled="report"/>
+
+          <DIVIDER/>
+
+          <BUTTON Id="clear" Name="Clear" DisplayText="Clear" OnClick="javascript:onClear()" DisableOnClick="true"/>
+
+          <BUTTON Id="search" Name="Search" DisplayText="Search" OnClick="javascript:dispatchSearch()" DisableOnClick="true" Emphasized="true"/>
+
+        </BUTTONS>
+        <PAGINATION/>
+      </REPORT>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportData">
+    <x2:param name="this"/>
+
+    <xapl:variable name="response">
+      <x2:execute command="bcm.framework.queryform.Form:getFormReportData">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+    </xapl:variable>
+    
+
+    <xapl:return>
+      <xapl:value-of select="$response"/>
+    </xapl:return>
+    
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

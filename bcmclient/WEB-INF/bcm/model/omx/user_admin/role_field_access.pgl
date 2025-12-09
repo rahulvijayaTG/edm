@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:page-group xmlns:ui="http://www.i2.com/ui"
+  source="omx.user_admin.role_field_access:load" version="2">
+
+  <ui:container id="container" editable="true" scrollable="true">
+    <ui:step editable="false"
+      select="DATA"
+      displayText=""
+      id="container"
+      scrollable="true"
+      selected="true"
+      >
+
+	  <ui:validation anyFieldIsRequired="false"></ui:validation>
+      <ui:validation  anyFieldIsRequired="false" successMessage="{SUCCESS_MESSAGE/@Value}" errorMessage="{ERROR_MESSAGE/@Value}"
+
+        ></ui:validation>
+
+
+      <ui:container inner="true" id="header_details_container" collapsable="true" scrollable="true">
+        <ui:step id="header_details" select="." displayText="Role Details" scrollable="true" selected="true" collapsable="true" inner="true">
+
+    
+          <ui:field-group>
+            <ui:field-group>
+ 
+              <ui:display-field
+                displayText="Role ID"
+                dataType="Text" hidden="true" 
+                name="ROLE_ID"
+                />
+		   <ui:hidden-field name="ROLE_ID" submitAsXML="true"/>
+		   <ui:hidden-field name="ROLE_NAME" submitAsXML="true"/>
+		   <ui:hidden-field name="DOCUMENT_NAME" submitAsXML="true"/>
+		   <ui:hidden-field name="SERVICE_NAME" submitAsXML="true"/>
+              <ui:display-field
+                displayText="Table"
+                dataType="Text"
+                name="DOCUMENT_NAME"
+                />
+            </ui:field-group>
+            <ui:field-group>
+              <ui:display-field
+                displayText="Role Description"
+                dataType="Text"  
+                name="ROLE_NAME"
+                >
+              </ui:display-field>
+ 
+            </ui:field-group>
+          </ui:field-group>
+
+        </ui:step>
+
+
+      </ui:container>
+
+      <ui:table
+        displayCondition="true"
+        id="order_details_table"
+        displayText="Field Access Details"
+        displayTextNoRecords="Field Access Details is not available"
+        select="DOCUMENT"
+        scrollable="true"
+        rowSrc="PROPERTY/PRESENTATION" selectable="All" rowId="NAME"
+        collapsable="true"
+        configurable="false"
+        maxRows="-1"
+        exportable="false"
+        >
+
+        <ui:validation anyFieldIsRequired="false"></ui:validation>
+        <ui:help url="{$pages:todo}"/>
+        <ui:field-group>
+
+           
+
+          <ui:display-field
+            displayText="Field Name"
+            dataType="Text"
+            name="NAME_C" select="DISPLAY_NAME" 
+            />
+			 <ui:hidden-field
+             name="NAME" select="NAME" submitAsXML="true"
+            />
+            <ui:hidden-field name="VIEW_H" value="{VIEW/@Value}" submitAsXML="true"/>
+			<ui:checkbox  name="EDITABLE_C" value="{EDITABLE/@Value}" displayText="Edit" onClick="syncEditCheckBox();"/>
+            <ui:hidden-field name="EDITABLE" select="EDITABLE" submitAsXML="true"/>
+        </ui:field-group>
+
+
+        <ui:buttons>
+
+        </ui:buttons>
+
+      </ui:table>
+      <ui:buttons>
+<ui:button
+        id="back"
+        displayText="Back"
+		   onClick="javascript:onMyBack()"/>
+         
+        />
+   <ui:button
+        id="submit"
+        displayText="Submit"
+		 submitAsXML="true" submitTo="role_field_access/submit.cmd"
+		 disabled="{count($root/DATA/DOCUMENT/PROPERTY/PRESENTATION) = 0}"
+         
+        />
+
+      </ui:buttons>
+    <ui:field-group select="$root">
+         <ui:hidden-field name="NO_OF_ROWS"  value="{count(DATA/DOCUMENT/PROPERTY/PRESENTATION)}" submitAsXML="true"/>
+      </ui:field-group>
+
+
+    </ui:step>
+
+
+  </ui:container>
+  <ui:script>
+    <![CDATA[
+	function syncEditCheckBox()
+	{
+	   if (document.form.EDITABLE_C == null) return;
+
+		if (document.form.EDITABLE_C.length == null)
+		{
+			if (document.form.EDITABLE_C != null)
+			{
+				document.form.EDITABLE.value  = document.form.EDITABLE_C.checked ;
+			}
+		}
+		else
+		{
+			for(k = 0; k < document.form.EDITABLE_C.length; k++)
+			{
+				document.form.EDITABLE[k].value = 	document.form.EDITABLE_C[k].checked; 
+			}
+		}
+	}
+	function syncSelectCheckBox()
+	{
+	   if (document.form.VIEW_H == null) return;
+
+		if (document.form.VIEW_H.length == null)
+		{
+			if (document.form.VIEW_H != null)
+			{
+				if ( document.form.VIEW_H.value  == "true") 
+				document.form.ID.checked = "true";
+			}
+		}
+		else
+		{
+			for(k = 0; k < document.form.VIEW_H.length; k++)
+			{
+				if ( document.form.VIEW_H[k].value  == "true") 
+				document.form.ID[k].checked = "true";
+			}
+		}
+
+	}
+ function onMyBack()
+  {
+     document.location = omxContextPath + "/bcm/framework/breadcrumb/controller/back.x2c";
+  }
+  function onLoad()
+  {
+    onLoadSuper();
+  scrollHelper();
+  syncSelectCheckBox();
+  }
+
+  function onResize()
+  {
+
+    onResizeSuper();
+    scrollHelper();
+  }
+
+   function onSubmit()
+    {
+        disableButton('submit');
+        document.form.action = "role_field_access/submit.cmd";
+        document.form.submit();
+    }
+ 
+  ]]>
+  </ui:script>
+
+
+  
+
+</ui:page-group>

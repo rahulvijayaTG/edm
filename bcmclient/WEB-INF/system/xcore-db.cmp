@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:components xmlns:x2="http://www.i2.com/x2" xmlns:xapl="http://www.i2.com/xapl" xmlns:xcore-db="http://www.i2.com/xcore-db" description="">
+
+  <x2:component name="define-connection" description="Defines the database connection for a data store.">
+    <x2:class value="com.i2.x2.components.db.DefineConnection"/>
+	
+  	<x2:input name="name" description="Logical name of the connection to be used inside x2." required="true"/>
+  	<x2:body>
+  	  <x2:include-component name="xcore-db:user-id" maxOccur="1" minOccur="1"/>
+  	  <x2:include-component name="xcore-db:password" maxOccur="1" minOccur="1"/>	  
+  	  <x2:include-component name="xcore-db:driver" maxOccur="1" minOccur="1"/>	  
+  	  <x2:include-component name="xcore-db:url" maxOccur="1" minOccur="1"/>	  
+  	  <x2:include-component name="xcore-db:pool-size" maxOccur="1" minOccur="0"/>	  
+  	</x2:body>
+    
+    <x2:example type="description">
+      Below is a code snippet showing how to define a database connection.
+    </x2:example>
+    <x2:example type="code">
+      <xcore-db:define-connection name="omx-ui">
+        <xcore-db:user-id value="user_name"/> 
+        <xcore-db:password value="password"/> 
+        <xcore-db:driver value="sun.jdbc.odbc.JdbcOdbcDriver" /> 
+        <xcore-db:url value="jdbc:odbc:OMX_UI" /> 
+      </xcore-db:define-connection>
+    </x2:example>
+
+  </x2:component>
+    
+  <x2:component name="define-document" description="Defines a xml specification for modelling application data and its relationships to other documents.">
+    <x2:class value="com.i2.x2.components.db.DefineDocument"/>
+	  <x2:input name="name" description="Name of the document.  This corresponds to the name of a database table." required="true"/>
+	  <x2:input name="documentAccess" description="Defines the default access to the document.  Possible values could be any combination of r and w." required="false"/>
+	  <x2:input name="propertyAccess" description="Defines the default access to the properties.  Possible values could be any combination of r and w." required="false"/>
+  	<x2:body>
+  	  <x2:include-component name="xcore-db:property" minOccur="1"/>
+    	  <x2:include-component name="xcore-db:document-link" minOccur="0"/>
+  	</x2:body>
+
+    <x2:example type="description">
+      Below is a code snippet showing how to define a document specification.
+    </x2:example>
+    <x2:example type="code">
+      <xcore-db:define-documents connection="omx-ui">
+        <xcore-db:define-document name="RECENTLY_ACCD">
+          <xcore-db:property name="USER_ID" type="string(255)" primaryKey="yes" />
+          <xcore-db:property name="OBJECT_TYPE" type="string(255)" primaryKey="yes" />
+          <xcore-db:property name="ID" type="string(255)" primaryKey="yes" />
+          <xcore-db:property name="TOUCHED" type="int" />
+        </xcore-db:define-document>  
+      </xcore-db:define-documents>    
+    </x2:example>
+ 
+  </x2:component>
+  
+  <x2:component name="define-documents" description="Encloses one to many document specifications and link them a logical database connection.">
+    <x2:class value="com.i2.x2.components.db.DefineDocuments"/>
+    <x2:input name="connection" description="Logical name of the database connection." required="true"/>
+  	<x2:body>
+  	  <x2:include-component name="xcore-db:define-document" minOccur="1"/>
+  	</x2:body>
+
+    <x2:example type="description">
+      Below is a code snippet showing how to enclose a document specification.
+    </x2:example>
+    <x2:example type="code">
+      <xcore-db:define-documents connection="omx-ui">
+        <xcore-db:define-document name="RECENTLY_ACCD">
+          <xcore-db:property name="USER_ID" type="string(255)" primaryKey="yes" />
+          <xcore-db:property name="OBJECT_TYPE" type="string(255)" primaryKey="yes" />
+          <xcore-db:property name="ID" type="string(255)" primaryKey="yes" />
+          <xcore-db:property name="TOUCHED" type="int" />
+        </xcore-db:define-document>  
+      </xcore-db:define-documents>    
+    </x2:example>
+ 
+  </x2:component>
+  
+  <x2:component name="document-link" description="Defines a foreign key relationship from one document to another.">
+    <x2:class value="com.i2.x2.components.db.DocumentLink"/>
+  	<x2:input name="name" description="Name of the link." required="true"/>
+  	<x2:input name="linkedDocument" description="Name of the document to be linked." required="true"/>
+  	<x2:input name="autoDelete" description="If set true, a xcore:remove-document of the parent would also remove the linked document." required="false"/>	
+  	<x2:body>
+  	  <x2:include-component name="xcore-db:map-property" minOccur="1"/>
+  	</x2:body>
+  </x2:component>
+  
+  <x2:component name="map-property" description="Maps the property in the parent document to a property in a linked document.">
+    <x2:class value="com.i2.x2.components.db.MapProperty"/>
+  	<x2:input name="from" description="Name of the property in the parent document." required="true"/>
+  	<x2:input name="to" description="Name of the property in the linked document." required="true"/>
+  </x2:component>
+  
+  <x2:component name="property" description="Defines a property of the enclosing document.">
+    <x2:class value="com.i2.x2.components.db.DocumentProperty"/>
+  	<x2:input name="name" description="Name of the property." required="true"/>
+  	<x2:input name="type" description="Type of property.  Possible choices are: string(length), int, float, LongString, date, datetime, timestamp." required="true"/>
+  	<x2:input name="primaryKey" description="Used to uniquely identify the document.  If more than one property is defined as a primary key, they will be used in conjunction." required="false"/>		
+  	<x2:input name="validValues" description="Comma-separated list of valid values." required="false"/>	
+  	<x2:input name="access" description="Defines the access to the property.  Possible values could be any combination of r and w." required="false"/>	
+  	<x2:input name="default" description="_" required="false"/>		
+  </x2:component>
+</x2:components>

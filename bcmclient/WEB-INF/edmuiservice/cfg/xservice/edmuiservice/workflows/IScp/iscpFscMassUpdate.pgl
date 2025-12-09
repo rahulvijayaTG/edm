@@ -1,0 +1,236 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" id="pgMU" Id="iscpFscMassUpdate.pgl">
+  <ui:container id="cntrMU" scrollable="true" collapsable="true">
+    <ui:step id="stpMU" displayText="Facility Storage Capacity Mass Update">
+      <ui:validation anyFieldIsRequired="false" successMessage="{$root/SUCCESS_MESSAGE/@Value}" instructionMessage="Please validate after making any change(s) to value(s)." />
+      <ui:grid>
+        <ui:row>
+          <ui:cell>
+            <ui:container id="cntrPH" editable="false" height="100">
+              <ui:step displayText="Planning Horizon" id="stpPH" editable="true">
+                <ui:grid>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group id="leftFields11">
+                        <ui:display-field displayText="Starting Week" id="SWTXT" name="SWTXT" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields12">
+                        <ui:dropdown id="SWBKT" name="SWBKT" optionSrc="$root/MUDROPDOWN/STDTWKBKT" value="{$root/SWBKT/@Value}" disabled="false" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields15">
+                        <ui:entry-field editable="fasle" id="SWDATE" style="font-weight:Bold" value="{$root/STARTDATE/@Value}" defaultValue="MM/DD/YYYY" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group id="leftFields21">
+                        <ui:display-field displayText="Ending Week" id="EWTXT" name="EWTXT" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields22">
+                        <ui:dropdown id="EWBKT" name="EWBKT" optionSrc="$root/MUDROPDOWN/STDTWKBKT" value="{$root/EWBKT/@Value}" disabled="false" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields25">
+                        <ui:entry-field editable="fasle" id="EWDATE" style="font-weight:Bold;" value="{$root/ENDDATE/@Value}" defaultValue="MM/DD/YYYY" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                </ui:grid>
+                <ui:buttons id="setButton">
+                  <ui:button id="SETBKT" name="SETBKT" displayText="Set Bucket(s)" />
+                </ui:buttons>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+          <ui:cell rowSpan="2">
+            <ui:container editable="false" height="219" id="cntrL">
+              <ui:step displayText="Legends - for individual time buckets (Not across time buckets)" id="stpL" editable="true">
+                <ui:grid>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group showDivider="true">
+                        <ui:entry-field id="LGD11" name="LGD11" editable="false" displayText="Note" displayNoWrap="true" defaultValue="Please validate after making any change(s) to value(s)." style="font-weight:Bold" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group showDivider="false">
+                        <ui:entry-field id="LGD11" name="LGD11" editable="false" displayText="" displayNoWrap="true" defaultValue="" style="font-weight:Bold" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group showDivider="false">
+                        <ui:entry-field id="LGD11" name="LGD11" editable="false" displayText="" displayNoWrap="true" defaultValue="" style="font-weight:Bold" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group showDivider="true">
+                        <ui:entry-field id="LGD11" name="LGD11" editable="false" displayText="XX, XXX" displayNoWrap="true" defaultValue="(Location cell) Sum of effective segment(s) units &gt; location's effective units" style="font-weight:Bold;background:#BEC5E7" />
+                        <ui:entry-field id="LGD12" name="LGD12" editable="fasle" displayText="XX, XXX" displayNoWrap="true" defaultValue="(Segment cell) Sum of effective segment(s) units &gt; location's effective units" style="font-weight:Bold;color:red;background:yellow" />
+                        <ui:entry-field id="LGD13" name="LGD13" editable="fasle" displayText="XX, XXX" displayNoWrap="true" defaultValue="Segment's soft constraint effective units &gt; segment's hard constraint effective units" style="font-weight:Bold;color:red;background:#BEC5E7" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                </ui:grid>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+        </ui:row>
+        <ui:row>
+          <ui:cell>
+            <ui:container editable="false" height="110" id="cntrMUP">
+              <ui:step id="MUP" displayText="Mass Update Panel">
+                <ui:field-group showDivider="true">
+                  <ui:dropdown id="EntryField" name="EntryField" displayText="Entry Attribute">
+                    <ui:option value="Units (Rated Capacity)" id="OrganizationXAllocatedLocationCapacityMeasure" />
+                    <ui:option value="Utilization %" id="OrganizationXLocationCapacityTargetUtilizationPercent" />
+                  </ui:dropdown>
+                  <ui:entry-field id="EntryValue" name="EntryValue" displayText="Entry Value" align="left" dataType="Number" decimals="2" />
+                  <ui:entry-field id="Comment" name="Comment" displayText="Comments" align="left" dataType="String" />
+                </ui:field-group>
+                <ui:buttons id="appButton">
+                  <!--CR : 20748, 01/28/2008 Venkat  Code Start -->
+                  <!--<ui:button id="APPLY" name="APPLY" displayText="Apply"/>-->
+                  <ui:button id="APPLY" name="APPLY" displayText="Apply" disabled="{$root/APPLY_BTN_DSTS/@Value}" />
+                  <!--CR : 20748, 01/28/2008 Venkat  Code End -->
+                </ui:buttons>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+          <!--          <ui:cell>
+            <ui:container editable="false" height="100" displayText="">
+              <ui:step id="MUP" displayText="Mass Update Panel">
+                <ui:field-group showDivider="true">
+                  <ui:dropdown id="EntryField" name="EntryField" displayText="Entry Attribute">
+										<ui:option id="Units (Rated Capacity)"/>
+										<ui:option id="Utilization %"/>
+									</ui:dropdown>
+                  <ui:entry-field id="EntryValue" name="EntryValue" displayText="Entry Value"/> 
+                  <ui:entry-field id="Comment" name="Comment" displayText="Comment"/>
+                </ui:field-group>
+								<ui:buttons>
+        <ui:button id="SAVE" name="SAVE" displayText="Save"/>
+        
+      </ui:buttons>
+              </ui:step>
+            </ui:container>
+          </ui:cell>-->
+        </ui:row>
+      </ui:grid>
+    </ui:step>
+  </ui:container>
+  <ui:container id="cntrMUR">
+    <ui:step id="stpMUR" displayText="Facility Storage Capacity Mass Update">
+      <ui:pivot id="pivot" displayText="Mass Update" select="$root/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS" subRowSrc="BUCKETS/ROWDATA" scrollable="true" maxRows="2" totalRowCount="$root/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/@TotalRowCount" startAtRow="$root/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/@startRowCount">
+        <ui:table-row select="BUFFER_SLA">
+          <ui:table-row select="SEGMENT_SLAS/BUFFER_SLA" />
+        </ui:table-row>
+        <ui:pivot-field axis="row" id="UNIQUEROW" name="UNIQUEROW" displayText="Segment" displayCondition="false" />
+        <ui:pivot-field axis="row" id="LocationIdentifier" name="LocationIdentifier" displayText="Location" treeCell="true" collapsed="true" dataType="String" />
+        <!--ui:pivot-field axis="row" id="LOCNAME" name="LOCNAME" displayText="Location Name"/-->
+        <ui:pivot-field axis="row" id="LocationCapacityType" name="LocationCapacityType" displayText="Location Type" />
+        <ui:pivot-field axis="row" id="OrganizationPartyIdentifier" name="OrganizationPartyIdentifier" displayText="Segment" dataType="String" />
+        <ui:pivot-field axis="row" id="SGMNAME" name="SGMNAME" displayText="Segment Name" />
+        <ui:pivot-field axis="row" id="OrganizationXLocationCapacityLimitClassIdentifier" name="OrganizationXLocationCapacityLimitClassIdentifier" displayText="Constraint" />
+        <ui:pivot-field axis="row" id="CapacityUnitOfMeasureIdentifier" name="CapacityUnitOfMeasureIdentifier" displayText="Unit of Measure" />
+        <ui:pivot-field axis="column" name="FROM_DATE" displayText="" />
+        <ui:entry-field name="OrganizationXAllocatedLocationCapacityMeasure" displayText="Units (Rated Capacity)" dataType="Number" align="left" editable="{FIELDEDITABLE/@Value = 'false'}" />
+        <ui:entry-field name="OrganizationXLocationCapacityTargetUtilizationPercent" displayText="Utilization %" dataType="Number" align="left" editable="{FIELDEDITABLE/@Value = 'false'}" decimals="2" />
+        <ui:display-field name="EFFSTRGUNIT" displayText="Effective Units" dataType="Number" align="left" style="{STYLE/@Value}" />
+        <ui:compound-field displayText="Comments">
+          <ui:textarea name="CMMNT" id="CMMNT" align="left" editable="{FIELDEDITABLE/@Value = 'false'}" style="padding:0" />
+        </ui:compound-field>
+        <!--  <ui:entry-field name="CMMNT" displayText="Comments" maxlength="255" align="left" editable="{FIELDEDITABLE/@Value = 'false'}"/>-->
+      </ui:pivot>
+      <ui:buttons id="murButton">
+        <ui:button id="VALIDATE" name="VALIDATE" displayText="Validate" disabled="{$root/VB/@Value}" />
+        <ui:divider />
+        <ui:button id="SAVE" name="SAVE" displayText="Save" disabled="{$root/SB/@Value}" />
+        <ui:divider />
+        <!-- RIC: 240988 Praneeth - Cancel button wording changes request - Start -->
+        <ui:button id="CANCEL" name="CANCEL" displayText="Back to Search" />
+        <!-- RIC: 240988 Praneeth - Cancel button wording changes request - End -->
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function replaceAll(str, searchTerm, replaceWith){
+   var regex = "/"+searchTerm+"/g";
+   regex += "i";
+   return str.replace(eval(regex), replaceWith);
+}		
+
+function isInteger(s){
+	return s.length &gt; 0 &amp;&amp; !(/[^0-9]/).test(s);
+}	
+			
+function on_APPLY(){
+	var entryValue = document.form.EntryValue.value;
+	var cmmntVal = document.form.Comment.value;
+	var searchStr = ",";
+	var replaceStr = "";
+	//alert("is interger "+ isInteger(1.2));		
+	//alert("entry value "+entryValue+"replace all  "+replaceAll(trimString(entryValue), searchStr, replaceStr));
+    <!-- MYANG RIC 230571 - FSC Utilization Validation Change   Start -->
+    if(document.form.EntryField.options[document.form.EntryField.selectedIndex].value == 'OrganizationXLocationCapacityTargetUtilizationPercent'){
+		if(parseFloat(entryValue) &gt; 999 || parseFloat(entryValue) &lt; 0 || strlen(trimString(entryValue)) == 0 || isNaN( parseFloat(trimString(entryValue)) ) ){
+			core_alert("Please select a value between 0 and 999!");
+			return;
+			}
+	}
+    <!-- MYANG RIC 230571 - FSC Utilization Validation Change   End -->
+    else if(document.form.EntryField.options[document.form.EntryField.selectedIndex].value == 'OrganizationXAllocatedLocationCapacityMeasure'){
+		//alert("is interger " + isInteger(replaceAll(trimString(entryValue), searchStr, replaceStr)) );
+		if( strlen(replaceAll(trimString(entryValue), searchStr, replaceStr)) == 0 || parseInt(replaceAll(trimString(entryValue), searchStr, replaceStr)) &lt;0 || isNaN(parseInt(replaceAll(trimString(entryValue), searchStr, replaceStr))) ){
+			core_alert("Please provide positive value for Units!");
+			return;
+			}else if( !isInteger(replaceAll(trimString(entryValue), searchStr, replaceStr)) ){
+			core_alert("Please provide integer values for Units!");
+			return;
+			}else if(strlen(parseInt(replaceAll(trimString(entryValue), searchStr, replaceStr))) &gt; 18){
+			core_alert("Units can not be more than 18 digits!");
+			return;
+			}
+	}
+		if(strlen(trimString(cmmntVal)) == 0){
+			core_alert("Please provide comments for mass update!");
+			return;
+			} else if(strlen(trimString(cmmntVal)) &gt; 2000){
+			core_alert("Comment should be less than 2000 character!");
+			return;
+			}
+		
+		var bIsValid = true;
+		document.form.SUBMIT_AS_XML.value = 'false';
+
+		bIsValid = (isValid_MUP());
+
+		if( bIsValid == false ){
+			validation_alert('MUP');
+		}
+		if ( bIsValid == true){
+			disableButtons(); 
+			trapExcelPivotChanges(); 
+			document.form.BUTTON_ID.value = 'APPLY'; 
+			document.form.action = 'view.x2ps';
+			document.form.submit();  
+		}
+
+		onResize();  
+		return; 
+}
+  </ui:script>
+</ui:page-group>
+

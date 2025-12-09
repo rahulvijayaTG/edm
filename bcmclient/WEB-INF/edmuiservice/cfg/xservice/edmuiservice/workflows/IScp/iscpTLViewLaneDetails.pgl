@@ -1,0 +1,31 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="TLViewLaneDetails.pgl" title="Lane Details">
+  <ui:container id="cnt">
+    <ui:step id="stp" displayText="Transportation Lane Details" select="$root/TL_DETAILS/P_TransportLane">
+      <ui:field-group id="main" columns="2">
+        <ui:display-field displayText="Lane ID" name="TransportLaneIdentifier" dataType="Number" unFormat="true" decimals="0" align="left" />
+        <ui:display-field displayText="Lane Name" name="TransportLaneName" />
+        <ui:display-field displayText="Source Location" name="OriginLocationIdn" />
+        <!-- <ui:display-field displayText="Source Location Name" name="SrcLocationName"/>-->
+        <ui:display-field displayText="Source Location Description" name="SrcLocationDesc" />
+        <ui:display-field displayText="Source Location Type" name="SrcLocationType" />
+        <ui:display-field displayText="Destination Location" name="DestinationLocationIdn" />
+        <!--       <ui:display-field displayText="Destination Location Name" name="DestnLocationName"/>-->
+        <ui:display-field displayText="Destination Location Description" name="DestnLocationDesc" />
+        <ui:display-field displayText="Destination Location Type" name="DestnLocationType" />
+        <ui:display-field displayText="Transport Mode" name="TransMode" />
+        <ui:display-field displayText="Lane Type" name="TransLaneClass" />
+        <ui:display-field displayText="Lane Duration (hours) " name="TransportDurationTimeCount" align="left" />
+        <ui:display-field displayText="Lane Start Date " name="TransportLaneStartDate" dataType="Date" />
+        <ui:display-field displayText="Lane End Date " name="TransportLaneEndDate" dataType="Date" />
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="return" displayText="Return" onClick="javascript:closeWindow();" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>function closeWindow()
+		{
+		  self.close();
+		}</ui:script>
+</ui:page-group>
+

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="12" ShowInBreadCrumbs="true" Version="1.0" Name="wfIPItemLocParamShowHist" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables/>
+  <nodes>
+    <sub_workflow Name="Search Location" InputVar="{nodeInXml,xml}" Workflow="wfSrchLocation">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutXml,xml}"/>
+      <input>
+        <TO_XML DocVar="thisParam"/>
+      </input>
+    </sub_workflow>
+    <sub_workflow Name="Search Item" InputVar="{nodeInXml,xml}" Workflow="wfSearchItem">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutXml,xml}"/>
+      <input>
+        <TO_XML DocVar="thisParam"/>
+      </input>
+    </sub_workflow>
+    <ui_form2 Name="IP Item Location Exception History" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="uiwfIPLocMaterialParameterShowHist.pgl">
+      <pre_actions>
+        <action>
+          <SET Var="currDate" FromValue="{date()}"/>
+          <SET Var="fromDate" FromValue="{incrDate($currDate,duration((-90),0,0,0))}"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root>
+              <FROM_DATE Value="{$fromDate}"/>
+              <TO_DATE Value="{$currDate}"/>
+              <line TotalRowCount="2" startRowCount="0">
+                <ROW_DATA>
+                  <Item Value="1084958103899123"/>
+                  <ItemDescription Value="Oats Canister"/>
+                  <GTIN Value="1084958103899"/>
+                  <MaterialType Value="Finished Goods"/>
+                  <Location Value="1000"/>
+                  <LocDesc Value="Bridge View"/>
+                  <modDate Value="10/01/2005"/>
+                  <modBy Value="user1"/>
+                  <DefPRPDays Value="8"/>
+                  <ORPRPDays Value="6"/>
+                  <ORPRPDaysComment Value="Input From Field"/>
+                  <DefFRCSTError Value="10%"/>
+                  <ORFRCSTError Value="20%"/>
+                  <ORPRPDaysComment Value="Accuracy Decreased"/>
+                  <DefROQ Value=""/>
+                  <ORROQ Value=""/>
+                  <ORROQComment Value=""/>
+                  <DefKeepInvFlag Value="N"/>
+                  <ORKeepInvFlag Value="Y"/>
+                  <ORKeepInvFlagComment Value="Input from IP Team"/>
+                </ROW_DATA>
+                <ROW_DATA>
+                  <Item Value="1084958103899123"/>
+                  <ItemDescription Value="Oats Canister"/>
+                  <GTIN Value="1084958103899"/>
+                  <MaterialType Value="Finished Goods"/>
+                  <Location Value="1008"/>
+                  <LocDesc Value="Worley"/>
+                  <modDate Value="03/03/2005"/>
+                  <modBy Value="user3"/>
+                  <DefPRPDays Value="12"/>
+                  <ORPRPDays Value=""/>
+                  <ORPRPDaysComment Value=""/>
+                  <DefFRCSTError Value="32%"/>
+                  <ORFRCSTError Value="25%"/>
+                  <ORPRPDaysComment Value="Improved Accuracy"/>
+                  <DefROQ Value=""/>
+                  <ORROQ Value=""/>
+                  <ORROQComment Value=""/>
+                  <DefKeepInvFlag Value="N"/>
+                  <ORKeepInvFlag Value=""/>
+                  <ORKeepInvFlagComment Value=""/>
+                </ROW_DATA>
+              </line>
+            </root>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='return'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IP Item Location Exception History" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='searchLocation'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search Location" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='searchItem'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search Item" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='searchSegment'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done7" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <start Name="start6">
+      <actions>
+      </actions>
+      <next_nodes>
+        <next_node Name="IP Item Location Exception History" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done7">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <mgcnode Name="Search Location" location="545,357" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Search Location" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Search Item" location="124,132" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Search Item" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="IP Item Location Exception History" location="255,249" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="IP Item Location Exception History" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <start6 location="29,253" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start6" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start6>
+      <done7 location="573,279" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done7" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done7>
+    </mgcnodes>
+    <mgcconnectors>
+      <mgcnode Name="IP Item Location Exception History">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="271,249" endpoint="271,249" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="269,172,4,4" ctrlRect2="269,172,4,4" textRect="214,170,115,9">
+          <textProps text="[$userAction ='return']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="287,272" endpoint="545,379" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="440,248,4,4" ctrlRect2="349,377,4,4" textRect="315,310,162,9">
+          <textProps text="[$userAction ='searchLocation']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="271,249" endpoint="156,154" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="269,177,4,4" ctrlRect2="241,152,4,4" textRect="186,162,143,9">
+          <textProps text="[$userAction ='searchItem']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="287,272" endpoint="573,301" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="499,270,4,4" ctrlRect2="356,299,4,4"/>
+      </mgcnode>
+      <start6>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="61,275" endpoint="255,272" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="204,273,4,4" ctrlRect2="107,270,4,4"/>
+      </start6>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="0">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables/>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

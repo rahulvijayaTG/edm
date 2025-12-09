@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:components xmlns:x2="http://www.i2.com/x2" xmlns:xapl="http://www.i2.com/xapl" xmlns:authorization="http://www.i2.com/authorization" description="">
+  <x2:component name="set-authorization-context" description="sets the authorization context">
+    <x2:class value="com.i2.bcm.x2.components.authorizationContext.AuthorizationContextHandler"/>
+    <x2:body>
+      <x2:include-component type="ANY"/>
+    </x2:body>
+    <x2:example type="description">
+      Below is a code snippet showing how to set authorization context.
+    </x2:example>
+    <x2:example type="code">
+      <authorization:set-authorization-context>
+        <DOCELEMENT Name="Location">
+          <AuthID Value="TABLE_FACTORY"/>
+        </DOCELEMENT>
+        <DOCELEMENT Name="PGMaster">
+          <AuthID Value="PG-2"/>
+        </DOCELEMENT>
+      </authorization:set-authorization-context>
+    </x2:example>
+  </x2:component>
+  <x2:component name="get-authorization-context" description="Returns the current authorization-context.">
+    <x2:class value="com.i2.bcm.x2.components.authorizationContext.GetAuthorizationContextHandler"/>
+    <x2:example type="description">
+      Below is a code snippet showing how to retrieve the authorization context from the session. return 0 if no authorization context exists
+    </x2:example>
+    <x2:example type="code">
+      <xapl:print>authorization context: <authorization:get-authorization-context/>
+      </xapl:print>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results: 
+    </x2:example>
+    <x2:example type="code">
+      <AUTHORIZATION_CONTEXT>
+        <DOCELEMENT Name="Location">
+          <AuthID Value="TABLE_FACTORY"/>
+        </DOCELEMENT>
+        <DOCELEMENT Name="PGMaster">
+          <AuthID Value="PG-2"/>
+        </DOCELEMENT>
+      </AUTHORIZATION_CONTEXT>
+    </x2:example>
+  </x2:component>
+  <x2:component name="enable-authorization-context" description="enables the authorization context">
+    <x2:class value="com.i2.bcm.x2.components.authorizationContext.enableAuthorizationContext"/>
+    <x2:body>
+      <x2:include-component type="ANY"/>
+    </x2:body>
+    <x2:example type="description">
+      Below is a code snippet showing how to enable authorization context.
+    </x2:example>
+    <x2:example type="code">
+      <authorization:enable-authorization-context/>
+    </x2:example>
+  </x2:component>  
+  <x2:component name="disable-authorization-context" description="disables the authorization context">
+    <x2:class value="com.i2.bcm.x2.components.authorizationContext.disableAuthorizationContext"/>
+    <x2:body>
+      <x2:include-component type="ANY"/>
+    </x2:body>
+    <x2:example type="description">
+      Below is a code snippet showing how to disable authorization context.
+    </x2:example>
+    <x2:example type="code">
+      <authorization:disable-authorization-context/>
+    </x2:example>
+  </x2:component>    
+</x2:components>

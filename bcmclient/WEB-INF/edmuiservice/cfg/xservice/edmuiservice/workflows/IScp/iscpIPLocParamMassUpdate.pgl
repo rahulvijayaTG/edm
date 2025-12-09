@@ -1,0 +1,57 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="wfIPLocParamMassUpdate.pgl">
+  <ui:container id="topContainer">
+    <ui:step id="c1" displayText="" editable="true">
+      <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" />
+      <ui:table id="bottomTable1" displayText="Mass Update Selections" select="$root/MASSUPDATESEL" collapsable="true" scrollable="true" displayTextNoRecords="No Record Found" rowId="SegmentNumber" rowSrc="Table" displayCondition="{$root/MASSUPDATESEL/userAction/@Value='MassUpdate'}">
+        <ui:field-group>
+          <ui:display-field id="SegmentNumber" name="SegmentNumber" displayText="Segment Number" />
+          <ui:display-field id="SegmentDescription" name="SegmentDescription" displayText="Segment Description" />
+          <ui:display-field id="LocationNumber" name="LocationNumber" displayText="Location Number" />
+          <ui:display-field id="LocationDescription" name="LocationDescription" displayText="Location Description" />
+          <ui:display-field id="LocationType" name="LocationType" displayText="Location Type" />
+          <ui:display-field id="KeepInventoryFlag" name="KeepInventoryFlag" displayText="Keep Inventory Flag" />
+          <ui:textarea id="ParameterValueCommentText" name="ParameterValueCommentText" displayText="Comments" editable="false" />
+          <!--				<ui:display-field id="ParameterValueCommentText" name="ParameterValueCommentText" displayText="Comments"/>-->
+          <ui:hidden-field name="SourceSystemMnemonicValue" id="SourceSystemMnemonicValue" />
+        </ui:field-group>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:container id="bottomContainer" displayText="Mass Update">
+    <ui:step id="c2" displayText="" editable="true">
+      <ui:table id="bottomTable" displayText="Updateable Parameters" rowSrc="$root/PARAM_DETAILS_LIST/PARAM_DETAILS" postRowIdAs="SelectedParamName" totalRowCount="1" startAtRow="0" maxRows="4" rowId="ParamName" exportable="false" selectable="All" scrollable="true">
+        <ui:field-group>
+          <ui:entry-field displayText="Parameter Name" name="ParamName" id="ParamName" editable="false" />
+          <ui:dropdown id="ParameterValue1" selectOne="true" name="ParameterValue1" displayText="Parameter Value">
+            <ui:option id="N" value="N" />
+            <ui:option id="U" value="U" />
+            <ui:option id="Y" value="Y" />
+          </ui:dropdown>
+          <ui:textarea name="Comments1" displayText="Comments" required="false" />
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button displayText="Save" id="Save" name="Save" enabledBySelections="true" />
+          <!-- RIC: 240988 Praneeth - Cancel button wording changes request - Start -->
+          <ui:button displayText="Back to Search" id="Cancel" name="Cancel" enabledBySelections="false" />
+          <!-- RIC: 240988 Praneeth - Cancel button wording changes request - End -->
+        </ui:buttons>
+      </ui:table>
+      <!-- <ui:field-group columns="4" id="fieldGroups1">
+        <ui:field-group id="leftFields">
+          <ui:dropdown displayText="Keep Inventory Flag" value="Y" name="keepInvFlag">
+            <ui:option id="Y" value="Y"/>
+            <ui:option id="N" value="N"/>
+          </ui:dropdown>
+        </ui:field-group>
+        <ui:field-group id="rightFields">
+          <ui:textarea id="comments" name="COMMENTS" displayText="Keep Inventory Flag Comment" required="true"/>
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button displayText="Save" id="Save" enabledBySelections="true"/>
+        <ui:button displayText="Cancel" id="Cancel" enabledBySelections="false"/>
+      </ui:buttons>-->
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

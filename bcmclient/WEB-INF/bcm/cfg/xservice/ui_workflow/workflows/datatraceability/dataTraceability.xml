@@ -1,0 +1,636 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="513" ShowInBreadCrumbs="true" Version="1.0" Name="dataTraceability" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="entityNames" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start4">
+      <actions>
+        <action>
+          <SET Var="nodeOutputXml" FromSelect="$thisParam"/>
+          <PRINTLN Value="Printing $nodeOutputXml***********"/>
+          <PRINTLN Value="{$nodeOutputXml}"/>
+          <TO_DOCVAR AssignToVar="entityNames">
+            <ENTITIES>
+              <FOR_EACH SelectList="$nodeOutputXml/AUDIT_TRAIL_NAME" CurrentElement="auditTrailName">
+                <TO_XML DocVar="auditTrailName"/>
+              </FOR_EACH>
+            </ENTITIES>
+          </TO_DOCVAR>
+          <!--PRINTLN Value="auditTrailService  {$auditTrailService}"/>
+<SET Var="auditTrailService" FromSelect="$nodeOutputXml/AUDIT_TRAIL_SERVICE/@Value"/>
+	  <IF_TEST Test="$auditTrailService=null">
+    <THEN>
+      <PRINTLN Value="inside if auditTrailSerice = null"/>
+      <SET Var="auditTrailService" FromValue="BCM_MASTER"/>
+    </THEN>
+  </IF_TEST>
+  <PRINTLN Value="finally auditTrailService  {$auditTrailService}"/-->
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutputXml,xml}">
+        <next_node Name="Audit Trail Search" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Audit Trail Search" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" InputVar="{nodeInputXml,xml}" ShowInBreadCrumbs="SHOW" Template="dataTraceability.pgl">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam=null">
+            <THEN>
+              <SET Var="thisParam" FromSelect="$nodeInputXml"/>
+            </THEN>
+          </IF_TEST>
+          <PRINTLN Value="$thisParam:: {$thisParam}"/>
+          <IF_TEST Test="$thisParam/SORT_BY/@Value = 'ID' or $userAction='change_entity'">
+            <THEN>
+              <REMOVE_CHILDREN ChildName="SORT_BY" DocVar="thisParam"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='change_entity'">
+            <THEN>
+              <REMOVE_CHILDREN ChildName="AUDIT_FIELD_FILTER" DocVar="thisParam"/>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+              <REMOVE_CHILDREN ChildName="RECORD_COUNT" DocVar="thisParam"/>
+              <FOR_EACH SelectList="$thisParam/*" CurrentElement="filterVar">
+                <IF_TEST Test="starts-with(name($filterVar),'FILTER_')">
+                  <THEN>
+                    <REMOVE_CHILDREN ChildName="{$filterVar/name()}" DocVar="thisParam"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <SET Var="auditTrailName" FromSelect="$thisParam/AUDIT_TRAIL_NAME/@Value"/>
+          <SET Var="auditDays" FromSelect="$thisParam/AUDIT_DAYS/@Value"/>
+          <APPEND_TO_XML DocVar="thisParam">
+            <SERVICE_NAME Value="BCM_MASTER"/>
+            <AUDIT_TRAIL_NAME Value="{$auditTrailName}"/>
+          </APPEND_TO_XML>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$entityNames"/>
+              <AUDIT_DAYS Value="{$auditDays}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <IF_TEST Test="count($thisParam/SEARCH_COND) = 0">
+            <THEN>
+              <APPEND_TO_XML DocVar="thisParam">
+                <SEARCH_COND Value="SEARCH_COND_ANY"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="($thisParam/FROM_DATE/@Value = null or $thisParam/FROM_DATE/@Value = '') and ($thisParam/TO_DATE/@Value= '' or $thisParam/TO_DATE/@Value= null) ">
+            <THEN>
+              <IF_TEST Test="$thisParam/AUDIT_DAYS/@Value != null and $thisParam/AUDIT_DAYS/@Value != ''">
+                <THEN>
+                  <SET Var="auditPeriodParam" FromValue="{int($thisParam/AUDIT_DAYS/@Value)}"/>
+                  <SET Var="minusOne" FromValue="-1"/>
+                  <SET Var="auditPeriod" FromSelect="int($auditPeriodParam mul $minusOne)"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="auditPeriod" FromValue="-30"/>
+                </ELSE>
+              </IF_TEST>
+              <SET DocVar="thisParam" Property="TO_DATE" FromValue="{incrDate(date(),duration ((1), 0, 0,0))}"/>
+              <SET DocVar="thisParam" Property="FROM_DATE" FromValue="{incrDate(date(),duration ($auditPeriod, 0, 0,0))}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="strlen($thisParam/BUTTON_ID/@Value) > 0 and strlen($auditTrailName)>0">
+            <THEN>
+              <PRINTLN Value="{$thisParam}"/>
+              <IF_TEST Test="$thisParam/AUDIT_TRAIL_NAME/@Value != null">
+                <THEN>
+                  <REQUEST Name="getAuditTrailDetails" ServiceName="BCM_MASTER" AssignToVar="auditTrail">
+                    <NAME Value="{$auditTrailName}"/>
+                  </REQUEST>
+                  <PRINTLN Value="Printing auditTrailName****************"/>
+                  <PRINTLN Value="{$auditTrail}"/>
+                  <IF_TEST Test="$thisParam/MAX_ROWS/@Value != null">
+                    <THEN>
+                      <SET Var="maxRows" FromSelect="$thisParam/MAX_ROWS/@Value"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="maxRows" FromValue="10"/>
+                    </ELSE>
+                  </IF_TEST>
+                  <SET Var="sortBy" FromSelect="$thisParam/SORT_BY/@Value"/>
+                  <SET Var="sortOrder" FromSelect="$thisParam/SORT_ORDER/@Value"/>
+                  <IF_TEST Test="$sortBy != null">
+                    <THEN>
+                      <IF_TEST Test="$auditTrail/AUDIT_TRAIL/AUDIT_FIELDS/FIELD[@Name = $sortBy] != null">
+                        <THEN>
+                          <SET Var="sortBy" FromSelect="concat( $sortBy, '_NV' )"/>
+                        </THEN>
+                      </IF_TEST>
+                      <IF_TEST Test="$sortOrder = null">
+                        <THEN>
+                          <SET Var="sortOrder" FromValue="Ascending"/>
+                        </THEN>
+                      </IF_TEST>
+                      <MAKE_INSTANCE_DOCUMENT Name="{$sortBy}" AssignToVar="sortByTag"/>
+                      <SET DocVar="sortByTag" Attribute="Sort" FromSelect="$sortOrder"/>
+                    </THEN>
+                  </IF_TEST>
+                  <!--To implement the filter search -->
+                  <TO_DOCVAR AssignToVar="filterColumn">
+                    <FILTERS/>
+                  </TO_DOCVAR>
+                  <CLONE_XML DocVar="auditTrail" AssignToVar="auditTrailDoc"/>
+                  <FOR_EACH SelectList="$auditTrailDoc/AUDIT_TRAIL/AUDIT_DOCUMENT/PROPERTY" CurrentElement="propName">
+                    
+                    <MAKE_INSTANCE_DOCUMENT Name="{$propName/@Name}" AssignToVar="column"/>
+                    <SET DocVar="column" Attribute="InputName" FromValue="{concat('FILTER_',$propName/@Name)}"/>                    
+                    
+                    <IF_TEST Test="$propName/@Type='datetime'">
+                    <THEN>
+                    	<!--	<PRINTLN Value="INSIDE1221"/>
+                    	    <MAKE_INSTANCE_DOCUMENT Name="{$propName/@Name}" AssignToVar="column1"/>
+			    
+			    <PRINTLN Var="column1"/>
+			    
+			    <SET DocVar="column1" Attribute="InputName" FromValue="{concat('FILTER_FROM_',$propName/@Name)}"/>
+			    
+			    <APPEND_TO_XML DocVar="filterColumn">
+			      <TO_XML DocVar="column1"/>
+			    </APPEND_TO_XML>
+			    
+			    <MAKE_INSTANCE_DOCUMENT Name="{$propName/@Name}" AssignToVar="column2"/>
+			    			    
+			    <PRINTLN Var="column2"/>
+
+			    <SET DocVar="column2" Attribute="InputName" FromValue="{concat('FILTER_TO_',$propName/@Name)}"/>
+
+			    <APPEND_TO_XML DocVar="filterColumn">
+			      <TO_XML DocVar="column2"/>
+			    </APPEND_TO_XML>-->
+			    <PRINTLN Value="INSID56"/>
+			<SET DocVar="column" Attribute="Range" FromValue="true"/>
+                    	<SET DocVar="column" Attribute="IsFilter" FromValue="true"/>
+                    </THEN>
+                    </IF_TEST>                    <APPEND_TO_XML DocVar="filterColumn">
+                      <TO_XML DocVar="column"/>
+                    </APPEND_TO_XML>
+                  </FOR_EACH>
+                  <PRINTLN Value="{$filterColumn}"/>
+                  <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                    <TO_XML SelectList="$filterColumn/*"/>
+                  </FORM_SEARCH_FILTER>
+                  <PRINTLN Value="{$filters}"/>
+                  <!-- To add the date range filter too-->
+                  <TO_DOCVAR AssignToVar="dateRange">
+                    <FILTER Name="TRANSACTION_TIME">
+                      <IF_TEST Test="strlen($thisParam/FROM_DATE/@Value) > 0">
+                        <THEN>
+                          <TO_DOCVAR AssignToVar="fromDate">
+                            <TRANSACTION_TIME Value="{$thisParam/FROM_DATE/@Value}" MatchBy="GREATER_EQUAL"/>
+                          </TO_DOCVAR>
+                          <TO_XML Select="$fromDate"/>
+                        </THEN>
+                      </IF_TEST>
+                      <IF_TEST Test="strlen($thisParam/TO_DATE/@Value) > 0">
+                        <THEN>
+                          <TO_DOCVAR AssignToVar="toDate">
+                            <TRANSACTION_TIME Value="{$thisParam/TO_DATE/@Value}" MatchBy="LESS_EQUAL"/>
+                          </TO_DOCVAR>
+                          <TO_XML Select="$toDate"/>
+                        </THEN>
+                      </IF_TEST>
+                    </FILTER>
+                  </TO_DOCVAR>
+                  <!-- To add the date range filter too-->
+                  <!--To implement the filter search -->
+                  <TO_DOCVAR AssignToVar="searchParams">
+                    <THIS_PARAM>
+                      <TO_XML SelectList="$filters/*"/>
+                      <TO_XML SelectList="$dateRange"/>
+                      <TO_XML SelectList="$thisParam/AUDIT_FIELD_FILTER"/>
+                      <ORDER_BY>
+                        <TO_XML DocVar="sortByTag"/>
+                        <!--<TRANSACTION_TIME Sort="Ascending"/>-->
+                      </ORDER_BY>
+                      <MAX_ROWS Value="{$maxRows}"/>
+                    </THIS_PARAM>
+                  </TO_DOCVAR>
+                  <IF_TEST Test="$userAction!='back' and $searchParams/FILTER/*/@Value = 'INVALID DATE'">
+		              <THEN>
+		                <TO_DOCVAR AssignToVar="errorDoc">
+		                  <ROOT>
+		                    <ERROR Value="Invalid Date Time: Check the date time or date time format : MM/DD/YYYY hh:mm:ss" />
+		                  </ROOT>
+		                </TO_DOCVAR>
+		  </THEN>
+            	  <ELSE>
+			  <REQUEST Name="searchAuditTrail" ServiceName="BCM_MASTER" AssignToVar="searchResult">
+			    <NAME Value="{$auditTrailName}"/>
+			    <SEARCH_PARAMS StartAtRow="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}" MaxRows="{$maxRows}" ReturnRowCount="true">
+			      <TO_XML SelectList="$searchParams/*"/>
+			    </SEARCH_PARAMS>
+			    <DATA>
+			      <TO_XML SelectList="$thisParam/*"/>
+			    </DATA>
+			  </REQUEST>
+                    </ELSE>
+                  </IF_TEST>
+                  <CLONE_XML DocVar="auditTrail" AssignToVar="changedFields"/>
+                  <FOR_EACH SelectList="$changedFields/AUDIT_TRAIL/AUDIT_FIELDS/FIELD" CurrentElement="propName">
+                    <SET Var="column" FromValue="{$propName}"/>
+                    <SET_NAME DocVar="column" FromValue="OPTION"/>
+                    <SET DocVar="column" Attribute="Value" FromValue="{$propName/@Name}"/>
+                    <SET DocVar="column" Attribute="Id" FromValue="{$propName/@Name}"/>
+                    <IF_TEST Test="count($thisParam/AUDIT_FIELD_FILTER[@Value = $column/@Value]) > 0">
+                      <THEN>
+                        <SET DocVar="column" Attribute="selected" FromValue="true"/>
+                      </THEN>
+                    </IF_TEST>
+                    <REMOVE_ATTRIBUTE DocVar="column" Name="MapTo"/>
+                    <REMOVE_ATTRIBUTE DocVar="column" Name="Name"/>
+                  </FOR_EACH>
+                  <REQUEST Name="getDocumentForm" ServiceName="BPE_META" AssignToVar="selectedDocument">
+                    <SERVICE Value="BCM_MASTER"/>
+                    <DOCUMENT Value="{$auditTrail/AUDIT_TRAIL/@Document}"/>
+                  </REQUEST>
+                  <PRINTLN Value="{$selectedDocument}"/>
+                  <SET Var="numFields" FromValue="1"/>
+                  <!--<SET Var="numFields" FromSelect="$numFields + count($auditTrail/AUDIT_TRAIL/REFERENCE_FIELDS/FIELD)"/>
+            <SET Var="numFields" FromSelect="$numFields + count($auditTrail/AUDIT_TRAIL/STATIC_FIELDS/FIELD)"/>-->
+                  <SET Var="numFields" FromSelect="$numFields + count($auditTrail/AUDIT_TRAIL/AUDIT_FIELDS/FIELD)"/>
+                  <SET Var="numRows" FromSelect="int($numFields div 3)"/>
+                  <IF_TEST Test="($numRows mul 3) &lt; $numFields">
+                    <THEN>
+                      <SET Var="numRows" FromSelect="int($numRows+1)"/>
+                    </THEN>
+                  </IF_TEST>
+                  <TO_DOCVAR AssignToVar="pglFormInput">
+                    <DATA>
+                      <PGL>
+                        <!--<ui:search xmlns:ui="http://www.i2.com/ui" displayText="Search" saveSearch="false">
+                             <ui:field-group rows="1" select="$this">
+                               <ui:hidden-field name="AUDIT_TRAIL_NAME" value="{$auditTrailName}"/>
+                               <ui:hidden-field name="TABLE_NAME" value="{$auditTrail/AUDIT_TRAIL/@Document}"/>
+                               <ui:dropdown name="ENTITY" id="ENTITY" selectAll="false" displayText="Entity" optionSrc="$root/ENTITIES/*" size="5" onChange="javascript:changeEntity();" sort="ascending"/>
+                               <ui:dropdown displayText="Changed Fields" name="AUDIT_FIELD_FILTER" size="4">
+                                 <FOR_EACH SelectList="$auditTrail/AUDIT_TRAIL/AUDIT_FIELDS/FIELD" CurrentElement="field">
+                                   <APPEND_TO_XML>
+                                     <ui:option id="{$field/@Name}" value="{$field/@Value}" selected="{count($thisParam/AUDIT_FIELD_FILTER[@Value = $field/@Name]) > 0}"/>
+                                   </APPEND_TO_XML>
+                                 </FOR_EACH>
+                               </ui:dropdown>
+                               <ui:date-range id="DATE" name="DATE" toDate="{$root/TO_DATE/@Value}" fromDate="{$root/FROM_DATE/@Value}"/>
+                             </ui:field-group>
+                           </ui:search>-->
+                        <ui:table xmlns:ui="http://www.i2.com/ui" id="{$auditTrail/AUDIT_TRAIL/@Name}" displayText="{$auditTrail/AUDIT_TRAIL/@Name}" displayTextNoRecords="No records found" selectable="Single" select="SEARCH_RESULTS" rowSrc="{$auditTrail/AUDIT_TRAIL/AUDIT_DOCUMENT/@Name}" configurable="true" exportable="true" sortBy="$root/SORT_BY/@Value" sortOrder="$root/SORT_ORDER/@Value" maxRows="{$maxRows}" filter="true">
+                        <ui:validation id="errs" anyFieldIsRequired="false" errorMessage="{$errorDoc/ERROR/@Value}" />
+                          <ui:field-group>
+                            <ui:image-link-field alt="Current Value" name="currValue" readOnly="true" class="disabledText" sortable="false" filter="false" targetType="popup" targetName="popUp6" src="/view_details.gif">
+                              <ui:url page="view.x2ps">
+                                <SERVICE_NAME select="'BCM_MASTER'"/>
+                                <PAGE select="'BCM_MASTER.dataTraceability.viewCurrentValue.pgl'"/>
+                                <TABLE_NAME select="'{$auditTrail/AUDIT_TRAIL/@Document}'"/>
+                                <AUDIT_TRAIL_NAME select="'{$auditTrailName}'"/>
+                                <!--                                <AUDIT_DAYS Value="'{$thisParam/AUDIT_DAYS/@Value}'"/>
+-->
+                                <BUTTON_ID select="'currentValue'"/>
+                                <FOR_EACH SelectList="$auditTrail/AUDIT_TRAIL/REFERENCE_FIELDS/FIELD" CurrentElement="field">
+                                  <IF_TEST Test="($field/@Type = 'date') or (($field/@Type = 'datetime') or ($field/@Type = 'timestamp'))">
+                                    <THEN>
+                                      <SET Var="dataType" FromValue="Date"/>
+                                    </THEN>
+                                    <ELSE>
+                                      <IF_TEST Test="($field/@Type = 'double') or ($field/@Type = 'int')">
+                                        <THEN>
+                                          <SET Var="dataType" FromValue="Number"/>
+                                        </THEN>
+                                        <ELSE>
+                                          <SET Var="dataType" FromValue="String"/>
+                                        </ELSE>
+                                      </IF_TEST>
+                                    </ELSE>
+                                  </IF_TEST>
+                                </FOR_EACH>
+                                <!--<SET Var="attribValue" Value="{$field/@Name}/@Value"/>-->
+                                <APPEND_TO_XML>
+                                  <!--<ui:display-field displayText="{$field/@Name}" name="{$field/@Name}" dataType="{$dataType}" sortable="true"/>-->
+                                  <CLONE_XML DocVar="selectedDocument" AssignToVar="currentDoc"/>
+                                  <FOR_EACH SelectList="$currentDoc/DEFINE_DOCUMENT/UNIQUE/KEY" CurrentElement="pkKey">
+                                    <SET Var="primaryProp" FromValue="{$pkKey}"/>
+                                    <SET_NAME DocVar="primaryProp" FromValue="{$pkKey/@Property}"/>
+                                    <SET DocVar="primaryProp" Attribute="select" FromValue="{$pkKey/@Property}/@Value"/>
+                                    <REMOVE_ATTRIBUTE DocVar="primaryProp" Name="Property"/>
+                                    <APPEND_TO_XML>
+                                      <!--<SELECTED_COL select="'{$pkKey/@Property}'"/>
+                                    <SELECTED_ID select="{$pkKey/@Property}/@Value"/>-->
+                                      <TO_XML SelectList="$primaryProp"/>
+                                    </APPEND_TO_XML>
+                                  </FOR_EACH>
+                                </APPEND_TO_XML>
+                              </ui:url>
+                            </ui:image-link-field>
+                            <!--FOR_EACH SelectList="$auditTrail/AUDIT_TRAIL/AUDIT_DOCUMENT/PROPERTY" CurrentElement="field"-->
+                            <FOR_EACH SelectList="$auditTrail/AUDIT_TRAIL/REFERENCE_FIELDS/FIELD" CurrentElement="field">
+                              <IF_TEST Test="($field/@Type = 'date') or (($field/@Type = 'datetime') or ($field/@Type = 'timestamp'))">
+                                <THEN>
+                                  <SET Var="dataType" FromValue="DateTime"/>
+                                </THEN>
+                                <ELSE>
+                                  <IF_TEST Test="($field/@Type = 'double') or ($field/@Type = 'int')">
+                                    <THEN>
+                                      <SET Var="dataType" FromValue="Number"/>
+                                    </THEN>
+                                    <ELSE>
+                                      <SET Var="dataType" FromValue="String"/>
+                                    </ELSE>
+                                  </IF_TEST>
+                                </ELSE>
+                              </IF_TEST>
+                              <APPEND_TO_XML>
+                                <ui:display-field displayText="{$field/@Name}" name="{$field/@Name}" dataType="{$dataType}" sortable="true"/>
+                              </APPEND_TO_XML>
+                            </FOR_EACH>
+                            <FOR_EACH SelectList="$auditTrail/AUDIT_TRAIL/AUDIT_FIELDS/FIELD" CurrentElement="field">
+                              <IF_TEST Test="($field/@Type = 'date') or (($field/@Type = 'datetime') or ($field/@Type = 'timestamp'))">
+                                <THEN>
+                                  <SET Var="dataType" FromValue="DateTime"/>
+                                </THEN>
+                                <ELSE>
+                                  <IF_TEST Test="($field/@Type = 'double') or ($field/@Type = 'int')">
+                                    <THEN>
+                                      <SET Var="dataType" FromValue="Number"/>
+                                    </THEN>
+                                    <ELSE>
+                                      <SET Var="dataType" FromValue="String"/>
+                                    </ELSE>
+                                  </IF_TEST>
+                                </ELSE>
+                              </IF_TEST>
+                              <!--SET Var="attrValue" FromValue="{substringBefore($field/@Name,'_')}"/-->
+                              <SET Var="oldValName" FromValue="{concat($field/@Name,'_OV')}"/>
+                              <SET Var="newValName" FromValue="{concat($field/@Name,'_NV')}"/>
+                              <APPEND_TO_XML>
+                                <ui:choose-field displayText="{$oldValName}" name="{$oldValName}" sortable="true">
+                                  <ui:when test="{$field/@Name}/@IsChanged = 'true'">
+                                    <ui:display-field style="background='#fff6a6'" displayText="{$oldValName}" name="{$oldValName}" dataType="{$dataType}" sortable="true" filter="false"/>
+                                  </ui:when>
+                                  <ui:otherwise>
+                                    <ui:display-field displayText="{$oldValName}" name="{$oldValName}" dataType="{$dataType}" sortable="true" filter="false"/>
+                                  </ui:otherwise>
+                                </ui:choose-field>
+                                <ui:choose-field displayText="{$newValName}" name="{$newValName}" sortable="true">
+                                  <ui:when test="{$field/@Name}/@IsChanged = 'true'">
+                                    <ui:display-field style="background='#fff6a6'" displayText="{$newValName}" name="{$newValName}" dataType="{$dataType}" sortable="true" filter="false"/>
+                                  </ui:when>
+                                  <ui:otherwise>
+                                    <ui:display-field displayText="{$newValName}" name="{$newValName}" dataType="{$dataType}" sortable="true" filter="false"/>
+                                  </ui:otherwise>
+                                </ui:choose-field>
+                              </APPEND_TO_XML>
+                            </FOR_EACH>
+                            <FOR_EACH SelectList="$auditTrail/AUDIT_TRAIL/STATIC_FIELDS/FIELD" CurrentElement="field">
+                              <IF_TEST Test="($field/@Type = 'date') or (($field/@Type = 'datetime') or ($field/@Type = 'timestamp'))">
+                                <THEN>
+                                  <SET Var="dataType" FromValue="DateTime"/>
+                                </THEN>
+                                <ELSE>
+                                  <IF_TEST Test="($field/@Type = 'double') or ($field/@Type = 'int')">
+                                    <THEN>
+                                      <SET Var="dataType" FromValue="Number"/>
+                                    </THEN>
+                                    <ELSE>
+                                      <SET Var="dataType" FromValue="String"/>
+                                    </ELSE>
+                                  </IF_TEST>
+                                </ELSE>
+                              </IF_TEST>
+                              <IF_TEST Test="$field/@Name='TRANSACTION_TIME'">
+                                <THEN>
+                                  <APPEND_TO_XML>
+                                    <ui:display-field displayText="{$field/@Name}" name="{$field/@Name}" dataType="{$dataType}" sortable="true" filter="false"/>
+                                  </APPEND_TO_XML>
+                                </THEN>
+                                <ELSE>
+                                  <APPEND_TO_XML>
+                                    <ui:display-field displayText="{$field/@Name}" name="{$field/@Name}" dataType="{$dataType}" sortable="true" filter="true"/>
+                                  </APPEND_TO_XML>
+                                </ELSE>
+                              </IF_TEST>
+                            </FOR_EACH>
+                          </ui:field-group>
+                        </ui:table>
+                      </PGL>
+                      <TO_XML SelectList="$searchResult/SEARCH_RESULTS"/>
+                      <SORT_BY Value="{$sortBy}"/>
+                      <SORT_ORDER Value="{$sortOrder}"/>
+                      <TO_XML SelectList="$entityNames"/>
+                      <TO_XML SelectList="$thisParam/AUDIT_TRAIL_NAME[@Value != null]"/>
+                      <TO_XML SelectList="$changedFields/AUDIT_TRAIL/AUDIT_FIELDS"/>
+                      <TO_XML SelectList="$nodeInputXml/*"/>
+                    </DATA>
+                  </TO_DOCVAR>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <DATES>
+              <TO_XML SelectList="$thisParam/FROM_DATE"/>
+              <TO_XML SelectList="$thisParam/TO_DATE"/>
+            </DATES>
+          </APPEND_TO_XML>
+          <PRINTLN Value="$$$$$$$$$$$$$Printing PglFormInput$$$$$$$$$$$$$"/>
+          <PRINTLN Value="{$pglFormInput}"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <PRINTLN Value="{$pglFormOutput}"/>
+          <!--<SET Var="pglFormOutput" FromSelect="$thisParam"/>-->
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction='search_button'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Audit Trail Search" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='back'">
+        <next_nodes OutputVar="{pglFormOutput,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='currentValue'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="viewCurrentValue" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='change_entity'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Audit Trail Search" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="done174" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="viewCurrentValue" InputVar="{nodeInputXml,xml}" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE" Template="viewCurrentValue.pgl">
+      <pre_actions>
+        <action>
+          <SET Var="nodeInputXml" FromDocVar="thisParam"/>
+          <PRINTLN Value="{$nodeInputXml}"/>
+          <REQUEST Name="getDocumentForm" ServiceName="BPE_META" AssignToVar="selectedDoc">
+            <SERVICE Value="BCM_MASTER"/>
+            <DOCUMENT Value="{$nodeInputXml/TABLE_NAME/@Value}"/>
+          </REQUEST>
+          <PRINTLN Value="{$selectedDoc}"/>
+          <TO_DOCVAR AssignToVar="primaryKeys">
+            <PRIMARY/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$selectedDoc/DEFINE_DOCUMENT/UNIQUE/KEY" CurrentElement="pk">
+            <!--<SET Var="colSelected" FromValue="{$nodeInputXml/SELECTED_COL}"/>
+            <SET_NAME DocVar="colSelected" FromValue="{$nodeInputXml/SELECTED_COL/@Value}"/>
+            <SET DocVar="colSelected" Attribute="Value" FromValue="{$nodeInputXml/SELECTED_ID/@Value}"/>-->
+            <APPEND_TO_XML DocVar="primaryKeys">
+              <TO_XML SelectList="$nodeInputXml/*[name() = $pk/@Property]"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <PRINTLN Value="{$primaryKeys}"/>
+          <GET_DOCUMENT AssignToVar="currTableValue" Name="{$nodeInputXml/TABLE_NAME/@Value}" ServiceName="BCM_MASTER">
+            <TO_XML SelectList="$primaryKeys/*"/>
+          </GET_DOCUMENT>
+          <PRINTLN Value="{$currTableValue}"/>
+          <TO_DOCVAR AssignToVar="pglFormInput" IsLiteral="true">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="table" IsLiteral="true">
+            <TABLE>
+              <TO_XML SelectList="$currTableValue/*"/>
+            </TABLE>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="dynamicPglData" IsLiteral="true">
+            <DYNAMIC_PGL_DATA>
+            </DYNAMIC_PGL_DATA>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="uitable" IsLiteral="true">
+            <ui:table xmlns:ui="http://www.i2.com/ui" id="{$nodeInputXml/TABLE_NAME/@Value}" displayText="{$nodeInputXml/TABLE_NAME/@Value}" rowSrc="$root/TABLE/*" exportable="false" displayTextNoRecords="" sortable="true" doPaging="false" collapsable="false">
+            </ui:table>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="uifieldgroup" IsLiteral="true">
+            <ui:field-group xmlns:ui="http://www.i2.com/ui" id="auditTableColumns">
+              <ui:hidden-field name="AUDIT_TRAIL_NAME" value="{$nodeInputXml/AUDIT_TRAIL_NAME/@Value}"/>
+              <ui:hidden-field name="SERVICE_NAME" value="{$nodeInputXml/SERVICE_NAME/@Value}"/>
+              <!--              <ui:hidden-field name="AUDIT_DAYS" value="{$nodeInputXml/AUDIT_DAYS/@Value}"/>
+-->
+            </ui:field-group>
+          </TO_DOCVAR>
+          <ADD_CHILD DocVar="uitable" ChildDocVar="uifieldgroup"/>
+          <ADD_CHILD DocVar="dynamicPglData" ChildDocVar="uitable"/>
+          <IF_TEST Test="count($selectedDoc/DEFINE_DOCUMENT/*) > 0">
+            <THEN>
+              <FOR_EACH SelectList="$selectedDoc/DEFINE_DOCUMENT/PROPERTY" CurrentElement="prop">
+                <APPEND_TO_XML Select="$uifieldgroup">
+                  <ui:display-field xmlns:ui="http://www.i2.com/ui" displayText="{$prop/@Name}" name="{$prop/@Name}"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+            </THEN>
+            <ELSE>
+              <FOR_EACH SelectList="$selectedDoc/DOCUMENT/PROPERTY" CurrentElement="prop">
+                <APPEND_TO_XML Select="$uifieldgroup">
+                  <ui:display-field xmlns:ui="http://www.i2.com/ui" displayText="{$prop/@Name}" name="{$prop/@Name}"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+            </ELSE>
+          </IF_TEST>
+          <ADD_CHILD DocVar="pglFormInput" ChildDocVar="dynamicPglData"/>
+          <ADD_CHILD DocVar="pglFormInput" ChildDocVar="table"/>
+          <PRINTLN Value="{$pglFormInput}"/>
+        </action>
+      </pre_actions>
+      <if_cond Value="$userAction ='back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Audit Trail Search" Description=""/>
+          <next_node Name="CloseRefresh" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="CloseRefresh" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE" Template="CloseRefresh.pgl">
+      <if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Audit Trail Search" Description=""/>
+        </next_nodes>
+      </if_cond>
+    </ui_form2>
+    <done Name="done174">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start4 location="112,123" font="Tahoma,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start4" font="Tahoma,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start4>
+      <mgcnode Name="Audit Trail Search" location="302,158" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Audit Trail Search" font="Times New Roman,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <viewCurrentValue location="476,8" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="viewCurrentValue" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </viewCurrentValue>
+      <CloseRefresh location="547,249" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="CloseRefresh" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </CloseRefresh>
+      <done174 location="435,298" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done174" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done174>
+    </mgcnodes>
+    <mgcconnectors>
+      <start4>
+        <nextNodeView font="Tahoma,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="144,145" endpoint="302,180" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="260,143,4,4" ctrlRect2="181,178,4,4"/>
+      </start4>
+      <mgcnode Name="Audit Trail Search">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="302,169" endpoint="318,203" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="146,60,4,4" ctrlRect2="349,339,4,4" textRect="232,197,34,8">
+          <textProps text="Search" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="334,169" endpoint="492,53" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="450,167,4,4" ctrlRect2="490,138,4,4" textRect="397,150,150,9">
+          <textProps text="[$userAction ='currentValue']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="310,158" endpoint="318,158" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="184,48,4,4" ctrlRect2="316,81,4,4" textRect="174,62,156,9">
+          <textProps text="[$userAction ='change_entity']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="326,203" endpoint="451,298" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="324,271,4,4" ctrlRect2="449,224,4,4"/>
+      </mgcnode>
+      <viewCurrentValue>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="476,30" endpoint="318,158" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="310,71,4,4" ctrlRect2="316,60,4,4" textRect="303,63,25,8">
+          <textProps text="Back" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="508,30" endpoint="563,249" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="546,55,4,4" ctrlRect2="561,82,4,4" textRect="543,66,25,8">
+          <textProps text="Back" font="Verdana,0,9"/>
+        </nextNodeView>
+      </viewCurrentValue>
+      <CloseRefresh>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="547,271" endpoint="334,180" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="386,269,4,4" ctrlRect2="492,178,4,4"/>
+      </CloseRefresh>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Tahoma,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="1" textAttrsKey0="entityNames : xml">
+      <textProps text="Pipeline" font="Tahoma,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="entityNames" Type="xml" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

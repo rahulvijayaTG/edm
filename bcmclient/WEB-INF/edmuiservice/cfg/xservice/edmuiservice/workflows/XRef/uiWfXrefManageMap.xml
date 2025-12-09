@@ -1,0 +1,755 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="949" ShowInBreadCrumbs="true" Version="1.0" Name="uiWfXrefManageMap" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="InputPglString" Type="xml" Comment=""/>
+    <variable Name="SelectedId" Type="string" Comment=""/>
+    <variable Name="message" Type="xml" Comment=""/>
+    <variable Name="message1" Type="xml" Comment=""/>
+    <variable Name="readResults" Type="xml" Comment=""/>
+    <variable Name="details" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="InputPglString">
+            <INPUT_STRING/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="message">
+            <MSG/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="message1">
+            <MSG/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="details">
+            <DETAIL/>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="Manage CrossRef Map" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Manage CrossRef Map" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="xrefManageMap.pgl">
+      <pre_actions>
+        <action>
+          <SET Var="exportTableId" FromValue="{ifElse($thisParam/FILTER_ID/@Value=null, '', $thisParam/FILTER_ID/@Value)}"/>
+          <SET Var="sortBy" FromValue="{$thisParam/SORT_BY/@Value}"/>
+          <SET Var="sortOrder" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+          <IF_TEST Test="$userAction='DELETE' or $thisParam/innerAction/@Value='Filter'">
+            <THEN>
+              <SET Var="paginateStart" FromValue="0"/>
+            </THEN>
+            <ELSE>
+              <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="pgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '10', $thisParam/MAX_ROWS/@Value)}"/>
+          <IF_TEST Test="$userAction != 'SHOW_DETAILS' and $userAction != 'DELETE'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="message">
+                <MSG/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction != 'SHOW_DETAILS'">
+            <THEN>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filter">
+                <CrossReferenceMapIdentifier InputName="FILTER_CrossReferenceMapIdentifier"/>
+                <ObjectClassMnemonicValue InputName="FILTER_ObjectClassMnemonicValue"/>
+                <ObjectType InputName="FILTER_ObjectType"/>
+                <CrossReferenceObjectBaseDataTableDomainIndicator InputName="FILTER_ObjectClassCategory" MultiValued="true"/>
+                <CrossReferenceUsageMnemonicValue InputName="FILTER_MapUsage" MultiValued="true"/>
+                <TargetObject InputName="FILTER_TargetObjectMnemonicValue"/>
+                <SourceObject InputName="FILTER_CrossReferenceSourceObjectMnemonicValue"/>
+                <TargetSystemName InputName="FILTER_TargetSystemMnemonicValue"/>
+                <SourceSystemName InputName="FILTER_CrossReferenceSourceSystemMnemonicValue"/>
+                <CrossReferenceMapStatusMnemonicValue InputName="FILTER_MapStatus" MultiValued="true"/>
+                <LastModifiedDate InputName="FILTER_lastModifiedDate"/>
+                <LastModifiedby InputName="FILTER_lastModifiedBy"/>
+                <DataCount InputName="FILTER_DataCount"/>
+              </FORM_SEARCH_FILTER>
+              <IF_TEST Test="count($filter/FILTER)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="CIfilters">
+                    <FILTERS>
+                      <TO_XML SelectList="$filter/FILTER/*"/>
+                    </FILTERS>
+                  </TO_DOCVAR>
+                </THEN>
+              </IF_TEST>
+              <!-- code for case inscensitive search -->
+              <FOR_EACH CurrentElement="tempElem" SelectList="$CIfilters/*">
+                <SET Var="thisValue" FromValue="{$tempElem/@Value}"/>
+                <REMOVE_ATTRIBUTE DocVar="tempElem" Name="Value"/>
+                <SET Attribute="ScalarFn" FromValue="upperCase" DocVar="tempElem"/>
+                <SET Attribute="Value" FromValue="{upperCase($thisValue)}" DocVar="tempElem"/>
+              </FOR_EACH>
+              <IF_TEST Test="strlen($sortBy) != 0">
+                <THEN>
+                  <REQUEST AssignToVar="readResults" Name="readXrefMap" ServiceName="BCM_MASTER" ReturnRowCount="yes" MaxRows="{$pgMaxRows}" StartAtRow="{ifElse($exportTableId='',$paginateStart,'0')}">
+                    <TO_XML SelectList="$CIfilters/*"/>
+                    <SORT_ORDER Value="{$sortOrder}"/>
+                    <SORT_BY Value="{$sortBy}"/>
+                  </REQUEST>
+                </THEN>
+                <ELSE>
+                  <REQUEST AssignToVar="readResults" Name="readXrefMap" ServiceName="BCM_MASTER" ReturnRowCount="yes" MaxRows="{$pgMaxRows}" StartAtRow="{ifElse($exportTableId='',$paginateStart,'0')}">
+                    <TO_XML SelectList="$CIfilters/*"/>
+                  </REQUEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <INPUT>
+              <TO_XML SelectList="$message/*"/>
+              <TO_XML SelectList="$message1/*"/>
+              <Category Value="{$thisParam/FILTER_ObjectClassCategory/@Value}"/>
+              <MAP_USAGE Value="{$thisParam/FILTER_MapUsage/@Value}"/>
+              <MAP_STATUS Value="{$thisParam/FILTER_MapStatus/@Value}"/>
+              <USER_ACTION Value="{$userAction}"/>
+              <ROOT TotalRowCount="{$readResults/TOTAL_ROW_COUNT/@Value}">
+                <START_ROW_COUNT Value="{$paginateStart}"/>
+                <!--        <TO_XML SelectList="$message/*">-->
+                <TO_XML SelectList="$details/*"/>
+                <TO_XML SelectList="$readResults/*"/>
+              </ROOT>
+            </INPUT>
+          </TO_DOCVAR>
+          <IF_TEST Test="count($pglFormInput/_ERRORS) > 0 and $userAction = 'Create'">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <ERR_STS Value="True"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!--start of code for populating the drop dowm dynamically -->
+          <IF_TEST Test="count($thisParam/FILTER_MapUsage) = 0 or $thisParam/FILTER_MapUsage/@Value= ''">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <USG_SELECT Value=""/>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <USG_SELECT Value="{$thisParam/FILTER_MapUsage/@Value}"/>
+              </APPEND_TO_XML>
+            </ELSE>
+          </IF_TEST>
+          <GET_DOCUMENT AssignToVar="usg" Name="P_CrossReferenceUsage" ServiceName="PEDM_MASTER">
+            <SELECT>
+              <CrossReferenceUsageMnemonicValue/>
+              <CrossReferenceUsageIdentifier/>
+            </SELECT>
+            <ENTITY_STATE Value="ACTIVE" MatchBy="EQUAL"/>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT AssignToVar="crdnlty" Name="P_CrossReferenceCardinality" ServiceName="PEDM_MASTER">
+            <SELECT>
+              <CrossReferenceCardinalityMnemonicValue/>
+              <CrossReferenceCardinalityIdentifier/>
+            </SELECT>
+            <ENTITY_STATE Value="ACTIVE" MatchBy="EQUAL"/>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT AssignToVar="status" Name="P_CrossReferenceMapStatus" ServiceName="PEDM_MASTER">
+            <SELECT>
+              <CrossReferenceMapStatusMnemonicValue/>
+              <CrossReferenceMapStatusIdentifier/>
+            </SELECT>
+            <ENTITY_STATE Value="ACTIVE" MatchBy="EQUAL"/>
+            <!-- <OR>
+      <CrossReferenceMapStatusMnemonicValue Value="Active" MatchBy="EQUAL"/>
+      <CrossReferenceMapStatusMnemonicValue Value="Deleted" MatchBy="EQUAL"/>
+    </OR>-->
+          </GET_DOCUMENT>
+          <TO_DOCVAR AssignToVar="usage">
+            <USG/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="cardinality">
+            <CRDNLTY/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="mapStatus">
+            <STS/>
+          </TO_DOCVAR>
+          <FOR_EACH CurrentElement="curUsg" SelectList="$usg/P_CrossReferenceUsage">
+            <APPEND_TO_XML DocVar="usage">
+              <USG_LIST>
+                <Usg_List Value="{$curUsg/CrossReferenceUsageMnemonicValue/@Value}"/>
+              </USG_LIST>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <FOR_EACH CurrentElement="curCrdnlty" SelectList="$crdnlty/P_CrossReferenceCardinality">
+            <APPEND_TO_XML DocVar="cardinality">
+              <CARD_LIST>
+                <Crdnlty_List Value="{$curCrdnlty/CrossReferenceCardinalityMnemonicValue/@Value}"/>
+              </CARD_LIST>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <FOR_EACH CurrentElement="curSts" SelectList="$status/P_CrossReferenceMapStatus">
+            <APPEND_TO_XML DocVar="mapStatus">
+              <STS_LIST>
+                <Crdnlty_List Value="{$curSts/CrossReferenceMapStatusMnemonicValue/@Value}"/>
+              </STS_LIST>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <APPEND_TO_XML Select="$pglFormInput">
+            <TO_XML DocVar="usage"/>
+            <TO_XML DocVar="cardinality"/>
+            <TO_XML DocVar="mapStatus"/>
+          </APPEND_TO_XML>
+          <!--end of code for populating the drop dowm dynamically -->
+          <SET Var="action" FromValue="{$userAction}"/>
+          <IF_TEST Test="$action = null or $action='Clear'">
+            <THEN>
+              <APPEND_TO_XML Select="$pglFormInput">
+                <Button Value="True"/>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$action = 'SHOW_DETAILS'">
+                <THEN>
+                  <APPEND_TO_XML Select="$pglFormInput">
+                    <Button Value="False"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'Create' and count($thisParam/SELECTED_MAP_ID) > 1">
+            <THEN>
+              <FOR_EACH CurrentElement="cur" SelectList="$thisParam/SELECTED_MAP_ID">
+                <SET Var="id" FromValue="{$cur/@Value}"/>
+              </FOR_EACH>
+              <REMOVE_CHILDREN ChildName="SELECTED_MAP_ID" DocVar="$thisParam"/>
+              <SET_PROPS Select="$thisParam">
+                <SELECTED_MAP_ID Value="{$id}"/>
+              </SET_PROPS>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'Clear'">
+            <THEN>
+              <SET_PROPS Select="$thisParam">
+                <SELECTED_MAP_ID Value=""/>
+              </SET_PROPS>
+            </THEN>
+          </IF_TEST>
+          <REQUEST Name="getAccessLevel" ServiceName="BCM_MASTER" AssignToVar="getAccessRoles">
+            <ACTIVITY_ID Value="edmXRefStructure"/>
+            <USER_ID Value="{$userId}"/>
+          </REQUEST>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$getAccessRoles/SQL_RESULT/ACCESS_LEVEL"/>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="InputPglString">
+            <RESPONSE/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="details">
+            <DETAIL/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="message">
+            <MSG/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="message1">
+            <MSG/>
+          </TO_DOCVAR>
+          <SET Var="selectedmapid" FromValue="{$pglFormOutput/SELECTED_MAP_ID/@Value}"/>
+          <IF_TEST Test="$userAction='SHOW_DETAILS' and $selectedmapid != ''">
+            <THEN>
+              <FOR_EACH CurrentElement="cur" SelectList="$readResults/P_CrossReferenceMap[MapIdentifier/@Value = $pglFormOutput/SELECTED_MAP_ID/@Value]">
+                <APPEND_TO_XML DocVar="details">
+                  <DETAILS>
+                    <TO_XML DocVar="cur"/>
+                  </DETAILS>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Clear'">
+            <THEN>
+              <SET_PROPS Select="$thisParam">
+                <FILTER_ObjectClassCategory Value=""/>
+                <FILTER_MapUsage Value=""/>
+                <FILTER_MapStatus Value=""/>
+              </SET_PROPS>
+              <REMOVE_CHILDREN ChildName="DETAILS" DocVar="readResults"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='SHOW_DETAILS'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage CrossRef Map" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='DELETE'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="delete" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Create'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="create" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Update'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="update" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='GenerateName'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='COPY'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='MANAGE_DATA'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CREATE_MAP'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='MODIFY'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SelectObjectClass'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ObjectClass" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SelectSourceObject'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SelectTargetObject'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Clear'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage CrossRef Map" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ok'">
+        <next_nodes OutputVar="{pglFormOutput,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='VIEW'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ShowComments'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage CrossRef Map" Description=""/>
+          <next_node Name="done4" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done4">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="ObjectClass" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE ME" Template="xrefManageSearchObjectClass.pgl">
+      <pre_actions>
+        <action>
+          <SET Var="sortBy" FromValue="{$thisParam/SORT_BY/@Value}"/>
+          <SET Var="sortOrder" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+          <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+          <SET Var="pgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '10', $thisParam/MAX_ROWS/@Value)}"/>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filter">
+            <ObjectClassMnemonicValue InputName="FILTER_ObjectClassMnemonicValue"/>
+            <ObjectClassDescription InputName="FILTER_ObjectClassDescription"/>
+            <!--  <ObjectClassName InputName="FILTER_ObjectClassName"/>-->
+            <ObjectClassDomain InputName="FILTER_ObjectClassDomain"/>
+            <ObjectClassStatus InputName="FILTER_ObjectClassStatus"/>
+          </FORM_SEARCH_FILTER>
+          <IF_TEST Test="strlen($sortBy) != 0">
+            <THEN>
+              <REQUEST AssignToVar="result" Name="readObjectClass" ServiceName="BCM_MASTER" ReturnRowCount="yes" MaxRows="{$pgMaxRows}" StartAtRow="{$paginateStart}">
+                <TO_XML SelectList="$filter/FILTER/*"/>
+                <SORT_ORDER Value="{$sortOrder}"/>
+                <SORT_BY Value="{$sortBy}"/>
+              </REQUEST>
+            </THEN>
+            <ELSE>
+              <REQUEST AssignToVar="result" Name="readObjectClass" ServiceName="BCM_MASTER" ReturnRowCount="yes" MaxRows="{$pgMaxRows}" StartAtRow="{$paginateStart}">
+                <TO_XML SelectList="$filter/FILTER/*"/>
+              </REQUEST>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <INPUTPGL>
+              <StartAtRow Value="{$paginateStart}"/>
+              <CLASS_DOMAIN Value="{$thisParam/FILTER_ObjectClassDomain/@Value}"/>
+              <CLASS_STATUS Value="{$thisParam/FILTER_ObjectClassStatus/@Value}"/>
+              <OBJECT_CLASS TotalRowCount="{$result/TOTAL_ROW_COUNT/@Value}">
+                <TO_XML SelectList="$result/*"/>
+              </OBJECT_CLASS>
+            </INPUTPGL>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="abc" FromValue="123"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage CrossRef Map" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Select'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <task Name="create" InputVar="{nodeInput,xml}">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="createInfo">
+            <INFO>
+              <ACTIONTOBDONE Value="INSERT"/>
+              <ObjectClassMnemonicValue Value="{$nodeInput/ObjectClass/@Value}"/>
+              <DataBaseViewName Value="{$nodeInput/ViewName/@Value}"/>
+              <MapStatus Value="{$nodeInput/Status/@Value}"/>
+              <MapCardinality Value="{$nodeInput/CARDINALITY/@Value}"/>
+              <CrossReferenceSourceSystemMnemonicValue Value="{$nodeInput/SourceSystem/@Value}"/>
+              <CrossReferenceSourceObjectMnemonicValue Value="{$nodeInput/SourceObject/@Value}"/>
+              <TargetSystemMnemonicValue Value="{$nodeInput/TargetSystem/@Value}"/>
+              <TargetObjectMnemonicValue Value="{$nodeInput/TargetObject/@Value}"/>
+              <MapUsage Value="{$nodeInput/Usage/@Value}"/>
+              <ConversionSystemNotes Value="{$nodeInput/comments/@Value}"/>
+            </INFO>
+          </TO_DOCVAR>
+          <REQUEST AssignToVar="res" Name="CreateActivateMapUI" ReturnRowCount="yes" ServiceName="BCM_MASTER" HandleException="yes">
+            <TO_XML SelectList="$createInfo/*"/>
+          </REQUEST>
+          <TO_DOCVAR AssignToVar="values">
+            <VALUES>
+              <P_CrossReferenceMap>
+                <MapUsage Value="{$thisParam/Usage/@Value}"/>
+                <MapStatus Value="{$thisParam/Status/@Value}"/>
+                <MapCardinality Value="{$thisParam/CARDINALITY/@Value}"/>
+                <TargetObjectMnemonicValue Value="{$thisParam/TargetObject/@Value}"/>
+                <TargetSystemMnemonicValue Value="{$thisParam/TargetSystem/@Value}"/>
+                <CrossReferenceSourceObjectMnemonicValue Value="{$thisParam/SourceObject/@Value}"/>
+                <CrossReferenceSourceSystemMnemonicValue Value="{$thisParam/SourceSystem/@Value}"/>
+                <ObjectClassMnemonicValue Value="{$thisParam/ObjectClass/@Value}"/>
+                <DataBaseViewName Value="{upperCase($thisParam/ViewName/@Value)}"/>
+                <ConversionSystemNotes Value="{$thisParam/comments/@Value}"/>
+              </P_CrossReferenceMap>
+            </VALUES>
+          </TO_DOCVAR>
+          <IF_TEST Test="$res/@Status = 'Success' and $res/SCENARIO_ID/@Value = 0 and $res/MapUsage/@Value != null and $res/CrossReferenceSourceObjectMnemonicValue/@Value != null">
+            <THEN>
+              <APPEND_TO_XML DocVar="message1">
+                <_SUCCESS Value="Map Added Successfully!" Details="true"/>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="details">
+                <DETAILS>
+                  <TO_XML SelectList="$values/*"/>
+                </DETAILS>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$res/@Status = 'Success' and $res/MODULE/@Value = 'Activate'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="message1">
+                    <_SUCCESS Value="Map Activated Successfully!" Details="true"/>
+                  </APPEND_TO_XML>
+                  <APPEND_TO_XML DocVar="details">
+                    <DETAILS>
+                      <TO_XML SelectList="$values/*"/>
+                    </DETAILS>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$res/@Status = 'Error'">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="message1">
+                        <_ERRORS Value="SEVERE_ERROR">
+                          <_ERROR Value="{$res/@Description}" Severity="SEVERE_ERROR"/>
+                        </_ERRORS>
+                      </APPEND_TO_XML>
+                      <APPEND_TO_XML DocVar="details">
+                        <DETAILS>
+                          <TO_XML SelectList="$values/*"/>
+                        </DETAILS>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="message1">
+                        <_ERRORS Value="SEVERE_ERROR">
+                          <_ERROR Value="{$res/_RESULT/_ERROR/@Value}" Severity="SEVERE_ERROR"/>
+                        </_ERRORS>
+                      </APPEND_TO_XML>
+                      <APPEND_TO_XML DocVar="details">
+                        <DETAILS>
+                          <TO_XML SelectList="$values/*"/>
+                        </DETAILS>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="Manage CrossRef Map" Description=""/>
+      </next_nodes>
+    </task>
+    <task Name="delete" InputVar="{nodeInput,xml}">
+      <actions>
+        <action>
+          <SET Var="mapid" FromValue="{strlen($nodeInput/SELECTED_MAP_ID/@Value)}"/>
+          <IF_TEST Test="$mapid>0">
+            <THEN>
+              <FOR_EACH CurrentElement="cur" SelectList="$readResults/P_CrossReferenceMap[MapIdentifier/@Value = $nodeInput/SELECTED_MAP_ID/@Value]">
+                <TO_DOCVAR AssignToVar="createInfo">
+                  <INFO>
+                    <ACTIONTOBDONE Value="DELETE"/>
+                    <MapStatus Value="{$cur/MapStatus/@Value}"/>
+                    <MapCardinality Value="{$cur/MapCardinality/@Value}"/>
+                    <CrossReferenceSourceSystemMnemonicValue Value="{$cur/CrossReferenceSourceSystemMnemonicValue/@Value}"/>
+                    <CrossReferenceSourceObjectMnemonicValue Value="{$cur/CrossReferenceSourceObjectMnemonicValue/@Value}"/>
+                    <TargetSystemMnemonicValue Value="{$cur/TargetSystemMnemonicValue/@Value}"/>
+                    <TargetObjectMnemonicValue Value="{$cur/TargetObjectMnemonicValue/@Value}"/>
+                    <MapUsage Value="{$cur/MapUsage/@Value}"/>
+                  </INFO>
+                </TO_DOCVAR>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <REQUEST AssignToVar="res" Name="deleteXrefMap" ReturnRowCount="yes" ServiceName="BCM_MASTER" HandleException="yes">
+            <TO_XML SelectList="$createInfo/*"/>
+          </REQUEST>
+          <!--<IF_TEST Test="$res/@Status = 'Success' and $res/@RowCount = 1"> -->
+          <IF_TEST Test="$res/@Status = 'Success' and count($res/_RESULT/_ERROR) = 0">
+            <THEN>
+              <APPEND_TO_XML DocVar="message">
+                <!-- <USER_ACTION Value="{$userAction}"/> -->
+                <_SUCCESS1 Value="Map Deleted Successfully!" Details="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$res/@Status = 'Error'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="message">
+                    <_ERRORS Value="SEVERE_ERROR">
+                      <_ERROR Value="{$res/@Description}" Severity="SEVERE_ERROR"/>
+                    </_ERRORS>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="message">
+                    <_ERRORS Value="SEVERE_ERROR">
+                      <_ERROR Value="{$res/_RESULT/_ERROR/@Value}" Severity="SEVERE_ERROR"/>
+                    </_ERRORS>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="Manage CrossRef Map" Description=""/>
+      </next_nodes>
+    </task>
+    <task Name="update" InputVar="{nodeInput,xml}">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="createInfo">
+            <INFO>
+              <ACTIONTOBDONE Value="UPDATE"/>
+              <MapIdentifier Value="{$nodeInput/SELECTED_MAP_ID/@Value}"/>
+              <ObjectClassMnemonicValue Value="{$nodeInput/ObjectClass/@Value}"/>
+              <DOCUMENT_CONTEXT>
+                <CrossReferenceSourceSystemMnemonicValue Value="{$nodeInput/SourceSystem/@Value}"/>
+                <CrossReferenceSourceObjectMnemonicValue Value="{$nodeInput/SourceObject/@Value}"/>
+                <TargetSystemMnemonicValue Value="{$nodeInput/TargetSystem/@Value}"/>
+                <TargetObjectMnemonicValue Value="{$nodeInput/TargetObject/@Value}"/>
+                <MapUsage Value="{$nodeInput/Usage/@Value}"/>
+              </DOCUMENT_CONTEXT>
+              <UPDATE_PROPERTIES>
+                <DataBaseViewName Value="{upperCase($nodeInput/ViewName/@Value)}"/>
+                <MapStatus Value="{$nodeInput/Status/@Value}"/>
+                <MapCardinality Value="{$nodeInput/CARDINALITY/@Value}"/>
+                <ConversionSystemNotes Value="{$nodeInput/comments/@Value}"/>
+              </UPDATE_PROPERTIES>
+            </INFO>
+          </TO_DOCVAR>
+          <REQUEST AssignToVar="res" Name="updateXrefMap" ReturnRowCount="yes" ServiceName="BCM_MASTER" HandleException="yes">
+            <TO_XML SelectList="$createInfo/*"/>
+          </REQUEST>
+          <TO_DOCVAR AssignToVar="values">
+            <VALUES>
+              <P_CrossReferenceMap>
+                <MapUsage Value="{$thisParam/Usage/@Value}"/>
+                <MapStatus Value="{$thisParam/Status/@Value}"/>
+                <MapCardinality Value="{$thisParam/CARDINALITY/@Value}"/>
+                <TargetObjectMnemonicValue Value="{$thisParam/TargetObject/@Value}"/>
+                <TargetSystemMnemonicValue Value="{$thisParam/TargetSystem/@Value}"/>
+                <CrossReferenceSourceObjectMnemonicValue Value="{$thisParam/SourceObject/@Value}"/>
+                <CrossReferenceSourceSystemMnemonicValue Value="{$thisParam/SourceSystem/@Value}"/>
+                <ObjectClassMnemonicValue Value="{$thisParam/ObjectClass/@Value}"/>
+                <DataBaseViewName Value="{upperCase($thisParam/ViewName/@Value)}"/>
+                <ConversionSystemNotes Value="{$thisParam/comments/@Value}"/>
+              </P_CrossReferenceMap>
+            </VALUES>
+          </TO_DOCVAR>
+          <IF_TEST Test="$res/@Status = 'Success' and $res/@RowCount = 1">
+            <THEN>
+              <APPEND_TO_XML DocVar="message1">
+                <_SUCCESS Value="Map Updated Successfully!" Details="true"/>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="details">
+                <DETAILS>
+                  <TO_XML SelectList="$values/*"/>
+                </DETAILS>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$res/@Status = 'Error'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="message1">
+                    <_ERRORS Value="SEVERE_ERROR">
+                      <_ERROR Value="{$res/@Description}" Severity="SEVERE_ERROR"/>
+                    </_ERRORS>
+                  </APPEND_TO_XML>
+                  <APPEND_TO_XML DocVar="details">
+                    <DETAILS>
+                      <TO_XML SelectList="$values/*"/>
+                    </DETAILS>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$res/@Status = 'Success' and $res/@RowCount = 0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="message1">
+                        <_ERRORS Value="SEVERE_ERROR">
+                          <_ERROR Value="ERR-XRF-UPD-0517:Create Map, as it is not found for updation" Severity="SEVERE_ERROR"/>
+                        </_ERRORS>
+                      </APPEND_TO_XML>
+                      <APPEND_TO_XML DocVar="details">
+                        <DETAILS>
+                          <TO_XML SelectList="$values/*"/>
+                        </DETAILS>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="message1">
+                        <_ERRORS Value="SEVERE_ERROR">
+                          <_ERROR Value="{$res/_RESULT/_ERROR/@Value}" Severity="SEVERE_ERROR"/>
+                        </_ERRORS>
+                      </APPEND_TO_XML>
+                      <APPEND_TO_XML DocVar="details">
+                        <DETAILS>
+                          <TO_XML SelectList="$values/*"/>
+                        </DETAILS>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="Manage CrossRef Map" Description=""/>
+      </next_nodes>
+    </task>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="86,149" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <mgcnode Name="Manage CrossRef Map" location="304,143" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Manage CrossRef Map" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done4 location="544,143" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done4" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done4>
+      <ObjectClass location="305,30" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="ObjectClass" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </ObjectClass>
+      <create location="146,50" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="create" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+      </create>
+      <delete location="307,271" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="delete" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+      </delete>
+      <update location="492,46" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="update" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+      </update>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="118,171" endpoint="304,166" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="255,169,4,4" ctrlRect2="162,164,4,4"/>
+      </start2>
+      <mgcnode Name="Manage CrossRef Map">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="320,189" endpoint="320,189" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="318,262,4,4" ctrlRect2="234,262,4,4" textRect="398,91,172,9"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="320,189" endpoint="323,271" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="318,248,4,4" ctrlRect2="321,207,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="304,166" endpoint="178,72" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="208,164,4,4" ctrlRect2="271,70,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="336,166" endpoint="492,69" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="451,164,4,4" ctrlRect2="373,67,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="320,143" endpoint="321,76" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="318,92,4,4" ctrlRect2="319,125,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="320,189" endpoint="320,189" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="318,262,4,4" ctrlRect2="399,281,4,4" textRect="307,248,112,9"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="320,143" endpoint="320,143" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="318,66,4,4" ctrlRect2="318,66,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="336,166" endpoint="544,165" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="490,164,4,4" ctrlRect2="386,163,4,4"/>
+      </mgcnode>
+      <ObjectClass>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="321,76" endpoint="320,143" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="319,78,4,4" ctrlRect2="322,143,4,4"/>
+      </ObjectClass>
+      <create>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="178,72" endpoint="304,166" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="270,70,4,4" ctrlRect2="207,164,4,4"/>
+      </create>
+      <delete>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="323,271" endpoint="320,189" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="321,208,4,4" ctrlRect2="318,249,4,4"/>
+      </delete>
+      <update>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="492,69" endpoint="336,166" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="373,67,4,4" ctrlRect2="451,164,4,4"/>
+      </update>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="6" textAttrsKey0="InputPglString : xml" textAttrsKey1="SelectedId : string" textAttrsKey2="details : xml" textAttrsKey3="message : xml" textAttrsKey4="message1 : xml" textAttrsKey5="readResults : xml">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="InputPglString" Type="xml" Comment=""/>
+        <variable Name="SelectedId" Type="string" Comment=""/>
+        <variable Name="message" Type="xml" Comment=""/>
+        <variable Name="message1" Type="xml" Comment=""/>
+        <variable Name="readResults" Type="xml" Comment=""/>
+        <variable Name="details" Type="xml" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

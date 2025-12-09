@@ -1,0 +1,749 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="40" ShowInBreadCrumbs="true" Version="1.0" Name="dataAuditReport" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="auditEntities" Type="xml" Comment=""/>
+    <variable Name="columns" Type="xml" Comment=""/>
+    <variable Name="dynamicPglData" Type="xml" Comment=""/>
+    <variable Name="entities" Type="xml" Comment=""/>
+    <variable Name="selectedDoc" Type="xml" Comment=""/>
+    <variable Name="users" Type="xml" Comment=""/>
+    <variable Name="searchParams" Type="xml" Comment=""/>
+    <variable Name="colDataType" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2" Description="Start Node">
+      <actions>
+        <action Name="get users and entities">
+          <REQUEST Name="getFolders" ServiceName="BCM_MASTER" AssignToVar="temp"/>
+          <TO_DOCVAR AssignToVar="entities">
+            <ENTITIES>
+              <FOR_EACH SelectList="$temp/ALL_FOLDERS/FOLDER/DOCUMENTS/DOCUMENT" CurrentElement="doc">
+                <IF_TEST Test="$doc/@AuditTrail = 'true'">
+                  <THEN>
+                    <APPEND_TO_XML>
+                      <ENTITY Value="{$doc/@DisplayName}" Id="{$doc/@Name}"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </ENTITIES>
+          </TO_DOCVAR>
+          <!-- There is no api for getting all active users, so for now making a get document call, will need to refactor later -->
+          <GET_DOCUMENT Name="USER_PROFILE" AssignToVar="temp" ServiceName="USER_SECURITY">
+            <SELECT>
+              <ID/>
+              <LOGIN_NAME/>
+            </SELECT>
+            <STATUS Value="ACTIVE"/>
+            <ORDER_BY>
+              <LOGIN_NAME Sort="Ascending"/>
+            </ORDER_BY>
+          </GET_DOCUMENT>
+          <TO_DOCVAR AssignToVar="users">
+            <USERS>
+              <FOR_EACH SelectList="$temp/USER_PROFILE" CurrentElement="user">
+                <APPEND_TO_XML>
+                  <USER Id="{$user/ID/@Value}" Value="{$user/LOGIN_NAME/@Value}"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+            </USERS>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{root,xml}">
+        <next_node Name="Data Audit Report" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Data Audit Report" Description="Display the search criteria form." InputVar="{root,xml}" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="SHOW" Template="dataAuditReport.pgl">
+      <pre_actions>
+        <action>
+          <!-- clear workflow variables which can be rebuilt -->
+          <IF_TEST Test="$root/BUTTON_ID/@Value = 'change_entity'">
+            <THEN>
+              <SET Var="columns" FromValue="{null}"/>
+              <SET Var="selectedDoc" FromValue="{null}"/>
+              <SET Var="colDataType" FromValue="{null}"/>
+              <SET Var="auditEntities" FromValue="{null}"/>
+              <SET Var="dynamicPglData" FromValue="{null}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$root/BUTTON_ID/@Value = 'change_column' or $root/BUTTON_ID/@Value = 'search_button'">
+            <THEN>
+              <IF_TEST Test="count($selectedDoc/DEFINE_DOCUMENT/*) > 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="colDataType">
+                    <COLUMN_DATATYPE Value="{$selectedDoc/DEFINE_DOCUMENT/PROPERTY[@Name=$root/COLUMN/@Value]/@Type}"/>
+                  </TO_DOCVAR>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="colDataType">
+                    <COLUMN_DATATYPE Value="{$selectedDoc/DOCUMENT/PROPERTY[@Name=$root/COLUMN/@Value]/@Type}"/>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$root/BUTTON_ID/@Value = 'search_button'">
+            <THEN>
+              <SET Var="auditEntities" FromValue="{null}"/>
+              <SET Var="dynamicPglData" FromValue="{null}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$root/BUTTON_ID/@Value = 'view'">
+            <THEN>
+              <SET Var="dynamicPglData" FromValue="{null}"/>
+            </THEN>
+          </IF_TEST>
+          <!-- Initialize the pglFormInput -->
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML Select="$entities"/>
+              <IF_TEST Test="$root/BUTTON_ID/@Value = 'change_column' or $root/BUTTON_ID/@Value='search_button'">
+                <THEN>
+                  <TO_XML Select="$colDataType"/>
+                </THEN>
+              </IF_TEST>
+              <TO_XML Select="$users"/>
+              <TO_XML SelectList="$root/USER"/>
+              <TO_XML SelectList="$root/ENTITY"/>
+              <!--To reset the column, column value and date values when user changes entity -->
+              <IF_TEST Test="$root/BUTTON_ID/@Value != 'change_entity' and $root/BUTTON_ID/@Value != 'change_column'">
+                <THEN>
+                  <TO_XML Select="$root/COLUMN"/>
+                  <TO_XML Select="$root/COLUMN_VALUE"/>
+                  <TO_XML Select="$root/TO_DATE"/>
+                  <TO_XML Select="$root/FROM_DATE"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$root/BUTTON_ID/@Value = 'change_column'">
+                <THEN>
+                  <TO_XML Select="$root/COLUMN"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="count($root/ENTITY) = 1 and $root/ENTITY/@Value != ''">
+                <THEN>
+                  <APPEND_TO_XML>
+                    <SINGLE_ENTITY Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML>
+                    <SINGLE_ENTITY Value="false"/>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+            </ROOT>
+          </TO_DOCVAR>
+          <!-- Get the properties of the selected entity and form the columns xml-->
+          <IF_TEST Test="count($root/ENTITY) = 1 and $root/ENTITY/@Value != ''">
+            <THEN>
+              <IF_TEST Test="$columns = null">
+                <THEN>
+                  <IF_TEST Test="$selectedDoc = null">
+                    <THEN>
+                      <REQUEST Name="getDocumentForm" ServiceName="BPE_META" AssignToVar="selectedDoc">
+                        <SERVICE Value="BCM_MASTER"/>
+                        <DOCUMENT Value="{substringBefore($root/ENTITY/@Value, '_AT')}"/>
+                      </REQUEST>
+                    </THEN>
+                  </IF_TEST>
+                  <TO_DOCVAR AssignToVar="columns">
+                    <COLUMNS/>
+                  </TO_DOCVAR>
+                  <!-- EQ: 580906 To support the xdoc tags of DEFINE_DOCUMENT & DOCUMENT -->
+                  <IF_TEST Test="count($selectedDoc/DEFINE_DOCUMENT/*) > 0">
+                    <THEN>
+                      <FOR_EACH SelectList="$selectedDoc/DEFINE_DOCUMENT/PROPERTY" CurrentElement="prop">
+                        <REQUEST Name="getFacetInfo" ServiceName="BPE_META" AssignToVar="colFacet">
+                          <FACET_CATEGORY>
+                            <SEGMENT Value="MDM"/>
+                            <SEGMENT Value="PRESENTATION"/>
+                            <SEGMENT Value="DOCUMENT"/>
+                            <SEGMENT Value="FIELD"/>
+                          </FACET_CATEGORY>
+                          <FACET_OF>
+                            <SEGMENT Value="{substringBefore($root/ENTITY/@Value, '_AT')}"/>
+                            <SEGMENT Value="{$prop/@Name}"/>
+                          </FACET_OF>
+                        </REQUEST>
+                        <IF_TEST Test="$colFacet/PRESENTATION/SEARCHABLE/@Value='true'">
+                          <THEN>
+                            <APPEND_TO_XML Select="$columns">
+                              <COLUMN Value="{$prop/@Name}" Id="{$prop/@Name}"/>
+                            </APPEND_TO_XML>
+                          </THEN>
+                        </IF_TEST>
+                      </FOR_EACH>
+                    </THEN>
+                    <ELSE>
+                      <FOR_EACH SelectList="$selectedDoc/DOCUMENT/PROPERTY" CurrentElement="prop">
+                        <REQUEST Name="getFacetInfo" ServiceName="BPE_META" AssignToVar="colFacet">
+                          <FACET_CATEGORY>
+                            <SEGMENT Value="MDM"/>
+                            <SEGMENT Value="PRESENTATION"/>
+                            <SEGMENT Value="DOCUMENT"/>
+                            <SEGMENT Value="FIELD"/>
+                          </FACET_CATEGORY>
+                          <FACET_OF>
+                            <SEGMENT Value="{substringBefore($root/ENTITY/@Value, '_AT')}"/>
+                            <SEGMENT Value="{$prop/@Name}"/>
+                          </FACET_OF>
+                        </REQUEST>
+                        <IF_TEST Test="$colFacet/PRESENTATION/SEARCHABLE/@Value='true'">
+                          <THEN>
+                            <APPEND_TO_XML Select="$columns">
+                              <COLUMN Value="{$prop/@Name}" Id="{$prop/@Name}"/>
+                            </APPEND_TO_XML>
+                          </THEN>
+                        </IF_TEST>
+                      </FOR_EACH>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <!-- Get the properties of the currently viewed entity and form the dynamic pgl xml-->
+          <IF_TEST Test="$root/ID/@Value != null and $root/ID/@Value != ''">
+            <THEN>
+              <IF_TEST Test="$dynamicPglData = null">
+                <THEN>
+                  <IF_TEST Test="$selectedDoc = null">
+                    <THEN>
+                      <REQUEST Name="getDocumentForm" ServiceName="BPE_META" AssignToVar="selectedDoc">
+                        <SERVICE Value="BCM_MASTER"/>
+                        <DOCUMENT Value="{substringBefore($root/ID/@Value, '_AT')}"/>
+                      </REQUEST>
+                    </THEN>
+                  </IF_TEST>
+                  <!-- Form dynamic pgl -->
+                  <TO_DOCVAR AssignToVar="dynamicPglData" IsLiteral="true">
+                    <DYNAMIC_PGL_DATA>
+                    </DYNAMIC_PGL_DATA>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="uitable" IsLiteral="true">
+                    <ui:table xmlns:ui="http://www.i2.com/ui" id="auditTable" displayText="Audit Data" select="$root/AUDIT_DATA" exportable="true">
+                    </ui:table>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="uifieldgroup" IsLiteral="true">
+                    <ui:field-group xmlns:ui="http://www.i2.com/ui" id="auditTableColumns">
+                      <ui:display-field displayText="Modified By" name="AT_MODIFIED_BY"/>
+                      <ui:display-field displayText="Modified On" name="AT_MODIFIED_ON"/>
+                      <ui:display-field displayText="Audit Action" name="AT_ACTION"/>
+                    </ui:field-group>
+                  </TO_DOCVAR>
+                  <ADD_CHILD DocVar="uitable" ChildDocVar="uifieldgroup"/>
+                  <ADD_CHILD DocVar="dynamicPglData" ChildDocVar="uitable"/>
+                  <!--EQ: 580906 To support the xdoc tags of DEFINE_DOCUMENT & DOCUMENT-->
+                  <IF_TEST Test="count($selectedDoc/DEFINE_DOCUMENT/*) > 0">
+                    <THEN>
+                      <FOR_EACH SelectList="$selectedDoc/DEFINE_DOCUMENT/PROPERTY" CurrentElement="prop">
+                        <APPEND_TO_XML Select="$uifieldgroup">
+                          <ui:display-field xmlns:ui="http://www.i2.com/ui" displayText="{$prop/@Name}" name="{$prop/@Name}"/>
+                        </APPEND_TO_XML>
+                      </FOR_EACH>
+                    </THEN>
+                    <ELSE>
+                      <FOR_EACH SelectList="$selectedDoc/DOCUMENT/PROPERTY" CurrentElement="prop">
+                        <APPEND_TO_XML Select="$uifieldgroup">
+                          <ui:display-field xmlns:ui="http://www.i2.com/ui" displayText="{$prop/@Name}" name="{$prop/@Name}"/>
+                        </APPEND_TO_XML>
+                      </FOR_EACH>
+                    </ELSE>
+                  </IF_TEST>
+                  <!--EQ: 580906 To support the xdoc tags of DEFINE_DOCUMENT & DOCUMENT-->
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$root/BUTTON_ID/@Value='change_entity'">
+            <THEN>
+              <IF_TEST Test="$columns != null">
+                <THEN>
+                  <ADD_CHILD DocVar="pglFormInput" ChildDocVar="columns"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$root/BUTTON_ID/@Value='change_column'">
+            <THEN>
+              <IF_TEST Test="$columns != null">
+                <THEN>
+                  <ADD_CHILD DocVar="pglFormInput" ChildDocVar="columns"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$root/BUTTON_ID/@Value='search_button' or $root/BUTTON_ID/@Value='view'">
+            <THEN>
+              <IF_TEST Test="$root/BUTTON_ID/@Value='view'">
+                <THEN>
+                  <SET Var="maxRows" FromValue="{$thisParam/auditTable_MAX_ROWS/@Value}"/>
+                  <IF_TEST Test="$maxRows = null">
+                    <THEN>
+                      <SET Var="maxRows" FromValue="10"/>
+                    </THEN>
+                  </IF_TEST>
+                  <SET Var="startCount" FromValue="{$thisParam/auditTable_START_COUNT/@Value}"/>
+                  <IF_TEST Test="$startCount = null">
+                    <THEN>
+                      <SET Var="startCount" FromValue="0"/>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="maxRows" FromValue="0"/>
+                  <SET Var="startCount" FromValue="0"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$root/ENTITY/@Value != null and $root/ENTITY/@Value != ''">
+                <!-- Either one or more entities have been selected -->
+                <THEN>
+                  <IF_TEST Test="$auditEntities = null">
+                    <!-- Search Button was clicked -->
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="auditEntities">
+                        <AUDIT_ENTITIES TotalRowCount="{count($root/ENTITY)}">
+                        </AUDIT_ENTITIES>
+                      </TO_DOCVAR>
+                      <ADD_CHILD DocVar="pglFormInput" ChildDocVar="auditEntities"/>
+                      <IF_TEST Test="$columns != null">
+                        <THEN>
+                          <ADD_CHILD DocVar="pglFormInput" ChildDocVar="columns"/>
+                        </THEN>
+                      </IF_TEST>
+                      <FOR_EACH SelectList="$root/ENTITY" CurrentElement="curentity">
+                        <REQUEST Name="getDocument" DocumentName="{$curentity/@Value}" ServiceName="BCM_MASTER" AssignToVar="auditReport" ReturnRowCount="yes" MaxRows="0" HandleException="true">
+                          <IF_TEST Test="$root/USER != null and  ($root/USER/@Value != null and strlen($root/USER/@Value) != 0)">
+                            <THEN>
+                              <TO_DOCVAR AssignToVar="orDoc">
+                                <OR>
+                                </OR>
+                              </TO_DOCVAR>
+                              <FOR_EACH SelectList="$root/USER" CurrentElement="user">
+                                <TO_DOCVAR AssignToVar="userDoc">
+                                  <AT_MODIFIED_BY Value="{$user/@Value}"/>
+                                </TO_DOCVAR>
+                                <ADD_CHILD DocVar="orDoc" ChildDocVar="userDoc"/>
+                              </FOR_EACH>
+                              <TO_XML Select="$orDoc"/>
+                            </THEN>
+                          </IF_TEST>
+                          <IF_TEST Test="$root/FROM_DATE/@Value != ''">
+                            <THEN>
+                              <TO_DOCVAR AssignToVar="fromDate">
+                                <AT_MODIFIED_ON Value="{$root/FROM_DATE/@Value}" MatchBy="GREATER_EQUAL"/>
+                              </TO_DOCVAR>
+                              <TO_XML Select="$fromDate"/>
+                            </THEN>
+                          </IF_TEST>
+                          <IF_TEST Test="$root/TO_DATE/@Value != ''">
+                            <THEN>
+                              <TO_DOCVAR AssignToVar="toDate">
+                                <AT_MODIFIED_ON Value="{concat($root/TO_DATE/@Value,' 23:59:59')}" MatchBy="LESS_EQUAL"/>
+                              </TO_DOCVAR>
+                              <TO_XML Select="$toDate"/>
+                            </THEN>
+                          </IF_TEST>
+                          <IF_TEST Test="$root/COLUMN/@Value != '' and $root/COLUMN_VALUE/@Value != '' and $root/COLUMN/@Value != null and $root/COLUMN_VALUE/@Value != null">
+                            <THEN>
+                              <FORM_SEARCH_FILTER Value="{$root}" AssignToVar="filters">
+                                <COLUMN_VALUE MultiValued="false"/>
+                              </FORM_SEARCH_FILTER>
+                              <SET Var="column" FromValue="{$filters/FILTER[@Name='COLUMN_VALUE']/COLUMN_VALUE}"/>
+                              <SET_NAME DocVar="column" FromValue="{$root/COLUMN/@Value}"/>
+                              <!--Eq:582164 To make the search case Insensitive -->
+                              <SET DocVar="column" Attribute="Value" FromValue="{upperCase($column/@Value)}"/>
+                              <SET DocVar="column" Attribute="ScalarFn" FromValue="upperCase"/>
+                              <!--EQ: 581152 To accomodate the characters-->
+                              <IF_TEST Test="$column/@Value= ''">
+                                <THEN>
+                                  <SET DocVar="column" Attribute="Value" FromValue="%"/>
+                                  <SET DocVar="column" Attribute="MatchBy" FromValue="ENDS_WITH"/>
+                                </THEN>
+                              </IF_TEST>
+                              <IF_TEST Test="$column/@Value= '%' and $column/@MatchBy='EQUAL'">
+                                <THEN>
+                                  <SET DocVar="column" Attribute="MatchBy" FromValue="ENDS_WITH"/>
+                                </THEN>
+                              </IF_TEST>
+                              <!--EQ: 581152 To accomodate the characters-->
+                              <TO_XML Select="$column"/>
+                            </THEN>
+                          </IF_TEST>
+                        </REQUEST>
+                        <IF_TEST Test="$auditReport/@Status = 'Error'">
+                          <THEN>
+                            <SET DocVar="pglFormInput" Property="ERROR_TAG" FromValue="Input String datatype incompatible with the column datatype."/>
+                          </THEN>
+                          <ELSE>
+                            <APPEND_TO_XML Select="$auditEntities">
+                              <AUDIT_ENTITY>
+                                <NAME Value="{substringBefore($curentity/@Value, '_AT')}"/>
+                                <ID Value="{$curentity/@Value}"/>
+                                <ROW_COUNT Value="{$auditReport/@TotalRowCount}"/>
+                              </AUDIT_ENTITY>
+                            </APPEND_TO_XML>
+                            <!--EQ:583802 Set the pipeline variable with the search params so that the view details will include only these params -->
+                            <TO_DOCVAR AssignToVar="searchParams">
+                              <PARAMS>
+                                <COLUMN Value="{$root/COLUMN/@Value}"/>
+                                <COLUMN_VALUE Value="{$root/COLUMN_VALUE/@Value}"/>
+                                <USER Value="{$root/USER/@Value}"/>
+                                <FromDate Value="{$root/FROM_DATE/@Value}"/>
+                                <ToDate Value="{$root/TO_DATE/@Value}"/>
+                              </PARAMS>
+                            </TO_DOCVAR>
+                            <!--EQ:583802 Set the pipeline variable with the search params so that the view details will include only these params -->
+                          </ELSE>
+                        </IF_TEST>
+                      </FOR_EACH>
+                    </THEN>
+                    <ELSE>
+                      <!-- View button was clicked -->
+                      <!-- Issue 581351 Hardcoding the order by clause in GET_DOCUMENT till the time we get support for Sorting in case of dynamic pgl -->
+                      <!--SET Var="sortBy" FromValue="{ifElse($thisParam/SORT_BY/@Value = null or $thisParam/SORT_BY/@Value = 'ID', 'AT_MODIFIED_ON', $thisParam/SORT_BY/@Value)}"/>
+                      <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Descending', $thisParam/SORT_ORDER/@Value)}"/>
+                      <TO_DOCVAR AssignToVar="orderBy">
+                        <ORDER_BY>
+                        </ORDER_BY>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="orderProp">
+                        <TEMP_PROP Sort="{$sortOrder}"/>
+                      </TO_DOCVAR>
+                      <SET_NAME Value="{$orderProp}" FromValue="{$sortBy}"/>
+                      <ADD_CHILD DocVar="orderBy" ChildDocVar="orderProp"/-->
+                      <GET_DOCUMENT Name="{$root/ID/@Value}" AssignToVar="auditReport" ServiceName="BCM_MASTER" ReturnRowCount="yes" MaxRows="{$maxRows}" StartAtRow="{$startCount}">
+                        <IF_TEST Test="$searchParams/USER != null and  ($searchParams/USER/@Value != null and strlen($searchParams/USER/@Value) != 0)">
+                          <THEN>
+                            <TO_DOCVAR AssignToVar="orDoc">
+                              <OR>
+                              </OR>
+                            </TO_DOCVAR>
+                            <FOR_EACH SelectList="$searchParams/USER" CurrentElement="user">
+                              <TO_DOCVAR AssignToVar="userDoc">
+                                <AT_MODIFIED_BY Value="{$user/@Value}"/>
+                              </TO_DOCVAR>
+                              <ADD_CHILD DocVar="orDoc" ChildDocVar="userDoc"/>
+                            </FOR_EACH>
+                            <TO_XML Select="$orDoc"/>
+                          </THEN>
+                        </IF_TEST>
+                        <IF_TEST Test="$searchParams/FromDate/@Value != ''">
+                          <THEN>
+                            <TO_DOCVAR AssignToVar="fromDate">
+                              <AT_MODIFIED_ON Value="{$searchParams/FromDate/@Value}" MatchBy="GREATER_EQUAL"/>
+                            </TO_DOCVAR>
+                            <TO_XML Select="$fromDate"/>
+                          </THEN>
+                        </IF_TEST>
+                        <IF_TEST Test="$searchParams/ToDate/@Value != ''">
+                          <THEN>
+                            <TO_DOCVAR AssignToVar="toDate">
+                              <AT_MODIFIED_ON Value="{concat($searchParams/ToDate/@Value,' 23:59:59')}" MatchBy="LESS_EQUAL"/>
+                            </TO_DOCVAR>
+                            <TO_XML Select="$toDate"/>
+                          </THEN>
+                        </IF_TEST>
+                        <IF_TEST Test="$searchParams/COLUMN/@Value != '' and $searchParams/COLUMN_VALUE/@Value != '' and $searchParams/COLUMN/@Value != null and $searchParams/COLUMN_VALUE/@Value != null">
+                          <THEN>
+                            <FORM_SEARCH_FILTER Value="{$searchParams}" AssignToVar="filters">
+                              <COLUMN_VALUE MultiValued="false"/>
+                            </FORM_SEARCH_FILTER>
+                            <SET Var="column" FromValue="{$filters/FILTER[@Name='COLUMN_VALUE']/COLUMN_VALUE}"/>
+                            <SET_NAME DocVar="column" FromValue="{$searchParams/COLUMN/@Value}"/>
+                            <!--EQ:584951 To make the search and view case insensitive-->
+                            <SET DocVar="column" Attribute="Value" FromValue="{upperCase($column/@Value)}"/>
+                            <SET DocVar="column" Attribute="ScalarFn" FromValue="upperCase"/>
+                            <!--EQ:584951 To make the search and view case insensitive-->
+                            <!--EQ: 582734 & 581152 To accomodate the characters-->
+                            <IF_TEST Test="$column/@Value= ''">
+                              <THEN>
+                                <SET DocVar="column" Attribute="Value" FromValue="%"/>
+                                <SET DocVar="column" Attribute="MatchBy" FromValue="ENDS_WITH"/>
+                              </THEN>
+                            </IF_TEST>
+                            <IF_TEST Test="$column/@Value= '%' and $column/@MatchBy='EQUAL'">
+                              <THEN>
+                                <SET DocVar="column" Attribute="MatchBy" FromValue="ENDS_WITH"/>
+                              </THEN>
+                            </IF_TEST>
+                            <!--EQ: 582734 & 581152To accomodate the characters-->
+                            <TO_XML Select="$column"/>
+                          </THEN>
+                        </IF_TEST>
+                        <ORDER_BY>
+                          <AT_MODIFIED_ON Sort="Descending"/>
+                        </ORDER_BY>
+                        <!--EQ:583802 To avoid the inclusion of the search parameters again in the get document -->
+                        <!--TO_XML Select="$orderBy"/-->
+                      </GET_DOCUMENT>
+                      <IF_TEST Test="count($auditReport/*) > 0">
+                        <THEN>
+                          <TO_DOCVAR AssignToVar="auditData">
+                            <AUDIT_DATA TotalRowCount="{$auditReport/@TotalRowCount}">
+                            </AUDIT_DATA>
+                          </TO_DOCVAR>
+                          <SET_NAME SelectList="$auditReport/*" FromValue="AUDIT_DATA_ROW"/>
+                          <ADD_CHILDREN DocVar="auditData" FromSelectList="$auditReport/*"/>
+                          <ADD_CHILD DocVar="pglFormInput" ChildDocVar="auditData"/>
+                          <ADD_CHILD DocVar="pglFormInput" ChildDocVar="dynamicPglData"/>
+                          <ADD_CHILD DocVar="pglFormInput" ChildDocVar="auditEntities"/>
+                          <IF_TEST Test="$columns != null">
+                            <THEN>
+                              <ADD_CHILD DocVar="pglFormInput" ChildDocVar="columns"/>
+                            </THEN>
+                          </IF_TEST>
+                        </THEN>
+                        <ELSE>
+                          <IF_TEST Test="$columns != null">
+                            <THEN>
+                              <ADD_CHILD DocVar="pglFormInput" ChildDocVar="columns"/>
+                            </THEN>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <!-- All entities was selected -->
+                  <IF_TEST Test="$auditEntities = null">
+                    <!-- Search Button was clicked -->
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="auditEntities">
+                        <AUDIT_ENTITIES TotalRowCount="{count($entities/ENTITY)}">
+                        </AUDIT_ENTITIES>
+                      </TO_DOCVAR>
+                      <ADD_CHILD DocVar="pglFormInput" ChildDocVar="auditEntities"/>
+                      <IF_TEST Test="$columns != null">
+                        <THEN>
+                          <ADD_CHILD DocVar="pglFormInput" ChildDocVar="columns"/>
+                        </THEN>
+                      </IF_TEST>
+                      <FOR_EACH SelectList="$entities/ENTITY" CurrentElement="curentity">
+                        <GET_DOCUMENT Name="{$curentity/@Id}" AssignToVar="auditReport" ServiceName="BCM_MASTER" ReturnRowCount="yes" MaxRows="0">
+                          <IF_TEST Test="$root/USER/@Value != ''">
+                            <THEN>
+                              <TO_DOCVAR AssignToVar="orDoc">
+                                <OR>
+                                </OR>
+                              </TO_DOCVAR>
+                              <FOR_EACH SelectList="$root/USER" CurrentElement="user">
+                                <TO_DOCVAR AssignToVar="userDoc">
+                                  <AT_MODIFIED_BY Value="{$user/@Value}"/>
+                                </TO_DOCVAR>
+                                <ADD_CHILD DocVar="orDoc" ChildDocVar="userDoc"/>
+                              </FOR_EACH>
+                              <TO_XML Select="$orDoc"/>
+                            </THEN>
+                          </IF_TEST>
+                          <IF_TEST Test="$root/FROM_DATE/@Value != ''">
+                            <THEN>
+                              <TO_DOCVAR AssignToVar="fromDate">
+                                <AT_MODIFIED_ON Value="{$root/FROM_DATE/@Value}" MatchBy="GREATER_EQUAL"/>
+                              </TO_DOCVAR>
+                              <TO_XML Select="$fromDate"/>
+                            </THEN>
+                          </IF_TEST>
+                          <IF_TEST Test="$root/TO_DATE/@Value != ''">
+                            <THEN>
+                              <TO_DOCVAR AssignToVar="toDate">
+                                <AT_MODIFIED_ON Value="{concat($root/TO_DATE/@Value,' 23:59:59')}" MatchBy="LESS_EQUAL"/>
+                              </TO_DOCVAR>
+                              <TO_XML Select="$toDate"/>
+                            </THEN>
+                          </IF_TEST>
+                        </GET_DOCUMENT>
+                        <APPEND_TO_XML Select="$auditEntities">
+                          <AUDIT_ENTITY>
+                            <NAME Value="{substringBefore($curentity/@Id, '_AT')}"/>
+                            <ID Value="{$curentity/@Id}"/>
+                            <ROW_COUNT Value="{$auditReport/@TotalRowCount}"/>
+                          </AUDIT_ENTITY>
+                        </APPEND_TO_XML>
+                        <!--EQ:583802 Set the pipeline variable with the search params so that the view details will include only these params -->
+                        <TO_DOCVAR AssignToVar="searchParams">
+                          <PARAMS>
+                            <COLUMN Value="{$root/COLUMN/@Value}"/>
+                            <COLUMN_VALUE Value="{$root/COLUMN_VALUE/@Value}"/>
+                            <USER Value="{$root/USER/@Value}"/>
+                            <FromDate Value="{$root/FROM_DATE/@Value}"/>
+                            <ToDate Value="{$root/TO_DATE/@Value}"/>
+                          </PARAMS>
+                        </TO_DOCVAR>
+                        <!--EQ:583802 Set the pipeline variable with the search params so that the view details will include only these params -->
+                      </FOR_EACH>
+                    </THEN>
+                    <ELSE>
+                      <!-- View button was clicked -->
+                      <!-- Issue 581351Hardcoding the order by clause in GET_DOCUMENT till the time we get support for Sorting in case of dynamic pgl -->
+                      <!--SET Var="sortBy" FromValue="{ifElse($thisParam/SORT_BY/@Value = null or $thisParam/SORT_BY/@Value = 'ID', 'AT_MODIFIED_ON', $thisParam/SORT_BY/@Value)}"/>
+                      <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Descending', $thisParam/SORT_ORDER/@Value)}"/>
+                      <TO_DOCVAR AssignToVar="orderBy">
+                        <ORDER_BY>
+                        </ORDER_BY>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="orderProp">
+                        <TEMP_PROP Sort="{$sortOrder}"/>
+                      </TO_DOCVAR>
+                      <SET_NAME Value="{$orderProp}" FromValue="{$sortBy}"/>
+                      <ADD_CHILD DocVar="orderBy" ChildDocVar="orderProp"/-->
+                      <GET_DOCUMENT Name="{$root/ID/@Value}" AssignToVar="auditReport" ServiceName="BCM_MASTER" ReturnRowCount="yes" MaxRows="{$maxRows}" StartAtRow="{$startCount}">
+                        <IF_TEST Test="$searchParams/USER/@Value != ''">
+                          <THEN>
+                            <TO_DOCVAR AssignToVar="orDoc">
+                              <OR>
+                              </OR>
+                            </TO_DOCVAR>
+                            <FOR_EACH SelectList="$searchParams/USER" CurrentElement="user">
+                              <TO_DOCVAR AssignToVar="userDoc">
+                                <AT_MODIFIED_BY Value="{$user/@Value}"/>
+                              </TO_DOCVAR>
+                              <ADD_CHILD DocVar="orDoc" ChildDocVar="userDoc"/>
+                            </FOR_EACH>
+                            <TO_XML Select="$orDoc"/>
+                          </THEN>
+                        </IF_TEST>
+                        <IF_TEST Test="$searchParams/FromDate/@Value != ''">
+                          <THEN>
+                            <TO_DOCVAR AssignToVar="fromDate">
+                              <AT_MODIFIED_ON Value="{$searchParams/FromDate/@Value}" MatchBy="GREATER_EQUAL"/>
+                            </TO_DOCVAR>
+                            <TO_XML Select="$fromDate"/>
+                          </THEN>
+                        </IF_TEST>
+                        <IF_TEST Test="$searchParams/ToDate/@Value != ''">
+                          <THEN>
+                            <TO_DOCVAR AssignToVar="toDate">
+                              <AT_MODIFIED_ON Value="{concat($searchParams/ToDate/@Value,' 23:59:59')}" MatchBy="LESS_EQUAL"/>
+                            </TO_DOCVAR>
+                            <TO_XML Select="$toDate"/>
+                          </THEN>
+                        </IF_TEST>
+                        <ORDER_BY>
+                          <AT_MODIFIED_ON Sort="Descending"/>
+                        </ORDER_BY>
+                        <!--TO_XML Select="$orderBy"/-->
+                      </GET_DOCUMENT>
+                      <IF_TEST Test="count($auditReport/*) > 0">
+                        <THEN>
+                          <TO_DOCVAR AssignToVar="auditData">
+                            <AUDIT_DATA TotalRowCount="{$auditReport/@TotalRowCount}">
+                            </AUDIT_DATA>
+                          </TO_DOCVAR>
+                          <SET_NAME SelectList="$auditReport/*" FromValue="AUDIT_DATA_ROW"/>
+                          <ADD_CHILDREN DocVar="auditData" FromSelectList="$auditReport/*"/>
+                          <ADD_CHILD DocVar="pglFormInput" ChildDocVar="auditData"/>
+                          <ADD_CHILD DocVar="pglFormInput" ChildDocVar="dynamicPglData"/>
+                          <ADD_CHILD DocVar="pglFormInput" ChildDocVar="auditEntities"/>
+                          <IF_TEST Test="$columns != null">
+                            <THEN>
+                              <ADD_CHILD DocVar="pglFormInput" ChildDocVar="columns"/>
+                            </THEN>
+                          </IF_TEST>
+                        </THEN>
+                        <ELSE>
+                          <IF_TEST Test="$columns != null">
+                            <THEN>
+                              <ADD_CHILD DocVar="pglFormInput" ChildDocVar="columns"/>
+                            </THEN>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction = 'search_button'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Data Audit Report" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction = 'change_entity'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Data Audit Report" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction = 'change_column'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Data Audit Report" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction = 'view'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Data Audit Report" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="done6" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done6">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="10,10" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <mgcnode Name="Data Audit Report" location="113,8" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Data Audit Report" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done6 location="220,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done6" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done6>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="42,21" endpoint="113,31" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="92,19,4,4" ctrlRect2="57,29,4,4"/>
+      </start2>
+      <mgcnode Name="Data Audit Report">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="113,41" endpoint="113,31" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="36,39,4,4" ctrlRect2="36,29,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="113,41" endpoint="113,31" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="36,39,4,4" ctrlRect2="36,29,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="113,41" endpoint="113,31" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="36,39,4,4" ctrlRect2="36,29,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="145,41" endpoint="145,31" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="218,39,4,4" ctrlRect2="218,29,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="145,41" endpoint="220,32" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="198,39,4,4" ctrlRect2="161,30,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard4" location="325,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="8" textAttrsKey0="auditEntities : xml" textAttrsKey1="colDataType : xml" textAttrsKey2="columns : xml" textAttrsKey3="dynamicPglData : xml" textAttrsKey4="entities : xml" textAttrsKey5="searchParams : xml" textAttrsKey6="selectedDoc : xml" textAttrsKey7="users : xml">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="auditEntities" Type="xml" Comment=""/>
+        <variable Name="columns" Type="xml" Comment=""/>
+        <variable Name="dynamicPglData" Type="xml" Comment=""/>
+        <variable Name="entities" Type="xml" Comment=""/>
+        <variable Name="selectedDoc" Type="xml" Comment=""/>
+        <variable Name="users" Type="xml" Comment=""/>
+        <variable Name="searchParams" Type="xml" Comment=""/>
+        <variable Name="colDataType" Type="xml" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="289" Version="1.0" Name="DefineAttributes" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <nodes>
+    <done Name="done4" InputVar="{nodeInput,xml}">
+      <next_nodes/>
+      <actions>
+        <action>
+          <APPEND_TO_XML DocVar="thisReturn">
+            <itemLocations>
+              <FOR_EACH CurrentElement="item" SelectList="$nodeInput/items/item">
+                <FOR_EACH CurrentElement="location" SelectList="$nodeInput/locations/location">
+                  <APPEND_TO_XML>
+                    <itemLocation>
+                      <locationID Value="{$location/locationID/@Value}"/>
+                      <itemID Value="{$item/itemID/@Value}"/>
+                      <TO_XML Select="$thisParam/replenishmentPolicy"/>
+                      <TO_XML Select="$thisParam/safetyStockType"/>
+                      <TO_XML Select="$thisParam/demandType"/>
+                      <TO_XML Select="$thisParam/storageClass"/>
+                      <TO_XML Select="$thisParam/inventoryPolicy"/>
+                      <TO_XML Select="$thisParam/isProductionPlanBuffer"/>
+                      <TO_XML Select="$thisParam/isSellable"/>
+                      <TO_XML Select="$thisParam/description"/>
+                      <TO_XML Select="$thisParam/plannerCode"/>
+                      <TO_XML Select="$thisParam/udSupplyChainStage"/>
+                      <TO_XML Select="$thisParam/udBERIPoint"/>
+                      <TO_XML Select="$thisParam/releaseFence"/>
+                      <TO_XML Select="$thisParam/udReleaseFenceUOM"/>
+                      <TO_XML Select="$thisParam/releaseBlock"/>
+                      <TO_XML Select="$thisParam/releaseAgainstScheduledReceiptsFlag"/>
+                      <TO_XML Select="$thisParam/udReleaseCoProductPO"/>
+                      <TO_XML Select="$thisParam/minOnHand"/>
+                      <TO_XML Select="$thisParam/maxOnHand"/>
+                      <TO_XML Select="$thisParam/coveragePeriod"/>
+                      <TO_XML Select="$thisParam/lookAheadPeriod"/>
+                      <TO_XML Select="$thisParam/daysOfCoverage"/>
+                      <TO_XML Select="$thisParam/maxDaysOfCoverage"/>
+                      <TO_XML Select="$thisParam/periodUOM"/>
+                      <TO_XML Select="$thisParam/qtyUOM"/>
+                      <TO_XML Select="$thisParam/safetyStockPolicy"/>
+                      <TO_XML Select="$thisParam/demandPriority"/>
+                      <TO_XML Select="$thisParam/averageSellingPrice"/>
+                      <status Value="ACTIVE"/>
+                    </itemLocation>
+                  </APPEND_TO_XML>
+                </FOR_EACH>
+              </FOR_EACH>
+            </itemLocations>
+          </APPEND_TO_XML>
+          <REMOVE_CHILDREN DocVar="thisReturn" ChildName="items"/>
+          <REMOVE_CHILDREN DocVar="thisReturn" ChildName="locations"/>
+          <FOR_EACH CurrentElement="itemLoc" SelectList="$thisReturn/itemLocations/itemLocation">
+            <REQUEST Name="createItemLocation" ServiceName="BCM_MASTER" AssignToVar="response" UserId="{$userId}">
+              <TO_XML SelectList="$itemLoc/*"/>
+            </REQUEST>
+          </FOR_EACH>
+        </action>
+      </actions>
+    </done>
+    <start Name="start">
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="Define Attributes" Description=""/>
+      </next_nodes>
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="nodeOutput">
+            <PARAMETERS>
+              <TO_XML SelectList="$thisParam/*"/>
+            </PARAMETERS>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+    </start>
+    <ui_form2 Name="Define Attributes" Description="Define Attributes" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" Template="DefineAttributes.pgl" InputVar="{nodeInput,xml}" ShowInBreadCrumbs="SHOW">
+      <pre_actions>
+        <action>
+          <PRINT Value="pre_actions Define Attributes"/>
+          <PRINT Value="{$nodeInput}"/>
+          <SET DocVar="thisParam" Property="replenishmentPolicy" FromValue="{ifElse($thisParam/replenishmentPolicy/@Value = null, 'PRODUCING_FLOW_CALENDAR_FILTER_AND_RANK', $thisParam/replenishmentPolicy/@Value)}"/>
+          <SET DocVar="thisParam" Property="safetyStockPolicy" FromValue="{ifElse($thisParam/replenishmentPolicy/@Value = null or $thisParam/replenishmentPolicy/@Value = 'SupplyCalendar', 'PRODUCING_FLOW_CALENDAR_FILTER_AND_RANK', $thisParam/replenishmentPolicy/@Value)}"/>
+          <GET_DOCUMENT Name="CODE_MASTER_VALUE" ServiceName="USER_SECURITY" AssignToVar="replenishmentPolicy">
+            <STATUS Value="ACTIVE"/>
+            <TYPE_ID Value="ITEMLOC_REP_POLICY"/>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT Name="CODE_MASTER_VALUE" ServiceName="USER_SECURITY" AssignToVar="safetyStockType">
+            <STATUS Value="ACTIVE"/>
+            <TYPE_ID Value="ITEMLOC_SAFETY_STOCK_TYPE"/>
+            <PARENT_ID Value="{$thisParam/replenishmentPolicy/@Value}"/>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT Name="CODE_MASTER_VALUE" ServiceName="USER_SECURITY" AssignToVar="timeUOM">
+            <STATUS Value="ACTIVE"/>
+            <TYPE_ID Value="TIME_UOM"/>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT Name="CODE_MASTER_VALUE" ServiceName="USER_SECURITY" AssignToVar="qtyUOM">
+            <STATUS Value="ACTIVE"/>
+            <TYPE_ID Value="QTY_UOM"/>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT Name="CODE_MASTER_VALUE" ServiceName="USER_SECURITY" AssignToVar="storageClass">
+            <STATUS Value="ACTIVE"/>
+            <TYPE_ID Value="STORAGE_CLASS"/>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT Name="CODE_MASTER_VALUE" ServiceName="USER_SECURITY" AssignToVar="invPolicy">
+            <STATUS Value="ACTIVE"/>
+            <TYPE_ID Value="ITEMLOC_INVENTORY_POLICY"/>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT Name="CODE_MASTER_VALUE" ServiceName="USER_SECURITY" AssignToVar="demandType">
+            <STATUS Value="ACTIVE"/>
+            <TYPE_ID Value="DEMAND_TYPE"/>
+          </GET_DOCUMENT>
+          <REQUEST Name="getCODPCodes" ServiceName="BCM_MASTER" AssignToVar="supplyChainStage"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$thisParam/*"/>
+              <TO_XML SelectList="$nodeInput/items"/>
+              <TO_XML SelectList="$nodeInput/locations"/>
+              <OPTIONS>
+                <ITEMLOC_REP_POLICY>
+                  <DROP_DOWN_OPTIONS SelectList="$replenishmentPolicy/CODE_MASTER_VALUE" Id="VALUE_ID" Value="DESCRIPTION"/>
+                </ITEMLOC_REP_POLICY>
+                <ITEMLOC_SAFETY_STOCK_TYPE>
+                  <DROP_DOWN_OPTIONS SelectList="$safetyStockType/CODE_MASTER_VALUE" Id="VALUE_ID" Value="DESCRIPTION"/>
+                </ITEMLOC_SAFETY_STOCK_TYPE>
+                <DEMAND_TYPE>
+                  <DROP_DOWN_OPTIONS SelectList="$demandType/CODE_MASTER_VALUE" Id="VALUE_ID" Value="DESCRIPTION"/>
+                </DEMAND_TYPE>
+                <STORAGE_CLASS>
+                  <DROP_DOWN_OPTIONS SelectList="$storageClass/CODE_MASTER_VALUE" Id="VALUE_ID" Value="DESCRIPTION"/>
+                </STORAGE_CLASS>
+                <ITEMLOC_INVENTORY_POLICY>
+                  <DROP_DOWN_OPTIONS SelectList="$invPolicy/CODE_MASTER_VALUE" Id="VALUE_ID" Value="DESCRIPTION"/>
+                </ITEMLOC_INVENTORY_POLICY>
+                <TIME_UOM>
+                  <DROP_DOWN_OPTIONS SelectList="$timeUOM/CODE_MASTER_VALUE" Id="VALUE_ID" Value="DESCRIPTION"/>
+                </TIME_UOM>
+                <QTY_UOM>
+                  <DROP_DOWN_OPTIONS SelectList="$qtyUOM/CODE_MASTER_VALUE" Id="VALUE_ID" Value="DESCRIPTION"/>
+                </QTY_UOM>
+                <SUPPLY_CHAIN_STAGE>
+                  <DROP_DOWN_OPTIONS SelectList="$supplyChainStage/udSupplyChainStage" Id="udSupplyChainStage" Value="description"/>
+                </SUPPLY_CHAIN_STAGE>
+                <BOOLEAN>
+                  <OPTION Id="TRUE" Value="True"/>
+                  <OPTION Id="FALSE" Value="False"/>
+                </BOOLEAN>
+              </OPTIONS>
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="nodeInputForPostAction">
+            <TO_XML SelectList="$nodeInput"/>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <TO_DOCVAR AssignToVar="nodeOutput">
+          <PARAMETERS>
+            <!-- nodeInput is not available for some reason-->
+            <TO_XML SelectList="$nodeInputForPostAction/items"/>
+            <TO_XML SelectList="$nodeInputForPostAction/locations"/>
+            <TO_XML SelectList="$pglFormOutput/*"/>
+          </PARAMETERS>
+        </TO_DOCVAR>
+      </post_actions>
+      <if_cond Value="$userAction = 'update_button'">
+        <next_nodes OutputVar="{nodeOutput,xml}">
+          <next_node Name="Define Attributes" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='next'">
+        <next_nodes OutputVar="{nodeOutput,xml}">
+          <next_node Name="done4" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{nodeOutput,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <variables>
+    <variable Name="nodeInputForPostAction" Type="xml" Comment=""/>
+  </variables>
+  <mgcview>
+    <mgcnodes>
+      <done4 location="245,95" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR">
+        <textProps text="done4"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done4>
+      <start location="49,95" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR">
+        <textProps text="start"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start>
+      <mgcnode Name="Define Attributes" location="147,95" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR">
+        <textProps text="Define Attributes"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView fade="false" startpoint="81,128" endpoint="147,119" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" showCaption="false"/>
+      </start>
+      <mgcnode Name="Define Attributes">
+        <nextNodeView fade="false" startpoint="155,95" endpoint="163,95" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" showCaption="false" captionText="[$userAction = 'update_button']"/>
+        <nextNodeView fade="false" startpoint="179,107" endpoint="245,118" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" textRect="160,106,102,12" showCaption="false" captionText="[$userAction ='next']"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard286" location="5,5" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" textAttrsSize="1" textAttrsKey0="nodeInputForPostAction : xml">
+      <textProps text="Pipeline"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="nodeInputForPostAction" Type="xml" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

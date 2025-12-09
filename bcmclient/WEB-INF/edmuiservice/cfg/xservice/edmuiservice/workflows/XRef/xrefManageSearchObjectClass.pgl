@@ -1,0 +1,52 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="xrefManageSearchObjectClass.pgl">
+  <ui:table id="ObjectTable" displayText="Select Object Class" displayTextNoRecords="No Records Found" rowId="ObjectClassMnemonicValue" select="OBJECT_CLASS" rowSrc="ObjectClass" selectable="Single" doPaging="true" maxRows="10" startAtRow="$root/StartAtRow/@Value" filter="true" postRowIdAs="SELECTED_ITEM">
+    <ui:field-group id="fg1">
+      <ui:display-field id="ObjectClassMnemonicValue" name="ObjectClassMnemonicValue" displayText="Name" />
+      <!--      <ui:display-field id="ObjectClassName" name="ObjectClassName" displayText="Name"/>-->
+      <ui:display-field id="ObjectClassDescription" name="ObjectClassDescription" displayText="Description" />
+      <ui:dropdown id="ObjectClassDomain" sortable="true" name="ObjectClassDomain" size="1" selectOne="true" editable="false" displayText="CodeDecode/Xref">
+        <ui:option id="1" value="CodeDecode" selected="{$root/CLASS_DOMAIN/@Value=1}" />
+        <ui:option id="0" value="Xref" selected="{$root/CLASS_DOMAIN/@Value=0}" />
+      </ui:dropdown>
+      <ui:dropdown id="ObjectClassStatus" name="ObjectClassStatus" sortable="true" displayText="Status" size="1" selectOne="true" editable="false">
+        <ui:option id="1" value="Active" selected="{$root/CLASS_STATUS/@Value=1}" />
+        <ui:option id="0" value="Delete" selected="{$root/CLASS_STATUS/@Value=0}" />
+      </ui:dropdown>
+      <ui:display-field id="LastModifiedDate" name="LastModifiedDate" displayText="LastModifiedDate" filter="false" />
+    </ui:field-group>
+    <ui:buttons id="bg1">
+      <ui:button id="Cancel" name="Cancel" displayText="Cancel" onClick="javascript:window.close();" />
+      <ui:divider id="div1" />
+      <ui:button id="Select" name="Select" displayText="Select and Return" onClick="javascript:on_select()" />
+    </ui:buttons>
+  </ui:table>
+  <ui:script>function on_select()
+  {
+    var x = document.getElementsByName( 'SELECTED_ITEM' );
+		
+    var length = x.length;
+    var selectedObjClass = null;
+    
+    for(i=0; i&lt;length; i++)
+    {		
+      var t = x[ i ];
+	//	alert(t);
+      if ( t.checked )
+      {
+        selectedObjClass = t.value;
+      }
+    }
+					
+			if(selectedObjClass == '' || selectedObjClass == null)
+				{
+					core_alert('Please select a valid ObjectClass value.');
+				}
+				else{
+					parent.opener.form.ObjectClass.value =selectedObjClass;
+					parent.opener.onValueChange('ObjectClass');	  
+					window.close();
+					}		
+			
+}</ui:script>
+</ui:page-group>
+

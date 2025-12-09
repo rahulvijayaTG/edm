@@ -1,0 +1,2482 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="3305" ShowInBreadCrumbs="true" Version="1.0" Name="wfTLManageTLaneXItem" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="appliedFilters" Type="xml" Comment=""/>
+    <variable Name="augmentedLaneItemSearch" Type="xml" Comment=""/>
+    <variable Name="dropDownValues" Type="xml" Comment=""/>
+    <variable Name="isSearch" Type="string" Comment=""/>
+    <variable Name="laneDetails" Type="xml" Comment=""/>
+    <variable Name="laneItemSrchResult" Type="xml" Comment=""/>
+    <variable Name="massUpdateList" Type="xml" Comment=""/>
+    <variable Name="removeSel" Type="string" Comment=""/>
+    <variable Name="successSave" Type="string" Comment=""/>
+    <variable Name="validationMessage" Type="xml" Comment=""/>
+    <variable Name="massUpdateSelectAll" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+        <action>
+          <SET DocVar="successSave" FromValue="YES"/>
+          <SET DocVar="isSearch" FromValue="NO"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Transportation Lane Product Assignment" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Transportation Lane Product Assignment" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="iscpTLLaneItemSearchAndEdit.pgl">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$userAction = 'delete' or $userAction = 'search_button'">
+            <THEN>
+              <SET Var="paginateStart" FromValue="0"/>
+              <TO_DOCVAR AssignToVar="augmentedLaneItemSearch">
+                <ROOT/>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+            </ELSE>
+          </IF_TEST>
+          <!-- SIR161472 6/26/08 Zia Rehman Start-->
+          <IF_TEST Test="$userAction = 'save_copy' or $userAction = 'save' or $userAction = 'cancel'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="augmentedLaneItemSearch">
+                <ROOT/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <!-- SIR161472 6/26/08 Zia Rehman End-->
+          <IF_TEST Test="$userAction = 'cancel' or $userAction = 'save_copy'">
+            <THEN>
+              <SET Var="paginateStart" FromValue="{ifElse($thisReturn/START_COUNT/@Value = null or $thisReturn/START_COUNT/@Value = '', '0', $thisReturn/START_COUNT/@Value)}"/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="pgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '10', $thisParam/MAX_ROWS/@Value)}"/>
+          <SET Var="sortBy" FromValue="{ifElse($thisParam/SORT_BY/@Value = null, 'ItemIdentifier', $thisParam/SORT_BY/@Value)}"/>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+          <MAKE_INSTANCE_DOCUMENT Name="{$sortBy}" AssignToVar="sortByTag"/>
+          <SET DocVar="sortByTag" Attribute="Sort" FromValue="{$sortOrder}"/>
+          <SET DocVar="thisParam" Property="SRCH_STATE" FromValue="ACTIVE"/>
+          <IF_TEST Test="$thisParam/TO_SRCH_MOD_DATE/@Value != null and $thisParam/TO_SRCH_MOD_DATE/@Value !=''">
+            <THEN>
+              <SET_PROPS Select="$thisParam">
+                <TO_SRCH_MOD_DATE Value="{concat($thisParam/TO_SRCH_MOD_DATE/@Value,' 23:59:59')}"/>
+              </SET_PROPS>
+            </THEN>
+          </IF_TEST>
+          <!-- if test condition for useraction fetchRPLUom by Vamshi start -->
+          <IF_TEST Test="$userAction = 'fetchRPLUom'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="xyz2">
+                <MYDOCUMENT>
+                  <INPUT>
+                    <TO_XML SelectList="$thisParam/*"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="SELECTED_LANEITEM">
+                    <SEQ_NUM/>
+                  </COLLATE_LIST>
+                </MYDOCUMENT>
+              </TO_DOCVAR>
+              <COLLATE_XML DocVar="xyz2" AssignToVar="selectedLaneItemList"/>
+              <TO_DOCVAR AssignToVar="xyz1">
+                <MYDOCUMENT>
+                  <INPUT>
+                    <TO_XML SelectList="$thisParam/*"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="SELECTED_LANEITEM_DETAILS">
+                    <SeqNum/>
+                    <TransportLaneXItemCommentText/>
+                    <origComments/>
+                    <EffectiveEndDate/>
+                    <ReplenishmentLotSize/>
+                    <ReplenishmentLotSizeUOM/>
+                    <ReplenishmentRoundingValue/>
+                    <UnloadingTime/>
+                    <LoadingTime/>
+                    <SourcingPriority/>
+                    <TransportModePriority/>
+                    <DestinationReceivingDays/>
+                  </COLLATE_LIST>
+                </MYDOCUMENT>
+              </TO_DOCVAR>
+              <COLLATE_XML DocVar="xyz1" AssignToVar="selectedLaneItemDetailsList"/>
+              <SET Var="dummycounterforRPLUom" FromValue="0"/>
+              <FOR_EACH SelectList="$selectedLaneItemList/SELECTED_LANEITEM" CurrentElement="outerId">
+                <FOR_EACH SelectList="$selectedLaneItemDetailsList/SELECTED_LANEITEM_DETAILS" CurrentElement="innerId">
+                  <IF_TEST Test="$outerId/SEQ_NUM/@Value=$innerId/SeqNum/@Value ">
+                    <THEN>
+                      <SET_PROPS Select="$laneItemSrchResult/LANE_ITEM_DETAILS/*[SeqNum[@Value=$innerId/SeqNum/@Value]]">
+                        <TransportLaneXItemCommentText Value="{$innerId/TransportLaneXItemCommentText/@Value}"/>
+                        <EffectiveEndDate Value="{$innerId/EffectiveEndDate/@Value}"/>
+                        <ReplenishmentLotSize Value="{$innerId/ReplenishmentLotSize/@Value}"/>
+                        <ReplenishmentLotSizeUOM Value="{$innerId/ReplenishmentLotSizeUOM/@Value}"/>
+                        <ReplenishmentRoundingValue Value="{$innerId/ReplenishmentRoundingValue/@Value}"/>
+                        <UnloadingTime Value="{$innerId/UnloadingTime/@Value}"/>
+                        <LoadingTime Value="{$innerId/LoadingTime/@Value}"/>
+                        <SourcingPriority Value="{$innerId/SourcingPriority/@Value}"/>
+                        <TransportModePriority Value="{$innerId/TransportModePriority/@Value}"/>
+                        <SUN Value="{ifElse(subString($innerId/DestinationReceivingDays/@Value,0,1)  = '1','true','false')}"/>
+                        <MON Value="{ifElse(subString($innerId/DestinationReceivingDays/@Value,1,2)  = '1','true','false')}"/>
+                        <TUE Value="{ifElse(subString($innerId/DestinationReceivingDays/@Value,2,3)  = '1','true','false')}"/>
+                        <WED Value="{ifElse(subString($innerId/DestinationReceivingDays/@Value,3,4)  = '1','true','false')}"/>
+                        <THU Value="{ifElse(subString($innerId/DestinationReceivingDays/@Value,4,5)  = '1','true','false')}"/>
+                        <FRI Value="{ifElse(subString($innerId/DestinationReceivingDays/@Value,5,6)  = '1','true','false')}"/>
+                        <SAT Value="{ifElse(subString($innerId/DestinationReceivingDays/@Value,6,7)  = '1','true','false')}"/>
+                      </SET_PROPS>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$outerId/SEQ_NUM/@Value=$innerId/SeqNum/@Value and innerId/TransportLaneXItemCommentText/@Value != innerId/origComments/@Value">
+                    <THEN>
+                      <SET Var="dummycounterforRPLUom" FromValue="{$dummycounter + 1}"/>
+                    </THEN>
+                  </IF_TEST>
+                </FOR_EACH>
+              </FOR_EACH>
+              <SET Var="selectedRPLItem" FromValue="{$thisParam/SelectedRPLUOMItemVal/@Value}"/>
+              <SET Var="selectedRPLUOM" FromValue="{$thisParam/SelectedRPLUOMVal/@Value}"/>
+              <SET Var="selectedSEQNUM" FromValue="{$thisParam/SelectedSEQUENCENUM/@Value}"/>
+              <REQUEST Name="getRPLUomValueForItem" ServiceName="PEDM_MASTER" AssignToVar="newRPLUom">
+                <ReplenishmentLotSizeUOM Value="{$selectedRPLUOM/@Value}"/>
+                <ItemIdentification Value="{$selectedRPLItem/@Value}"/>
+              </REQUEST>
+              <SET_PROPS Select="$laneItemSrchResult/LANE_ITEM_DETAILS/*[SeqNum[@Value=$selectedSEQNUM]]">
+                <ReplenishmentLotSize Value="{$newRPLUom/rplUOMValforItem/@Value}"/>
+                <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+                <!--<ReplenishmentRoundingValue Value="{$newRPLUom/rplUOMValforItem/@Value}"/>-->
+                <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+                <ReplenishmentLotSizeUOM Value="{$selectedRPLUOM}"/>
+                <ReplenishmentLotSizeUOMHidden Value="{$selectedRPLUOM}"/>
+              </SET_PROPS>
+            </THEN>
+          </IF_TEST>
+          <!-- if test condition for useraction fetchRPLUom by Vamshi end-->
+          <!-- and condition for useraction fetchRPLUom by Vamshi-->
+          <IF_TEST Test="($userAction/@Value != 'save' and $userAction/@Value != 'delete' or $successSave = 'YES' ) and  $userAction/@Value !='fetchRPLUom'">
+            <THEN>
+              <IF_TEST Test="$isSearch = 'YES'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="appliedFilters">
+                    <SRCH_DESTN_LOC_CLAS Value="PLNT_NUM"/>
+                    <SRCH_SRC_LOC_CLAS Value="PLNT_NUM"/>
+                    <ItemIdentificationClass Value="SAP_MAT_NUM"/>
+                    <ENTITY_STATE Value="ACTIVE"/>
+                  </APPEND_TO_XML>
+                  <FORM_SEARCH_FILTER Value="{$appliedFilters}" AssignToVar="laneItemFilters">
+                    <TransportLaneName MultiValued="true" InputName="SRCH_TL_ID"/>
+                    <ItemIdentificationValue MultiValued="true" InputName="SRCH_ITEM_ID"/>
+                    <PartyIdentificationValue MultiValued="true" InputName="SRCH_SEGMENT_ID"/>
+                    <TransportLaneXItemStatusMnemonicValue InputName="SRCH_LNE_ITEM_STATUS"/>
+                    <TransportLaneXItemStartDate InputName="SRCH_LNE_ITEM_STRT_DATE"/>
+                    <TransportLaneXItemEndDate InputName="SRCH_LNE_ITEM_END_DATE"/>
+                    <LAST_MODIFIED_BY InputName="SRCH_MOD_BY" MultiValued="true"/>
+                    <LAST_MODIFIED_DATE InputName="SRCH_MOD_DATE" Range="true"/>
+                    <SRCH_SRC_LOC_CLAS MatchBy="EQUAL" MultiValued="true"/>
+                    <SRCH_DESTN_LOC_CLAS MatchBy="EQUAL" MultiValued="true"/>
+                    <ItemIdentificationClass MatchBy="EQUAL" MultiValued="true"/>
+                    <ENTITY_STATE MatchBy="EQUAL"/>
+                  </FORM_SEARCH_FILTER>
+                  <APPEND_TO_XML DocVar="laneItemFilters">
+                    <FILTER Name="PartyDescription">
+                      <PartyDescription Value="1000" MatchBy="NOT_EQUAL"/>
+                      <PartyDescription Value="Project1 Up" MatchBy="NOT_EQUAL"/>
+                    </FILTER>
+                  </APPEND_TO_XML>
+                  <IF_TEST Test="contains($appliedFilters/SRCH_TL_ID/@Value,'*')">
+                    <THEN>
+                      <SET Var="isWildCardSearch" FromValue="YES"/>
+                      <APPEND_TO_XML DocVar="laneItemFilters">
+                        <SRCH_TL_ID Value="{$appliedFilters/TL_WILD_CARD_SRCH/@Value}"/>
+                      </APPEND_TO_XML>
+                      <DELETE_ALL_CHILDREN Select="$laneItemFilters/FILTER[@Name = 'TransportLaneIdentifier']">
+                        <TransportLaneIdentifier/>
+                      </DELETE_ALL_CHILDREN>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="isWildCardSearch" FromValue="NO"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+              <REQUEST Name="readLaneItems" ServiceName="BCM_MASTER" AssignToVar="laneItemSrchResult" ReturnRowCount="yes">
+                <MaxRows Value="{$pgMaxRows}"/>
+                <StartAtRow Value="{$paginateStart}"/>
+                <IS_SEARCH Value="{$isSearch}"/>
+                <PAGE_SOURCE Value="{$pageSource}"/>
+                <IS_WILD_CARD_SEARCH Value="{$isWildCardSearch}"/>
+                <TO_XML SelectList="$laneItemFilters/*"/>
+                <ORDER_BY>
+                  <TO_XML DocVar="sortByTag"/>
+                </ORDER_BY>
+              </REQUEST>
+              <APPEND_TO_XML DocVar="augmentedLaneItemSearch">
+                <TO_XML SelectList="$laneItemSrchResult/LANE_ITEM_DETAILS/*"/>
+              </APPEND_TO_XML>
+              <!--<FOR_EACH SelectList="$laneItemSrchResult/LANE_ITEM_DETAILS/P_TransportLaneXItem" CurrentElement="curElem">-->
+              <!--        <SET DocVar="curElem" Property="UnloadingTime" FromValue="{ifElse($curElem/UnloadingTime/@Value != 0,$curElem/UnloadingTime/@Value div 3600,'0')}"/>
+
+        <SET DocVar="curElem" Property="LoadingTime" FromValue="{ifElse($curElem/LoadingTime/@Value != 0,$curElem/LoadingTime/@Value div 3600,'0')}"/>-->
+              <!--<SET Var="ldngHours" FromValue="{ifElse(int($curElem/LoadingTime/@Value div 3600) != 0,int($curElem/LoadingTime/@Value div 3600),'00')}"/>
+
+                <SET Var="ldngMinutes" FromValue="{ifElse(int(($curElem/LoadingTime/@Value mod 3600) div 60) != 0,int(($curElem/LoadingTime/@Value mod 3600) div 60),'00')}"/>
+
+                <SET Var="ldngSeconds" FromValue="{ifElse(int($curElem/LoadingTime/@Value mod 60) != 0,int($curElem/LoadingTime/@Value mod 60),'00')}"/>
+
+                <SET Var="unldngHours" FromValue="{ifElse(int($curElem/UnloadingTime/@Value div 3600) != 0,int($curElem/UnloadingTime/@Value div 3600),'00')}"/>
+
+                <SET Var="unldngMinutes" FromValue="{ifElse(int(($curElem/UnloadingTime/@Value mod 3600) div 60) != 0,int(($curElem/UnloadingTime/@Value mod 3600) div 60),'00')}"/>
+
+                <SET Var="unldngSeconds" FromValue="{ifElse(int($curElem/UnloadingTime/@Value mod 60) != 0,int($curElem/UnloadingTime/@Value mod 60),'00')}"/>
+
+                <SET Var="unldngSeconds" FromValue="{ifElse($unldngSeconds > 0 and $unldngSeconds &lt; 10,concat('0',$unldngSeconds),$unldngSeconds)}"/>
+
+                <SET Var="ldngSeconds" FromValue="{ifElse($ldngSeconds > 0 and $ldngSeconds &lt; 10,concat('0',$ldngSeconds),$ldngSeconds)}"/>
+
+                <SET Var="unldngMinutes" FromValue="{ifElse($unldngMinutes > 0 and $unldngMinutes &lt; 10,concat('0',$unldngMinutes),$unldngMinutes)}"/>
+
+                <SET Var="ldngMinutes" FromValue="{ifElse($ldngMinutes > 0 and $ldngMinutes &lt; 10,concat('0',$ldngMinutes),$ldngMinutes)}"/>
+
+                <SET DocVar="curElem" Property="LoadingTime" FromValue="{ifElse($curElem/LoadingTime/@Value != 0,concat($ldngHours,':',$ldngMinutes,':',$ldngSeconds),'00:00:00')}"/>
+
+                <SET DocVar="curElem" Property="UnloadingTime" FromValue="{ifElse($curElem/UnloadingTime/@Value != 0,concat($unldngHours,':',$unldngMinutes,':',$unldngSeconds),'00:00:00')}"/>
+
+      </FOR_EACH>-->
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <!-- if test condition for useraction not fetchRPLUom by Vamshi start-->
+          <!--<IF_TEST Test=" $userAction/@Value !='fetchRPLUom'">
+
+            <THEN>-->
+          <REQUEST Name="readTransLanes" ServiceName="BCM_MASTER" AssignToVar="laneDetails" ReturnRowCount="yes">
+            <IS_SEARCH Value="YES"/>
+            <FILTER Name="SRCH_DESTN_LOC_CLAS">
+              <SRCH_DESTN_LOC_CLAS Value="PLNT_NUM" MatchBy="EQUAL"/>
+            </FILTER>
+            <FILTER Name="SRCH_SRC_LOC_CLAS">
+              <SRCH_SRC_LOC_CLAS Value="PLNT_NUM" MatchBy="EQUAL"/>
+            </FILTER>
+            <FILTER Name="SRCH_STATE">
+              <SRCH_STATE Value="ACTIVE" MatchBy="EQUAL"/>
+            </FILTER>
+          </REQUEST>
+          <APPEND_TO_XML DocVar="laneItemSrchResult">
+            <TO_XML SelectList="$validationMessage/*"/>
+          </APPEND_TO_XML>
+          <TO_DOCVAR AssignToVar="dropDownValues">
+            <DROP_DOWN_VALUES>
+              <TO_XML SelectList="$laneItemSrchResult/UOM"/>
+              <TO_XML SelectList="$laneItemSrchResult/SGMNT_DET"/>
+              <TO_XML SelectList="$laneItemSrchResult/LANE_ITEM_STATUS"/>
+              <TO_XML SelectList="$laneItemSrchResult/SRC_PRIR"/>
+              <TO_XML SelectList="$laneItemSrchResult/TRANS_MODE_PRIR"/>
+            </DROP_DOWN_VALUES>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="formattedSegDet">
+            <SEGMENT/>
+          </TO_DOCVAR>
+          <FOR_EACH CurrentElement="curSeg" SelectList="$laneItemSrchResult/SGMNT_DET/*">
+            <APPEND_TO_XML DocVar="formattedSegDet">
+              <OPTION Value="{concat($curSeg/PartyIdentificationValue/@Value,' - ',$curSeg/PartyDescription/@Value)}" Id="{$curSeg/PartyIdentificationValue/@Value}"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <REQUEST Name="getAccessLevel" ServiceName="BCM_MASTER" AssignToVar="roleAccessPerm">
+            <ACTIVITY_ID Value="iscpTransLaneXProduct"/>
+            <USER_ID Value="{$userId}"/>
+          </REQUEST>
+          <SET DocVar="prevSel" FromValue=""/>
+          <!--  <IF_TEST Test="$userAction = 'cancel'  or $thisParam/BUTTON_ID/@Value = 'SYS_RELOAD'">
+
+    <THEN>-->
+          <FOR_EACH SelectList="$thisParam/*" CurrentElement="curElem">
+            <IF_TEST Test="name($curElem) = 'SEQ_NUM' and contains($removeSel,$curElem/@Value) = 'false'">
+              <THEN>
+                <SET DocVar="prevSel" FromValue="{ifElse(contains($prevSel,$curElem/@Value),$prevSel,concat($prevSel,',',$curElem/@Value))}"/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <!--	    </THEN>
+
+  </IF_TEST>-->
+          <SET DocVar="removeSel" FromValue=""/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <SELECT Value="{ifElse(contains($roleAccessPerm/SQL_RESULT/ACCESS_LEVEL/@Value,'Update') or contains($roleAccessPerm/SQL_RESULT/ACCESS_LEVEL/@Value,'Add') or contains($roleAccessPerm/SQL_RESULT/ACCESS_LEVEL/@Value,'Delete'),'All','None')}"/>
+              <SEARCH_FIELDS>
+                <SELECTED_ROW_COUNT Value="{substringAfter($prevSel,',')}"/>
+                <TO_XML SelectList="$appliedFilters/SRCH_TL_ID"/>
+                <TO_XML SelectList="$appliedFilters/SRCH_ITEM_ID"/>
+                <TO_XML SelectList="$appliedFilters/SRCH_SEGMENT_ID"/>
+                <TO_XML SelectList="$appliedFilters/SRCH_LNE_ITEM_STATUS"/>
+                <TO_XML SelectList="$appliedFilters/SRCH_LNE_ITEM_STRT_DATE"/>
+                <TO_XML SelectList="$appliedFilters/SRCH_LNE_ITEM_END_DATE"/>
+                <TO_XML SelectList="$appliedFilters/SRCH_MOD_BY"/>
+                <TO_XML SelectList="$appliedFilters/FROM_SRCH_MOD_DATE"/>
+                <TO_XML SelectList="$appliedFilters/TO_SRCH_MOD_DATE"/>
+                <TO_XML SelectList="$appliedFilters/SRCH_STATE"/>
+              </SEARCH_FIELDS>
+              <AccessLevel Value="{$roleAccessPerm/SQL_RESULT/ACCESS_LEVEL/@Value}"/>
+              <START_AT_ROW Value="{$paginateStart}"/>
+              <TotalRowCount Value="{$laneItemSrchResult/LANE_ITEM_DETAILS/@TotalRowCount}"/>
+              <SORT_BY Value="{$sortBy}"/>
+              <SORT_ORDER Value="{$sortOrder}"/>
+              <TO_XML SelectList="$laneItemSrchResult/*"/>
+              <SRC_PRIR>
+                <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/SRC_PRIR/P_SourcingPriorityClass" Id="SourcingPriorityClassMnemonicValue" Value="SourcingPriorityClassMnemonicValue"/>
+              </SRC_PRIR>
+              <TRANS_MODE_PRIR>
+                <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/TRANS_MODE_PRIR/P_TransportModePriorityClass" Id="TransportModePriorityClassMnemonicValue" Value="TransportModePriorityClassMnemonicValue"/>
+              </TRANS_MODE_PRIR>
+              <LANE_ITEM_STATUS>
+                <OPTION Value="Select All" Id="*"/>
+                <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/LANE_ITEM_STATUS/P_TransportLaneXItemStatus" Id="TransportLaneXItemStatusMnemonicValue" Value="TransportLaneXItemStatusMnemonicValue"/>
+              </LANE_ITEM_STATUS>
+              <UPD_LANE_ITEM_STATUS>
+                <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/LANE_ITEM_STATUS/P_TransportLaneXItemStatus" Id="TransportLaneXItemStatusMnemonicValue" Value="TransportLaneXItemStatusMnemonicValue"/>
+              </UPD_LANE_ITEM_STATUS>
+              <SGMNT_DET>
+                <OPTION Value="Select All" Id="*"/>
+                <TO_XML SelectList="$formattedSegDet/*"/>
+                <!--        <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/SGMNT_DET/P_Party" Id="PartyIdentificationValue" Value="PartyIdentificationValue"/>-->
+              </SGMNT_DET>
+              <UOM_VALUES>
+                <DROP_DOWN_OPTIONS SelectList="$dropDownValues/UOM/P_UnitOfMeasure" Id="UnitOfMeasureMnemonicValue" Value="UnitOfMeasureMnemonicValue"/>
+              </UOM_VALUES>
+              <USER_ACTION Value="{$userAction}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction = 'fetchRPLUom'">
+            <THEN>
+              <REMOVE_CHILDREN ChildName="SUCCESS_MESSAGE" DocVar="pglFormInput"/>
+              <!--  <IF_TEST Test="$dummycounterforRPLUom >1">
+
+                <THEN>
+
+                  <APPEND_TO_XML DocVar="pglFormInput">
+
+                    <FlagForCommentsRetentionRPLUOM Value="100"/>
+
+                  </APPEND_TO_XML>
+
+                </THEN>
+
+              </IF_TEST>-->
+            </THEN>
+          </IF_TEST>
+          <!--   </THEN>
+
+          </IF_TEST>-->
+          <!-- if test condition for useraction not  fetchRPLUom by Vamshi end -->
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="validationMessage">
+            <NULL/>
+          </TO_DOCVAR>
+          <SET DocVar="successSave" FromValue=""/>
+          <IF_TEST Test="$userAction = 'search_button'">
+            <THEN>
+              <REMOVE_CHILDREN ChildName="SEQ_NUM" DocVar="pglFormOutput"/>
+              <CLONE_XML DocVar="pglFormOutput" AssignToVar="appliedFilters"/>
+              <SET DocVar="isSearch" FromValue="YES"/>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'create'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="thisReturn">
+                <COPIED_VALUES>
+                  <START_COUNT Value="{$thisParam/START_COUNT/@Value}"/>
+                </COPIED_VALUES>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'massUpdate'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="massUpdateList">
+                <COPIED_VALUES/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="filterList">
+                <MASS_UPD_SEL/>
+              </TO_DOCVAR>
+              <SET Var="sortBy" FromValue="SeqNum"/>
+              <SET Var="sortOrder" FromValue="Ascending"/>
+              <MAKE_INSTANCE_DOCUMENT Name="{$sortBy}" AssignToVar="sortByTag"/>
+              <TO_DOCVAR AssignToVar="colSequenceNo">
+                <COLLATE_REQUEST>
+                  <INPUT>
+                    <TO_XML SelectList="$thisParam/*"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="SequenceNo">
+                    <SEQ_NUM/>
+                  </COLLATE_LIST>
+                </COLLATE_REQUEST>
+              </TO_DOCVAR>
+              <COLLATE_XML Var="colSequenceNo" AssignToVar="SeqNos"/>
+              <PRINTLN Value="PGLFORM2{$pglFormOutput/SEQ_NUM}"/>
+              <PRINTLN Value="AUGMENTINPOST{$augmentedLaneItemSearch/P_TransportLaneXItem/SeqNum}"/>
+              <FOR_EACH SelectList="$SeqNos/SequenceNo/*" CurrentElement="curRowForMU">
+                <APPEND_TO_XML DocVar="thisReturn">
+                  <P_TransportLaneXItem>
+                    <TO_XML SelectList="$augmentedLaneItemSearch/P_TransportLaneXItem[SeqNum/@Value = $curRowForMU/@Value]/*"/>
+                  </P_TransportLaneXItem>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <APPEND_TO_XML DocVar="massUpdateList">
+                <START_COUNT Value="{$thisParam/START_COUNT/@Value}"/>
+                <TO_XML SelectList="$thisReturn/*"/>
+                <TO_XML SelectList="$thisParam/SEQ_NUM"/>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'massUpdateAll'">
+            <THEN>
+              <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+              <IF_TEST Test="$userAction = 'cancel' or $userAction = 'save_copy'">
+                <THEN>
+                  <SET Var="paginateStart" FromValue="{ifElse($thisReturn/START_COUNT/@Value = null or $thisReturn/START_COUNT/@Value = '', '0', $thisReturn/START_COUNT/@Value)}"/>
+                </THEN>
+              </IF_TEST>
+              <!--<SET Var="pgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '10', $thisParam/MAX_ROWS/@Value)}"/>-->
+              <SET Var="sortBy" FromValue="{ifElse($thisParam/SORT_BY/@Value = null, 'ItemIdentifier', $thisParam/SORT_BY/@Value)}"/>
+              <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+              <MAKE_INSTANCE_DOCUMENT Name="{$sortBy}" AssignToVar="sortByTag"/>
+              <SET DocVar="sortByTag" Attribute="Sort" FromValue="{$sortOrder}"/>
+              <SET DocVar="thisParam" Property="SRCH_STATE" FromValue="ACTIVE"/>
+              <IF_TEST Test="$thisParam/TO_SRCH_MOD_DATE/@Value != null and $thisParam/TO_SRCH_MOD_DATE/@Value !=''">
+                <THEN>
+                  <SET_PROPS Select="$thisParam">
+                    <TO_SRCH_MOD_DATE Value="{concat($thisParam/TO_SRCH_MOD_DATE/@Value,' 23:59:59')}"/>
+                  </SET_PROPS>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$userAction/@Value != 'save' and $userAction/@Value != 'delete' or $successSave = 'YES'">
+                <THEN>
+                  <IF_TEST Test="$isSearch = 'YES'">
+                    <THEN>
+                      <CLONE_XML DocVar="pglFormOutput" AssignToVar="appliedFilters"/>
+                      <APPEND_TO_XML DocVar="appliedFilters">
+                        <SRCH_DESTN_LOC_CLAS Value="PLNT_NUM"/>
+                        <SRCH_SRC_LOC_CLAS Value="PLNT_NUM"/>
+                        <ItemIdentificationClass Value="SAP_MAT_NUM"/>
+                        <ENTITY_STATE Value="ACTIVE"/>
+                      </APPEND_TO_XML>
+                      <FORM_SEARCH_FILTER Value="{$appliedFilters}" AssignToVar="laneItemFilters">
+                        <TransportLaneName MultiValued="true" InputName="SRCH_TL_ID"/>
+                        <ItemIdentificationValue MultiValued="true" InputName="SRCH_ITEM_ID"/>
+                        <PartyIdentificationValue MultiValued="true" InputName="SRCH_SEGMENT_ID"/>
+                        <TransportLaneXItemStatusMnemonicValue InputName="SRCH_LNE_ITEM_STATUS"/>
+                        <TransportLaneXItemStartDate InputName="SRCH_LNE_ITEM_STRT_DATE"/>
+                        <TransportLaneXItemEndDate InputName="SRCH_LNE_ITEM_END_DATE"/>
+                        <LAST_MODIFIED_BY InputName="SRCH_MOD_BY" MultiValued="true"/>
+                        <LAST_MODIFIED_DATE InputName="SRCH_MOD_DATE" Range="true"/>
+                        <SRCH_SRC_LOC_CLAS MatchBy="EQUAL" MultiValued="true"/>
+                        <SRCH_DESTN_LOC_CLAS MatchBy="EQUAL" MultiValued="true"/>
+                        <ItemIdentificationClass MatchBy="EQUAL" MultiValued="true"/>
+                        <ENTITY_STATE MatchBy="EQUAL"/>
+                      </FORM_SEARCH_FILTER>
+                      <APPEND_TO_XML DocVar="laneItemFilters">
+                        <FILTER Name="PartyDescription">
+                          <PartyDescription Value="1000" MatchBy="NOT_EQUAL"/>
+                          <PartyDescription Value="Project1 Up" MatchBy="NOT_EQUAL"/>
+                        </FILTER>
+                      </APPEND_TO_XML>
+                      <IF_TEST Test="contains($appliedFilters/SRCH_TL_ID/@Value,'*')">
+                        <THEN>
+                          <SET Var="isWildCardSearch" FromValue="YES"/>
+                          <APPEND_TO_XML DocVar="laneItemFilters">
+                            <SRCH_TL_ID Value="{$appliedFilters/TL_WILD_CARD_SRCH/@Value}"/>
+                          </APPEND_TO_XML>
+                          <DELETE_ALL_CHILDREN Select="$laneItemFilters/FILTER[@Name = 'TransportLaneIdentifier']">
+                            <TransportLaneIdentifier/>
+                          </DELETE_ALL_CHILDREN>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="isWildCardSearch" FromValue="NO"/>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                  </IF_TEST>
+                  <REQUEST Name="readLaneItems" ServiceName="BCM_MASTER" AssignToVar="laneItemSrchResult" ReturnRowCount="yes">
+                    <!-- <MaxRows Value="{$pgMaxRows}"/>
+
+            <StartAtRow Value="{$paginateStart}"/>-->
+                    <IS_SEARCH Value="{$isSearch}"/>
+                    <PAGE_SOURCE Value="{$pageSource}"/>
+                    <IS_WILD_CARD_SEARCH Value="{$isWildCardSearch}"/>
+                    <TO_XML SelectList="$laneItemFilters/*"/>
+                    <ORDER_BY>
+                      <TO_XML DocVar="sortByTag"/>
+                    </ORDER_BY>
+                  </REQUEST>
+                  <TO_DOCVAR AssignToVar="augmentedLaneItemSearch">
+                    <ROOT/>
+                  </TO_DOCVAR>
+                  <APPEND_TO_XML DocVar="augmentedLaneItemSearch">
+                    <TO_XML SelectList="$laneItemSrchResult/LANE_ITEM_DETAILS/*"/>
+                  </APPEND_TO_XML>
+                  <PRINTLN Value="AMAR{$laneItemSrchResult}"/>
+                  <!--<TO_DOCVAR AssignToVar="massUpdateList">
+
+                    <COPIED_VALUES/>
+
+                  </TO_DOCVAR>
+
+                  <TO_DOCVAR AssignToVar="filterList">
+
+                    <MASS_UPD_SEL/>
+
+                  </TO_DOCVAR>
+
+                  <SET Var="sortBy" FromValue="SeqNum"/>
+
+                  <SET Var="sortOrder" FromValue="Ascending"/>
+
+                  <MAKE_INSTANCE_DOCUMENT Name="{$sortBy}" AssignToVar="sortByTag"/>
+
+                  <TO_DOCVAR AssignToVar="colSequenceNo">
+
+                    <COLLATE_REQUEST>
+
+                      <INPUT>
+
+                        <TO_XML SelectList="$augmentedLaneItemSearch/*"/>
+
+                      </INPUT>
+
+                      <COLLATE_LIST Value="SequenceNo">
+
+                        <SeqNum/>
+
+                      </COLLATE_LIST>
+
+                    </COLLATE_REQUEST>
+
+                  </TO_DOCVAR>
+
+                  <COLLATE_XML Var="colSequenceNo" AssignToVar="SeqNos"/>
+
+                  <PRINTLN Value="PGLFORM2{$pglFormOutput/SEQ_NUM}"/>
+
+                  <PRINTLN Value="AUGMENTINPOST{$augmentedLaneItemSearch/P_TransportLaneXItem/SeqNum}"/>
+
+                  <FOR_EACH SelectList="$SeqNos/SequenceNo/*" CurrentElement="curRowForMU">
+
+                    <APPEND_TO_XML DocVar="thisReturn">
+
+                      <P_TransportLaneXItem>
+
+                        <TO_XML SelectList="$augmentedLaneItemSearch/P_TransportLaneXItem[SeqNum/@Value = $curRowForMU/@Value]/*"/>
+
+                      </P_TransportLaneXItem>
+
+                    </APPEND_TO_XML>
+
+                  </FOR_EACH>-->
+                  <TO_DOCVAR AssignToVar="massUpdateList">
+                    <COPIED_VALUES/>
+                  </TO_DOCVAR>
+                  <APPEND_TO_XML DocVar="massUpdateList">
+                    <TO_XML SelectList="$augmentedLaneItemSearch/*"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <PRINTLN Value="MASSUPDATE{$massUpdateList}"/>
+          <IF_TEST Test="$userAction = 'copy'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="thisReturn">
+                <COPIED_VALUES/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$pglFormOutput/SEQ_NUM" CurrentElement="curSelectedLaneItem">
+                <APPEND_TO_XML DocVar="thisReturn">
+                  <COPIED_LIST>
+                    <START_COUNT Value="{$thisParam/START_COUNT/@Value}"/>
+                    <SEQ_NUM Value="{$curSelectedLaneItem/@Value}"/>
+                    <TO_XML SelectList="$laneItemSrchResult/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedLaneItem/@Value]/*"/>
+                  </COPIED_LIST>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <REMOVE_CHILDREN ChildName="TransportLaneXItemCommentText" Select="$thisReturn/COPIED_LIST"/>
+              <REMOVE_CHILDREN ChildName="ReplenishmentLotSizeUOM" Select="$thisReturn/COPIED_LIST"/>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='showHistory'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="outputXml">
+                <ROOT>
+                  <!--          <AUDIT_TRAIL_NAME Value="TlaneXItemTrail"/>
+
+          <AUDIT_TRAIL_NAME Value="TLanexItemRelTrail"/>
+
+          <AUDIT_TRAIL_NAME Value="DestinationReceivngDaysTrail"/>
+
+          <SERVICE_NAME Value="PEDM_MASTER"/>-->
+                  <AUDIT_TRAIL_NAME Value="TlaneXItemTrail"/>
+                  <SERVICE_NAME Value="BCM_OUTPUT_STAGING"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='delete'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Delete" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='copy'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Copy Lane Product Assignment" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Save" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Transportation Lane Product Assignment" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Select_item_id'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select Item" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Select_tl_id'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select Lane" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='view_tlane'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="View Lane Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='create'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create Lane Product Assignment" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='showHistory'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Lane Product Assignment History" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='massUpdate'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Lane Product Mass Update" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Select_User'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select User" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='massUpdateAll'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Lane Product Mass Update" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Transportation Lane Product Assignment" Description=""/>
+          <next_node Name="Transportation Lane Product Assignment" Description=""/>
+          <next_node Name="Transportation Lane Product Assignment" Description=""/>
+          <next_node Name="done4" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done4">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <task Name="Save">
+      <actions>
+        <action>
+          <DELETE_ALL_CHILDREN Select="$laneItemSrchResult">
+            <_ERRORS/>
+            <SUCCESS_MESSAGE/>
+          </DELETE_ALL_CHILDREN>
+          <SET_NAME SelectList="$thisParam/SourceLocationIdn" FromValue="SourceLocationValue"/>
+          <SET_NAME SelectList="$thisParam/TransportLaneIdentifier" FromValue="TransportationLaneIdentification"/>
+          <SET_NAME SelectList="$thisParam/DestinationLocationIdn" FromValue="DestinationLocationValue"/>
+          <SET_NAME SelectList="$thisParam/SegmentIdentification" FromValue="BusinessOrganizationValue"/>
+          <SET_NAME SelectList="$thisParam/LoadingTime" FromValue="LoadingTimeMeasure"/>
+          <SET_NAME SelectList="$thisParam/UnloadingTime" FromValue="UnloadingTimeMeasure"/>
+          <SET_NAME SelectList="$thisParam/ReplenishmentLotSizeUOM" FromValue="ReplenishmentLotSizeUnitOfMeasureValue"/>
+          <SET_NAME SelectList="$thisParam/EffectiveStartDate" FromValue="TransportLaneXItemStartDate"/>
+          <SET_NAME SelectList="$thisParam/TransportModePriority" FromValue="TransportModePriorityMnemonicValue"/>
+          <SET_NAME SelectList="$thisParam/TransMode" FromValue="TransportModeMnemonicValue"/>
+          <SET_NAME SelectList="$thisParam/ItemIdentification" FromValue="ItemIdentificationValue"/>
+          <SET_NAME SelectList="$thisParam/EffectiveEndDate" FromValue="TransportLaneXItemEndDate"/>
+          <SET_NAME SelectList="$thisParam/TransMode" FromValue="TransportModeMnemonicValue"/>
+          <SET_NAME SelectList="$thisParam/SourcingPriority" FromValue="SourcingPriorityClassMnemonicValue"/>
+          <SET_NAME SelectList="$thisParam/ReplenishmentLotSize" FromValue="ReplenishmentLotSizeMeasure"/>
+          <SET_NAME SelectList="$thisParam/DestinationReceivingDays" FromValue="DestinationReceivingDays"/>
+          <SET_NAME SelectList="$thisParam/TransportationLaneStatus" FromValue="TransportLaneXItemStatusMnemonicValue"/>
+          <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+          <SET_NAME SelectList="$thisParam/ReplenishmentRoundingValue" FromValue="ReplenishmentRoundingMeasure"/>
+          <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+          <TO_DOCVAR AssignToVar="changedLaneItem">
+            <CHANGED_LANE_ITEM_LISTS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="colLneItemDoc">
+            <COLLATE_REQUEST>
+              <INPUT>
+                <TO_XML SelectList="$thisParam/*"/>
+              </INPUT>
+              <COLLATE_LIST Value="LANE_ITEM_LINE">
+                <SeqNum/>
+                <DestinationReceivingDays/>
+                <TransportationLaneIdentification/>
+                <ItemIdentificationValue/>
+                <SourceLocationValue/>
+                <DestinationLocationValue/>
+                <TransportModeMnemonicValue/>
+                <ReplenishmentRoundingMeasure/>
+                <TransportLaneXItemStartDate/>
+                <TransportLaneXItemEndDate/>
+                <TransportLaneXItemStatusMnemonicValue/>
+                <ReplenishmentLotSizeMeasure/>
+                <UnloadingTimeMeasure/>
+                <LoadingTimeMeasure/>
+                <SourcingPriorityClassMnemonicValue/>
+                <TransportModePriorityMnemonicValue/>
+                <DestinationReceivingDaysValue/>
+                <BusinessOrganizationValue/>
+                <TransportLaneXItemCommentText/>
+                <ReplenishmentLotSizeUnitOfMeasureValue/>
+                <LAST_MODIFIED_DATE/>
+              </COLLATE_LIST>
+            </COLLATE_REQUEST>
+          </TO_DOCVAR>
+          <COLLATE_XML Var="colLneItemDoc" AssignToVar="laneItemLines"/>
+          <FOR_EACH SelectList="$laneItemSrchResult/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $thisParam/SEQ_NUM/@Value]" CurrentElement="curSelectedId">
+            <SET DocVar="curSelectedId" Property="EffectiveEndDate" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $curSelectedId/SeqNum/@Value]/EffectiveEndDate/@Value}"/>
+            <!-- CR:115759 12/19/2007 Praneeth Karnam Start -->
+            <SET DocVar="curSelectedId" Property="ReplenishmentLotSize" FromValue="{floor($laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $curSelectedId/SeqNum/@Value]/ReplenishmentLotSizeMeasure/@Value)}"/>
+            <!-- CR:115759 12/19/2007 Praneeth Karnam End -->
+            <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+            <!--<SET DocVar="curSelectedId" Property="ReplenishmentRoundingValue" FromValue="{floor($laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $curSelectedId/SeqNum/@Value]/ReplenishmentLotSizeMeasure/@Value)}"/>-->
+            <SET DocVar="curSelectedId" Property="ReplenishmentRoundingValue" FromValue="{floor($laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $curSelectedId/SeqNum/@Value]/ReplenishmentRoundingValue/@Value)}"/>
+            <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+            <!-- CR:115759 12/19/2007 Praneeth Karnam Start -->
+            <SET DocVar="curSelectedId" Property="UnloadingTime" FromValue="{ceiling($laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $curSelectedId/SeqNum/@Value]/UnloadingTimeMeasure/@Value)}"/>
+            <SET DocVar="curSelectedId" Property="LoadingTime" FromValue="{ceiling($laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $curSelectedId/SeqNum/@Value]/LoadingTimeMeasure/@Value)}"/>
+            <!-- CR:115759 12/19/2007 Praneeth Karnam End -->
+            <SET DocVar="curSelectedId" Property="SourcingPriority" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $curSelectedId/SeqNum/@Value]/SourcingPriority/@Value}"/>
+            <SET DocVar="curSelectedId" Property="TransportModePriority" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $curSelectedId/SeqNum/@Value]/TransportModePriority/@Value}"/>
+            <SET DocVar="curSelectedId" Property="DestinationReceivingDays" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $curSelectedId/SeqNum/@Value]/DestinationReceivingDays/@Value}"/>
+            <SET DocVar="curSelectedId" Property="TransportationLaneStatus" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $curSelectedId/SeqNum/@Value]/TransportationLaneStatus/@Value}"/>
+            <!-- CR:115759 12/19/2007 Praneeth Karnam Start -->
+            <SET DocVar="curSelectedId" Property="ReplenishmentLotSizeUOM" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $curSelectedId/SeqNum/@Value]/ReplenishmentLotSizeUnitOfMeasureValue/@Value}"/>
+            <!-- CR:115759 12/19/2007 Praneeth Karnam End -->
+            <SET DocVar="curSelectedId" Property="TransportLaneXItemCommentText" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $curSelectedId/SeqNum/@Value]/TransportLaneXItemCommentText/@Value}"/>
+            <SET DocVar="curSelectedId" Property="LAST_MODIFIED_DATE_FOR_CHECK" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $curSelectedId/SeqNum/@Value]/LAST_MODIFIED_DATE/@Value}"/>
+          </FOR_EACH>
+          <FOR_EACH SelectList="$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $thisParam/SEQ_NUM/@Value]" CurrentElement="curSelectedId">
+            <REQUEST Name="updateLaneItem" ServiceName="edmuiservice" AssignToVar="thisReturn" HandleException="true">
+              <TO_XML SelectList="$curSelectedId/*"/>
+              <ValidateMultiUserEdit Value="YES"/>
+            </REQUEST>
+            <IF_TEST Test="count($thisReturn/RESPONSE/*/_ERRORS) = 0">
+              <THEN/>
+              <ELSE>
+                <BREAK/>
+              </ELSE>
+            </IF_TEST>
+          </FOR_EACH>
+          <IF_TEST Test="$thisReturn/RESPONSE/@Status != 'Error' and count($thisReturn/RESPONSE/*/_ERRORS) = 0">
+            <THEN>
+              <TO_DOCVAR AssignToVar="validationMessage">
+                <VALIDATION_MESSAGE>
+                  <SUCCESS_MESSAGE Value="The selected records are successfully updated!"/>
+                </VALIDATION_MESSAGE>
+              </TO_DOCVAR>
+              <SET DocVar="successSave" FromValue="YES"/>
+            </THEN>
+            <ELSE>
+              <SET DocVar="successSave" FromValue="NO"/>
+              <REMOVE_CHILDREN ChildName="TransportLaneXItemCommentText" Select="$thisReturn/RESPONSE/REQUEST"/>
+              <IF_TEST Test="$thisReturn/@Status = 'Error'">
+                <THEN>
+                  <!--      <APPEND_TO_XML DocVar="curSelectedId">
+
+                    <TO_XML SelectList="$thisReturn/RESPONSE/REQUEST/*"/>
+
+                  </APPEND_TO_XML>-->
+                  <REMOVE_CHILDREN ChildName="_ERRORS" DocVar="curSelectedId"/>
+                  <REMOVE_CHILDREN ChildName="ReplenishmentLotSize" DocVar="curSelectedId"/>
+                  <REMOVE_CHILDREN ChildName="ReplenishmentRoundingValue" DocVar="curSelectedId"/>
+                  <REMOVE_CHILDREN ChildName="UnloadingTime" DocVar="curSelectedId"/>
+                  <REMOVE_CHILDREN ChildName="LoadingTime" DocVar="curSelectedId"/>
+                  <REMOVE_CHILDREN ChildName="TransportModePriorityClassIdentifier" DocVar="curSelectedId"/>
+                  <REMOVE_CHILDREN ChildName="SourcingPriorityClassIdentifier" DocVar="curSelectedId"/>
+                  <SET_NAME Select="$curSelectedId/ReplenishmentLotSizeMeasure" FromValue="ReplenishmentLotSize"/>
+                  <SET_NAME Select="$curSelectedId/ReplenishmentLotSizeUnitOfMeasureValue" FromValue="ReplenishmentLotSizeUOM"/>
+                  <SET_NAME Select="$curSelectedId/ReplenishmentRoundingMeasure" FromValue="ReplenishmentRoundingValue"/>
+                  <SET_NAME Select="$curSelectedId/UnloadingTimeMeasure" FromValue="UnloadingTime"/>
+                  <SET_NAME Select="$curSelectedId/LoadingTimeMeasure" FromValue="LoadingTime"/>
+                  <SET_NAME Select="$curSelectedId/TransportLaneXItemEndDate" FromValue="TransportLaneXItemEndDate"/>
+                  <APPEND_TO_XML Select="$curSelectedId/SourcingPriority">
+                    <TO_XML SelectList="$curSelectedId/SourcingPriorityClassIdentifier/*"/>
+                  </APPEND_TO_XML>
+                  <APPEND_TO_XML Select="$curSelectedId/TransportModePriority">
+                    <TO_XML SelectList="$curSelectedId/TransportModePriorityClassIdentifier/*"/>
+                  </APPEND_TO_XML>
+                  <APPEND_TO_XML Select="$curSelectedId/TransportationLaneStatus">
+                    <TO_XML SelectList="$curSelectedId/TransportLaneXItemStatusIdentifier/*"/>
+                  </APPEND_TO_XML>
+                  <!--  <SET_PROPS DocVar="curSelectedId">
+
+                    <SUN Value="{ifElse(subString($curSelectedId/DestinationReceivingDays/@Value,0,1)  = '1','true','false')}"/>
+
+                    <MON Value="{ifElse(subString($curSelectedId/DestinationReceivingDays/@Value,1,2) = '1','true','false')}"/>
+
+                    <TUE Value="{ifElse(subString($curSelectedId/DestinationReceivingDays/@Value,2,3) = '1','true','false')}"/>
+
+                    <WED Value="{ifElse(subString($curSelectedId/DestinationReceivingDays/@Value,3,4) = '1','true','false')}"/>
+
+                    <THU Value="{ifElse(subString($curSelectedId/DestinationReceivingDays/@Value,4,5) = '1','true','false')}"/>
+
+                    <FRI Value="{ifElse(subString($curSelectedId/DestinationReceivingDays/@Value,5,6) = '1','true','false')}"/>
+
+                    <SAT Value="{ifElse(subString($curSelectedId/DestinationReceivingDays/@Value,6,7) = '1','true','false')}"/>
+
+                  </SET_PROPS>-->
+                  <TO_DOCVAR AssignToVar="validationMessage">
+                    <ERROR_MSG>
+                      <_ERRORS Value="{$thisReturn/RESPONSE/_RESULT/@Value}">
+                        <TO_XML SelectList="$thisReturn/RESPONSE/_RESULT/*"/>
+                      </_ERRORS>
+                    </ERROR_MSG>
+                  </TO_DOCVAR>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="validationMessage">
+                    <ERROR_MSG>
+                      <_ERRORS Value="{$thisReturn/RESPONSE/@Status}">
+                        <_ERROR Value="{substringBefore($thisReturn/RESPONSE/@Description,'=')}"/>
+                      </_ERRORS>
+                    </ERROR_MSG>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <SET_NAME SelectList="$laneItemSrchResult/LANE_ITEM_DETAILS/P_TransportLaneXItem/ReplenishmentLotSizeUnitOfMeasure" FromValue="ReplenishmentLotSizeUOM"/>
+          <FOR_EACH SelectList="$laneItemSrchResult/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $thisParam/SEQ_NUM/@Value]" CurrentElement="tempUpdates">
+            <SET DocVar="tempUpdates" Property="ReplenishmentLotSizeUOM" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $tempUpdates/SeqNum/@Value]/ReplenishmentLotSizeUOM/@Value}"/>
+            <SET DocVar="tempUpdates" Property="TransportLaneXItemCommentText" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $tempUpdates/SeqNum/@Value]/TransportLaneXItemCommentText/@Value}"/>
+            <SET DocVar="tempUpdates" Property="UnloadingTime" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $tempUpdates/SeqNum/@Value]/UnloadingTime/@Value}"/>
+            <SET DocVar="tempUpdates" Property="LoadingTime" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $tempUpdates/SeqNum/@Value]/LoadingTime/@Value}"/>
+            <SET DocVar="tempUpdates" Property="EffectiveEndDate" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $tempUpdates/SeqNum/@Value]/TransportLaneXItemEndDate/@Value}"/>
+            <SET DocVar="tempUpdates" Property="ReplenishmentLotSize" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $tempUpdates/SeqNum/@Value]/ReplenishmentLotSize/@Value}"/>
+            <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+            <!--<SET DocVar="tempUpdates" Property="ReplenishmentRoundingValue" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $tempUpdates/SeqNum/@Value]/ReplenishmentLotSize/@Value}"/>-->
+            <SET DocVar="tempUpdates" Property="ReplenishmentRoundingValue" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $tempUpdates/SeqNum/@Value]/ReplenishmentRoundingValue/@Value}"/>
+            <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+            <SET DocVar="tempUpdates" Property="DestinationReceivingDays" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $tempUpdates/SeqNum/@Value]/DestinationReceivingDays/@Value}"/>
+            <SET DocVar="tempUpdates" Property="SourcingPriority" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $tempUpdates/SeqNum/@Value]/SourcingPriorityClassMnemonicValue/@Value}"/>
+            <SET DocVar="tempUpdates" Property="TransportModePriority" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $tempUpdates/SeqNum/@Value]/TransportModePriorityMnemonicValue/@Value}"/>
+            <SET DocVar="tempUpdates" Property="TransportationLaneStatus" FromValue="{$laneItemLines/LANE_ITEM_LINE[SeqNum/@Value = $tempUpdates/SeqNum/@Value]/TransportLaneXItemStatusMnemonicValue/@Value}"/>
+            <SET DocVar="tempUpdates" Property="SUN" FromValue="{ifElse(subString($tempUpdates/DestinationReceivingDays/@Value,0,1)  = '1','true','false')}"/>
+            <SET DocVar="tempUpdates" Property="MON" FromValue="{ifElse(subString($tempUpdates/DestinationReceivingDays/@Value,1,2)  = '1','true','false')}"/>
+            <SET DocVar="tempUpdates" Property="TUE" FromValue="{ifElse(subString($tempUpdates/DestinationReceivingDays/@Value,2,3)  = '1','true','false')}"/>
+            <SET DocVar="tempUpdates" Property="WED" FromValue="{ifElse(subString($tempUpdates/DestinationReceivingDays/@Value,3,4)  = '1','true','false')}"/>
+            <SET DocVar="tempUpdates" Property="THU" FromValue="{ifElse(subString($tempUpdates/DestinationReceivingDays/@Value,4,5)  = '1','true','false')}"/>
+            <SET DocVar="tempUpdates" Property="FRI" FromValue="{ifElse(subString($tempUpdates/DestinationReceivingDays/@Value,5,6)  = '1','true','false')}"/>
+            <SET DocVar="tempUpdates" Property="SAT" FromValue="{ifElse(subString($tempUpdates/DestinationReceivingDays/@Value,6,7)  = '1','true','false')}"/>
+          </FOR_EACH>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Transportation Lane Product Assignment" Description=""/>
+      </next_nodes>
+    </task>
+    <task Name="Delete">
+      <actions>
+        <action>
+          <FOR_EACH SelectList="$thisParam/SEQ_NUM" CurrentElement="curSelectedLaneItem">
+            <TO_DOCVAR AssignToVar="deleteList">
+              <DELETE_LANE_ITEM>
+                <TO_XML SelectList="$laneItemSrchResult/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedLaneItem/@Value]/*"/>
+              </DELETE_LANE_ITEM>
+            </TO_DOCVAR>
+            <SET_NAME Select="$deleteList/SourceLocationIdn" FromValue="SourceLocationValue"/>
+            <SET_NAME Select="$deleteList/DestinationLocationIdn" FromValue="DestinationLocationValue"/>
+            <SET_NAME Select="$deleteList/TransMode" FromValue="TransportModeValue"/>
+            <SET_NAME Select="$deleteList/ItemIdentification" FromValue="ItemValue"/>
+            <REQUEST Name="deleteLaneItem" ServiceName="edmuiservice" AssignToVar="thisReturn">
+              <TO_XML SelectList="$deleteList/*"/>
+            </REQUEST>
+            <IF_TEST Test="count($thisReturn/RESPONSE/*/_ERRORS) > 0">
+              <THEN>
+                <BREAK/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </FOR_EACH>
+          <IF_TEST Test="count($thisReturn/RESPONSE/*/_ERRORS) = 0">
+            <THEN>
+              <TO_DOCVAR AssignToVar="validationMessage">
+                <VALIDATION_MESSAGE>
+                  <SUCCESS_MESSAGE Value="The selected Lane Product Assignments are successfully deleted!"/>
+                </VALIDATION_MESSAGE>
+              </TO_DOCVAR>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="SEQ_NUM"/>
+              <SET DocVar="successSave" FromValue="YES"/>
+            </THEN>
+            <ELSE>
+              <SET DocVar="successSave" FromValue="NO"/>
+              <IF_TEST Test="$thisReturn/RESPONSE/@Status = 'Error'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="validationMessage">
+                    <ERROR_MSG>
+                      <_ERRORS Value="{$thisReturn/RESPONSE/@Status}">
+                        <_ERROR Value="{substringBefore($thisReturn/RESPONSE/@Description,'=')}"/>
+                      </_ERRORS>
+                    </ERROR_MSG>
+                  </TO_DOCVAR>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="validationMessage">
+                    <ERROR_MSG>
+                      <_ERRORS Value="{$thisReturn/RESPONSE/_RESULT/@Value}">
+                        <TO_XML SelectList="$thisReturn/RESPONSE/_RESULT/*"/>
+                      </_ERRORS>
+                    </ERROR_MSG>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Transportation Lane Product Assignment" Description=""/>
+      </next_nodes>
+    </task>
+    <sub_workflow Name="View Lane Details" Workflow="wfTLViewLaneDetails">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes/>
+      <input>
+        <TO_XML SelectList="$thisParam/*"/>
+      </input>
+    </sub_workflow>
+    <ui_form2 Name="Lane Product Mass Update" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="iscpTLLaneProductMassUpdate.pgl">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$userAction = 'massUpdate'">
+            <THEN>
+              <!--<FOR_EACH SelectList="$massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem" CurrentElement="curElem">-->
+              <!--        <SET DocVar="curElem" Property="UnloadingTime" FromValue="{ifElse($curElem/UnloadingTime/@Value != 0,$curElem/UnloadingTime/@Value div 3600,'0')}"/>
+
+        <SET DocVar="curElem" Property="LoadingTime" FromValue="{ifElse($curElem/LoadingTime/@Value != 0,$curElem/LoadingTime/@Value div 3600,'0')}"/>-->
+              <!--<SET Var="ldngHours" FromValue="{ifElse(int($curElem/LoadingTime/@Value div 3600) != 0,int($curElem/LoadingTime/@Value div 3600),'00')}"/>
+
+                <SET Var="ldngMinutes" FromValue="{ifElse(int(($curElem/LoadingTime/@Value mod 3600) div 60) != 0,int(($curElem/LoadingTime/@Value mod 3600) div 60),'00')}"/>
+
+                <SET Var="ldngSeconds" FromValue="{ifElse(int($curElem/LoadingTime/@Value mod 60) != 0,int($curElem/LoadingTime/@Value mod 60),'00')}"/>
+
+                <SET Var="unldngHours" FromValue="{ifElse(int($curElem/UnloadingTime/@Value div 3600) != 0,int($curElem/UnloadingTime/@Value div 3600),'00')}"/>
+
+                <SET Var="unldngMinutes" FromValue="{ifElse(int(($curElem/UnloadingTime/@Value mod 3600) div 60) != 0,int(($curElem/UnloadingTime/@Value mod 3600) div 60),'00')}"/>
+
+                <SET Var="unldngSeconds" FromValue="{ifElse(int($curElem/UnloadingTime/@Value mod 60) != 0,int($curElem/UnloadingTime/@Value mod 60),'00')}"/>
+
+                <SET Var="unldngSeconds" FromValue="{ifElse($unldngSeconds > 0 and $unldngSeconds &lt; 10,concat('0',$unldngSeconds),$unldngSeconds)}"/>
+
+                <SET Var="ldngSeconds" FromValue="{ifElse($ldngSeconds > 0 and $ldngSeconds &lt; 10,concat('0',$ldngSeconds),$ldngSeconds)}"/>
+
+                <SET Var="unldngMinutes" FromValue="{ifElse($unldngMinutes > 0 and $unldngMinutes &lt; 10,concat('0',$unldngMinutes),$unldngMinutes)}"/>
+
+                <SET Var="ldngMinutes" FromValue="{ifElse($ldngMinutes > 0 and $ldngMinutes &lt; 10,concat('0',$ldngMinutes),$ldngMinutes)}"/>
+
+                <SET DocVar="curElem" Property="LoadingTime" FromValue="{ifElse($curElem/LoadingTime/@Value != 0,concat($ldngHours,':',$ldngMinutes,':',$ldngSeconds),'00:00:00')}"/>
+
+                <SET DocVar="curElem" Property="UnloadingTime" FromValue="{ifElse($curElem/UnloadingTime/@Value != 0,concat($unldngHours,':',$unldngMinutes,':',$unldngSeconds),'00:00:00')}"/>
+
+      </FOR_EACH>-->
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$userAction = 'massUpdateAll'">
+                <THEN>
+                  <SET Var="massUpdateSelectAll" FromValue="1"/>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$massUpdateList/*"/>
+              <IF_TEST Test="$userAction = 'save_upd'">
+                <THEN>
+                  <TO_XML SelectList="$thisReturn/*"/>
+                </THEN>
+                <ELSE/>
+              </IF_TEST>
+              <SRC_PRIR>
+                <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/SRC_PRIR/P_SourcingPriorityClass" Id="SourcingPriorityClassMnemonicValue" Value="SourcingPriorityClassMnemonicValue"/>
+              </SRC_PRIR>
+              <TRANS_MODE_PRIR>
+                <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/TRANS_MODE_PRIR/P_TransportModePriorityClass" Id="TransportModePriorityClassMnemonicValue" Value="TransportModePriorityClassMnemonicValue"/>
+              </TRANS_MODE_PRIR>
+              <LANE_ITEM_STATUS>
+                <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/LANE_ITEM_STATUS/P_TransportLaneXItemStatus" Id="TransportLaneXItemStatusMnemonicValue" Value="TransportLaneXItemStatusMnemonicValue"/>
+              </LANE_ITEM_STATUS>
+              <UOM_VALUES>
+                <DROP_DOWN_OPTIONS SelectList="$dropDownValues/UOM/P_UnitOfMeasure" Id="UnitOfMeasureMnemonicValue" Value="UnitOfMeasureMnemonicValue"/>
+              </UOM_VALUES>
+              <ABC>
+                <displayTableFlag Value="{ifElse(($userAction/@Value = 'massUpdateAll') or ($massUpdateSelectAll = 1 and $userAction='save_upd'), 'false','true')}"/>
+              </ABC>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <!--          <TO_DOCVAR AssignToVar="selectedId">
+
+            <MASS_UPDATE_LIST>
+
+              <TO_XML SelectList="$pglFormOutput/SeqNum"/>
+
+            </MASS_UPDATE_LIST>
+
+          </TO_DOCVAR>-->
+          <SET_NAME SelectList="$pglFormOutput/SeqNum" FromValue="SEQ_NUM"/>
+          <IF_TEST Test="$userAction = 'cancel'">
+            <THEN>
+              <SET Var="removeSel" FromValue=""/>
+              <FOR_EACH SelectList="$massUpdateList/*" CurrentElement="curElem">
+                <IF_TEST Test="name($curElem) = 'SEQ_NUM' and $massUpdateList[SeqNum/@Value = $curElem/@Value]">
+                  <THEN>
+                    <SET DocVar="removeSel" FromValue="{concat($removeSel,',',$curElem/@Value)}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <SET DocVar="removeSel" FromValue="{substringAfter($removeSel,',')}"/>
+              <TO_DOCVAR AssignToVar="thisReturn">
+                <RESET_START_CNT>
+                  <START_COUNT Value="{$massUpdateList/START_COUNT/@Value}"/>
+                </RESET_START_CNT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'save_upd'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="colSeqNum">
+                <COLLATE_REQUEST>
+                  <INPUT>
+                    <TO_XML SelectList="$thisParam/*"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="SequenceNo">
+                    <SEQ_NUM/>
+                  </COLLATE_LIST>
+                </COLLATE_REQUEST>
+              </TO_DOCVAR>
+              <!--      <SET_PROPS SelectList="$pglFormOutput">
+
+                <UnloadingTime Value="{ifElse($thisParam/UnloadingTime/@Value != '',$thisParam/UnloadingTime/@Value mul 3600,0)}"/>
+
+                <LoadingTime Value="{ifElse($thisParam/LoadingTime/@Value != '',$thisParam/LoadingTime/@Value mul 3600,0)}"/>
+
+      </SET_PROPS>-->
+              <SET_NAME SelectList="$thisParam/SourceLocationIdn" FromValue="SourceLocationValue"/>
+              <SET_NAME SelectList="$thisParam/DestinationLocationIdn" FromValue="DestinationLocationValue"/>
+              <SET_NAME SelectList="$thisParam/TransMode" FromValue="TrasnportModeValue"/>
+              <SET_NAME SelectList="$pglFormOutput/upd_EffectiveEndDate" FromValue="EffectiveEndDate"/>
+              <SET_NAME SelectList="$pglFormOutput/ItemIdentification" FromValue="ItemIdentificationValue"/>
+              <SET_NAME SelectList="$pglFormOutput/SegmentIdentification" FromValue="BusinessOrganizationValue"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/SourceLocationIdn" FromValue="SourceLocationValue"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/TransportLaneIdentifier" FromValue="TransportLaneIdentifier"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/DestinationLocationIdn" FromValue="DestinationLocationValue"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/SegmentIdentification" FromValue="BusinessOrganizationValue"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/LoadingTime" FromValue="LoadingTimeMeasure"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/UnloadingTime" FromValue="UnloadingTimeMeasure"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/ReplenishmentLotSizeUOM" FromValue="ReplenishmentLotSizeUnitOfMeasureValue"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/EffectiveStartDate" FromValue="TransportLaneXItemStartDate"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/TransportModePriority" FromValue="TransportModePriorityMnemonicValue"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/TransMode" FromValue="TransportModeMnemonicValue"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/ItemIdentification" FromValue="ItemIdentificationValue"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/EffectiveEndDate" FromValue="TransportLaneXItemEndDate"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/TransMode" FromValue="TransportModeMnemonicValue"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/SourcingPriority" FromValue="SourcingPriorityClassMnemonicValue"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/ReplenishmentLotSize" FromValue="ReplenishmentLotSizeMeasure"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/DestinationReceivingDays" FromValue="DestinationReceivingDays"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/TransportationLaneStatus" FromValue="TransportLaneXItemStatusMnemonicValue"/>
+              <!-- $pglFormOutput/chkStrtDate/@Value = 'true' and $pglFormOutput/chkEndDate/@Value = 'true' and -->
+              <IF_TEST Test="($pglFormOutput/chkEndDate/@Value = 'true' and $pglFormOutput/chkLoadingTime/@Value = 'true' and $pglFormOutput/chkUnLoadingTime/@Value = 'true' and $pglFormOutput/chkRplLotSize/@Value = 'true' and $pglFormOutput/chkRplRndgVal/@Value = 'true' and $pglFormOutput/chkSrcPrir/@Value = 'true' and $pglFormOutput/chkTrnsModePrir/@Value = 'true' and $pglFormOutput/chkLaneItemSts/@Value = 'true' and $pglFormOutput/chkDestnDays/@Value = 'true' and $pglFormOutput/chkRplLotSizeUOM/@Value = 'true')">
+                <THEN>
+                  <!--            <SET_PROPS SelectList="$pglFormOutput">
+
+                      <UnloadingTime Value="{$thisParam/UnloadingTime/@Value mul 3600}"/>
+
+                      <LoadingTime Value="{$thisParam/LoadingTime/@Value mul 3600}"/>
+
+            </SET_PROPS>-->
+                  <APPEND_TO_XML DocVar="tempList">
+                    <TO_XML Select="$pglFormOutput/EffectiveEndDate"/>
+                    <TO_XML Select="ceiling($pglFormOutput/LoadingTime)"/>
+                    <TO_XML Select="ceiling($pglFormOutput/UnloadingTime)"/>
+                    <TO_XML Select="floor($pglFormOutput/ReplenishmentLotSize)"/>
+                    <TO_XML Select="$pglFormOutput/ReplenishmentLotSizeUnitOfMeasure"/>
+                    <TO_XML Select="floor($pglFormOutput/ReplenishmentRoundingValue)"/>
+                    <TO_XML Select="$pglFormOutput/TransportationLaneStatus"/>
+                    <TO_XML Select="$pglFormOutput/SourcingPriority"/>
+                    <TO_XML Select="$pglFormOutput/TransportModePriority"/>
+                    <TO_XML Select="$pglFormOutput/DestinationReceivingDays"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="tempList">
+                    <EffectiveEndDate Value="{ifElse($pglFormOutput/chkEndDate/@Value != 'true' or $pglFormOutput/EffectiveEndDate/@Value = '',$massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/EffectiveEndDate/@Value,$pglFormOutput/EffectiveEndDate/@Value)}"/>
+                    <LoadingTime Value="{ifElse($pglFormOutput/chkLoadingTime/@Value != 'true' or $pglFormOutput/LoadingTime/@Value = '',ceiling($massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/LoadingTime/@Value),ceiling($pglFormOutput/LoadingTime/@Value))}"/>
+                    <UnloadingTime Value="{ifElse($pglFormOutput/chkUnloadingTime/@Value != 'true' or $pglFormOutput/UnloadingTime/@Value ='',ceiling($massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/UnloadingTime/@Value),ceiling($pglFormOutput/UnloadingTime/@Value))}"/>
+                    <ReplenishmentLotSize Value="{ifElse($pglFormOutput/chkRplLotSize/@Value != 'true' or $pglFormOutput/ReplenishmentLotSize/@Value='',floor($massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/ReplenishmentLotSize/@Value),floor($pglFormOutput/ReplenishmentLotSize/@Value))}"/>
+                    <ReplenishmentLotSizeUnitOfMeasure Value="{ifElse($pglFormOutput/chkRplLotSizeUOM/@Value != 'true' or $pglFormOutput/ReplenishmentLotSizeUnitOfMeasure/@Value='',$massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/ReplenishmentLotSizeUOM/@Value,$pglFormOutput/ReplenishmentLotSizeUnitOfMeasure/@Value)}"/>
+                    <ReplenishmentRoundingValue Value="{ifElse($pglFormOutput/chkRplRndgVal/@Value != 'true' or $pglFormOutput/ReplenishmentRoundingValue/@Value='',floor($massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/ReplenishmentRoundingValue/@Value),floor($pglFormOutput/ReplenishmentRoundingValue/@Value))}"/>
+                    <TransportationLaneStatus Value="{ifElse($pglFormOutput/chkLaneItemSts/@Value != 'true' or $pglFormOutput/TransportationLaneStatus/@Value='',$massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/TransportationLaneStatus/@Value,$pglFormOutput/TransportationLaneStatus/@Value)}"/>
+                    <SourcingPriority Value="{ifElse($pglFormOutput/chkSrcPrir/@Value != 'true' or $pglFormOutput/SourcingPriority/@Value='',$massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/SourcingPriority/@Value,$pglFormOutput/SourcingPriority/@Value)}"/>
+                    <TransportModePriority Value="{ifElse($pglFormOutput/chkTrnsModePrir/@Value != 'true' or $pglFormOutput/TransportModePriority/@Value='',$massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/TransportModePriority/@Value,$pglFormOutput/TransportModePriority/@Value)}"/>
+                    <DestinationReceivingDays Value="{ifElse($pglFormOutput/chkDestnDays/@Value != 'true' or $pglFormOutput/DestinationReceivingDays/@Value='',$massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/DestinationReceivingDays/@Value,$pglFormOutput/DestinationReceivingDays/@Value)}"/>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+              <!--        <SET Var="ldngHours" FromValue="{substringBefore($tempList/LoadingTime/@Value,':')}"/>
+
+                <SET Var="ldngMinutes" FromValue="{substringBefore(substringAfter($tempList/LoadingTime/@Value,':'),':')}"/>
+
+                <SET Var="ldngSeconds" FromValue="{substringAfter(substringAfter($tempList/LoadingTime/@Value,':'),':')}"/>
+
+                <SET Var="unldngHours" FromValue="{substringBefore($tempList/UnloadingTime/@Value,':')}"/>
+
+                <SET Var="unldngMinutes" FromValue="{substringBefore(substringAfter($tempList/UnloadingTime/@Value,':'),':')}"/>
+
+                <SET Var="unldngSeconds" FromValue="{substringAfter(substringAfter($tempList/UnloadingTime/@Value,':'),':')}"/>
+
+                <SET DocVar="tempList" Property="LoadingTime" FromValue="{$ldngHours mul 3600 + $ldngMinutes mul 60 + $ldngSeconds}"/>
+
+                <SET DocVar="tempList" Property="UnloadingTime" FromValue="{$unldngHours mul 3600 + $unldngMinutes mul 60 + $unldngSeconds}"/>-->
+              <FOR_EACH SelectList="$massUpdateList/P_TransportLaneXItem" CurrentElement="curElem">
+                <REQUEST Name="updateLaneItem" ServiceName="edmuiservice" AssignToVar="updateResponse" HandleException="true">
+                  <TransportLaneXItemEndDate Value="{ifElse($pglFormOutput/chkEndDate/@Value != 'true' or $pglFormOutput/EffectiveEndDate/@Value = '',$curElem/TransportLaneXItemEndDate/@Value,$pglFormOutput/EffectiveEndDate/@Value)}"/>
+                  <LoadingTimeMeasure Value="{ifElse($pglFormOutput/chkLoadingTime/@Value != 'true' or $pglFormOutput/LoadingTime/@Value = '',$curElem/LoadingTimeMeasure/@Value,$pglFormOutput/LoadingTime/@Value)}"/>
+                  <UnloadingTimeMeasure Value="{ifElse($pglFormOutput/chkUnloadingTime/@Value != 'true' or $pglFormOutput/UnloadingTime/@Value ='',$curElem/UnloadingTimeMeasure/@Value,$pglFormOutput/UnloadingTime/@Value)}"/>
+                  <ReplenishmentLotSizeMeasure Value="{ifElse($pglFormOutput/chkRplLotSize/@Value != 'true' or $pglFormOutput/ReplenishmentLotSize/@Value='',$curElem/ReplenishmentLotSizeMeasure/@Value,$pglFormOutput/ReplenishmentLotSize/@Value)}"/>
+                  <ReplenishmentLotSizeUnitOfMeasureValue Value="{ifElse($pglFormOutput/chkRplLotSizeUOM/@Value != 'true' or $pglFormOutput/ReplenishmentLotSizeUnitOfMeasure/@Value='',$curElem/ReplenishmentLotSizeUnitOfMeasureValue/@Value,$pglFormOutput/ReplenishmentLotSizeUnitOfMeasure/@Value)}"/>
+                  <ReplenishmentRoundingMeasure Value="{ifElse($pglFormOutput/chkRplRndgVal/@Value != 'true' or $pglFormOutput/ReplenishmentRoundingValue/@Value='',$curElem/ReplenishmentRoundingValue/@Value,$pglFormOutput/ReplenishmentRoundingValue/@Value)}"/>
+                  <TransportLaneXItemStatusMnemonicValue Value="{ifElse($pglFormOutput/chkLaneItemSts/@Value != 'true' or $pglFormOutput/TransportationLaneStatus/@Value='',$curElem/TransportLaneXItemStatusMnemonicValue/@Value,$pglFormOutput/TransportationLaneStatus/@Value)}"/>
+                  <SourcingPriorityClassMnemonicValue Value="{ifElse($pglFormOutput/chkSrcPrir/@Value != 'true' or $pglFormOutput/SourcingPriority/@Value='',$curElem/SourcingPriorityClassMnemonicValue/@Value,$pglFormOutput/SourcingPriority/@Value)}"/>
+                  <TransportModePriorityMnemonicValue Value="{ifElse($pglFormOutput/chkTrnsModePrir/@Value != 'true' or $pglFormOutput/TransportModePriority/@Value='',$curElem/TransportModePriorityMnemonicValue/@Value,$pglFormOutput/TransportModePriority/@Value)}"/>
+                  <DestinationReceivingDays Value="{ifElse($pglFormOutput/chkDestnDays/@Value != 'true' or $pglFormOutput/DestinationReceivingDays/@Value='',$curElem/DestinationReceivingDays/@Value,$pglFormOutput/DestinationReceivingDays/@Value)}"/>
+                  <TransportModeMnemonicValue Value="{$curElem/TransportModeMnemonicValue/@Value}"/>
+                  <TransportLaneXItemStartDate Value="{$curElem/TransportLaneXItemStartDate/@Value}"/>
+                  <SourceLocationValue Value="{$curElem/SourceLocationValue/@Value}"/>
+                  <DestinationLocationValue Value="{$curElem/DestinationLocationValue/@Value}"/>
+                  <TransportLaneIdentifier Value="{$curElem/TransportLaneIdentifier/@Value}"/>
+                  <BusinessOrganizationValue Value="{$curElem/BusinessOrganizationValue/@Value}"/>
+                  <ItemIdentificationValue Value="{$curElem/ItemIdentificationValue/@Value}"/>
+                  <TransportModeValue Value="{$curElem/TransportModeMnemonicValue/@Value}"/>
+                  <!--TO_XML SelectList="$tempList/*"/>
+
+                  <TransportLaneXItemSequenceNumber Value="{$curSelectedId/@Value}"/-->
+                  <!--                  <ItemIdentification Value="{$thisParam/ItemIdentification/@Value}"/>
+
+                  <SourceLocationIdentification Value="{$thisParam/SourceLocationIdentification/@Value}"/>
+
+                  <DestinationLocationIdentification Value="{$thisParam/DestinationLocationIdentification/@Value}"/>
+
+                  <MeansOfTransportIdentification Value="{$thisParam/MeansOfTransportIdentification/@Value}"/>-->
+                  <!--ItemIdentification Value="{$massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/ItemIdentification/@Value}"/>
+
+                    <SourceLocationIdentification Value="{$massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/SourceLocationIdn/@Value}"/>
+
+                    <DestinationLocationIdentification Value="{$massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/DestinationLocationIdn/@Value}"/>
+
+                    <MeansOfTransportIdentification Value="{$massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/TransMode/@Value}"/>
+
+                    <EffectiveStartDate Value="{$massUpdateList/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/EffectiveStartDate/@Value}"/-->
+                  <!--          <EffectiveEndDate Value="{$laneItemSrchResult/LANE_ITEM_DETAILS/P_TransportLaneXItem[SeqNum/@Value = $curSelectedId/@Value]/EffectiveEndDate/@Value}"/>-->
+                  <TransportLaneXItemCommentText Value="{$pglFormOutput/upd_TransportLaneXItemCommentText/@Value}"/>
+                </REQUEST>
+                <!-- </FOR_EACH>-->
+                <IF_TEST Test="$updateResponse/RESPONSE/@Status != 'Error' and count($updateResponse/RESPONSE/*/_ERRORS) = 0">
+                  <THEN/>
+                  <ELSE>
+                    <BREAK/>
+                  </ELSE>
+                </IF_TEST>
+              </FOR_EACH>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/SourceLocationValue" FromValue="SourceLocationIdn"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/TransportLaneIdentifier" FromValue="TransportLaneIdentifier"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/DestinationLocationValue" FromValue="DestinationLocationIdn"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/BusinessOrganizationValue" FromValue="SegmentIdentification"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/LoadingTimeMeasure" FromValue="LoadingTime"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/UnloadingTimeMeasure" FromValue="UnloadingTime"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/ReplenishmentLotSizeUnitOfMeasureValue" FromValue="ReplenishmentLotSizeUOM"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/TransportLaneXItemStartDate" FromValue="EffectiveStartDate"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/TransportModePriorityMnemonicValue" FromValue="TransportModePriority"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/TransportModeMnemonicValue" FromValue="TransMode"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/ItemIdentificationValue" FromValue="ItemIdentification"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/TransportLaneXItemEndDate" FromValue="EffectiveEndDate"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/TransportModeMnemonicValue" FromValue="TransMode"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/SourcingPriorityClassMnemonicValue" FromValue="SourcingPriority"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/ReplenishmentLotSizeMeasure" FromValue="ReplenishmentLotSize"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/DestinationReceivingDays" FromValue="DestinationReceivingDays"/>
+              <SET_NAME SelectList="$massUpdateList/P_TransportLaneXItem/TransportLaneXItemStatusMnemonicValue" FromValue="TransportationLaneStatus"/>
+              <IF_TEST Test="$updateResponse/RESPONSE/@Status != 'Error' and count($updateResponse/RESPONSE/*/_ERRORS) = 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="thisReturn">
+                    <MESSAGE>
+                      <SUCCESS_MESSAGE Value="The Selected Lane Product Assignments are successfully updated!"/>
+                    </MESSAGE>
+                  </TO_DOCVAR>
+                  <IF_TEST Test="$pglFormOutput/chkEndDate/@Value = 'true'">
+                    <THEN>
+                      <SET_PROPS SelectList="$massUpdateList/P_TransportLaneXItem">
+                        <EffectiveEndDate Value="{$pglFormOutput/EffectiveEndDate/@Value}"/>
+                      </SET_PROPS>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                  <!-- If Success, update the mass update selections table with the updated value-->
+                  <IF_TEST Test="$pglFormOutput/chkLoadingTime/@Value = 'true'">
+                    <THEN>
+                      <SET_PROPS SelectList="$massUpdateList/P_TransportLaneXItem">
+                        <!--<LoadingTime Value="{concat($ldngHours,':',$ldngMinutes,':',$ldngSeconds)}"/>-->
+                        <LoadingTime Value="{$pglFormOutput/LoadingTime/@Value}"/>
+                      </SET_PROPS>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                  <IF_TEST Test="$pglFormOutput/chkUnloadingTime/@Value = 'true'">
+                    <THEN>
+                      <SET_PROPS SelectList="$massUpdateList/P_TransportLaneXItem">
+                        <!-- <UnloadingTime Value="{concat($unldngHours,':',$unldngMinutes,':',$unldngSeconds)}"/>-->
+                        <UnloadingTime Value="{$pglFormOutput/UnloadingTime/@Value}"/>
+                      </SET_PROPS>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                  <IF_TEST Test="$pglFormOutput/chkRplLotSize/@Value = 'true'">
+                    <THEN>
+                      <SET_PROPS SelectList="$massUpdateList/P_TransportLaneXItem">
+                        <ReplenishmentLotSize Value="{floor($pglFormOutput/ReplenishmentLotSize/@Value)}"/>
+                        <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+                        <!--<ReplenishmentRoundingValue Value="{floor($pglFormOutput/ReplenishmentLotSize/@Value)}"/>-->
+                        <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+                      </SET_PROPS>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                  <IF_TEST Test="$pglFormOutput/chkRplLotSizeUOM/@Value = 'true'">
+                    <THEN>
+                      <SET_PROPS SelectList="$massUpdateList/P_TransportLaneXItem">
+                        <ReplenishmentLotSizeUOM Value="{$pglFormOutput/ReplenishmentLotSizeUnitOfMeasure/@Value}"/>
+                      </SET_PROPS>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                  <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+                  <IF_TEST Test="$pglFormOutput/chkRplRndgVal/@Value = 'true'">
+                    <THEN>
+                      <SET_PROPS SelectList="$massUpdateList/P_TransportLaneXItem">
+                        <ReplenishmentRoundingValue Value="{$pglFormOutput/ReplenishmentRoundingValue/@Value}"/>
+                      </SET_PROPS>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                  <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+                  <IF_TEST Test="$pglFormOutput/chkSrcPrir/@Value = 'true'">
+                    <THEN>
+                      <SET_PROPS SelectList="$massUpdateList/P_TransportLaneXItem">
+                        <SourcingPriority Value="{$pglFormOutput/SourcingPriority/@Value}"/>
+                      </SET_PROPS>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                  <IF_TEST Test="$pglFormOutput/chkTrnsModePrir/@Value = 'true'">
+                    <THEN>
+                      <SET_PROPS SelectList="$massUpdateList/P_TransportLaneXItem">
+                        <TransportModePriority Value="{$pglFormOutput/TransportModePriority/@Value}"/>
+                      </SET_PROPS>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                  <IF_TEST Test="$pglFormOutput/chkLaneItemSts/@Value = 'true'">
+                    <THEN>
+                      <SET_PROPS SelectList="$massUpdateList/P_TransportLaneXItem">
+                        <TransportationLaneStatus Value="{$pglFormOutput/TransportationLaneStatus/@Value}"/>
+                      </SET_PROPS>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                  <IF_TEST Test="$pglFormOutput/chkDestnDays/@Value = 'true'">
+                    <THEN>
+                      <SET_PROPS SelectList="$massUpdateList/P_TransportLaneXItem">
+                        <SUN Value="{$pglFormOutput/upd_SUN/@Value}"/>
+                        <MON Value="{$pglFormOutput/upd_MON/@Value}"/>
+                        <TUE Value="{$pglFormOutput/upd_TUE/@Value}"/>
+                        <WED Value="{$pglFormOutput/upd_WED/@Value}"/>
+                        <THU Value="{$pglFormOutput/upd_THU/@Value}"/>
+                        <FRI Value="{$pglFormOutput/upd_FRI/@Value}"/>
+                        <SAT Value="{$pglFormOutput/upd_SAT/@Value}"/>
+                      </SET_PROPS>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                  <!-- $pglFormOutput/chkStrtDate/@Value = 'true' or $pglFormOutput/chkEndDate/@Value = 'true'  or-->
+                  <IF_TEST Test="($pglFormOutput/chkLoadingTime/@Value = 'true' or $pglFormOutput/chkUnloadingTime/@Value = 'true' or $pglFormOutput/chkRplLotSize/@Value = 'true' or $pglFormOutput/chkRplRndgVal/@Value = 'true'       or $pglFormOutput/chkSrcPrir/@Value = 'true' or $pglFormOutput/chkTrnsModePrir/@Value = 'true'      or $pglFormOutput/chkLaneItemSts/@Value = 'true' or $pglFormOutput/chkDestnDays/@Value = 'true')">
+                    <THEN>
+                      <SET_PROPS SelectList="$massUpdateList/P_TransportLaneXItem">
+                        <TransportLaneXItemCommentText Value="{$pglFormOutput/upd_TransportLaneXItemCommentText/@Value}"/>
+                      </SET_PROPS>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$updateResponse/RESPONSE/@Status = 'Error' ">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="thisReturn">
+                        <DB_ERROR>
+                          <_ERRORS Value="{$updateResponse/RESPONSE/@Status}">
+                            <_ERROR Value="{substringBefore($updateResponse/RESPONSE/@Description,'=')}"/>
+                          </_ERRORS>
+                        </DB_ERROR>
+                      </TO_DOCVAR>
+                    </THEN>
+                    <ELSE>
+                      <TO_DOCVAR AssignToVar="thisReturn">
+                        <UPDATE_VAL>
+                          <TO_XML SelectList="$updateResponse/RESPONSE/REQUEST/*"/>
+                          <TO_XML Select="$pglFormOutput/chkEndDate"/>
+                          <TO_XML Select="$pglFormOutput/chkLoadingTime"/>
+                          <TO_XML Select="$pglFormOutput/chkUnloadingTime"/>
+                          <TO_XML Select="$pglFormOutput/chkRplLotSize"/>
+                          <TO_XML Select="$pglFormOutput/chkRplLotSizeUOM"/>
+                          <TO_XML Select="$pglFormOutput/chkRplRndgVal"/>
+                          <TO_XML Select="$pglFormOutput/chkSrcPrir"/>
+                          <TO_XML Select="$pglFormOutput/chkTrnsModePrir"/>
+                          <TO_XML Select="$pglFormOutput/chkLaneItemSts"/>
+                          <TO_XML Select="$pglFormOutput/chkDestnDays"/>
+                        </UPDATE_VAL>
+                      </TO_DOCVAR>
+                      <SET_NAME Select="$thisReturn/TransportLaneXItemCommentText" FromValue="upd_TransportLaneXItemCommentText"/>
+                      <REMOVE_CHILDREN ChildName="_ERRORS" DocVar="thisReturn"/>
+                      <IF_TEST Test="count($thisReturn/*[name() !='TransportLaneXItemEndDate' and name() !='SourcingPriority' and name()!= 'SourcingPriorityClassIdentifier' and name()!= 'TransportModePriorityClassIdentifier' and name() !='TransportModePriority' and name() !='ReplenishmentLotSizeMeasure' and name() !='ReplenishmentRoundingMeasure' and name() !='UnloadingTimeMeasure' and name() !='LoadingTimeMeasure' and name() != 'TransportationLaneStatus']/_ERRORS) > 0">
+                        <THEN>
+                          <APPEND_TO_XML DocVar="thisReturn">
+                            <_ERRORS Value="{$updateResponse/RESPONSE/_RESULT/@Value}">
+                              <TO_XML SelectList="$updateResponse/RESPONSE/_RESULT/*"/>
+                            </_ERRORS>
+                          </APPEND_TO_XML>
+                        </THEN>
+                        <ELSE>
+                          <IF_TEST Test="contains($updateResponse/RESPONSE/_RESULT/_ERROR[1]/@Value,'UPD-0203')">
+                            <THEN>
+                              <APPEND_TO_XML DocVar="thisReturn">
+                                <_ERRORS Value="{$updateResponse/RESPONSE/_RESULT/@Value}">
+                                  <_ERROR Value="ERR-TL-UPD-0203:TL_X_ITEM_START_DATE_SHOULD_BE_LESSER_THAN_END_DATE"/>
+                                </_ERRORS>
+                              </APPEND_TO_XML>
+                            </THEN>
+                            <ELSE>
+                              <!-- MYANG RIC 232896 TL X Prod mass update - Error message display twice START-->
+                              <IF_TEST Test="count($thisReturn/*[name() = 'ReplenishmentLotSizeMeasure']/_ERRORS) > 0 or count($thisReturn/*[name() = 'TransportLaneXItemEndDate']/_ERRORS) > 0">
+                                <THEN/>
+                                <ELSE>
+                                  <APPEND_TO_XML DocVar="thisReturn">
+                                    <_ERRORS Value="{$updateResponse/RESPONSE/_RESULT/@Value}">
+                                      <TO_XML SelectList="$updateResponse/RESPONSE/_RESULT/*"/>
+                                    </_ERRORS>
+                                  </APPEND_TO_XML>
+                                </ELSE>
+                              </IF_TEST>
+                              <!-- MYANG RIC 232896 TL X Prod mass update - Error message display twice END-->
+                            </ELSE>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                      <IF_TEST Test="$pglFormOutput/chkEndDate/@Value = 'true'">
+                        <THEN>
+                          <SET_NAME SelectList="$thisReturn/TransportLaneXItemEndDate" FromValue="upd_EffectiveEndDate"/>
+                        </THEN>
+                        <ELSE/>
+                      </IF_TEST>
+                      <IF_TEST Test="$pglFormOutput/chkSrcPrir/@Value = 'true'">
+                        <THEN>
+                          <APPEND_TO_XML DocVar="thisReturn">
+                            <TO_XML Select="$pglFormOutput/SourcingPriority"/>
+                          </APPEND_TO_XML>
+                        </THEN>
+                        <ELSE/>
+                      </IF_TEST>
+                      <IF_TEST Test="$pglFormOutput/chkTrnsModePrir/@Value = 'true'">
+                        <THEN>
+                          <APPEND_TO_XML DocVar="thisReturn">
+                            <TO_XML Select="$pglFormOutput/TransportModePriority"/>
+                          </APPEND_TO_XML>
+                        </THEN>
+                        <ELSE/>
+                      </IF_TEST>
+                      <IF_TEST Test="$pglFormOutput/chkRplLotSize/@Value = 'true'">
+                        <THEN>
+                          <SET_NAME SelectList="$thisReturn/ReplenishmentLotSizeMeasure" FromValue="ReplenishmentLotSize"/>
+                        </THEN>
+                        <ELSE/>
+                      </IF_TEST>
+                      <IF_TEST Test="$pglFormOutput/chkRplLotSizeUOM/@Value = 'true'">
+                        <THEN>
+                          <APPEND_TO_XML DocVar="thisReturn">
+                            <ReplenishmentLotSizeUnitOfMeasure Value="{$dropDownValues/UOM/P_UnitOfMeasure[UnitOfMeasureIdentifier/@Value = $thisReturn/ReplenishmentLotSizeUnitOfMeasureIdentifier/@Value ]/UnitOfMeasureMnemonicValue/@Value}"/>
+                          </APPEND_TO_XML>
+                        </THEN>
+                        <ELSE/>
+                      </IF_TEST>
+                      <IF_TEST Test="$pglFormOutput/chkRplRndgVal/@Value = 'true'">
+                        <THEN>
+                          <SET_NAME SelectList="$thisReturn/ReplenishmentRoundingMeasure" FromValue="ReplenishmentRoundingValue"/>
+                        </THEN>
+                        <ELSE/>
+                      </IF_TEST>
+                      <IF_TEST Test="$pglFormOutput/chkUnloadingTime/@Value = 'true'">
+                        <THEN>
+                          <SET_NAME SelectList="$thisReturn/UnloadingTimeMeasure" FromValue="UnloadingTime"/>
+                          <!--                          <SET DocVar="thisReturn" Property="UnloadingTime" FromValue="{concat($unldngHours,':',$unldngMinutes,':',$unldngSeconds)}"/>-->
+                        </THEN>
+                        <ELSE/>
+                      </IF_TEST>
+                      <IF_TEST Test="$pglFormOutput/chkLoadingTime/@Value = 'true'">
+                        <THEN>
+                          <SET_NAME SelectList="$thisReturn/LoadingTimeMeasure" FromValue="LoadingTime"/>
+                          <!--                  <SET DocVar="thisReturn" Property="LoadingTime" FromValue="{$thisReturn/LoadingTime/@Value div 3600}"/>-->
+                          <!--                          <SET DocVar="thisReturn" Property="LoadingTime" FromValue="{concat($ldngHours,':',$ldngMinutes,':',$ldngSeconds)}"/>-->
+                        </THEN>
+                        <ELSE/>
+                      </IF_TEST>
+                      <IF_TEST Test="$pglFormOutput/chkLaneItemSts/@Value = 'true'">
+                        <THEN>
+                          <APPEND_TO_XML DocVar="thisReturn">
+                            <TO_XML Select="$pglFormOutput/TransportationLaneStatus"/>
+                          </APPEND_TO_XML>
+                        </THEN>
+                        <ELSE/>
+                      </IF_TEST>
+                      <IF_TEST Test="$pglFormOutput/chkDestnDays/@Value = 'true'">
+                        <THEN>
+                          <APPEND_TO_XML DocVar="thisReturn">
+                            <upd_SUN Value="{$pglFormOutput/upd_SUN/@Value}"/>
+                            <upd_MON Value="{$pglFormOutput/upd_MON/@Value}"/>
+                            <upd_TUE Value="{$pglFormOutput/upd_TUE/@Value}"/>
+                            <upd_WED Value="{$pglFormOutput/upd_WED/@Value}"/>
+                            <upd_THU Value="{$pglFormOutput/upd_THU/@Value}"/>
+                            <upd_FRI Value="{$pglFormOutput/upd_FRI/@Value}"/>
+                            <upd_SAT Value="{$pglFormOutput/upd_SAT/@Value}"/>
+                          </APPEND_TO_XML>
+                        </THEN>
+                        <ELSE/>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='save_upd'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Lane Product Mass Update" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Transportation Lane Product Assignment" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='view_tlane'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="View Lane Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Copy Lane Product Assignment" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="iscpTLLaneProductCopy.pgl">
+      <pre_actions>
+        <action>
+          <SET_NAME Select="$thisReturn/COPIED_LIST/ReplenishmentLotSizeUnitOfMeasureIdentifier" FromValue="ReplenishmentLotSizeUOM"/>
+          <TO_DOCVAR AssignToVar="formattedSegDet">
+            <SEGMENT/>
+          </TO_DOCVAR>
+          <!-- MYANG RIC 223304 - TL X Prod Copy Lot Size UOM drop down value missing START -->
+          <IF_TEST Test="($userAction='save_copy')">
+            <THEN>
+              <REQUEST Name="fetchRPLUomDropdownListForItem" ServiceName="PEDM_MASTER" AssignToVar="uomDetails">
+                <ItemIdentification Value="{ifElse($thisReturn/ItemIdentificationValue/@Value != null,$thisReturn/ItemIdentificationValue/@Value,$thisReturn/ItemIdentification/@Value)}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <!-- MYANG RIC 223304 - TL X Prod Copy Lot Size UOM drop down value missing END -->
+          <IF_TEST Test="($userAction='copy')">
+            <THEN>
+              <REQUEST Name="fetchRPLUomDropdownListForItem" ServiceName="PEDM_MASTER" AssignToVar="uomDetails">
+                <ItemIdentification Value="{ifElse($thisReturn/COPIED_LIST/ItemIdentificationValue/@Value != null,$thisReturn/COPIED_LIST/ItemIdentificationValue/@Value,$thisReturn/COPIED_LIST/ItemIdentification/@Value)}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <FOR_EACH CurrentElement="curSeg" SelectList="$laneItemSrchResult/SGMNT_DET/*">
+            <APPEND_TO_XML DocVar="formattedSegDet">
+              <OPTION Value="{concat($curSeg/PartyIdentificationValue/@Value,' - ',$curSeg/PartyDescription/@Value)}" Id="{$curSeg/PartyIdentificationValue/@Value}"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <SET_PROPS SelectList="$thisReturn/COPIED_LIST">
+            <TransportLaneIdentifier Value="{$thisReturn/COPIED_LIST/TransportLaneName/@Value}"/>
+          </SET_PROPS>
+          <IF_TEST Test="($userAction='fetchRPLUom')">
+            <THEN>
+              <IF_TEST Test="($thisParam/ReplenishmentLotSizeUOM/@Value !='' )">
+                <THEN>
+                  <REQUEST Name="fetchRPLUomDropdownListForItem" ServiceName="PEDM_MASTER" AssignToVar="uomDetails">
+                    <ItemIdentification Value="{ifElse($thisParam/ItemIdentificationValue/@Value != null,$thisParam/ItemIdentificationValue/@Value,$thisParam/ItemIdentification/@Value)}"/>
+                  </REQUEST>
+                  <REQUEST Name="getRPLUomValueForItem" ServiceName="PEDM_MASTER" AssignToVar="newRPLUom">
+                    <ReplenishmentLotSizeUOM Value="{$dropDownValues/UOM/P_UnitOfMeasure[floor(UnitOfMeasureIdentifier/@Value) = floor($thisParam/ReplenishmentLotSizeUOM/@Value)]/UnitOfMeasureMnemonicValue/@Value}"/>
+                    <ItemIdentification Value="{$thisParam/ItemIdentification/@Value}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="thisReturn">
+                <dummy>
+                  <ItemIdentification Value="{$thisParam/ItemIdentification/@Value}"/>
+                  <SegmentIdentification Value="{$thisParam/SegmentIdentification/@Value}"/>
+                  <TransportLaneIdentifier Value="{$thisParam/TransportLaneIdentifier/@Value}"/>
+                  <ItemDescription Value="{$thisParam/ItemDescription/@Value}"/>
+                  <TransportationLaneStatus Value="{$thisParam/TransportationLaneStatus/@Value}"/>
+                  <SourcingPriority Value="{$thisParam/SourcingPriority/@Value}"/>
+                  <EffectiveStartDate Value="{$thisParam/EffectiveStartDate/@Value}"/>
+                  <EffectiveEndDate Value="{$thisParam/EffectiveEndDate/@Value}"/>
+                  <TransportModePriority Value="{$thisParam/TransportModePriority/@Value}"/>
+                  <ReplenishmentLotSize Value="{$newRPLUom/rplUOMValforItem/@Value}"/>
+                  <ReplenishmentLotSizeUOM Value="{$thisParam/ReplenishmentLotSizeUOM/@Value}"/>
+                  <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+                  <ReplenishmentRoundingValue Value="{$thisParam/ReplenishmentRoundingValue/@Value}"/>
+                  <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+                  <UnloadingTime Value="{$thisParam/UnloadingTime/@Value}"/>
+                  <LoadingTime Value="{$thisParam/LoadingTime/@Value}"/>
+                  <TransportLaneXItemCommentText Value="{$thisParam/TransportLaneXItemCommentText/@Value}"/>
+                  <SUN Value="{$thisParam/SUN/@Value}"/>
+                  <MON Value="{$thisParam/MON/@Value}"/>
+                  <TUE Value="{$thisParam/TUE/@Value}"/>
+                  <WED Value="{$thisParam/WED/@Value}"/>
+                  <THU Value="{$thisParam/THU/@Value}"/>
+                  <FRI Value="{$thisParam/FRI/@Value}"/>
+                  <SAT Value="{$thisParam/SAT/@Value}"/>
+                </dummy>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <SRC_PRIR>
+                <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/SRC_PRIR/P_SourcingPriorityClass" Id="SourcingPriorityClassMnemonicValue" Value="SourcingPriorityClassMnemonicValue"/>
+              </SRC_PRIR>
+              <TRANS_MODE_PRIR>
+                <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/TRANS_MODE_PRIR/P_TransportModePriorityClass" Id="TransportModePriorityClassMnemonicValue" Value="TransportModePriorityClassMnemonicValue"/>
+              </TRANS_MODE_PRIR>
+              <LANE_ITEM_STATUS>
+                <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/LANE_ITEM_STATUS/P_TransportLaneXItemStatus" Id="TransportLaneXItemStatusMnemonicValue" Value="TransportLaneXItemStatusMnemonicValue"/>
+              </LANE_ITEM_STATUS>
+              <SGMNT_DET>
+                <TO_XML SelectList="$formattedSegDet/*"/>
+                <!--        <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/SGMNT_DET/P_Party" Id="PartyIdentificationValue" Value="PartyIdentificationValue"/>-->
+              </SGMNT_DET>
+              <!--  
+              <UOM_VALUES>
+                <DROP_DOWN_OPTIONS SelectList="$dropDownValues/UOM/P_UnitOfMeasure" Id="UnitOfMeasureIdentifier" Value="UnitOfMeasureMnemonicValue"/>
+              </UOM_VALUES>-->
+              <TO_XML SelectList="$thisReturn/COPIED_LIST/*"/>
+              <TO_XML SelectList="$thisReturn/*"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <IF_TEST Test="( count($thisReturn/*[name()='_ERRORS'])&lt;=0 and  $userAction!='fetchRPLUom')">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <!-- 
+								<UOM_VALUES>
+	                  <DROP_DOWN_OPTIONS SelectList="$dropDownValues/UOM/P_UnitOfMeasure" Id="UnitOfMeasureIdentifier" Value="UnitOfMeasureMnemonicValue"/>
+                </UOM_VALUES> -->
+                <UOM_VALUES>
+                  <DROP_DOWN_OPTIONS SelectList="$uomDetails/SQL_RESULT" Id="UOMID" Value="REPLENISHMENTLOTSIZEUOM"/>
+                </UOM_VALUES>
+              </APPEND_TO_XML>
+              <SET DocVar="pglFormInput" Property="ReplenishmentLotSizeUOM" FromValue="{substringBefore($pglFormInput/ReplenishmentLotSizeUOM/@Value,'.')}"/>
+              <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+              <SET DocVar="pglFormInput" Property="ReplenishmentRoundingValue" FromValue="{substringBefore($pglFormInput/ReplenishmentRoundingValue/@Value,'.')}"/>
+              <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+            </THEN>
+            <ELSE>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <UOM_VALUES>
+                  <DROP_DOWN_OPTIONS SelectList="$uomDetails/SQL_RESULT" Id="UOMID" Value="REPLENISHMENTLOTSIZEUOM"/>
+                </UOM_VALUES>
+              </APPEND_TO_XML>
+              <SET DocVar="pglFormInput" Property="ReplenishmentLotSizeUOM" FromValue="{substringBefore($pglFormInput/ReplenishmentLotSizeUOM/@Value,'.')}"/>
+              <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+              <SET DocVar="pglFormInput" Property="ReplenishmentRoundingValue" FromValue="{substringBefore($pglFormInput/ReplenishmentRoundingValue/@Value,'.')}"/>
+              <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction = 'cancel'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="thisReturn">
+                <RESET_START_CNT>
+                  <START_COUNT Value="{$thisParam/START_COUNT/@Value}"/>
+                </RESET_START_CNT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'save_copy'">
+            <THEN>
+              <!-- CR:115759 12/19/2007 Praneeth Karnam Start -->
+              <REQUEST Name="readTransLanes" ServiceName="BCM_MASTER" AssignToVar="laneDetails" ReturnRowCount="yes">
+                <IS_SEARCH Value="YES"/>
+                <FILTER Name="SRCH_DESTN_LOC_CLAS">
+                  <SRCH_DESTN_LOC_CLAS Value="PLNT_NUM" MatchBy="EQUAL"/>
+                </FILTER>
+                <FILTER Name="SRCH_SRC_LOC_CLAS">
+                  <SRCH_SRC_LOC_CLAS Value="PLNT_NUM" MatchBy="EQUAL"/>
+                </FILTER>
+                <FILTER Name="SRCH_STATE">
+                  <SRCH_STATE Value="ACTIVE" MatchBy="EQUAL"/>
+                </FILTER>
+              </REQUEST>
+              <!-- CR:115759 12/19/2007 Praneeth Karnam End -->
+              <SET_NAME Select="$laneDetails/TL_DETAILS/P_TransportLane/TransportLaneIdentification" FromValue="TransportLaneIdentifier"/>
+              <TO_DOCVAR AssignToVar="tempLaneDetails">
+                <LANE_DETAILS>
+                  <TO_XML SelectList="$laneDetails/TL_DETAILS/P_TransportLane[TransportLaneName/@Value = $pglFormOutput/TransportLaneIdentifier/@Value]/*"/>
+                </LANE_DETAILS>
+              </TO_DOCVAR>
+              <SET_NAME Select="$tempLaneDetails/DestinationLocationIdn" FromValue="DestinationLocationValue"/>
+              <SET_NAME Select="$tempLaneDetails/DestnLocationType" FromValue="DestinationLocationType"/>
+              <SET_NAME Select="$tempLaneDetails/OriginLocationIdn" FromValue="SourceLocationValue"/>
+              <SET_NAME Select="$tempLaneDetails/SrcLocationType" FromValue="SourceLocationType"/>
+              <SET_NAME Select="$tempLaneDetails/TransMode" FromValue="TransportModeMnemonicValue"/>
+              <SET_NAME Select="$tempLaneDetails/TransLaneClass" FromValue="TransportLaneClassMnemonicValue"/>
+              <SET_NAME Select="$pglFormOutput/LoadingTime" FromValue="LoadingTimeMeasure"/>
+              <SET_NAME Select="$pglFormOutput/UnloadingTime" FromValue="UnloadingTimeMeasure"/>
+              <SET_NAME Select="$pglFormOutput/EffectiveEndDate" FromValue="TransportLaneXItemEndDate"/>
+              <SET_NAME Select="$pglFormOutput/SourcingPriority" FromValue="SourcingPriorityClassMnemonicValue"/>
+              <SET_NAME Select="$pglFormOutput/ItemDescription" FromValue="ItemName"/>
+              <SET_NAME Select="$pglFormOutput/ReplenishmentLotSize" FromValue="ReplenishmentLotSizeMeasure"/>
+              <SET_NAME Select="$pglFormOutput/ReplenishmentLotSizeUOM" FromValue="ReplenishmentLotSizeUnitOfMeasure"/>
+              <SET_NAME Select="$pglFormOutput/SegmentIdentification" FromValue="BusinessOrganizationValue"/>
+              <SET_NAME Select="$pglFormOutput/EffectiveStartDate" FromValue="TransportLaneXItemStartDate"/>
+              <SET_NAME Select="$pglFormOutput/TransportModePriority" FromValue="TransportModePriorityMnemonicValue"/>
+              <SET_NAME Select="$pglFormOutput/ItemIdentification" FromValue="ItemIdentificationValue"/>
+              <SET_NAME Select="$pglFormOutput/TransportationLaneStatus" FromValue="TransportLaneXItemStatusMnemonicValue"/>
+              <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+              <SET_NAME Select="$pglFormOutput/ReplenishmentRoundingValue" FromValue="ReplenishmentRoundingMeasure"/>
+              <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+              <APPEND_TO_XML DocVar="pglFormOutput">
+                <ReplenishmentLotSizeUnitOfMeasureIdentifier Value="{$pglFormOutput/ReplenishmentLotSizeUnitOfMeasure/@Value}"/>
+              </APPEND_TO_XML>
+              <SET_PROPS SelectList="$pglFormOutput">
+                <!-- code to be changed for create/copy error by vamshi -->
+                <ReplenishmentLotSizeUnitOfMeasureValue Value="{$dropDownValues/UOM/P_UnitOfMeasure[floor(UnitOfMeasureIdentifier/@Value) = floor($pglFormOutput/ReplenishmentLotSizeUnitOfMeasure/@Value)]/UnitOfMeasureMnemonicValue/@Value}"/>
+              </SET_PROPS>
+              <SET_PROPS SelectList="$pglFormOutput">
+                <ReplenishmentLotSizeUnitOfMeasure Value="{$pglFormOutput/ReplenishmentLotSizeUnitOfMeasureValue/@Value}"/>
+              </SET_PROPS>
+              <SET_PROPS SelectList="$pglFormOutput">
+                <TransportModeValue Value="{$tempLaneDetails/TransportModeMnemonicValue/@Value}"/>
+              </SET_PROPS>
+              <SET_PROPS SelectList="$pglFormOutput">
+                <UnloadingTimeMeasure Value="{ceiling($pglFormOutput/UnloadingTimeMeasure/@Value)}"/>
+                <LoadingTimeMeasure Value="{ceiling($pglFormOutput/LoadingTimeMeasure/@Value)}"/>
+                <ReplenishmentLotSizeMeasure Value="{floor($pglFormOutput/ReplenishmentLotSizeMeasure/@Value)}"/>
+                <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+                <ReplenishmentRoundingMeasure Value="{floor($pglFormOutput/ReplenishmentRoundingMeasure/@Value)}"/>
+                <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+              </SET_PROPS>
+              <SET_PROPS SelectList="$pglFormOutput">
+                <TransportationLaneXProductCommentText Value="{$pglFormOutput/TransportLaneXItemCommentText/@Value}"/>
+              </SET_PROPS>
+              <APPEND_TO_XML DocVar="pglFormOutput">
+                <TransportModePriorityClassMnemonicValue Value="{$pglFormOutput/TransportModePriorityMnemonicValue/@Value}"/>
+              </APPEND_TO_XML>
+              <SET_PROPS DocVar="pglFormOutput">
+                <OriginalTransportLaneIdentifier Value="{$pglFormOutput/TransportLaneIdentifier/@Value}"/>
+              </SET_PROPS>
+              <SET_PROPS DocVar="pglFormOutput">
+                <TransportLaneIdentifier Value="{$tempLaneDetails/TransportLaneIdentifier/@Value}"/>
+              </SET_PROPS>
+              <REQUEST Name="createLaneItem" AssignToVar="createResponse" ServiceName="edmuiservice" HandleException="true">
+                <TO_XML SelectList="$pglFormOutput/*"/>
+                <TO_XML SelectList="$tempLaneDetails/*"/>
+                <TransportationLaneXProductComment Value="{$pglFormOutput/TransportLaneXItemCommentText/@Value}"/>
+              </REQUEST>
+              <IF_TEST Test="$createResponse/RESPONSE/@Status != 'Error' and count($createResponse/RESPONSE/*/_ERRORS) = 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="validationMessage">
+                    <VALIDATION_MESSAGE>
+                      <SUCCESS_MESSAGE Value="The Lane Product Assignment is successfully added!"/>
+                    </VALIDATION_MESSAGE>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="thisReturn">
+                    <RESET_START_CNT>
+                      <START_COUNT Value="{$thisParam/START_COUNT/@Value}"/>
+                    </RESET_START_CNT>
+                  </TO_DOCVAR>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$createResponse/RESPONSE/@Status = 'Error'">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="thisReturn">
+                        <DB_ERROR>
+                          <_ERRORS Value="{$createResponse/RESPONSE/@Status}">
+                            <_ERROR Value="{substringBefore($createResponse/RESPONSE/@Description,'=')}"/>
+                          </_ERRORS>
+                        </DB_ERROR>
+                      </TO_DOCVAR>
+                      <SET_PROPS Select="$thisReturn">
+                        <TransportLaneIdentifier Value="{$pglFormOutput/OriginalTransportLaneIdentifier/@Value}"/>
+                      </SET_PROPS>
+                    </THEN>
+                    <ELSE>
+                      <TO_DOCVAR AssignToVar="thisReturn">
+                        <TO_XML SelectList="$createResponse/RESPONSE/REQUEST"/>
+                      </TO_DOCVAR>
+                      <REMOVE_CHILDREN ChildName="_ERRORS" DocVar="thisReturn"/>
+                      <!-- RIC#237754 DYanez.  If duplicate error message, don't append to thisReturn -->
+                      <IF_TEST Test="($createResponse/RESPONSE/_RESULT/_ERROR/@Value != $thisReturn/TransportLaneXItemEndDate/_ERRORS/_ERROR/@Value)">
+                        <THEN>
+                          <APPEND_TO_XML DocVar="thisReturn">
+                            <_ERRORS Value="{$createResponse/RESPONSE/@Status}">
+                              <_ERROR Value="{$createResponse/RESPONSE/_RESULT/_ERROR/@Value}"/>
+                            </_ERRORS>
+                          </APPEND_TO_XML>
+                        </THEN>
+                      </IF_TEST>
+                      <!-- RIC#237754 End -->
+                      <APPEND_TO_XML DocVar="thisReturn">
+                        <SEQ_NUM Value="{$thisParam/SEQ_NUM/@Value}"/>
+                      </APPEND_TO_XML>
+                      <SET_PROPS Select="$thisReturn">
+                        <TransportLaneIdentifier Value="{$pglFormOutput/OriginalTransportLaneIdentifier/@Value}"/>
+                      </SET_PROPS>
+                      <IF_TEST Test="count($thisReturn/*[name() ='TransportLaneXItemCommentText' or name() ='DestinationReceivingDaysValue']/_ERRORS) > 0">
+                        <THEN>
+                          <APPEND_TO_XML DocVar="thisReturn">
+                            <_ERRORS Value="{$createResponse/RESPONSE/_RESULT/@Value}">
+                              <TO_XML SelectList="$createResponse/RESPONSE/_RESULT/*"/>
+                            </_ERRORS>
+                          </APPEND_TO_XML>
+                          <SET_PROPS Select="$thisReturn">
+                            <TransportLaneIdentifier Value="{$pglFormOutput/OriginalTransportLaneIdentifier/@Value}"/>
+                          </SET_PROPS>
+                        </THEN>
+                        <ELSE/>
+                      </IF_TEST>
+                      <APPEND_TO_XML Select="$thisReturn/ItemIdentification">
+                        <TO_XML SelectList="$thisReturn/ItemIdentifier/*"/>
+                        <TO_XML SelectList="$thisReturn/ItemStatusValue/*"/>
+                      </APPEND_TO_XML>
+                      <SET_NAME SelectList="$thisReturn/TransportLaneXItemStartDate" FromValue="EffectiveStartDate"/>
+                      <SET_NAME SelectList="$thisReturn/TransportLaneXItemEndDate" FromValue="EffectiveEndDate"/>
+                      <SET_NAME SelectList="$thisReturn/SourcingPriorityClassMnemonicValue" FromValue="SourcingPriority"/>
+                      <!-- CR:115759 12/19/2007 Praneeth Karnam Start -->
+                      <!--<SET_NAME SelectList="$thisReturn/TransportModePriorityClassIdentifier" FromValue="TransportModePriority"/>-->
+                      <SET_NAME SelectList="$thisReturn/TransportModePriorityMnemonicValue" FromValue="TransportModePriority"/>
+                      <IF_TEST Test="$thisReturn/TransportModePriorityClassIdentifier/@Value = null and $thisReturn/UPDATE_PROPERTIES/TransportModePriorityClassIdentifier/@Value !=null">
+                        <THEN>
+                          <SET_PROPS SelectList="$thisReturn">
+                            <TransportModePriority Value="{$dropDownValues/TRANS_MODE_PRIR/P_TransportModePriorityClass[TransportModePriorityClassIdentifier/@Value = $thisReturn/UPDATE_PROPERTIES/TransportModePriorityClassIdentifier/@Value]/TransportModePriorityClassMnemonicValue/@Value}"/>
+                          </SET_PROPS>
+                        </THEN>
+                        <ELSE>
+                          <SET_PROPS SelectList="$thisReturn">
+                            <TransportModePriority Value="{$dropDownValues/TRANS_MODE_PRIR/P_TransportModePriorityClass[TransportModePriorityClassIdentifier/@Value = $thisReturn/TransportModePriorityClassIdentifier/@Value]/TransportModePriorityClassMnemonicValue/@Value}"/>
+                          </SET_PROPS>
+                        </ELSE>
+                      </IF_TEST>
+                      <!-- CR:115759 12/19/2007 Praneeth Karnam End -->
+                      <SET_NAME SelectList="$thisReturn/ReplenishmentLotSizeMeasure" FromValue="ReplenishmentLotSize"/>
+                      <!-- <SET_NAME SelectList="$thisReturn/ReplenishmentLotSizeUnitOfMeasure" FromValue="ReplenishmentLotSizeUOM"/>-->
+                      <SET_NAME SelectList="$thisReturn/ReplenishmentLotSizeUnitOfMeasureIdentifier" FromValue="ReplenishmentLotSizeUOM"/>
+                      <SET_NAME SelectList="$thisReturn/ReplenishmentRoundingMeasure" FromValue="ReplenishmentRoundingValue"/>
+                      <SET_NAME SelectList="$thisReturn/UnloadingTimeMeasure" FromValue="UnloadingTime"/>
+                      <SET_NAME SelectList="$thisReturn/LoadingTimeMeasure" FromValue="LoadingTime"/>
+                      <!-- CR:115759 12/19/2007 Praneeth Karnam Start -->
+                      <SET_NAME SelectList="$thisReturn/TransportLaneXItemStatusMnemonicValue" FromValue="TransportationLaneStatus"/>
+                      <!--<SET_NAME SelectList="$thisReturn/LaneStatusValue" FromValue="TransportationLaneStatus"/>-->
+                      <!-- CR:115759 12/19/2007 Praneeth Karnam End -->
+                      <SET_NAME SelectList="$thisReturn/ItemIdentificationValue" FromValue="ItemIdentification"/>
+                      <SET_NAME SelectList="$thisReturn/BusinessOrganizationValue" FromValue="SegmentIdentification"/>
+                      <SET_NAME SelectList="$thisReturn/ItemName" FromValue="ItemDescription"/>
+                      <APPEND_TO_XML DocVar="thisReturn">
+                        <TO_XML Select="$thisParam/SUN"/>
+                        <TO_XML Select="$thisParam/MON"/>
+                        <TO_XML Select="$thisParam/TUE"/>
+                        <TO_XML Select="$thisParam/WED"/>
+                        <TO_XML Select="$thisParam/THU"/>
+                        <TO_XML Select="$thisParam/FRI"/>
+                        <TO_XML Select="$thisParam/SAT"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Transportation Lane Product Assignment" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='save_copy'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="isCopySuccess" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Select_tl_id'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select Lane" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Select_item_id'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select Item" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='fetchRPLUom'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Copy Lane Product Assignment" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Copy Lane Product Assignment" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Create Lane Product Assignment" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="iscpTLLaneProductCreate.pgl">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="formattedSegDet">
+            <SEGMENT/>
+          </TO_DOCVAR>
+          <FOR_EACH CurrentElement="curSeg" SelectList="$laneItemSrchResult/SGMNT_DET/*">
+            <APPEND_TO_XML DocVar="formattedSegDet">
+              <OPTION Value="{concat($curSeg/PartyIdentificationValue/@Value,' - ',$curSeg/PartyDescription/@Value)}" Id="{$curSeg/PartyIdentificationValue/@Value}"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <IF_TEST Test="($userAction='fetchRPLUom')">
+            <THEN>
+              <IF_TEST Test="($thisParam/ReplenishmentLotSizeUOM/@Value !='' )">
+                <THEN>
+                  <REQUEST Name="getRPLUomValueForItem" ServiceName="PEDM_MASTER" AssignToVar="newRPLUom">
+                    <ReplenishmentLotSizeUOM Value="{$dropDownValues/UOM/P_UnitOfMeasure[floor(UnitOfMeasureIdentifier/@Value) = floor($thisParam/ReplenishmentLotSizeUOM/@Value)]/UnitOfMeasureMnemonicValue/@Value}"/>
+                    <ItemIdentification Value="{$thisParam/ItemIdentification/@Value}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="thisReturn">
+                <dummy>.
+
+									<ItemIdentification Value="{$thisParam/ItemIdentification/@Value}"/>
+                  <SegmentIdentification Value="{$thisParam/SegmentIdentification/@Value}"/>
+                  <TransportLaneIdentifier Value="{$thisParam/TransportLaneIdentifier/@Value}"/>
+                  <ItemDescription Value="{$thisParam/ItemDescription/@Value}"/>
+                  <TransportationLaneStatus Value="{$thisParam/TransportationLaneStatus/@Value}"/>
+                  <SourcingPriority Value="{$thisParam/SourcingPriority/@Value}"/>
+                  <EffectiveStartDate Value="{$thisParam/EffectiveStartDate/@Value}"/>
+                  <EffectiveEndDate Value="{$thisParam/EffectiveEndDate/@Value}"/>
+                  <TransportModePriority Value="{$thisParam/TransportModePriority/@Value}"/>
+                  <ReplenishmentLotSize Value="{$newRPLUom/rplUOMValforItem/@Value}"/>
+                  <ReplenishmentLotSizeUOM Value="{$thisParam/ReplenishmentLotSizeUOM/@Value}"/>
+                  <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+                  <ReplenishmentRoundingValue Value="{$thisParam/ReplenishmentRoundingValue/@Value}"/>
+                  <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+                  <UnloadingTime Value="{$thisParam/UnloadingTime/@Value}"/>
+                  <LoadingTime Value="{$thisParam/LoadingTime/@Value}"/>
+                  <TransportLaneXItemCommentText Value="{$thisParam/TransportLaneXItemCommentText/@Value}"/>
+                  <SUN Value="{$thisParam/SUN/@Value}"/>
+                  <MON Value="{$thisParam/MON/@Value}"/>
+                  <TUE Value="{$thisParam/TUE/@Value}"/>
+                  <WED Value="{$thisParam/WED/@Value}"/>
+                  <THU Value="{$thisParam/THU/@Value}"/>
+                  <FRI Value="{$thisParam/FRI/@Value}"/>
+                  <SAT Value="{$thisParam/SAT/@Value}"/>
+                </dummy>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="( count($thisReturn/*[name()='_ERRORS'])>0 or $userAction='fetchRPLUom')">
+            <THEN>
+              <REQUEST Name="fetchRPLUomDropdownListForItem" ServiceName="PEDM_MASTER" AssignToVar="uomDetails">
+                <ItemIdentification Value="{ifElse($thisParam/ItemIdentificationValue/@Value != null,$thisParam/ItemIdentificationValue/@Value,$thisParam/ItemIdentification/@Value)}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <SRC_PRIR>
+                <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/SRC_PRIR/P_SourcingPriorityClass" Id="SourcingPriorityClassMnemonicValue" Value="SourcingPriorityClassMnemonicValue"/>
+              </SRC_PRIR>
+              <TRANS_MODE_PRIR>
+                <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/TRANS_MODE_PRIR/P_TransportModePriorityClass" Id="TransportModePriorityClassMnemonicValue" Value="TransportModePriorityClassMnemonicValue"/>
+              </TRANS_MODE_PRIR>
+              <LANE_ITEM_STATUS>
+                <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/LANE_ITEM_STATUS/P_TransportLaneXItemStatus" Id="TransportLaneXItemStatusMnemonicValue" Value="TransportLaneXItemStatusMnemonicValue"/>
+              </LANE_ITEM_STATUS>
+              <SGMNT_DET>
+                <TO_XML SelectList="$formattedSegDet/*"/>
+                <!--        <DROP_DOWN_OPTIONS SelectList="$laneItemSrchResult/SGMNT_DET/P_Party" Id="PartyIdentificationValue" Value="PartyIdentificationValue"/>-->
+              </SGMNT_DET>
+              <TO_XML SelectList="$thisReturn/*"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <IF_TEST Test="( count($thisReturn/*[name()='_ERRORS'])&lt;=0 and  $userAction!='fetchRPLUom')">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <UOM_VALUES>
+                  <DROP_DOWN_OPTIONS SelectList="$dropDownValues/UOM/P_UnitOfMeasure" Id="UnitOfMeasureIdentifier" Value="UnitOfMeasureMnemonicValue"/>
+                </UOM_VALUES>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <UOM_VALUES>
+                  <DROP_DOWN_OPTIONS SelectList="$uomDetails/SQL_RESULT" Id="UOMID" Value="REPLENISHMENTLOTSIZEUOM"/>
+                </UOM_VALUES>
+              </APPEND_TO_XML>
+              <SET DocVar="pglFormInput" Property="ReplenishmentLotSizeUOM" FromValue="{substringBefore($pglFormInput/ReplenishmentLotSizeUOM/@Value,'.')}"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction = 'cancel'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="thisReturn">
+                <RESET_START_CNT>
+                  <START_COUNT Value="{$thisParam/START_COUNT/@Value}"/>
+                </RESET_START_CNT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <!--          <IF_TEST Test="$userAction = 'cancel'">
+
+            <THEN>
+
+              <REQUEST Name="getRPLUomValueForItem" ServiceName="PEDM_MASTER" AssignToVar="newRPLUom">
+
+                <ReplenishmentLotSizeUOM Value="{$selectedRPLUOM/@Value}"/>
+
+                <ItemIdentification Value="{$selectedRPLItem/@Value}"/>
+
+              </REQUEST>
+
+            </THEN>
+
+          </IF_TEST>-->
+          <IF_TEST Test="$userAction = 'save'">
+            <THEN>
+              <!-- CR:115759 12/19/2007 Praneeth Karnam Start -->
+              <REQUEST Name="readTransLanes" ServiceName="BCM_MASTER" AssignToVar="laneDetails" ReturnRowCount="yes">
+                <IS_SEARCH Value="YES"/>
+                <FILTER Name="SRCH_DESTN_LOC_CLAS">
+                  <SRCH_DESTN_LOC_CLAS Value="PLNT_NUM" MatchBy="EQUAL"/>
+                </FILTER>
+                <FILTER Name="SRCH_SRC_LOC_CLAS">
+                  <SRCH_SRC_LOC_CLAS Value="PLNT_NUM" MatchBy="EQUAL"/>
+                </FILTER>
+                <FILTER Name="SRCH_STATE">
+                  <SRCH_STATE Value="ACTIVE" MatchBy="EQUAL"/>
+                </FILTER>
+              </REQUEST>
+              <!-- CR:115759 12/19/2007 Praneeth Karnam End -->
+              <SET_NAME Select="$laneDetails/TL_DETAILS/P_TransportLane/TransportLaneIdentification" FromValue="TransportLaneIdentifier"/>
+              <!--  <TO_DOCVAR AssignToVar="tempLaneDetails">
+
+        <LANE_DETAILS>
+
+          <TO_XML SelectList="$laneDetails/TL_DETAILS/P_TransportLane[substringBefore(TransportLaneIdentifier/@Value,'.') = $pglFormOutput/TransportLaneIdentifier/@Value]/*"/>
+
+        </LANE_DETAILS>
+
+      </TO_DOCVAR>-->
+              <TO_DOCVAR AssignToVar="tempLaneDetails">
+                <LANE_DETAILS>
+                  <TO_XML SelectList="$laneDetails/TL_DETAILS/P_TransportLane[TransportLaneName/@Value = $pglFormOutput/TransportLaneIdentifier/@Value]/*"/>
+                </LANE_DETAILS>
+              </TO_DOCVAR>
+              <SET_NAME Select="$tempLaneDetails/DestinationLocationIdn" FromValue="DestinationLocationValue"/>
+              <SET_NAME Select="$tempLaneDetails/DestnLocationType" FromValue="DestinationLocationType"/>
+              <SET_NAME Select="$tempLaneDetails/OriginLocationIdn" FromValue="SourceLocationValue"/>
+              <SET_NAME Select="$tempLaneDetails/SrcLocationType" FromValue="SourceLocationType"/>
+              <SET_NAME Select="$tempLaneDetails/TransMode" FromValue="TransportModeMnemonicValue"/>
+              <SET_NAME Select="$tempLaneDetails/TransLaneClass" FromValue="TransportLaneClassMnemonicValue"/>
+              <SET_NAME Select="$pglFormOutput/LoadingTime" FromValue="LoadingTimeMeasure"/>
+              <SET_NAME Select="$pglFormOutput/UnloadingTime" FromValue="UnloadingTimeMeasure"/>
+              <SET_NAME Select="$pglFormOutput/EffectiveEndDate" FromValue="TransportLaneXItemEndDate"/>
+              <SET_NAME Select="$pglFormOutput/SourcingPriority" FromValue="SourcingPriorityClassMnemonicValue"/>
+              <SET_NAME Select="$pglFormOutput/ItemDescription" FromValue="ItemName"/>
+              <SET_NAME Select="$pglFormOutput/ReplenishmentLotSize" FromValue="ReplenishmentLotSizeMeasure"/>
+              <SET_NAME Select="$pglFormOutput/ReplenishmentLotSizeUOM" FromValue="ReplenishmentLotSizeUnitOfMeasureIdentifier"/>
+              <SET_NAME Select="$pglFormOutput/SegmentIdentification" FromValue="BusinessOrganizationValue"/>
+              <SET_NAME Select="$pglFormOutput/EffectiveStartDate" FromValue="TransportLaneXItemStartDate"/>
+              <SET_NAME Select="$pglFormOutput/TransportModePriority" FromValue="TransportModePriorityClassMnemonicValue"/>
+              <SET_NAME Select="$pglFormOutput/ItemIdentification" FromValue="ItemIdentificationValue"/>
+              <SET_NAME Select="$pglFormOutput/TransportationLaneStatus" FromValue="TransportLaneXItemStatusMnemonicValue"/>
+              <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+              <SET_NAME Select="$pglFormOutput/ReplenishmentRoundingValue" FromValue="ReplenishmentRoundingMeasure"/>
+              <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+              <!--SET_NAME Select="$tempLaneDetails/OriginLocationIdn" FromValue="SourceLocationIdentification"/>
+              <SET_NAME Select="$tempLaneDetails/DestinationLocationIdn" FromValue="DestinationLocationIdentification"/>
+              <SET_NAME Select="$tempLaneDetails/TransMode" FromValue="MeansOfTransportIdentification"/>
+              <SET_NAME Select="$tempLaneDetails/TransportLaneIdentifier" FromValue="TransportLaneIdentification"/>
+              <SET_NAME Select="$pglFormOutput/ReplenishmentLotSizeUOM" FromValue="ReplenishmentLotSizeUnitOfMeasure"/-->
+              <SET_PROPS SelectList="$pglFormOutput">
+                <UnloadingTimeMeasure Value="{ceiling($pglFormOutput/UnloadingTimeMeasure/@Value)}"/>
+                <LoadingTimeMeasure Value="{ceiling($pglFormOutput/LoadingTimeMeasure/@Value)}"/>
+                <ReplenishmentLotSizeMeasure Value="{floor($pglFormOutput/ReplenishmentLotSizeMeasure/@Value)}"/>
+                <ReplenishmentLotSizeUnitOfMeasure Value="{$dropDownValues/UOM/P_UnitOfMeasure[UnitOfMeasureIdentifier/@Value = $pglFormOutput/ReplenishmentLotSizeUnitOfMeasureIdentifier/@Value]/UnitOfMeasureMnemonicValue/@Value}"/>
+                <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+                <ReplenishmentRoundingMeasure Value="{floor($pglFormOutput/ReplenishmentRoundingMeasure/@Value)}"/>
+                <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+              </SET_PROPS>
+              <SET_PROPS SelectList="$pglFormOutput">
+                <TransportModeValue Value="{$tempLaneDetails/TransportModeMnemonicValue/@Value}"/>
+              </SET_PROPS>
+              <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+              <!--<SET_PROPS SelectList="$pglFormOutput">
+                <ReplenishmentRoundingMeasure Value="{$pglFormOutput/ReplenishmentLotSizeMeasure/@Value}"/>
+              </SET_PROPS>-->
+              <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+              <SET_PROPS SelectList="$pglFormOutput">
+                <!-- code to be changed for create/copy save error by vamshi -->
+                <ReplenishmentLotSizeUnitOfMeasureValue Value="{$dropDownValues/UOM/P_UnitOfMeasure[floor(UnitOfMeasureIdentifier/@Value) =floor( $pglFormOutput/ReplenishmentLotSizeUnitOfMeasureIdentifier/@Value)]/UnitOfMeasureMnemonicValue/@Value}"/>
+              </SET_PROPS>
+              <SET_PROPS SelectList="$pglFormOutput">
+                <TransportationLaneXProductCommentText Value="{$pglFormOutput/TransportLaneXItemCommentText/@Value}"/>
+              </SET_PROPS>
+              <SET_PROPS SelectList="$pglFormOutput">
+                <SEQ_NUM Value="{concat($pglFormOutput/TransportLaneIdentifier/@Value,'|',$pglFormOutput/ItemIdentificationValue/@Value,'|',$pglFormOutput/TransportLaneXItemStartDate/@Value)}"/>
+              </SET_PROPS>
+              <SET_PROPS DocVar="pglFormOutput">
+                <OriginalTransportLaneIdentifier Value="{$pglFormOutput/TransportLaneIdentifier/@Value}"/>
+              </SET_PROPS>
+              <SET_PROPS DocVar="pglFormOutput">
+                <TransportLaneIdentifier Value="{$tempLaneDetails/TransportLaneIdentifier/@Value}"/>
+              </SET_PROPS>
+              <!--<SET Var="ldngHours" FromValue="{substringBefore($thisParam/LoadingTime/@Value,':')}"/>
+              <SET Var="ldngMinutes" FromValue="{substringBefore(substringAfter($thisParam/LoadingTime/@Value,':'),':')}"/>
+              <SET Var="ldngSeconds" FromValue="{substringAfter(substringAfter($thisParam/LoadingTime/@Value,':'),':')}"/>
+              <SET Var="unldngHours" FromValue="{substringBefore($thisParam/UnloadingTime/@Value,':')}"/>
+              <SET Var="unldngMinutes" FromValue="{substringBefore(substringAfter($thisParam/UnloadingTime/@Value,':'),':')}"/>
+              <SET Var="unldngSeconds" FromValue="{substringAfter(substringAfter($thisParam/UnloadingTime/@Value,':'),':')}"/>
+              <SET DocVar="thisParam" Property="LoadingTime" FromValue="{ifElse($thisParam/LoadingTime/@Value != '',$ldngHours mul 3600 + $ldngMinutes mul 60 + $ldngSeconds,0)}"/>
+              <SET DocVar="thisParam" Property="UnloadingTime" FromValue="{ifElse($thisParam/UnloadingTime/@Value != '',$unldngHours mul 3600 + $unldngMinutes mul 60 + $unldngSeconds,0)}"/>-->
+              <REQUEST Name="createLaneItem" AssignToVar="createResponse" ServiceName="edmuiservice" HandleException="true">
+                <TO_XML SelectList="$pglFormOutput/*"/>
+                <TO_XML SelectList="$tempLaneDetails/*"/>
+                <TransportationLaneXProductComment Value="{$pglFormOutput/TransportLaneXItemCommentText/@Value}"/>
+              </REQUEST>
+              <IF_TEST Test="$createResponse/@Status != 'Error' and count($createResponse/*/_ERRORS) = 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="thisReturn">
+                    <MESSAGE>
+                      <SUCCESS_MESSAGE Value="The Lane Product Assignment is successfully added!"/>
+                    </MESSAGE>
+                  </TO_DOCVAR>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$createResponse/RESPONSE/@Status = 'Error'">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="thisReturn">
+                        <DB_ERROR>
+                          <_ERRORS Value="{$createResponse/RESPONSE/@Status}">
+                            <_ERROR Value="{substringBefore($createResponse/RESPONSE/@Description,'=')}"/>
+                          </_ERRORS>
+                        </DB_ERROR>
+                      </TO_DOCVAR>
+                    </THEN>
+                    <ELSE>
+                      <TO_DOCVAR AssignToVar="thisReturn">
+                        <TO_XML SelectList="$createResponse/RESPONSE/REQUEST"/>
+                      </TO_DOCVAR>
+                      <REMOVE_CHILDREN ChildName="_ERRORS" DocVar="thisReturn"/>
+                      <!-- DYanez RIC#237752.  If duplicate error message, don't append to thisReturn -->
+                      <IF_TEST Test="($createResponse/RESPONSE/_RESULT/_ERROR/@Value != $thisReturn/TransportLaneXItemEndDate/_ERRORS/_ERROR/@Value)">
+                        <THEN>
+                          <APPEND_TO_XML DocVar="thisReturn">
+                            <_ERRORS Value="{$createResponse/RESPONSE/@Status}">
+                              <_ERROR Value="{$createResponse/RESPONSE/_RESULT/_ERROR/@Value}"/>
+                            </_ERRORS>
+                          </APPEND_TO_XML>
+                        </THEN>
+                      </IF_TEST>
+                      <!-- RIC#237752 End -->
+                      <SET_PROPS Select="$thisReturn">
+                        <TransportLaneIdentifier Value="{$pglFormOutput/OriginalTransportLaneIdentifier/@Value}"/>
+                      </SET_PROPS>
+                      <!--   <SET_PROPS Select="$thisReturn">
+                           <UnloadingTimeMeasure Value="{$thisReturn/UnloadingTime/@Value div 3600}"/>
+                          <LoadingTimeMeasure Value="{$thisReturn/LoadingTime/@Value div 3600}"/>
+                      </SET_PROPS>-->
+                      <IF_TEST Test="count($thisReturn/*[name() ='TransportLaneXItemCommentText' or name() ='DestinationReceivingDaysValue']/_ERRORS) > 0">
+                        <THEN>
+                          <APPEND_TO_XML DocVar="thisReturn">
+                            <_ERRORS Value="{$createResponse/RESPONSE/_RESULT/@Value}">
+                              <TO_XML SelectList="$createResponse/RESPONSE/_RESULT/*"/>
+                            </_ERRORS>
+                          </APPEND_TO_XML>
+                        </THEN>
+                        <ELSE/>
+                      </IF_TEST>
+                      <APPEND_TO_XML Select="$thisReturn/ItemIdentification">
+                        <TO_XML SelectList="$thisReturn/ItemIdentifier/*"/>
+                        <TO_XML SelectList="$thisReturn/ItemStatusValue/*"/>
+                      </APPEND_TO_XML>
+                      <SET_PROPS Select="$thisReturn">
+                        <TransportLaneIdentifier Value="{$pglFormOutput/OriginalTransportLaneIdentifier/@Value}"/>
+                      </SET_PROPS>
+                      <SET_NAME SelectList="$thisReturn/TransportLaneXItemStartDate" FromValue="EffectiveStartDate"/>
+                      <SET_NAME SelectList="$thisReturn/TransportLaneXItemEndDate" FromValue="EffectiveEndDate"/>
+                      <SET_NAME SelectList="$thisReturn/SourcingPriorityClassMnemonicValue" FromValue="SourcingPriority"/>
+                      <SET_NAME SelectList="$thisReturn/TransportModePriorityClassMnemonicValue" FromValue="TransportModePriority"/>
+                      <SET_NAME SelectList="$thisReturn/ReplenishmentLotSizeMeasure" FromValue="ReplenishmentLotSize"/>
+                      <SET_NAME SelectList="$thisReturn/ReplenishmentLotSizeUnitOfMeasureIdentifier" FromValue="ReplenishmentLotSizeUOM"/>
+                      <SET_NAME SelectList="$thisReturn/ReplenishmentRoundingMeasure" FromValue="ReplenishmentRoundingValue"/>
+                      <SET_NAME SelectList="$thisReturn/UnloadingTimeMeasure" FromValue="UnloadingTime"/>
+                      <SET_NAME SelectList="$thisReturn/LoadingTimeMeasure" FromValue="LoadingTime"/>
+                      <!-- CR:115759 12/19/2007 Praneeth Karnam Start -->
+                      <!--<SET_NAME SelectList="$thisReturn/LaneStatusValue" FromValue="TransportationLaneStatus"/>-->
+                      <SET_NAME SelectList="$thisReturn/TransportLaneXItemStatusMnemonicValue" FromValue="TransportationLaneStatus"/>
+                      <!-- CR:115759 12/19/2007 Praneeth Karnam End -->
+                      <SET_NAME SelectList="$thisReturn/ItemIdentificationValue" FromValue="ItemIdentification"/>
+                      <SET_NAME SelectList="$thisReturn/BusinessOrganizationValue" FromValue="SegmentIdentification"/>
+                      <SET_NAME SelectList="$thisReturn/ItemName" FromValue="ItemDescription"/>
+                      <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term Start -->
+                      <SET_NAME Select="$thisReturn/ReplenishmentRoundingMeasure" FromValue="ReplenishmentRoundingValue"/>
+                      <!-- MYANG RIC 249141 - Rounding value using for Single SKU Long Term End -->
+                      <!--              <SET DocVar="thisReturn" Property="UnloadingTime" FromValue="{concat($unldngHours,':',$unldngMinutes,':',$unldngSeconds)}"/>
+
+                      <SET DocVar="thisReturn" Property="LoadingTime" FromValue="{concat($ldngHours,':',$ldngMinutes,':',$ldngSeconds)}"/>
+
+-->
+                      <APPEND_TO_XML DocVar="thisReturn">
+                        <TO_XML Select="$thisParam/SUN"/>
+                        <TO_XML Select="$thisParam/MON"/>
+                        <TO_XML Select="$thisParam/TUE"/>
+                        <TO_XML Select="$thisParam/WED"/>
+                        <TO_XML Select="$thisParam/THU"/>
+                        <TO_XML Select="$thisParam/FRI"/>
+                        <TO_XML Select="$thisParam/SAT"/>
+                        <!--                <_ERRORS Value="{$createResponse/RESPONSE/_RESULT/@Value}">
+
+                  <TO_XML SelectList="$createResponse/RESPONSE/_RESULT/*"/>
+
+                </_ERRORS>-->
+                      </APPEND_TO_XML>
+                      <!--   <APPEND_TO_XML Select="$thisReturn/SegmentIdentification">
+
+                        <TO_XML SelectList="$thisReturn/PartyIdentifier/*"/>
+
+                      </APPEND_TO_XML>
+
+                      <APPEND_TO_XML Select="$thisReturn/TransportationLaneStatus">
+
+                        <TO_XML SelectList="$thisReturn/LaneStatusValue/*"/>
+
+                      </APPEND_TO_XML>-->
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Transportation Lane Product Assignment" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create Lane Product Assignment" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Select_tl_id'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select Lane" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Select_item_id'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select Item" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='fetchRPLUomDropdownListForItem'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create Lane Product Assignment" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='fetchRPLUom'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create Lane Product Assignment" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create Lane Product Assignment" Description=""/>
+          <next_node Name="Create Lane Product Assignment" Description=""/>
+          <next_node Name="Create Lane Product Assignment" Description=""/>
+          <next_node Name="Create Lane Product Assignment" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <sub_workflow Name="Lane Product Assignment History" Workflow="//UI_WORKFLOW/dataTraceability" InputVar="{nodeInXml,xml}">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes>
+        <next_node Name="Transportation Lane Product Assignment" Description=""/>
+      </next_nodes>
+      <input>
+        <TO_XML SelectList="$nodeInXml/*"/>
+      </input>
+    </sub_workflow>
+    <sub_workflow Name="Select Item" Workflow="wfTLSelectItem">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes/>
+      <input>
+        <TO_XML SelectList="$thisParam/*"/>
+      </input>
+    </sub_workflow>
+    <sub_workflow Name="Select Lane" Workflow="wfTLSelectLane">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes/>
+      <input>
+        <TO_XML SelectList="$thisParam/*"/>
+      </input>
+    </sub_workflow>
+    <decision Name="isCopySuccess">
+      <actions>
+      </actions>
+      <condition Value="count($thisReturn/*/_ERRORS) = 0 and count($thisReturn/_ERRORS) = 0"/>
+      <if_true>
+        <next_nodes>
+          <next_node Name="Transportation Lane Product Assignment" Description=""/>
+        </next_nodes>
+      </if_true>
+      <if_false>
+        <next_nodes>
+          <next_node Name="Copy Lane Product Assignment" Description=""/>
+        </next_nodes>
+      </if_false>
+    </decision>
+    <sub_workflow Name="Select User" Workflow="wfCommonSelectUser">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes>
+        <next_node Name="Transportation Lane Product Assignment" Description=""/>
+      </next_nodes>
+      <input>
+        <TO_XML SelectList="$thisParam/*"/>
+      </input>
+    </sub_workflow>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="176,16" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <mgcnode Name="Transportation Lane Product Assignment" location="269,88" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Transportation Lane Product Assignment" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done4 location="327,14" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done4" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done4>
+      <Save location="83,87" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Save" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+      </Save>
+      <Delete location="93,164" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Delete" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+      </Delete>
+      <mgcnode Name="View Lane Details" location="50,229" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="View Lane Details" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Lane Product Mass Update" location="155,309" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Lane Product Mass Update" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Copy Lane Product Assignment" location="326,273" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Copy Lane Product Assignment" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Create Lane Product Assignment" location="688,284" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Create Lane Product Assignment" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Lane Product Assignment History" location="475,0" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Lane Product Assignment History" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Select Item" location="450,101" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Select Item" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Select Lane" location="505,154" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Select Lane" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+      <isCopySuccess location="228,236" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="isCopySuccess" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1decision.gif" location="0,0"/>
+      </isCopySuccess>
+      <mgcnode Name="Select User" location="511,57" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Select User" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="208,38" endpoint="285,88" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="263,36,4,4" ctrlRect2="283,48,4,4"/>
+      </start2>
+      <mgcnode Name="Transportation Lane Product Assignment">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="269,111" endpoint="125,186" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="159,109,4,4" ctrlRect2="231,184,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="285,134" endpoint="342,273" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="283,235,4,4" ctrlRect2="353,272,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="269,111" endpoint="115,109" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="152,109,4,4" ctrlRect2="229,107,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="285,88" endpoint="285,88" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="283,11,4,4" ctrlRect2="283,11,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="301,111" endpoint="450,123" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="410,109,4,4" ctrlRect2="336,121,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="301,111" endpoint="505,176" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="452,109,4,4" ctrlRect2="350,174,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="269,111" endpoint="82,251" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="128,109,4,4" ctrlRect2="221,249,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="301,111" endpoint="688,307" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="588,109,4,4" ctrlRect2="395,305,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="301,111" endpoint="475,23" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="429,109,4,4" ctrlRect2="342,21,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="285,134" endpoint="171,309" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="283,262,4,4" ctrlRect2="169,175,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="301,111" endpoint="511,79" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="456,109,4,4" ctrlRect2="351,77,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="285,134" endpoint="171,309" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="283,262,4,4" ctrlRect2="169,175,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="285,88" endpoint="285,88" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="283,11,4,4" ctrlRect2="283,11,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="285,88" endpoint="285,88" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="283,11,4,4" ctrlRect2="283,11,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="285,88" endpoint="285,88" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="283,11,4,4" ctrlRect2="283,11,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="285,88" endpoint="343,59" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="283,65,4,4" ctrlRect2="341,79,4,4"/>
+      </mgcnode>
+      <Save>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="115,109" endpoint="269,111" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="228,107,4,4" ctrlRect2="151,109,4,4"/>
+      </Save>
+      <Delete>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="125,186" endpoint="269,111" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="231,184,4,4" ctrlRect2="159,109,4,4"/>
+      </Delete>
+      <mgcnode Name="Lane Product Mass Update">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="171,309" endpoint="171,309" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="169,232,4,4" ctrlRect2="169,232,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="171,309" endpoint="285,134" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="169,177,4,4" ctrlRect2="283,264,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="171,309" endpoint="82,251" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="169,264,4,4" ctrlRect2="147,249,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Copy Lane Product Assignment">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="342,273" endpoint="285,134" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="313,213,4,4" ctrlRect2="283,237,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="326,296" endpoint="260,259" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="275,294,4,4" ctrlRect2="308,257,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="342,273" endpoint="505,176" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="404,213,4,4" ctrlRect2="380,174,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="342,273" endpoint="466,146" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="374,195,4,4" ctrlRect2="465,292,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="358,296" endpoint="358,296" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="431,294,4,4" ctrlRect2="548,390,4,4" textRect="415,340,153,9">
+          <textProps text="[$userAction ='fetchRPLUom']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="342,273" endpoint="342,273" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="340,196,4,4" ctrlRect2="340,196,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Create Lane Product Assignment">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="688,307" endpoint="301,111" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="397,305,4,4" ctrlRect2="590,109,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="704,284" endpoint="704,284" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="702,207,4,4" ctrlRect2="702,207,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="704,284" endpoint="537,176" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="702,201,4,4" ctrlRect2="661,174,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="688,307" endpoint="466,146" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="520,305,4,4" ctrlRect2="464,265,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="704,284" endpoint="704,284" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="702,207,4,4" ctrlRect2="702,207,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="704,284" endpoint="704,284" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="702,207,4,4" ctrlRect2="702,207,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="704,284" endpoint="704,284" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="702,207,4,4" ctrlRect2="702,207,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="704,284" endpoint="704,284" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="702,207,4,4" ctrlRect2="702,207,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="704,284" endpoint="704,284" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="702,207,4,4" ctrlRect2="702,207,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="704,284" endpoint="704,284" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="702,207,4,4" ctrlRect2="702,207,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Lane Product Assignment History">
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="475,23" endpoint="301,111" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="343,21,4,4" ctrlRect2="430,109,4,4"/>
+      </mgcnode>
+      <isCopySuccess>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,0" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="244,236" endpoint="285,134" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="242,158,4,4" ctrlRect2="283,209,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="178,0,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="260,259" endpoint="326,296" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="307,257,4,4" ctrlRect2="274,294,4,4"/>
+      </isCopySuccess>
+      <mgcnode Name="Select User">
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="511,79" endpoint="301,111" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="352,77,4,4" ctrlRect2="457,109,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="623,0" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="11" textAttrsKey0="appliedFilters : xml" textAttrsKey1="augmentedLaneItemSearch : xml" textAttrsKey2="dropDownValues : xml" textAttrsKey3="isSearch : string" textAttrsKey4="laneDetails : xml" textAttrsKey5="laneItemSrchResult : xml" textAttrsKey6="massUpdateList : xml" textAttrsKey7="massUpdateSelectAll : string" textAttrsKey8="removeSel : string" textAttrsKey9="successSave : string" textAttrsKey10="... and 1 more">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="appliedFilters" Type="xml" Comment=""/>
+        <variable Name="augmentedLaneItemSearch" Type="xml" Comment=""/>
+        <variable Name="dropDownValues" Type="xml" Comment=""/>
+        <variable Name="isSearch" Type="string" Comment=""/>
+        <variable Name="laneDetails" Type="xml" Comment=""/>
+        <variable Name="laneItemSrchResult" Type="xml" Comment=""/>
+        <variable Name="massUpdateList" Type="xml" Comment=""/>
+        <variable Name="removeSel" Type="string" Comment=""/>
+        <variable Name="successSave" Type="string" Comment=""/>
+        <variable Name="validationMessage" Type="xml" Comment=""/>
+        <variable Name="massUpdateSelectAll" Type="string" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,591 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:i18n="http://www.i2.com/i18n" description="_">
+  <x2:command name="init" public="yes" description="_">
+    <x2:execute command="bcm.pages:defineBCM"/>
+  </x2:command>
+  <x2:command public="yes" description="_" name="defineBCM">
+    <!-- anish start -->
+    <web:define-page name="about" url="/i2/images/about_master_data_management.gif"/>
+    <web:define-page name="general_help" url="/bcm/help/general_help.htm"/>
+    <web:define-page name="login" url="/bcm/framework/login.jsp"/>
+    <web:define-xsl name="login" url="/bcm/framework/xsl/login.xsl"/>
+    <web:define-xsl name="middle" url="/core/xsl/middle.xsl"/>
+    <web:define-page name="nav_home" url="/bcm/framework/home.jsp"/>
+    <web:define-page name="omx_error_page" url="/bcm/framework/omx_error_page.jsp"/>
+    <web:define-page name="bcm_home" url="/bcm/framework/home.jsp"/>
+    <web:define-xsl name="profile" url="/bcm/framework/xsl/my_profile.xsl"/>
+    <!-- Table Data View -->
+    <web:define-page name="tableeditor" url="/bcm/framework/tableeditor/tableeditor.jsp"/>
+    <web:define-page name="linkToTable" url="/bcm/framework/tableeditor/TableEditorController/linkToTable.cmd"/>
+    <web:define-xsl name="tableeditor" url="/bcm/framework/tableeditor/xsl/tableeditor.xsl"/>
+    <web:define-page name="tablerow" url="/bcm/framework/tableeditor/tablerow.jsp"/>
+    <web:define-xsl name="tablerow" url="/bcm/framework/tableeditor/xsl/tablerow.xsl"/>
+    <web:define-page name="tableLinks" url="/bcm/framework/tableeditor/tableLinks.jsp"/>
+    <web:define-xsl name="tableLinks" url="/bcm/framework/tableeditor/xsl/table_links.xsl"/>
+    <!-- export/download file -->
+    <web:define-page name="downloaded_file" url="/bcm/framework/saved_trans/download.jsp"/>
+    <!-- Customize -->
+    <web:define-page name="customize" url="/bcm/framework/customize/customize.jsp"/>
+    <web:define-xsl name="customize" url="/bcm/framework/customize/xsl/customize.xsl"/>
+    <!-- Favorites -->
+    <web:define-page name="createFavorite" url="/bcm/framework/favorites/createFavorite.jsp"/>
+    <web:define-xsl name="createFavorite" url="/bcm/framework/favorites/xsl/createFavorite.xsl"/>
+    <web:define-page name="manageFavorites" url="/bcm/framework/favorites/manageFavorites.jsp"/>
+    <web:define-xsl name="manageFavorites" url="/bcm/framework/favorites/xsl/manageFavorites.xsl"/>
+    <!-- Filters  -->
+    <web:define-page name="filter" url="/bcm/framework/filter/filter.jsp"/>
+    <web:define-xsl name="filter" url="/bcm/framework/filter/xsl/filter.xsl"/>
+    <web:define-page name="saved_filters" url="/bcm/framework/filter/saved_filters.jsp"/>
+    <web:define-xsl name="saved_filters" url="/bcm/framework/filter/xsl/saved_filters.xsl"/>
+    <!-- generic Forms and Mass Edit by Form jsp xsl-->
+    <web:define-page name="form" url="/bcm/framework/forms/form.jsp"/>
+    <web:define-xsl name="form" url="/bcm/framework/forms/xsl/form.xsl"/>
+    <web:define-page name="groupEditForm" url="/bcm/framework/forms/groupEditForm.jsp"/>
+    <web:define-xsl name="groupEditForm" url="/bcm/framework/forms/xsl/groupEditForm.xsl"/>
+    <!-- Hierarchy Data Model start-->
+    <!-- Hierarchy table editors -->
+    <web:define-page name="dimension" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=Dimension&amp;SERVICE=BCMMasterService"/>
+    <web:define-page name="level" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=Level&amp;SERVICE=BCMMasterService"/>
+    <web:define-page name="member" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=Member&amp;SERVICE=BCMMasterService"/>
+    <web:define-page name="hierarchy" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=Hierarchy&amp;SERVICE=BCMMasterService"/>
+    <web:define-page name="levelHierarchy" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=LevelHierarchy&amp;SERVICE=BCMMasterService"/>
+    <web:define-page name="dimensionIN" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=Dimension&amp;SERVICE=BCMINService"/>
+    <web:define-page name="levelIN" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=Level&amp;SERVICE=BCMINService"/>
+    <web:define-page name="memberIN" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=Member&amp;SERVICE=BCMINService"/>
+    <web:define-page name="hierarchyIN" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=Hierarchy&amp;SERVICE=BCMINService"/>
+    <web:define-page name="levelHierarchyIN" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=LevelHierarchy&amp;SERVICE=BCMINService"/>
+    <!-- Member Hierarchy -->
+    <web:define-page name="memberHierarchy" url="/bcm/framework/hierarchy/memberHierarchy/memberHierarchy.jsp"/>
+    <web:define-page name="searchMemberHierarchy" url="/bcm/framework/hierarchy/memberHierarchy/searchMemberHierarchy.jsp"/>
+    <web:define-xsl name="searchMemberHierarchy" url="/bcm/framework/hierarchy/memberHierarchy/xsl/searchMemberHierarchy.xsl"/>
+    <web:define-page name="memberHierarchy_header" url="/bcm/framework/hierarchy/memberHierarchy/memberHierarchy_header.jsp"/>
+    <web:define-page name="memberHierarchy_footer" url="/bcm/framework/hierarchy/memberHierarchy/memberHierarchy_footer.jsp"/>
+    <web:define-page name="memberHierarchy_parent" url="/bcm/framework/hierarchy/memberHierarchy/memberHierarchy_parent.jsp"/>
+    <web:define-page name="memberHierarchy_child" url="/bcm/framework/hierarchy/memberHierarchy/memberHierarchy_child.jsp"/>
+    <web:define-page name="memberHierarchy_unassignedChild" url="/bcm/framework/hierarchy/memberHierarchy/memberHierarchy_unassignedChild.jsp"/>
+    <web:define-xsl name="memberHierarchy_header" url="/bcm/framework/hierarchy/memberHierarchy/xsl/memberHierarchy_header.xsl"/>
+    <web:define-xsl name="memberHierarchy_footer" url="/bcm/framework/hierarchy/memberHierarchy/xsl/memberHierarchy_footer.xsl"/>
+    <web:define-xsl name="memberHierarchy_parent" url="/bcm/framework/hierarchy/memberHierarchy/xsl/memberHierarchy_parent.xsl"/>
+    <web:define-xsl name="memberHierarchy_child" url="/bcm/framework/hierarchy/memberHierarchy/xsl/memberHierarchy_child.xsl"/>
+    <web:define-xsl name="memberHierarchy_unassignedChild" url="/bcm/framework/hierarchy/memberHierarchy/xsl/memberHierarchy_unassignedChild.xsl"/>
+    <web:define-page name="memberHierarchy_childs" url="/bcm/framework/hierarchy/memberHierarchy/memberHierarchy_childs.jsp"/>
+    <web:define-page name="memberHierarchy_content" url="/bcm/framework/hierarchy/memberHierarchy/memberHierarchy_content.jsp"/>
+    <!-- Hierarchy Data Model end-->
+    <!-- Manage Security - start -->
+    <web:define-page name="manage_security" url="/bcm/framework/security/security.jsp?MODE=START"/>
+    <web:define-page name="manage_security_no_start" url="/bcm/framework/security/security.jsp"/>
+    <web:define-xsl name="manage_security" url="/bcm/framework/security/xsl/security.xsl"/>
+    <!-- Manage Security - end -->
+    <!-- Alert -->
+    <web:define-page name="data_management" url="/bcm/framework/alerts/data_management.jsp?WHERE=alerts_page"/>
+    <web:define-xsl name="alert_home" url="/bcm/framework/alerts/xsl/alerts.xsl"/>
+    <web:define-page name="data_management_display" url="/bcm/framework/alerts/data_management/controller/display.cmd"/>
+    <web:define-page name="data_management_viewDocument" url="/bcm/framework/alerts/data_management/controller/viewDocument.cmd"/>
+    <web:define-page name="viewObjectHome" url="/bcm/framework/alerts/view/redirectToObjectHome.cmd"/>
+    <web:define-page name="select_column" url="/bcm/configure/select_column.jsp"/>
+    <web:define-xsl name="select_column" url="/bcm/configure/xsl/select_column.xsl"/>
+    <!-- OPERATION start-->
+    <!-- Search Operation-->
+    <web:define-page name="operation_search" url="/bcm/operation/search/operation.jsp?DIRECTORY=bcm.operation.search&amp;FILE=view&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=MST_OP_SRCH_FORM&amp;PAGE=operation_search"/>
+    <web:define-xsl name="operation_search" url="/bcm/operation/search/xsl/operation_search.xsl"/>
+    <web:define-page name="yieldCalendar" url="/bcm/operation/yieldCalendar/yieldCalendar.jsp"/>
+    <web:define-xsl name="yieldCalendar" url="/bcm/operation/yieldCalendar/xsl/yieldCalendar.xsl"/>
+    <!-- assigned resources -->
+    <web:define-page name="operation_assigned_resource" url="/bcm/operation/search/operation_assigned_resource.jsp"/>
+    <web:define-xsl name="operation_assigned_resource" url="/bcm/operation/search/xsl/operation_assigned_resource.xsl"/>
+    <!-- Details -->
+    <web:define-page name="op_general_details" url="/bcm/operation/details/general.jsp"/>
+    <web:define-xsl name="op_general_details" url="/bcm/operation/details/xsl/general.xsl"/>
+    <web:define-page name="op_properties_details" url="/bcm/operation/details/properties.jsp"/>
+    <web:define-xsl name="op_properties_details" url="/bcm/operation/details/xsl/properties.xsl"/>
+    <web:define-page name="op_assigned_res_details" url="/bcm/operation/details/assigned_res.jsp"/>
+    <web:define-xsl name="op_assigned_res_details" url="/bcm/operation/details/xsl/assigned_res.xsl"/>
+    <web:define-page name="opLocationSearch" url="/bcm/operation/details/operationLocation.jsp"/>
+    <web:define-xsl name="opLocationSearch" url="/bcm/operation/details/xsl/operationLocation.xsl"/>
+    <!-- Mass Edit-->
+    <web:define-page name="op_general_mass_edit" url="/bcm/operation/mass_edit/general.jsp"/>
+    <web:define-xsl name="op_general_mass_edit" url="/bcm/operation/mass_edit/xsl/general.xsl"/>
+    <web:define-page name="op_properties_mass_edit" url="/bcm/operation/mass_edit/properties.jsp"/>
+    <web:define-xsl name="op_properties_mass_edit" url="/bcm/operation/mass_edit/xsl/properties.xsl"/>
+    <!-- Overrides -->
+    <web:define-page name="itemloc_search" url="/bcm/operation/override/search/itemloc_search.jsp"/>
+    <web:define-xsl name="itemloc_search" url="/bcm/operation/override/search/xsl/itemloc_search.xsl"/>
+    <web:define-page name="resource_search" url="/bcm/operation/override/search/resource_search.jsp"/>
+    <web:define-xsl name="resource_search" url="/bcm/operation/override/search/xsl/resource_search.xsl"/>
+    <web:define-xsl name="edit_override_general" url="/bcm/operation/override/edit_override/xsl/general.xsl"/>
+    <web:define-page name="edit_override_general" url="/bcm/operation/override/edit_override/general.jsp"/>
+    <web:define-xsl name="edit_override_properties" url="/bcm/operation/override/edit_override/xsl/properties.xsl"/>
+    <web:define-page name="edit_override_properties" url="/bcm/operation/override/edit_override/properties.jsp"/>
+    <web:define-page name="override" url="/bcm/operation/override/override.jsp"/>
+    <web:define-xsl name="override" url="/bcm/operation/override/xsl/override.xsl"/>
+    <web:define-page name="editOverride" url="/bcm/operation/override/editOverride.jsp"/>
+    <web:define-xsl name="editOverride" url="/bcm/operation/override/xsl/editOverride.xsl"/>
+    <web:define-page name="resetDefaultOverride" url="/bcm/operation/override/resetDefaultOverride.jsp"/>
+    <web:define-xsl name="resetDefaultOverride" url="/bcm/operation/override/xsl/resetDefaultOverride.xsl"/>
+    <!-- OPERATION end -->
+    <!--supply chain workflow start-->
+    <!-- item-location search -->
+    <web:define-page name="item_location_search" url="/bcm/supply_chain/item_location_search/item_location_search.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=ITEM_LOC_SRCH_FORM&amp;PAGE=item_location_search"/>
+    <web:define-xsl name="item_location_search" url="/bcm/supply_chain/item_location_search/xsl/item_location_search.xsl"/>
+    <web:define-page name="item_edit" url="/bcm/supply_chain/item/itemEdit.jsp"/>
+    <!-- location search -->
+    <!--itemLocationGroup -->
+    <web:define-page name="item_location_group_search" url="/bcm/itemLocationGroup/itemLocationGroupSearch.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_ITEM_LOCATION_GROUP_SEARCH_FORM&amp;PAGE=item_location_group_search"/>
+    <web:define-xsl name="item_location_group_search" url="/bcm/itemLocationGroup/xsl/itemLocationGroupSearch.xsl"/>
+    <web:define-page name="item_location_group_details" url="/bcm/itemLocationGroup/itemLocationGroupDetails.jsp"/>
+    <web:define-xsl name="item_location_group_details" url="/bcm/itemLocationGroup/xsl/itemLocationGroupDetails.xsl"/>
+    <web:define-page name="item_location_group_create" url="/bcm/itemLocationGroup/itemLocationGroupCreate.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_ITEM_LOCATION_GROUP_CREATE_FORM&amp;PAGE=item_location_group_create"/>
+    <web:define-xsl name="item_location_group_create" url="/bcm/itemLocationGroup/xsl/itemLocationGroupCreate.xsl"/>
+    <web:define-xsl name="item_location_group_edit" url="/bcm/itemLocationGroup/xsl/itemLocationGroupEdit.xsl"/>
+    <web:define-page name="item_location_group_edit" url="/bcm/itemLocationGroup/itemLocationGroupEdit.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_ITEM_LOCATION_GROUP_EDIT_FORM&amp;PAGE=item_location_group_edit"/>
+    <web:define-page name="ILGDetailEdit" url="/bcm/itemLocationGroup/itemLocationGroupController/editILG.cmd"/>
+   <!--  itemGroup    -->
+    <web:define-page name="item_group_search" url="/bcm/itemGroup/itemGroupSearch.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_ITEM_GROUP_SEARCH_FORM&amp;PAGE=item_group_search"/>
+    <web:define-xsl name="item_group_search" url="/bcm/itemGroup/xsl/itemGroupSearch.xsl"/>
+    <web:define-page name="item_group_details" url="/bcm/itemGroup/itemGroupDetails.jsp"/>
+    <web:define-xsl name="item_group_details" url="/bcm/itemGroup/xsl/itemGroupDetails.xsl"/>
+    <web:define-page name="item_group_create" url="/bcm/itemGroup/itemGroupCreate.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_ITEM_GROUP_CREATE_FORM&amp;PAGE=item_group_create"/>
+    <web:define-xsl name="item_group_create" url="/bcm/itemGroup/xsl/itemGroupCreate.xsl"/>
+    <web:define-xsl name="item_group_edit" url="/bcm/itemGroup/xsl/itemGroupEdit.xsl"/>
+    <web:define-page name="item_group_edit" url="/bcm/itemGroup/itemGroupEdit.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_ITEM_GROUP_EDIT_FORM&amp;PAGE=item_group_edit"/>
+    <web:define-page name="ILDetailEdit" url="/bcm/itemGroup/itemGroupController/editItemGroup.cmd"/>
+    <web:define-page name="editItem" url="/bcm/itemGroup/itemGroupController/editItem.cmd"/>
+    <web:define-page name="item_edit_group" url="/bcm/itemGroup/tableRow.jsp"/>
+    <web:define-xsl name="item_edit_group" url="/bcm/itemGroup/xsl/tableRow.xsl"/>
+    <web:define-page name="location_search" url="/bcm/supply_chain/location_search/location_search.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_LOC_SRCH_FORM&amp;PAGE=location_search"/>
+    <web:define-xsl name="location_search" url="/bcm/supply_chain/location_search/xsl/location_search.xsl"/>
+    <!-- supply chain editor-->
+    <web:define-page name="ibr_search" url="/bcm/supply_chain/ibr_search/ibr_search.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_IBR_SEARCH_FORM&amp;PAGE=ibr_search"/>
+    <web:define-xsl name="ibr_search" url="/bcm/supply_chain/ibr_search/xsl/ibr_search.xsl"/>
+    <web:define-page name="supply_chain" url="/bcm/supply_chain/supply_chain.jsp"/>
+    <web:define-page name="supply_chain_reload" url="/bcm/supply_chain/controller/reloadSCTree.cmd"/>
+    <web:define-xsl name="header" url="/bcm/framework/xsl/bcm_header.xsl"/>
+    <web:define-page name="sc_item_content" url="/bcm/supply_chain/sc_item_content.jsp"/>
+    <web:define-xsl name="supply_chain_item_header" url="/bcm/supply_chain/xsl/supply_chain_item_header.xsl"/>
+    <web:define-page name="sc_tree_view_content" url="/bcm/supply_chain/sc_tree_view_content.jsp"/>
+    <web:define-xsl name="supply_chain_path_editor" url="/bcm/supply_chain/xsl/supply_chain_path_editor.xsl"/>
+    <web:define-page name="sc_tree_data_content" url="/bcm/supply_chain/sc_tree_data_content.jsp"/>
+    <web:define-xsl name="supply_chain_tree_data" url="/bcm/supply_chain/xsl/supply_chain_tree_data.xsl"/>
+    <web:define-page name="co_by_prod_tree_data" url="/bcm/supply_chain/co_by_prod_tree_data.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_CO_BY_PROD_IBR_FORM"/>
+    <web:define-page name="sc_base_tree_data_content" url="/bcm/supply_chain/sc_base_tree_data_content.jsp"/>
+    <web:define-xsl name="co_by_prod_tree_data" url="/bcm/supply_chain/xsl/co_by_prod_tree_data.xsl"/>
+
+    <web:define-page name="opres_base_tree_data_content" url="/bcm/supply_chain/opres_base_tree_data_content.jsp"/>
+    <web:define-page name="opres_override_tree_data" url="/bcm/supply_chain/opres_override_tree_data.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_OP_OVR_ITEM_RES_FORM"/>
+    <web:define-xsl name="opres_override_tree_data" url="/bcm/supply_chain/xsl/opres_override_tree_data.xsl"/>
+    <!-- EQ: 486373 -->
+    <web:define-page name="bomcomp_base_tree_data_content" url="/bcm/supply_chain/bomcomp_base_tree_data_content.jsp"/>
+    <web:define-page name="bomcomp_tree_data" url="/bcm/supply_chain/bomcomp_tree_data.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_SC_BOM_COMP_QTY_FORM"/>
+    <web:define-xsl name="bomcomp_tree_data" url="/bcm/supply_chain/xsl/bomcomp_tree_data.xsl"/>
+    <!-- End of EQ: 486373 -->
+    <!-- supply chain preview-->
+    <web:define-page name="supply_chain_preview" url="/bcm/supply_chain/preview/preview.jsp"/>
+    <web:define-xsl name="supply_chain_preview" url="/bcm/supply_chain/preview/xsl/preview.xsl"/>
+    <web:define-page name="supply_chain_alt" url="/bcm/supply_chain/alternate/alternate.jsp"/>
+    <web:define-xsl name="supply_chain_alt" url="/bcm/supply_chain/alternate/xsl/alternate.xsl"/>
+    <web:define-page name="supply_chain_alt_preview" url="/bcm/supply_chain/alternate/controller/preview.cmd"/>
+    <!-- supply chain co-by products-->
+    <web:define-page name="coByProducts" url="/bcm/supply_chain/cobyproducts/cobyproducts.jsp"/>
+    <web:define-page name="coByProductsParam" url="/bcm/supply_chain/cobyproducts/cobyproducts.jsp?ACTION=INIT"/>
+    <web:define-xsl name="coByProducts" url="/bcm/supply_chain/cobyproducts/xsl/cobyproducts.xsl"/>
+    <!--supply chain workflow end-->
+    <!-- CALENDAR START -->
+    <web:define-page name="calendarSearch" url="/bcm/calendar/calendarSearch.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=CALENDAR_SRCH_FORM&amp;PAGE=calendarSearch"/>
+    <web:define-page name="calendarSearchBreadcrumb" url="/bcm/calendar/calendarSearch.jsp"/>
+    <web:define-page name="calendarSearchAction" url="/bcm/calendar/calendarSearch.jsp"/>
+    <web:define-xsl name="calendarSearch" url="/bcm/calendar/xsl/calendarSearch.xsl"/>
+    <web:define-page name="calendarDetail" url="/bcm/calendar/calendarDetail.jsp"/>
+    <web:define-xsl name="calendarDetail" url="/bcm/calendar/xsl/calendarDetail.xsl"/>
+    <web:define-page name="showCalendarDetail" url="/bcm/calendar/search/controller/showCalendarDetail.cmd"/>
+    <web:define-page name="calendarEntry" url="/bcm/calendar/calendarEntry.jsp"/>
+    <web:define-xsl name="calendarEntry" url="/bcm/calendar/xsl/calendarEntry.xsl"/>
+    <web:define-page name="editCalendarEntry" url="/bcm/calendar/detail/controller/editEntry.cmd"/>
+    <!-- CALENDAR END -->
+    <!-- anish end -->
+    <!-- For Table Ravi -->
+    <!-- Resource Alternates  -->
+    <web:define-xsl name="resaltsearch" url="/bcm/resource/alternates/xsl/resaltsearchform.xsl"/>
+    <web:define-page name="resaltsearch" url="/bcm/resource/alternates/resaltsearch.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_RES_ALT_SRCH_FORM&amp;PAGE=resaltsearch"/>
+    <web:define-xsl name="resalt_resource_details" url="/bcm/resource/alternates/xsl/resalt_resource_details.xsl"/>
+    <web:define-page name="resalt_resource_details" url="/bcm/resource/alternates/resalt_resource_details.jsp"/>
+    <web:define-xsl name="resalteditcreate" url="/bcm/resource/alternates/xsl/resalteditcreate.xsl"/>
+    <web:define-page name="resalteditcreate" url="/bcm/resource/alternates/resalteditcreate.jsp"/>
+    <!-- BOR  -->
+    <!--
+    <web:define-xsl name="borsearch" url="/bcm/resource/bor/xsl/borsearch.xsl"/>
+    <web:define-page name="borsearch" url="/bcm/resource/bor/borsearch.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_BOR_SRCH_FORM&amp;PAGE=borsearch"/>
+    <web:define-xsl name="bor_resalt_details" url="/bcm/resource/bor/xsl/bor_resalt_details.xsl"/>
+    <web:define-page name="bor_resalt_details" url="/bcm/resource/bor/bor_resalt_details.jsp"/>
+    <web:define-xsl name="boreditcreate" url="/bcm/resource/bor/xsl/boreditcreate.xsl"/>
+    <web:define-page name="boreditcreate" url="/bcm/resource/bor/boreditcreate.jsp"/>
+    -->
+    <web:define-xsl name="borsearch" url="/bcm/resource/billofresources/xsl/BillOfResourcesSearch.xsl"/>
+    <web:define-page name="borsearch" url="/bcm/resource/billofresources/BillOfResourcesSearch.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_BILL_OF_RESOURCES_SRCH_FORM&amp;PAGE=borsearch"/>
+    <web:define-page name="getBorDetails" url="/bcm/resource/billofresources/BillOfResourcesController/getBorDetails.cmd"/>
+    <web:define-xsl name="boreditcreate" url="/bcm/resource/billofresources/xsl/BillOfResourcesDetail.xsl"/>
+    <web:define-page name="boreditcreate" url="/bcm/resource/billofresources/BillOfResourcesDetail.jsp"/>
+    <!-- Routing -->
+    <web:define-xsl name="routingopsearch" url="/bcm/routingop/xsl/routingsearch.xsl"/>
+    <web:define-page name="routingopsearch" url="/bcm/routingop/routingsearch.jsp?DIRECTORY=bcm.routingop&amp;FILE=view&amp;DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_RTNG_SRCH_FORM&amp;PAGE=routingopsearch"/>
+    <web:define-xsl name="routing_operation" url="/bcm/routingop/xsl/routing_operation.xsl"/>
+    <web:define-page name="routing_operation" url="/bcm/routingop/routing_operation_details.jsp"/>
+    <web:define-xsl name="routing_operation_details" url="/bcm/routingop/xsl/routing_operation.xsl"/>
+    <web:define-page name="routing_operation_details" url="/bcm/routingop/routing_operation_details.jsp"/>
+    <web:define-xsl name="routingeditcreate" url="/bcm/routingop/xsl/routingeditcreate.xsl"/>
+    <web:define-page name="routingeditcreate" url="/bcm/routingop/routingeditcreate.jsp"/>
+    <!-- Ravi -->
+    <!-- Validation start -->
+    <web:define-page name="all_documents" url="/bcm/framework/validation/documents.jsp"/>
+    <web:define-xsl name="all_documents" url="/bcm/framework/validation/xsl/documents.xsl"/>
+    <!--
+    <web:define-page name="document_error_log" url="/bcm/framework/validation/error_log.jsp"/>
+    <web:define-xsl name="document_error_log" url="/bcm/framework/validation/xsl/error_log.xsl"/>
+    -->
+    <web:define-page name="error_log" url="/bcm/framework/validation/doc_error/getErrorLogForDoc.cmd"/>
+    <web:define-page name="document_error_log" url="/bcm/framework/validation/error_log.jsp"/>
+    <web:define-xsl name="document_error_log" url="/bcm/framework/validation/xsl/error_log.xsl"/>
+    <web:define-page name="error_log_details" url="/bcm/framework/validation/error_log_details.jsp"/>
+    <web:define-xsl name="error_log_details" url="/bcm/framework/validation/xsl/error_log_details.xsl"/>
+    <!-- Validation end -->
+    <!-- user group users pages -->
+    <web:define-page name="user_admin_users" url="/bcm/framework/user_admin/user_admin_users.jsp"/>
+    <web:define-xsl name="user_admin_users" url="/bcm/framework/user_admin/xsl/user_admin_users.xsl"/>
+    <web:define-page name="my_profile" url="/omx/user_admin/users_edit/view.cmd?VIEW_MODE=PREFERENCE"/>
+    <web:define-page name="my_profile_leftnav" url="/omx/user_admin/users_edit/view.cmd?VIEW_MODE=PREFERENCE&amp;MODE=INIT"/>
+    <web:define-page name="user_admin_groups" url="/bcmframework//user_admin/user_admin_groups.jsp"/>
+    <web:define-xsl name="user_admin_groups" url="/bcm/framework/user_admin/xsl/user_admin_groups.xsl"/>
+    <web:define-page name="user_admin_groups_new" url="/bcm/framework/user_admin/user_admin_groups_new.jsp"/>
+    <web:define-xsl name="user_admin_groups_new" url="/bcm/framework/user_admin/xsl/user_admin_groups_new.xsl"/>
+    <web:define-page name="user_admin_groups_new_content" url="/bcm/framework/user_admin/user_admin_groups_content_new.jsp"/>
+    <web:define-page name="user_admin_group_admin_role_template" url="/bcm/framework/user_admin/user_admin_group_admin_role_template.jsp"/>
+    <web:define-xsl name="user_admin_group_admin_role_template" url="/bcm/framework/user_admin/xsl/user_admin_group_admin_role_template.xsl"/>
+    <web:define-page name="user_admin_group_admin_role_template_content" url="/bcm/framework/user_admin/user_admin_group_admin_role_template_content.jsp"/>
+    <web:define-page name="user_admin_groups_role_domain" url="/bcm/framework/user_admin/user_admin_groups_role_domain.jsp"/>
+    <web:define-page name="user_admin_groups_role_domain_content" url="/bcm/framework/user_admin/user_admin_groups_content_role_domain.jsp"/>
+    <web:define-xsl name="user_admin_groups_role_domain" url="/bcm/framework/user_admin/xsl/user_admin_groups_role_domain.xsl"/>
+    <!-- user group pages -->
+    <web:define-page name="user_admin_group_search" url="/omx/user_admin/UserGroupSearch.jsp?PAGE=user_admin_group_search&amp;ORG_ID=ORG_1&amp;DO_SEARCH=Yes&amp;FORM_NAME=USR_GRP_SEARCH_FORM&amp;SERVICE=UserSecurity"/>
+    <web:define-xsl name="user_admin_group_search" url="/omx/user_admin/xsl/UserGroupSearch.xsl"/>
+    <web:define-page name="get_usergroup_details" url="/omx/user_admin/user_group_details/getUserGroupDetails.cmd"/>
+    <web:define-page name="user_group_details" url="/omx/user_admin/UserGroupDetails.jsp"/>
+    <web:define-xsl name="user_group_details" url="/omx/user_admin/xsl/UserGroupDetails.xsl"/>
+    <web:define-page name="user_group_domain" url="/omx/user_admin/UserGroupDomain.jsp"/>
+    <web:define-xsl name="user_group_domain" url="/omx/user_admin/xsl/UserGroupDomain.xsl"/>
+    <web:define-page name="domain_nodes" url="/omx/user_admin/DomainNodes.jsp"/>
+    <web:define-page name="domain_nodes_search" url="/omx/user_admin/DomainNodesSearch.jsp"/>
+    <web:define-xsl name="domain_nodes_search" url="/omx/user_admin/xsl/DomainNodesSearch.xsl"/>
+    <web:define-page name="domain_nodes_result" url="/omx/user_admin/DomainNodesResult.jsp"/>
+    <web:define-xsl name="domain_nodes_result" url="/omx/user_admin/xsl/DomainNodesResult.xsl"/>
+    <!-- organization search -->
+    <web:define-page name="user_group_org_search" url="/bcm/framework/user_admin/user_group_org/view.cmd"/>
+    <web:define-page name="user_group_org_search_view" url="/omx/search/search.jsp?PAGE=user_group_org_search&amp;OBJECT_TYPE=ORGANIZATION&amp;DIRECTORY=omx.user_admin&amp;FILE=user_group_org_search&amp;JSCRIPT=bcm/framework/user_admin/js/user_group_admin.js"/>
+    <web:define-page name="user_grp_domain_add_search_view" url="/omx/search/search.jsp?PAGE=user_grp_domain_add_search_view&amp;OBJECT_TYPE=ORGANIZATION&amp;DIRECTORY=omx.user_admin&amp;FILE=user_grps_domain_add&amp;JSCRIPT=bcm/framework/user_admin/js/user_admin.js"/>
+    <!-- user group user search -->
+    <web:define-page name="user_group_user_search_view" url="/omx/search/search.jsp?PAGE=user_group_user_search_view&amp;OBJECT_TYPE=USER&amp;DIRECTORY=omx.user_admin&amp;FILE=users_search&amp;JSCRIPT=bcm/framework/user_admin/js/user_group_admin.js&amp;DO_SEARCH=Yes"/>
+    <web:define-page name="user_group_user_search_assign" url="/omx/search/search.jsp?PAGE=user_group_user_search_assign&amp;OBJECT_TYPE=USER&amp;DIRECTORY=omx.user_admin&amp;FILE=users_search&amp;JSCRIPT=bcm/framework/user_admin/js/user_group_admin.js"/>
+    <!-- User admin search -->
+    <web:define-page name="user_admin_search" url="/omx/user_admin/UserSearchView.jsp"/>
+    <web:define-page name="assignDomainToUserGrp" url="/bcm/framework/user_admin/assignDomainToUserGrp.jsp"/>
+    <web:define-page name="user_search_view" url="/omx/user_admin/UserSearchView.jsp?DO_SEARCH=Yes&amp;PAGE=user_search_view&amp;FORM_NAME=USER_SEARCH_FORM&amp;SERVICE=UserSecurity"/>
+    <web:define-xsl name="user_search_view" url="/omx/user_admin/xsl/UserSearchView.xsl"/>
+    <web:define-page name="users_edit" url="/omx/user_admin/users_edit.jsp"/>
+    <web:define-xsl name="users_edit" url="/omx/user_admin/xsl/users_edit.xsl"/>
+    <!--
+       <web:define-xsl name="assignDomainToUserGrp" url="/bcm/framework/user_admin/xsl/assignDomainToUserGrp.xsl"/>
+    -->
+    <web:define-xsl name="assignDomainHome" url="/bcm/framework/user_admin/xsl/assignDomainHome.xsl"/>
+    <web:define-page name="assignDomainHome" url="/bcm/framework/user_admin/assignDomainHome.jsp"/>
+    <web:define-xsl name="domainSearch" url="/bcm/framework/user_admin/xsl/domainSearch.xsl"/>
+    <web:define-page name="addDomain" url="/bcm/framework/user_admin/domainSearch.jsp"/>
+    <web:define-page name="domainSearch" url="/omx/search/search.jsp?PAGE=domainSearch&amp;OBJECT_TYPE=USER&amp;DIRECTORY=bcm.framework.user_admin&amp;FILE=domainSearchView&amp;JSCRIPT=bcm/framework/user_admin/js/search_domain.js&amp;WHERE=DOMAIN_SEARCH"/>
+    <web:define-page name="domainTree" url="/bcm/framework/user_admin/domainTree.jsp"/>
+    <web:define-xsl name="domainTree" url="/bcm/framework/user_admin/xsl/domainTree.xsl"/>
+    <web:define-page name="searchDomainResult" url="/bcm/framework/user_admin/searchDomainResult.jsp"/>
+    <web:define-xsl name="searchDomainResult" url="/bcm/framework/user_admin/xsl/searchDomainResult.xsl"/>
+    <web:define-page name="execDomainSearch" url="/bcm/framework/user_admin/execDomainSearch.jsp"/>
+    <web:define-xsl name="execDomainSearch" url="/bcm/framework/user_admin/xsl/execDomainSearch.xsl"/>
+    <!--  End: USER GROUPS -->
+    <!-- organization search -->
+    <web:define-page name="user_org_search" url="/omx/user_admin/users_org/view.cmd"/>
+    <web:define-page name="user_org_search_view" url="/omx/search/search.jsp?PAGE=org_search&amp;OBJECT_TYPE=ORGANIZATION&amp;DIRECTORY=omx.user_admin&amp;FILE=users_org&amp;JSCRIPT=omx/user_admin/js/org.js"/>
+    <!--Added by satish - for manage user roles-->
+    <web:define-page name="user_role_search" url="/omx/user_admin/UserRoleSearch.jsp?DO_SEARCH=Yes&amp;PAGE=user_role_search&amp;FORM_NAME=USR_SEC_ROLE_SEARCH_FORM&amp;SERVICE=UserSecurity"/>
+    <web:define-xsl name="user_role_search" url="/omx/user_admin/xsl/UserRoleSearch.xsl"/>
+    <web:define-page name="user_role_details" url="/omx/user_admin/UserRoleDetails.jsp"/>
+    <web:define-xsl name="user_role_details" url="/omx/user_admin/xsl/UserRoleDetails.xsl"/>
+    <web:define-page name="user_activity_search" url="/omx/user_admin/UserActivitySearch.jsp"/>
+    <web:define-xsl name="user_activity_search" url="/omx/user_admin/xsl/UserActivitySearch.xsl"/>
+    <web:define-page name="get_role_details" url="/omx/user_admin/user_role_details/getRoleDetails.cmd"/>
+    <!-- bom - by shrini - start -->
+    <web:define-page name="bom_home" url="/bcm/bom/bom.jsp?TYPE_NAME=MST_BOM_SRCH_CONS_ITEM_FORM&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;ACTION=INIT&amp;PAGE=bom_home"/>
+    <web:define-xsl name="bom_home" url="/bcm/bom/xsl/bom.xsl"/>
+    <web:define-page name="bom_details_page" url="/bcm/bom/details/controller/displayPage.cmd"/>
+    <web:define-page name="bom_details" url="/bcm/bom/details/bom_details.jsp"/>
+    <web:define-xsl name="bom_details" url="/bcm/bom/details/xsl/bom_details.xsl"/>
+    <web:define-page name="bom_item_loc_search" url="/bcm/bom/search/bom_item_loc_search.jsp"/>
+    <web:define-xsl name="bom_item_loc_search" url="/bcm/bom/search/xsl/bom_item_loc_search.xsl"/>
+    <!-- E2E workflow - Nikhil - start -->
+    <web:define-page name="endToEndWorkflow" url="/bcm/framework/e2e/view/load.cmd"/>
+    <web:define-page name="controlPanel" url="/bcm/framework/e2e/controlPanel.jsp?DO_SEARCH=Yes&amp;PAGE=controlPanel&amp;FORM_NAME=DATA_LOADS_FORM&amp;SERVICE=E2EService"/>
+    <web:define-xsl name="controlPanel" url="/bcm/framework/e2e/xsl/controlPanel.xsl"/>
+
+    <web:define-page name="errorSummary" url="/bcm/framework/e2e/errorSummary/errorSummary.jsp?SERVICE=E2EService&amp;DO_SEARCH=Yes&amp;PAGE=errorSummary"/>
+    <web:define-xsl name="errorSummary" url="/bcm/framework/e2e/errorSummary/xsl/errorSummary.xsl"/>
+
+    <!-- E2E workflow - Nikhil - end  -->
+    <!-- Master data pages - start -->
+    <web:define-page name="manage_items" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=Item&amp;SERVICE=BCMMasterService"/>
+    <web:define-page name="manage_location" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=Location&amp;SERVICE=BCMMasterService"/>
+    <web:define-page name="manage_resources" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=Resource&amp;SERVICE=BCMMasterService"/>
+    <web:define-page name="manage_calendar" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=CALENDAR_EVENT&amp;SERVICE=BCMMasterService"/>
+    <!-- Master data pages - start -->
+    <!-- Manufacturing model pages - start -->
+    <web:define-page name="manage_itemlocation" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;TABLE_NAME=ItemLocationMaster&amp;SERVICE=BCMMasterService"/>
+    <!-- Manufacturing model pages - end -->
+    <!-- Distribution Lane and Transportation mode - Nikhil - start -->
+    <web:define-page name="distributionLaneHomeFromNav" url="/bcm/distribLane/distribLaneHome.jsp?fromPage=LeftNav&amp;PAGE=distributionLaneHome"/>
+    <web:define-page name="distributionLaneHome" url="/bcm/distribLane/distribLaneHome.jsp?PAGE=distributionLaneHome"/>
+    <web:define-page name="distributionLaneHomeHead" url="/bcm/distribLane/distribLaneHome.jsp?FORM_NAME=MST_DIST_LN_SRCH_FORM"/>
+    <web:define-xsl name="distributionLaneHome" url="/bcm/distribLane/xsl/distribLaneHome.xsl"/>
+    <web:define-page name="distributionLaneDetail" url="/bcm/distribLane/detail/distribLaneDetail.jsp"/>
+    <web:define-xsl name="distributionLaneDetail" url="/bcm/distribLane/detail/xsl/distribLaneDetail.xsl"/>
+    <web:define-page name="distributionLaneDetailEdit" url="/bcm/distribLane/controller/editDistributionLane.cmd"/>
+    <web:define-page name="locationForm" url="/bcm/distribLane/detail/locationForm.jsp?PAGE=locationForm"/>
+    <web:define-xsl name="locationForm" url="/bcm/distribLane/detail/xsl/locationForm.xsl"/>
+    <web:define-page name="sourceLocForm" url="/bcm/distribLane/detail/locationForm.jsp?PAGE=sourceLocForm&amp;nextPage=sourceLocation&amp;fromPage=DistributionLane"/>
+    <web:define-page name="destLocForm" url="/bcm/distribLane/detail/locationForm.jsp?PAGE=destLocForm&amp;nextPage=destLocation&amp;fromPage=DistributionLane"/>
+    <web:define-page name="resourceLocForm" url="/bcm/distribLane/detail/locationForm.jsp?ACTION=Create&amp;PAGE=resourceLocForm&amp;nextPage=sourceLocation&amp;fromPage=resourceDetail"/>
+    <web:define-page name="handlingLocForm" url="/bcm/distribLane/detail/locationForm.jsp?PAGE=handlingLocForm&amp;nextPage=sourceLocation&amp;fromPage=locationHandlingDetail"/>
+    <web:define-page name="storageLocForm" url="/bcm/distribLane/detail/locationForm.jsp?PAGE=storageLocForm&amp;nextPage=sourceLocation&amp;fromPage=locationStorageDetail"/>
+
+    <web:define-xsl name="locationForm" url="/bcm/distribLane/detail/xsl/locationForm.xsl"/>
+    <web:define-page name="distribLaneDetailMassEdit" url="/bcm/distribLane/detail/controller/distribLaneDetailMassEdit.cmd"/>
+    <web:define-page name="transportModeHome" url="/bcm/transportMode/transportModeHome.jsp?PAGE=transportModeHome"/>
+    <web:define-page name="transportModeHomeFromNav" url="/bcm/transportMode/transportModeHome.jsp?fromPage=LeftNav&amp;PAGE=transportModeHome"/>
+    <web:define-xsl name="transportModeHome" url="/bcm/transportMode/xsl/transportModeHome.xsl"/>
+    <web:define-page name="transportModeDetails" url="/bcm/transportMode/detail/transportModeDetail.jsp"/>
+    <web:define-xsl name="transportModeDetails" url="/bcm/transportMode/detail/xsl/transportModeDetail.xsl"/>
+    <web:define-page name="transportModeDetailEdit" url="/bcm/transportMode/controller/editTransportMode.cmd"/>
+    <!-- Distribution Lane - Nikhil - end  -->
+    <!--Outbound Tables Sync- Sumanta- start-->
+    <web:define-page name="outboundStagingRefreshPage" url="/bcm/outboundStaging/outboundStagingRefreshPage.jsp"/>
+    <web:define-xsl name="outboundStagingRefreshPage" url="/bcm/outboundStaging/xsl/outboundStagingRefreshPage.xsl"/>
+    <!--Outbound Tables Sync- Sumanta- end  -->
+    <!-- Nikhil start: Help pages - only some are defined here; others have been defined in the respective view.cnd files (getContainer) with relative paths -->
+    <web:define-page name="alerts_help" url="/bcm/help/alerts_help.html"/>
+    <!-- Nikhil end: Help pages - only some are defined here; others have been defined in the respective view.cnd files (getContainer) with relative paths -->
+    <!-- Nikhil start: BOD pages -->
+    <web:define-page name="bodHomeFromNav" url="/bcm/bod/bodHome.jsp?fromPage=LeftNav&amp;PAGE=bodHome"/>
+    <web:define-page name="bodHome" url="/bcm/bod/bodHome.jsp?PAGE=bodHome"/>
+    <web:define-page name="bodHomeHead" url="/bcm/bod/bodHome.jsp?FORM_NAME=MST_BOD_SRCH_FORM"/>
+    <web:define-xsl name="bodHome" url="/bcm/bod/xsl/bodHome.xsl"/>
+    <!-- to fix issue 462681-->
+    <web:define-page name="bodDetailFromDL" url="/bcm/bod/detail/bodDetail.jsp?fromPage=bodHome"/>
+    <!-- end of issue 462681 -->
+    <web:define-page name="bodDetail" url="/bcm/bod/detail/bodDetail.jsp"/>
+    <web:define-xsl name="bodDetail" url="/bcm/bod/detail/xsl/bodDetail.xsl"/>
+    <web:define-page name="bodDetailEdit" url="/bcm/bod/controller/editBod.cmd"/>
+    <web:define-page name="bodMassCreate" url="/bcm/bod/massCreate/bodMassCreate.jsp"/>
+    <web:define-xsl name="bodMassCreate" url="/bcm/bod/massCreate/xsl/bodMassCreate.xsl"/>
+    <web:define-page name="itemHome" url="/bcm/bod/massCreate/itemHome.jsp?PAGE=itemHome"/>
+    <web:define-xsl name="itemHome" url="/bcm/bod/massCreate/xsl/itemHome.xsl"/>
+    <web:define-page name="loadFilteredDisrtibutionLanes" url="/bcm/bod/massCreate/controller/loadFilteredDisrtibutionLanes.cmd?BOD_ACTION=Create"/>
+    <web:define-page name="bodSummary" url="/bcm/bod/bodSummary/bodSummary.jsp"/>
+    <web:define-xsl name="bodSummary" url="/bcm/bod/bodSummary/xsl/bodSummary.xsl"/>
+    <!-- Nikhil end: BOD pages -->
+    <!-- Resources Search Page Sumanta Start-->
+    <web:define-page name="search_resource_leftnav" url="/bcm/resource/resource/search_resource.jsp?PAGE=search_resource&amp;MODE=START"/>
+    <web:define-page name="search_resource" url="/bcm/resource/resource/search_resource.jsp?PAGE=search_resource"/>
+    <web:define-xsl name="search_resource" url="/bcm/resource/resource/xsl/search_resource.xsl"/>
+    <web:define-page name="resourceEdit" url="/bcm/resource/resource/detail/controller/editResource.cmd"/>
+    <web:define-page name="resEdit" url="/bcm/resource/resource/detail/controller/editResFromResAlt.cmd"/>
+    <web:define-page name="resourceDetail" url="/bcm/resource/resource/resourceDetail.jsp"/>
+    <web:define-xsl name="resourceDetail" url="/bcm/resource/resource/xsl/resourceDetail.xsl"/>
+    <web:define-page name="resourceBOR" url="/bcm/resource/resource/resourceBOR.jsp"/>
+    <web:define-xsl name="resourceBOR" url="/bcm/resource/resource/xsl/resourceBOR.xsl"/>
+    <web:define-page name="resourceAltSearch" url="/bcm/resource/resource/resourceAltSearch.jsp"/>
+    <web:define-xsl name="resourceAltSearch" url="/bcm/resource/resource/xsl/resourceAltSearch.xsl"/>
+    <!-- integration with Calendars Anish  start -->
+    <web:define-page name="resourceCalendar" url="/bcm/resource/resource/resourceCalendar.jsp"/>
+    <web:define-xsl name="resourceCalendar" url="/bcm/resource/resource/xsl/resourceCalendar.xsl"/>
+    <web:define-page name="editCalendarFromResource" url="/bcm/resource/resource/detail/controller/editCalendar.cmd"/>
+    <!-- integration with Calendars Anish  end -->
+    <!-- Resources Search Page Sumanta End-->
+    <!-- LOCATION start Anish -->
+    <!--web:define-page name="searchLocation" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=Location&amp;SERVICE=BCMMasterService"/-->
+    <web:define-page name="searchLocation" url="/bcm/location/search_location.jsp?PAGE=searchLocation&amp;DO_SEARCH=Yes"/>
+    <web:define-xsl name="searchLocation" url="/bcm/location/xsl/search_location.xsl"/>
+    <web:define-page name="editLocation" url="/bcm/location/detail/controller/display.cmd"/>
+    <web:define-page name="locationDetail" url="/bcm/location/locationDetail.jsp"/>
+    <web:define-xsl name="locationDetail" url="/bcm/location/xsl/locationDetail.xsl"/>
+    <web:define-page name="locationCalendar" url="/bcm/location/locationCalendar.jsp"/>
+    <web:define-xsl name="locationCalendar" url="/bcm/location/xsl/locationCalendar.xsl"/>
+    <web:define-page name="editCalendarFromLocation" url="/bcm/location/detail/controller/editCalendar.cmd"/>
+    <!-- LOCATION end Anish -->
+    <!-- Ravi Start:Seller Product and Seller Safety Stock related pages -->
+    <web:define-page name="sellerproductsearch" url="/bcm/seller_product/SellerProductSearch.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=UD_SELL_PROD_SRCH_FORM&amp;PAGE=sellerproductsearch"/>
+    <web:define-xsl name="sellerproductsearch" url="/bcm/seller_product/xsl/SellerProductSearch.xsl"/>
+    <web:define-page name="sellerproductedit" url="/bcm/seller_product/SellerProductEdit.jsp"/>
+    <web:define-xsl name="sellerproductedit" url="/bcm/seller_product/xsl/SellerProductEdit.xsl"/>
+    <web:define-page name="sellersafetystockedit" url="/bcm/seller_product/SellerSafetyStockEdit.jsp"/>
+    <web:define-xsl name="sellersafetystockedit" url="/bcm/seller_product/xsl/SellerSafetyStockEdit.xsl"/>
+    <web:define-page name="sellerproductmassedit" url="/bcm/seller_product/SellerProductMassEdit.jsp"/>
+    <web:define-xsl name="sellerproductmassedit" url="/bcm/seller_product/xsl/SellerProductMassEdit.xsl"/>
+    <!--Ravi End:Seller Product and Seller Safety Stock related pages  -->
+    <!--Ravi Start:Plan Work Order -->
+    <web:define-page name="planworkordersearch" url="/bcm/plan_workorder/PlanWorkOrderSearch.jsp?DO_SEARCH=Yes&amp;SERVICE=ADWService&amp;FORM_NAME=MST_PLAN_WORK_ORDER_SRCH_FORM&amp;PAGE=planworkordersearch"/>
+    <web:define-xsl name="planworkordersearch" url="/bcm/plan_workorder/xsl/PlanWorkOrderSearch.xsl"/>
+    <web:define-page name="planworkorderedit" url="/bcm/plan_workorder/PlanWorkOrderEdit.jsp?DO_SEARCH=Yes&amp;SERVICE=ADWService&amp;FORM_NAME=MST_PLAN_WORK_ORDER_MAT_FORM&amp;PAGE=planworkorderedit"/>
+    <web:define-xsl name="planworkorderedit" url="/bcm/plan_workorder/xsl/PlanWorkOrderEdit.xsl"/>
+    <web:define-page name="workorderedit" url="/bcm/plan_workorder/PlanWorkOrderEdit.jsp"/>
+    <web:define-page name="planworkordermassedit" url="/bcm/plan_workorder/PlanWorkOrderMassEdit.jsp"/>
+    <web:define-xsl name="planworkordermassedit" url="/bcm/plan_workorder/xsl/PlanWorkOrderMassEdit.xsl"/>
+    <web:define-page name="getPlanWorkOrderParams" url="/bcm/plan_workorder/PlanWorkOrderController/getPlanWorkOrderParams.cmd"/>
+    <!--Ravi End:Plan Work Order -->
+    <!--Ravi Start:Where Used -->
+    <web:define-page name="whereUsedView" url="/bcm/where_used/WhereUsedView.jsp"/>
+    <web:define-xsl name="whereUsedView" url="/bcm/where_used/xsl/WhereUsedView.xsl"/>
+    <!--Ravi End:Where Used -->
+    <!--Ravi Start:Buffer -->
+    <web:define-page name="bufferSearchView" url="/bcm/itemLocation/bufferSearchView.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_BUFFER_SRCH_FORM&amp;PAGE=bufferSearchView"/>
+    <web:define-page name="bufferSearchViewHead" url="/bcm/itemLocation/bufferSearchView.jsp"/>
+    <web:define-xsl name="bufferSearchView" url="/bcm/itemLocation/xsl/bufferSearchView.xsl"/>
+    <web:define-page name="bufferDetailsView" url="/bcm/itemLocation/bufferDetailsView.jsp"/>
+    <web:define-xsl name="bufferDetailsView" url="/bcm/itemLocation/xsl/bufferDetailsView.xsl"/>
+    <web:define-page name="bufferMassUpdateView" url="/bcm/itemLocation/bufferMassUpdateView.jsp"/>
+    <web:define-page name="bufferSafetyStockCal" url="/bcm/itemLocation/bufferSafetyStockCal.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_BUFFER_SFT_STK_CAL_FORM&amp;PAGE=bufferSafetyStockCal"/>
+    <web:define-xsl name="bufferSafetyStockCal" url="/bcm/itemLocation/xsl/bufferSafetyStockCal.xsl"/>
+    <!-- Buffer Tree-->
+    <web:define-page name="bufferTopFrame" url="/bcm/itemLocation/whereused/buffer_topframe.jsp"/>
+    <web:define-page name="bufferTree" url="/bcm/itemLocation/whereused/buffer_tree_view_content.jsp"/>
+    <web:define-xsl name="bufferTree" url="/bcm/itemLocation/whereused/xsl/bufferTree.xsl"/>
+    <web:define-page name="bufferTreeData" url="/bcm/itemLocation/whereused/buffer_tree_data_content.jsp"/>
+    <web:define-xsl name="bufferTreeData" url="/bcm/itemLocation/whereused/xsl/bufferTreeData.xsl"/>
+    <!--Ravi End:Buffer -->
+    <!--Sumanta Handling-->
+    <web:define-page name="searchLocationHandling" url="/bcm/location/handling/searchLocationHandling.jsp?PAGE=searchLocationHandling"/>
+    <web:define-xsl name="searchLocationHandling" url="/bcm/location/handling/xsl/searchLocationHandling.xsl"/>
+    <web:define-page name="locationHandlingDetail" url="/bcm/location/handling/locationHandlingDetail.jsp"/>
+    <web:define-xsl name="locationHandlingDetail" url="/bcm/location/handling/xsl/locationHandlingDetail.xsl"/>
+    <web:define-page name="locationHandlingCalendar" url="/bcm/location/handling/locationHandlingCalendar.jsp"/>
+    <web:define-xsl name="locationHandlingCalendar" url="/bcm/location/handling/xsl/locationHandlingCalendar.xsl"/>
+    <web:define-page name="locationCalendarEdit" url="/bcm/location/handling/controller/locationCalendarEdit.cmd"/>
+    <web:define-page name="searchLocationStorage" url="/bcm/location/storage/searchLocationStorage.jsp?PAGE=searchLocationStorage"/>
+    <web:define-xsl name="searchLocationStorage" url="/bcm/location/storage/xsl/searchLocationStorage.xsl"/>
+    <web:define-page name="locationStorageDetail" url="/bcm/location/storage/locationStorageDetail.jsp"/>
+    <web:define-xsl name="locationStorageDetail" url="/bcm/location/storage/xsl/locationStorageDetail.xsl"/>
+    <web:define-page name="locationStorageEdit" url="/bcm/location/storage/controller/locationStorageEdit.cmd"/>
+    <web:define-page name="locationStorageCalendar" url="/bcm/location/storage/locationStorageCalendar.jsp"/>
+    <web:define-xsl name="locationStorageCalendar" url="/bcm/location/storage/xsl/locationStorageCalendar.xsl"/>
+        <!-- EQ: 511495 -->
+        <web:define-page name="operationSearchPage" url="/bcm/operation/search/operation.jsp"/>
+        <web:define-page name="borSearchPage" url="/bcm/resource/billofresources/BillOfResourcesSearch.jsp"/>
+        <web:define-page name="bomSearchPage" url="/bcm/bom/bom.jsp?TYPE_NAME=MST_BOM_SRCH_CONS_ITEM_FORM&amp;SERVICE=BCMMasterService&amp;ACTION=INIT"/>
+
+     <!-- data Validation summary-->
+    <web:define-page name="dataValidationSummary" url="/bcm/framework/alerts/data_validation_summary/dataValidationSummary.jsp"/>
+    <web:define-xsl name="dataValidationSummary" url="/bcm/framework/alerts/data_validation_summary/xsl/dataValidationSummary.xsl"/>
+    <web:define-page name="dataValidationErrorDetail" url="/bcm/framework/alerts/data_validation_summary/detail/dataValidationErrorDetails.jsp"/>
+    <web:define-xsl name="dataValidationErrorDetail" url="/bcm/framework/alerts/data_validation_summary/detail/xsl/dataValidationErrorDetails.xsl"/>
+
+        <!-- End of EQ: 511495 -->
+    <!-- Time heirarchy -->
+    <web:define-page name="timeHierarchy" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.hierarchy.timeHierarchy&amp;FILE=HorizonRefDetails&amp;TABLE_NAME=HorizonReferenceMaster&amp;SERVICE=BCMMasterService"/>
+    <web:define-page name="HorizonRefDetail" url="/bcm/framework/hierarchy/timeHierarchy/timeHierarchy.jsp?DIRECTORY=bcm.framework.hierarchy.timeHierarchy&amp;FILE=view&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=HORIZON_REF_DETAIL&amp;PAGE=HorizonRefDetail"/>
+    <web:define-xsl name="horizonRefDetail" url="/bcm/framework/hierarchy/timeHierarchy/xsl/horizonRefDetail.xsl"/>
+    <!-- Time heirarchy -->
+
+
+  <!-- PIPO -->
+    <web:define-page name="PIPOSetup_search" url="/bcm/PIPO/PIPOSetup_search/PIPOSetup_search.jsp?DIRECTORY=bcm.PIPO.PIPOSetup_search&amp;FILE=view&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PIPO_SETUP_SRCH_FORM&amp;PAGE=PIPOSetup_search"/>
+    <web:define-xsl name="PIPOSetup_search" url="/bcm/PIPO/PIPOSetup_search/xsl/PIPOSetup_search.xsl"/>
+    <web:define-page name="POMembers" url="/bcm/PIPO/PIPOSetup_search/PIPOMembers.jsp?DIRECTORY=bcm.PIPO.PIPOMembers&amp;FILE=view&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PO_MEMBERS_FORM&amp;PAGE=PIPOMembers"/>
+    <web:define-xsl name="PIPOMembers" url="/bcm/PIPO/PIPOSetup_search/xsl/PIPOMembers.xsl"/>
+    <web:define-page name="PIMembers" url="/bcm/PIPO/PIPOSetup_search/PIMembers.jsp?DIRECTORY=bcm.PIPO.PIMembers&amp;FILE=view&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PO_MEMBERS_FORM&amp;PAGE=PIMembers"/>
+    <web:define-xsl name="PIMembers" url="/bcm/PIPO/PIPOSetup_search/xsl/PIMembers.xsl"/>
+    <web:define-page name="OtherMembers" url="/bcm/PIPO/PIPOSetup_search/OtherMembers.jsp?DIRECTORY=bcm.PIPO.OtherMembers&amp;FILE=view&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=OTHER_MEMBERS_FORM&amp;PAGE=OtherMembers"/>
+    <web:define-xsl name="OtherMembers" url="/bcm/PIPO/PIPOSetup_search/xsl/OtherMembers.xsl"/>
+    <web:define-page name="savePIPODetails" url="/bcm/PIPO/PIPOSetup_search/savePIPODetails.jsp?DIRECTORY=bcm.PIPO.PIMembers&amp;FILE=view&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=SAVE_PIPO_FORM&amp;PAGE=savePIPODetails"/>
+    <web:define-xsl name="savePIPODetails" url="/bcm/PIPO/PIPOSetup_search/xsl/savePIPODetails.xsl"/>
+    <!--web:define-page name="PIPOSetupTE" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=PIPOSetup&amp;SERVICE=BCMMasterService"/-->
+    <web:define-page name="PIPORelTE" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=PIPORelationships&amp;SERVICE=BCMMasterService"/>
+    <web:define-page name="PIPOMeasuresTE" url="/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=PIPOMeasuresSetup&amp;SERVICE=BCMMasterService"/>
+    <web:define-page name="MeasureDetails" url="/bcm/PIPO/PIPOSetup_search/MeasureDetails.jsp?DIRECTORY=bcm.PIPO.MeasureDetails&amp;FILE=view&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PIPO_DETAILS_FORM&amp;PAGE=MeasureDetails"/>
+    <web:define-xsl name="MeasureDetails" url="/bcm/PIPO/PIPOSetup_search/xsl/MeasureDetails.xsl"/>
+        
+    <web:define-page name="addSrcMsrID" url="/bcm/PIPO/PIPOSetup/addSrcMsrID.jsp?DIRECTORY=bcm.PIPO.PIPOSetup&amp;FILE=addSrcMsrIDView&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PIPO_CREATE_SRC_ID_FORM&amp;PAGE=addSrcMsrID"/>
+    <web:define-xsl name="addSrcMsrID" url="/bcm/PIPO/PIPOSetup/xsl/addSrcMsrID.xsl"/>
+    <web:define-page name="addTgtMsrID" url="/bcm/PIPO/PIPOSetup/addTgtMsrID.jsp?DIRECTORY=bcm.PIPO.PIPOSetup&amp;FILE=addTgtMsrIDView&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PIPO_CREATE_TGT_ID_FORM&amp;PAGE=addTgtMsrID"/>
+    <web:define-xsl name="addTgtMsrID" url="/bcm/PIPO/PIPOSetup/xsl/addTgtMsrID.xsl"/>
+        
+    <web:define-page name="PIPORelationsDtls" url="/bcm/PIPO/PIPOSetup_search/PIPORelationsDtls.jsp?DIRECTORY=bcm.PIPO.PIPORelationsSrch&amp;FILE=PIPORelationsDtlsView&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PIPO_RLNTS_DTLS_FORM&amp;PAGE=PIPORelationsDtls"/>
+    <web:define-xsl name="PIPORelationsDtls" url="/bcm/PIPO/PIPOSetup_search/xsl/PIPORelationsDtls.xsl"/>
+    <web:define-page name="PIPORelationsSrch" url="/bcm/PIPO/PIPOSetup_search/PIPORelationsSrch.jsp?DIRECTORY=bcm.PIPO.PIPORelationsSrch&amp;FILE=PIPORelationsView&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PIPO_RLNTS_SRCH_FORM&amp;PAGE=PIPORelationsSrch"/>
+    <web:define-xsl name="PIPORelationsSrch" url="/bcm/PIPO/PIPOSetup_search/xsl/PIPORelationsSrch.xsl"/>
+    <web:define-page name="PIPOSetup" url="/bcm/PIPO/PIPOSetup/PIPOSetup.jsp?DIRECTORY=bcm.PIPO.PIPOSetup&amp;FILE=PIPOSetupView&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PIPO_SETUP_SRCH_FORM&amp;PAGE=PIPOSetup"/>
+    <web:define-xsl name="PIPOSetup" url="/bcm/PIPO/PIPOSetup/xsl/PIPOSetup.xsl"/>
+    <web:define-page name="createPIPOEOL" url="/bcm/PIPO/PIPOSetup/createPIPOEOL.jsp?DIRECTORY=bcm.PIPO.PIPOSetup&amp;FILE=createPIPOEOLView&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PIPO_CREATE_EOL_FORM&amp;PAGE=createPIPOEOL"/>
+    <web:define-xsl name="createPIPOEOL" url="/bcm/PIPO/PIPOSetup/xsl/createPIPOEOL.xsl"/>
+    <web:define-page name="createPIPONPI" url="/bcm/PIPO/PIPOSetup/createPIPONPI.jsp?DIRECTORY=bcm.PIPO.PIPOSetup&amp;FILE=createPIPONPIView&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PIPO_CREATE_NPI_FORM&amp;PAGE=createPIPONPI"/>
+    <web:define-xsl name="createPIPONPI" url="/bcm/PIPO/PIPOSetup/xsl/createPIPONPI.xsl"/>
+    <web:define-page name="addDimLevelID" url="/bcm/PIPO/PIPOSetup/addDimLevelID.jsp?DIRECTORY=bcm.PIPO.PIPOSetup&amp;FILE=addDimLevelIDView&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PIPO_CREATE_DIM_LEVEL_FORM&amp;PAGE=addDimLevelID"/>
+    <web:define-xsl name="addDimLevelID" url="/bcm/PIPO/PIPOSetup/xsl/addDimLevelID.xsl"/>
+    <web:define-page name="saveSetupDetails" url="/bcm/PIPO/PIPOSetup/saveSetupDetails.jsp?DIRECTORY=bcm.PIPO.PIPOSetup&amp;FILE=saveSetupDetailsView&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PIPO_CREATE_SAVE_FORM&amp;PAGE=saveSetupDetails"/>
+    <web:define-xsl name="saveSetupDetails" url="/bcm/PIPO/PIPOSetup/xsl/saveSetupDetails.xsl"/>
+    <web:define-page name="savePIPOSetup" url="/bcm/PIPO/PIPOSetup/savePIPOSetup.jsp?DIRECTORY=bcm.PIPO.PIPOSetup&amp;FILE=savePIPOSetupView&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PIPO_SETUP_SAVE_FORM&amp;PAGE=savePIPOSetup"/>
+    <web:define-xsl name="savePIPOSetup" url="/bcm/PIPO/PIPOSetup/xsl/savePIPOSetup.xsl"/>
+
+    <web:define-page name="MeasureIOLevelDtls" url="/bcm/PIPO/PIPOSetup/MeasureIOLevelDtls.jsp?DIRECTORY=bcm.PIPO.PIPOSetup&amp;FILE=MeasureIOLevelDtlsView&amp;SERVICE=BCMMasterService&amp;DO_SEARCH=Yes&amp;FORM_NAME=PIPO_MEASURE_IO_LEVEL_DETLS&amp;PAGE=MeasureIOLevelDtls"/>
+    <web:define-xsl name="MeasureIOLevelDtls" url="/bcm/PIPO/PIPOSetup/xsl/MeasureIOLevelDtls.xsl"/>
+
+    <!-- PIPO -->
+
+    <!-- Dummy PGL-based workflow. Just for testing co-located mode. -->
+    <web:define-page name="TestWorkflow" url="/start.x2ps?START_WORKFLOW=TestWorkflow&amp;SOLUTION_NAME=Test"/>
+    <!-- Business rules -->
+    <!--web:define-page name="BusinessRules" url="/start.x2ps?START_WORKFLOW=businessrulesui&amp;SERVICE_NAME=BPE_META"/-->
+    <web:define-page name="BusinessRules" url="/ruleexpr_kit/ruleexpr_ui.jsp"/>
+    
+    <!--workflows for dm-mdm-->
+
+    <web:define-page name="MeasureWf" url="/start.x2ps?START_WORKFLOW=tk_Manage_Measure&amp;SOLUTION_NAME=MDM"/>
+      <web:define-page name="MemberWf" url="/start.x2ps?START_WORKFLOW=tk_Manage_Member&amp;SOLUTION_NAME=MDM"/>
+      <web:define-page name="MapsetWf" url="/start.x2ps?START_WORKFLOW=tk_Manage_Mapset&amp;SOLUTION_NAME=MDM"/>
+        <web:define-page name="edit_mapset_details" url="/view.x2ps?BUTTON_ID=Edit" />
+
+
+<!-- HELP PAGES FOR mdm-dm -->
+<web:define-page name="dm_mdm_help" url="/bcm/help/dmhelp.html"/>
+<web:define-page name="managemeasure_help" url="/bcm/help/Manage_measure_help.htm"/>
+<web:define-page name="createmeasure_help" url="/bcm/help/Create_measure_help.htm"/>
+<web:define-page name="measuredim_help" url="/bcm/help/Measure_dimensionality_help.htm"/>
+
+<web:define-page name="Manage_member_details_help" url="/bcm/help/Manage_member_details_help.htm"/>
+<web:define-page name="Manage_members_help" url="/bcm/help/Manage_members_help.htm"/>
+<web:define-page name="Manage_Lifecycle_help" url="/bcm/help/Manage_Lifecycle_help.htm"/>
+<web:define-page name="Manage_mapset_definition_help" url="/bcm/help/Manage_mapset_definition_help.htm"/>
+<web:define-page name="Manage_mapsets_help" url="/bcm/help/Manage_mapsets_help.htm"/>
+
+
+    <!-- Issue No: 547873 -->
+    <web:define-page name="scenarioLog" url="/bcm/scenario/scenarioLog.jsp"/>
+    <web:define-xsl name="scenarioLog" url="/bcm/scenario/xsl/scenarioLog.xsl"/>
+    
+    <!-- Issue 549193 Making TableEditor as PGL component -->
+    <web:define-page name="TableEditor" url="/start.x2ps?START_WORKFLOW=tableEditor&amp;SOLUTION_NAME=MDM"/>
+    
+      <!-- Scenario: Start -->
+        <web:define-page name="scenarioSearch" url="/bcm/scenario/scenarioSearch.jsp?MODE=START"/>
+        <web:define-xsl name="scenarioSearch" url="/bcm/scenario/xsl/scenarioSearch.xsl"/>
+        <web:define-page name="createScenario" url="/bcm/scenario/createScenario.jsp"/>
+        <web:define-xsl name="createScenario" url="/bcm/scenario/xsl/createScenario.xsl"/>
+        <web:define-page name="scenarioLog" url="/bcm/scenario/scenarioLog.jsp"/>
+        <web:define-xsl name="scenarioLog" url="/bcm/scenario/xsl/scenarioLog.xsl"/>
+
+	<!-- Data Load: Start -->
+	<web:define-page name="dataLoads" url="/bcm/framework/e2e/dataLoads/dataLoad.jsp"/>
+    <web:define-xsl name="dataLoads" url="/bcm/framework/e2e/dataLoads/xsl/dataLoads.xsl"/>
+
+
+  </x2:command>
+</x2:commands>

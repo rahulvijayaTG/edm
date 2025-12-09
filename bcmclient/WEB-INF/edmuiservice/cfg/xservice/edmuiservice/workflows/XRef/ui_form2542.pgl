@@ -1,0 +1,26 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="xrefManageSystemDescription.pgl">
+  <ui:container id="desc">
+    <ui:step id="stepDesc" displayText="Enter System Description">
+      <ui:field-group id="fg1">
+        <ui:textarea id="enterDesc" name="enterDesc" displayText="Enter System Description" rows="5" columns="30" editable="false" />
+      </ui:field-group>
+      <ui:buttons id="b">
+        <ui:button id="Save" name="Save" displayText="Save" onClick="javascript:on_select()" />
+        <ui:button id="Cancel" name="Cancel" displayText="Cancel" onClick="javascript:window.close();" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>function on_select()
+  {
+    var x = document.getElementsByName( 'enterDesc' );
+		
+    var length = x.length;
+    var selectedtext = null;
+    selectedtext = x.value;
+   
+	alert(selectedtext);
+		parent.opener.form.SystemDescription.value =selectedtext;
+		window.close();
+}</ui:script>
+</ui:page-group>
+

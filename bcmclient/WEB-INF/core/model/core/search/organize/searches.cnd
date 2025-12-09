@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:identity="http://www.i2.com/identity" xmlns:i18n="http://www.i2.com/i18n" description="_">
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+
+    <xapl:variable name="category" select="$this/CATEGORY/@Value"/>
+    <xapl:if test="string-length($category)=0">
+      <xapl:set-variable name="category" select="'Favorites'"/>
+    </xapl:if>
+
+    <xapl:variable name="favorites">
+      <xcore:execute-method name="//BPE_UIService/getSavedSearches" StartAtRow="0" ReturnRowCount="yes">
+        <xapl:variable name="userId"><identity:get-user-id/></xapl:variable>
+        <FILTER Name="USER_ID">
+          <USER_ID Value="{$userId}"/>
+        </FILTER>
+        <FILTER Name="STATUS">
+          <OR>
+            <STATUS/>
+            <STATUS Value="ACTIVE"/>
+          </OR>
+        </FILTER>
+        <x2:execute command="core.search.select.searches:getPageNameFilter">
+          <x2:with-param name="category" select="$category"/>
+        </x2:execute>
+        <ORDER_BY>
+          <SEQUENCE_NUMBER Sort="Ascending"/>
+        </ORDER_BY>
+      </xcore:execute-method>
+    </xapl:variable>
+
+    <xapl:variable name="active">
+      <ACTIVE_SEARCHES/>
+    </xapl:variable>
+
+    <xapl:variable name="visible">
+      <VISIBLE_SEARCHES/>
+    </xapl:variable>
+
+    <xapl:for-each select="$favorites/FAVORITE" varName="favorite">
+      <xapl:choose>
+        <xapl:when test="$favorite/SEQUENCE_NUMBER/@Value > 0">
+          <docutil:add select="$visible">
+            <OPTION Id="{$favorite/ID/@Value}" Value="{$favorite/NAME/@Value}"/>
+          </docutil:add>
+        </xapl:when>
+        <xapl:otherwise>
+          <docutil:add select="$active">
+            <OPTION Id="{$favorite/ID/@Value}" Value="{$favorite/NAME/@Value}"/>
+          </docutil:add>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:for-each>
+
+		<x2:execute command="core.history:clear"/>
+    <xapl:return>
+      <!-- TODO This need to happen automatically -->
+      <x2:execute command="core.history:register">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="pPage" select="'core_organize_searches'"/>
+        <x2:with-param name="pPageName" select="'Organize Favorites'"/>
+      </x2:execute>
+      <FAVORITES_COUNT Value="{$favorites/@TotalRowCount}"/>
+      <CATEGORY Value="{$category}"/>
+      <xapl:value-of select="$active"/>
+      <xapl:value-of select="$visible"/>
+      <x2:execute command="core.search.select.searches:getCategories">
+        <x2:with-param name="unique" select="true()"/>
+      </x2:execute>
+    </xapl:return>
+  </x2:command>
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="save">
+
+    <xapl:variable name="assignResult">
+      <xcore:execute-method name="//BPE_UIService/setSavedSearchOrder" entireResponse="true">
+        <VISIBLE>
+          <xapl:for-each select="$this/VISIBLE" varName="visible">
+            <ID Value="{$visible/@Value}"/>
+          </xapl:for-each>
+        </VISIBLE>
+        <NOT_VISIBLE>
+          <xapl:for-each select="$this/ACTIVE" varName="active">
+            <ID Value="{$active/@Value}"/>
+          </xapl:for-each>
+        </NOT_VISIBLE>
+      </xcore:execute-method>
+    </xapl:variable>
+
+    <xapl:choose>
+      <xapl:when test="$assignResult/RESPONSE/@Status='Error'">
+        <xapl:variable name="result">
+          <TITLE Value="Delete Saved Search"/>
+          <xapl:value-of select="$assignResult/RESPONSE"/>
+          <ON_ERROR>
+            <MSG Value="Your request failed. Click back to correct it and submit again."/>
+            <BUTTONS>
+              <BUTTON Name="back"
+                      DisplayText="Back"
+                      OnClick="javascript:history.back()"
+                      Emphasized="yes"/>
+            </BUTTONS>
+          </ON_ERROR>
+        </xapl:variable>
+        <x2:execute command="cpm.result:showResult">
+          <x2:with-param name="result" select="$result"/>
+        </x2:execute>
+      </xapl:when>
+     <xapl:otherwise>
+       <web:display-page>
+        <web:get-page name="core_organize_searches">
+          <SUCCESS_MESSAGE Value="Saved Successfully"/>
+          <xapl:value-of select="$this/*"/>
+        </web:get-page>
+       </web:display-page>
+     </xapl:otherwise>
+   </xapl:choose>
+
+  </x2:command>
+
+  <!-- **********************************************************************
+   *********************************************************************** -->
+  <x2:command public="yes" description="_" name="onChange">
+    <web:display-page>
+      <web:get-page name="core_organize_searches">
+        <xapl:value-of select="$this/*"/>
+      </web:get-page>
+    </web:display-page>
+   </x2:command>
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+
+</x2:commands>

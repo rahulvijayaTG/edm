@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="132" ShowInBreadCrumbs="true" Version="1.0" Name="wfTLSelectLocation" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="fieldName" Type="string" Comment=""/>
+    <variable Name="locTypeForRP" Type="string" Comment=""/>
+    <variable Name="populateLocNameField" Type="string" Comment=""/>
+    <variable Name="select" Type="string" Comment=""/>
+    <variable Name="pageSource" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+        <action>
+          <SET DocVar="fieldName" FromValue="{$thisParam/FIELD_NAME/@Value}"/>
+          <SET DocVar="select" FromValue="{$thisParam/SELECTABLE/@Value}"/>
+          <SET DocVar="locTypeForRP" FromValue="{$thisParam/POP_LOC_TYPE/@Value}"/>
+          <SET DocVar="pageSource" FromValue="{$thisParam/SOURCE/@Value}"/>
+          <!--SET DocVar="populateLocNameField" FromValue="{$thisParam/POPULATE_LOC_NAME/@Value}"/-->
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Select Location" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Select Location" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE" Template="iscpTLSelectLocation.pgl">
+      <pre_actions>
+        <action>
+          <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+          <SET Var="pgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '10', $thisParam/MAX_ROWS/@Value)}"/>
+          <SET DocVar="thisParam" Property="SRCH_STATE" FromValue="ACTIVE"/>
+          <SET Var="sortBy" FromValue="{ifElse((($thisParam/SORT_BY/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID')), 'LocationIdn', $thisParam/SORT_BY/@Value)}"/>
+          <SET Var="sortOrder" FromValue="{ifElse((($thisParam/SORT_ORDER/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID')), 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+          <MAKE_INSTANCE_DOCUMENT Name="{$sortBy}" AssignToVar="sortByTag"/>
+          <SET DocVar="sortByTag" Attribute="Sort" FromValue="{$sortOrder}"/>
+          <!-- 02/19/2008 Rahul Keshri Fixed loacation popup which was showing deleted items Begin -->
+          <SET DocVar="thisParam" Property="SRCH_STATE" FromValue="ACTIVE"/>
+          <!-- 02/19/2008 Rahul Keshri fix End -->
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="locFilters">
+            <SRCH_LOC_ID MultiValued="true"/>
+            <!--SRCH_LOC_NAME MultiValued="true"/-->
+            <SRCH_LOC_DESC MultiValued="true"/>
+            <SRCH_LOC_TYPE MultiValued="true"/>
+            <SRCH_SGMNT_ID MultiValued="true"/>
+            <SRCH_ITEM_ID MultiValued="true"/>
+            <SRCH_STATE/>
+          </FORM_SEARCH_FILTER>
+          <APPEND_TO_XML DocVar="locFilters">
+            <ORDER_BY>
+              <TO_XML DocVar="sortByTag"/>
+            </ORDER_BY>
+          </APPEND_TO_XML>
+          <REQUEST Name="readLocations" ServiceName="BCM_MASTER" AssignToVar="locSrchResult" ReturnRowCount="yes">
+            <MaxRows Value="{$pgMaxRows}"/>
+            <StartAtRow Value="{$paginateStart}"/>
+            <TO_XML SelectList="$locFilters/*"/>
+            <pageSource Value="{$pageSource}"/>
+            <FILTER Name="LocationIdentificationClassMnemonicValue">
+              <LocationIdentificationClassMnemonicValue Value="{$defaultLocationforISCP}"/>
+            </FILTER>
+            <FILTER Name="SRCH_SGMNT_DESC">
+              <OR>
+                <SRCH_SGMNT_DESC Value="{$PartyDesc1000}" MatchBy="NOT_EQUAL"/>
+                <SRCH_SGMNT_DESC Value="{$PartyDescProject1up}" MatchBy="NOT_EQUAL"/>
+              </OR>
+            </FILTER>
+          </REQUEST>
+          <TO_DOCVAR AssignToVar="formattedLocTypes">
+            <LOC_TYPES/>
+          </TO_DOCVAR>
+          <FOR_EACH CurrentElement="curLocType" SelectList="$locSrchResult/LOC_TYPES/*">
+            <APPEND_TO_XML DocVar="formattedLocTypes">
+              <OPTION Value="{concat($curLocType/LocationClassMnemonicValue/@Value,' - ',$curLocType/LocationClassName/@Value)}" Id="{$curLocType/LocationClassMnemonicValue/@Value}"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <SET DocVar="prevSel" FromValue=""/>
+          <FOR_EACH SelectList="$thisParam/*" CurrentElement="curElem">
+            <IF_TEST Test="name($curElem) = 'SELECTED_LOC_IDS'">
+              <THEN>
+                <SET DocVar="prevSel" FromValue="{ifElse(contains(prevSel,$curElem/@Value),'',concat($prevSel,',',$curElem/@Value))}"/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <SEARCH_FIELDS>
+                <TO_XML SelectList="$thisParam/SRCH_LOC_ID"/>
+                <TO_XML SelectList="$thisParam/SRCH_SGMNT_ID"/>
+                <TO_XML SelectList="$thisParam/SRCH_ITEM_ID"/>
+                <TO_XML SelectList="$thisParam/SRCH_LOC_DESC"/>
+                <TO_XML SelectList="$thisParam/SRCH_LOC_TYPE"/>
+                <FIELD_NAME Value="{$fieldName}"/>
+                <POPULATE_LOC_NAME Value="{$populateLocNameField}"/>
+                <PREV_SEL Value="{substringAfter($prevSel,',')}"/>
+                <POP_LOCC_TYPE Value="{$locTypeForRP}"/>
+              </SEARCH_FIELDS>
+              <START_AT_ROW Value="{$paginateStart}"/>
+              <TotalRowCount Value="{$locSrchResult/LOC_DETAILS/@TotalRowCount}"/>
+              <SORT_BY Value="{$sortBy}"/>
+              <SORT_ORDER Value="{$sortOrder}"/>
+              <TO_XML SelectList="$locSrchResult/*"/>
+              <SELECT Value="{$select}"/>
+              <LOC_TYPES>
+                <OPTION Value="Select All" Id="*"/>
+                <TO_XML SelectList="$formattedLocTypes/*"/>
+                <!--        <DROP_DOWN_OPTIONS SelectList="$locSrchResult/LOC_TYPES/P_LocationClass" Id="LocationClassMnemonicValue" Value="LocationClassName"/>-->
+              </LOC_TYPES>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select Location" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='select'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done4" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done4">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="182,193" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <mgcnode Name="Select Location" location="304,159" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Select Location" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done4 location="423,193" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done4" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done4>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="214,215" endpoint="304,181" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="279,213,4,4" ctrlRect2="234,179,4,4"/>
+      </start2>
+      <mgcnode Name="Select Location">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="320,159" endpoint="320,159" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="318,82,4,4" ctrlRect2="376,113,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="336,181" endpoint="423,215" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="398,179,4,4" ctrlRect2="355,213,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="5" textAttrsKey0="fieldName : string" textAttrsKey1="locTypeForRP : string" textAttrsKey2="pageSource : string" textAttrsKey3="populateLocNameField : string" textAttrsKey4="select : string">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="fieldName" Type="string" Comment=""/>
+        <variable Name="locTypeForRP" Type="string" Comment=""/>
+        <variable Name="populateLocNameField" Type="string" Comment=""/>
+        <variable Name="select" Type="string" Comment=""/>
+        <variable Name="pageSource" Type="string" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,19 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="uiWfRPTopLevelCreate.pgl">
+  <ui:table id="bottomTable" displayText="RP Top Level Create" rowSrc="$root/ENGINE_LIST/ENGINE" postRowIdAs="segNO" collapsable="false" scrollable="true">
+    <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" />
+    <ui:field-group>
+      <ui:dropdown id="EngineIdentification" name="EngineIdentification" displayText="Engine" selectOne="true" optionSrc="$root/Engine/ID" />
+      <ui:dropdown id="SegmentIdentification" name="SegmentIdentification" displayText="Segment  Identification" selectOne="true" optionSrc="$root/Segment/ID" />
+      <ui:entry-field id="Enterprise" name="Enterprise" displayText="Enterprise" />
+      <ui:entry-field id="InstanceId" name="InstanceId" displayText="Instance ID" />
+      <ui:entry-field id="comment" name="comment" displayText="Comment" />
+      <!-- <ui:display-field id="LAST_MODIFIED_DATE" name="LAST_MODIFIED_DATE" displayText="Date Modified"/>
+          <ui:display-field id="ModifiedBy" name="ModifiedBy" displayText="Modified By"/>-->
+    </ui:field-group>
+    <ui:buttons id="btnGrp">
+      <ui:button id="Cancel" displayText="Cancel" emphasized="true" validate="false" />
+      <ui:button id="Save" displayText="Save" emphasized="true" validate="false" />
+    </ui:buttons>
+  </ui:table>
+</ui:page-group>
+

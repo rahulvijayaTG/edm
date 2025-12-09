@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+
+  <x2:command public="yes" description="_" name="init">
+    <xapl:variable name="loadID" resolver="session" global="true"/>
+	<xapl:variable name="wfID" resolver="session" global="true"/>
+	<xapl:variable name="loadDtls" resolver="session" global="true"/>
+  </x2:command>
+ <xapl:print>
+		Mohan printing this in data load before
+		<xapl:value-of select="$this"/>
+	</xapl:print>
+  <x2:command public="yes" description="_" name="load">
+         
+    <!-- BREADCRUMBS AT TOP OR AFTER CLEAN-CONTEXT-->
+    <x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+      <x2:with-param name="display" select="'Load Details'"/>
+      <x2:with-param name="page" select="'dataLoads'"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+<xapl:print>
+		Mohan printing this in data load after
+		<xapl:value-of select="$this"/>
+	</xapl:print>
+   <xapl:print>
+		printing befoer<xapl:value-of select="$loadID"/>
+	</xapl:print>
+
+<xapl:if test="$this/MODE/@Value = 'START'"> 
+	<xapl:set-variable name="loadID">
+	  <x2:execute command="bcm.framework.queryform.Form:getValueFromSelectedId">
+		<x2:with-param name="selectedId" select="$this/CURRENT_ID/@Value"/>
+		<x2:with-param name="key" select="'SYS_DATA_LOAD_INSTANCE.LOAD_ID'"/>
+	  </x2:execute>
+	</xapl:set-variable>
+    <xapl:print>
+		printing after1<xapl:value-of select="$loadID"/>
+	</xapl:print>
+
+	<xapl:set-variable name="wfID">
+	  <x2:execute command="bcm.framework.queryform.Form:getValueFromSelectedId">
+		<x2:with-param name="selectedId" select="$this/CURRENT_ID/@Value"/>
+		<x2:with-param name="key" select="'WORKFLOW_STATUS.WF_ID'"/>
+	  </x2:execute>
+	</xapl:set-variable>
+ </xapl:if>
+
+	<xapl:print>
+		printing this!!! 1111111<xapl:value-of select="$this"/>
+	</xapl:print>
+
+<docutil:set select="$this">
+      <SERVICE Value="E2EService"/>
+      <FORM_NAME Value="WORKFLOW_ACTIVITY_FORM"/>
+      <F_WORKFLOW_ACTIVITY_LOG.WF_ID Value="{$wfID}"/>
+      <!-- <ROUTINGID Value="{$this/Routing.routingID/@Value}"/> -->
+      <!--SORT_BY Value="WORKFLOW_ACTIVITY_LOG.ACTIVITY_END_TIME"/>
+      <SORT_ORDER Value="Ascending"/-->
+      <MAX_ROWS Value="100000"/>
+    </docutil:set>
+
+     
+     <xapl:if test="{((count($this/SORT_BY[1]) = 0) or (string-length($this/SORT_BY/@Value) = 0))}">
+           <docutil:set select="{$this}">
+             <SORT_BY Value="WORKFLOW_ACTIVITY_LOG.ACTIVITY_END_TIME"/>
+             <SORT_ORDER Value="Ascending"/>
+           </docutil:set>
+   </xapl:if> 
+
+
+
+	<xapl:variable name="tablesInLoad">	
+		<LOAD_TAB>
+			<xcore:execute-method name="//E2EService/getTablesInLoad"  synchronous="no" entireResponse="true" >
+			   <LOAD_ID Value ="{$loadID}"/>
+			</xcore:execute-method>
+		</LOAD_TAB>		 
+	</xapl:variable>
+
+	<xapl:set-variable name="loadDtls">	
+		<LOAD_DTLS>
+			<xcore:execute-method name="//E2EService/getLoadDetails"  synchronous="no" entireResponse="true" >
+                   <LOAD_ID Value ="{$loadID}"/>
+			</xcore:execute-method>
+		</LOAD_DTLS>		 
+	</xapl:set-variable>
+
+
+
+
+	<xapl:print>
+		printing this!!! <xapl:value-of select="$this"/>
+	</xapl:print>
+
+    <xapl:variable name="form">
+      <x2:execute command="bcm.framework.queryform.Form:getFormContainer">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="pSearchParam" select="$searchParam"/>
+        <x2:with-param name="pFormName" select="'WORKFLOW_ACTIVITY_FORM'"/>
+        <x2:with-param name="pServiceName" select="'E2EService'"/>
+        <!--x2:with-param name="pSearchFormConfigSource" select="'bcm.framework.e2e.dataLoads.view:getFormConfig'"/-->
+        <x2:with-param name="pSearchReportConfigSource" select="'bcm.framework.e2e.dataLoads.view:getReportConfig'"/>
+        <x2:with-param name="pReportDataSource" select="'bcm.framework.e2e.dataLoads.view:getReportData'"/>
+      </x2:execute>
+    </xapl:variable>
+    
+  <xapl:print>
+    errorgentime!! <xapl:value-of select="$wfStartTime"/>
+  </xapl:print>
+  <xapl:return>
+      <!-- Page Header-->
+      <x2:execute command="bcm.framework.e2e.dataLoads.view:getHeader">
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+      
+      <!-- Container-->
+      <x2:execute command="bcm.framework.e2e.dataLoads.view:getContainer">
+        <x2:with-param name="this" select="{$this}"/>
+        <x2:with-param name="pPage" select="'dataLoads'"/>
+      </x2:execute>
+      
+      <!-- Search / Form and Report -->
+      <xapl:value-of select="$form"/>
+     
+	  <!-- return tables in load -->
+	  <xapl:value-of select="$tablesInLoad"/>
+
+	  <!-- return Load Details-->
+		<xapl:value-of select="$loadDtls"/>
+	  
+    </xapl:return>
+  </x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+    <xapl:return>
+      <x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pPage"/>
+    <xapl:return>
+      <CONTAINER Scrollable="yes">
+        <EXPRESSION_FILTER Value="no"/>
+        <STEP DisplayText="Registered Data Loads" OnClick="{$pages:dataLoads}" Selected="{$pPage = 'dataLoads'}"/>    
+      </CONTAINER>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportConfig">
+	<x2:param name="this"/>
+    <docutil:set select="$this">
+      <MAX_ROWS Value="10"/>
+    </docutil:set>
+	<xapl:variable name="disable" select="'no'"/>
+<xapl:print>
+		printing this!!! 1111111<xapl:value-of select="$this"/>
+	</xapl:print>
+	
+	<xapl:if test="$loadDtls/RESPONSES/RESPONSE/RESPONSE/WORKFLOW_STATUS/STATUS/@Value = 'INCOMPLETE' ">
+	  <xapl:set-variable name="disable" select="'yes'"/>
+	</xapl:if>
+	<xapl:return>
+      <REPORT Title="Last Run Details" Selectable="Single" Action="dataLoad.jsp" Method="POST" Scrollable="no"  ScrollableContainer="yes" Id="#" ShowFilter="no" SelectedId="SELECTED_ID" PagingTitle="yes" NoRecordsTitle="No Records found">
+        <FIELDS>
+          <!--get form's report fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+          <!-- get Hidden Fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportHiddenFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+         </FIELDS>   
+        <BUTTONS>
+	       <BUTTON Id="Cancel" Name="Cancel" DisplayText="Cancel" OnClick="{$pages:controlPanel}"/>
+    
+	       <BUTTON Id="preLoad" Name="preLoad" DisplayText="Prepare Load" OnClick="javascript:prepareDataLoad()" DisableOnClick="true" Emphasized="true"/>
+
+               <BUTTON Id="startLoad" Name="startLoad" DisplayText="Start New Load" OnClick="javascript:startDataLoad()" DisableOnClick="true" Emphasized="true" Disabled="{$disable}"/>
+        </BUTTONS>
+         <PAGINATION/>
+        </REPORT>
+	
+    </xapl:return>
+  </x2:command>
+<!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormConfig">
+    <x2:param name="this" select="$this"/>
+    <xapl:print>
+      Value of this in getFormConfig
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+    <xapl:return>
+      <FORM Name="search_form" Action="dataLoad.jsp" NoOfCols="2" method="POST" Target="appFrame">
+        <!--get all search form fields -->
+        <x2:execute command="bcm.framework.queryform.Form:getFormSearchFields">
+          <x2:with-param name="this" select="$this"/>
+        </x2:execute>
+        <FIELD Name="search_param" Type="Hidden" Value="yes"/>
+       
+        <x2:execute command="bcm.framework.queryform.Form:getFormSearchHiddenFields">
+          <x2:with-param name="this" select="$this"/>
+        </x2:execute>
+        <BUTTONS>
+             <BUTTON Name="search" DisplayText="Search" OnClick="javascript:onSearch()" Emphasized="yes"/>
+        </BUTTONS>
+      </FORM>
+    </xapl:return>
+  </x2:command>
+    <!-- **********************************************************************
+  *********************************************************************** -->
+    <x2:command public="yes" description="_" name="getReportData">
+      <x2:param name="this"/>
+<xapl:print>
+		printing this!!inside getReportData <xapl:value-of select="$this"/>
+	</xapl:print>
+	<xapl:return>
+        <x2:execute command="bcm.framework.queryform.Form:getFormReportData">
+          <x2:with-param name="this" select="$this"/>
+          <x2:with-param name="fromProperty" select="'RESULT_PROPERTY'"/>
+          <x2:with-param name="delimeter" select="'.' "/>
+        </x2:execute>
+      </xapl:return>
+    </x2:command>
+
+
+    <!-- **********************************************************************
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="prepareLoad">
+      <x2:param name="this"/>
+        <xapl:print>starting preLoad Batch file</xapl:print>
+		<xapl:print>checking preLoad loadID value: <xapl:value-of select="$loadID"/></xapl:print>
+		<xapl:print>checking preLoad wfID value: <xapl:value-of select="$wfID"/></xapl:print>
+			<xcore:execute-method name="//E2EService/setPreloadConfig"  synchronous="no" entireResponse="true" >
+				<PRELOAD_PARAMETERS>
+					<LOAD_ID Value="{$loadID}"/>
+				</PRELOAD_PARAMETERS>
+			</xcore:execute-method>
+        <web:display-page>
+            <web:get-page name="dataLoads">
+				<DO_SEARCH Value="Yes"/>
+                <xapl:value-of select="$this/*"/>
+				<SUCCESS_MESSAGE Value="Prepare Data Load Workflow has been started"/>
+             </web:get-page>
+        </web:display-page>      
+    </x2:command>
+
+	    <!-- **********************************************************************
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="startDataLoadWf">
+      <x2:param name="this"/>
+        <xapl:print>starting Start Data Load Batch file</xapl:print>
+		<xapl:print>checking startLoad loadID value: <xapl:value-of select="$loadID"/></xapl:print>
+		<xapl:print>checking startLoad wfID value: <xapl:value-of select="$wfID"/></xapl:print>
+		<xcore:execute-method name="//E2EService/raiseE2EWfSync"  synchronous="no" entireResponse="true" >
+			<TYPE Value="LOAD"/>
+		</xcore:execute-method>
+
+        <web:display-page>
+            <web:get-page name="dataLoads">
+				<DO_SEARCH Value="Yes"/>
+                <xapl:value-of select="$this/*"/>			
+				<xapl:value-of select="$loadID"/>
+				<xapl:value-of select="$wfID"/>
+                <SUCCESS_MESSAGE Value="Start Data Load Workflow has been started"/>
+             </web:get-page>
+        </web:display-page>      
+    </x2:command>
+
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+
+  <x2:command public="yes" description="_" name="loadDetails">
+      <web:display-page>
+        <web:get-page name="dataLoads">
+          <DO_SEARCH Value="Yes"/>
+		  <xapl:value-of select="$this/*"/>
+        </web:get-page>
+      </web:display-page>
+  </x2:command>
+
+
+</x2:commands>

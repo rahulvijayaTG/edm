@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+    
+    <xapl:return>
+		
+	  <xapl:value-of select="$this/SUCCESS_MESSAGE"/>
+	  <xapl:value-of select="$this/ERROR_MESSAGE"/>
+	  
+      <!-- Note Details -->
+	  <xapl:variable name="note">
+        <x2:execute command="omx.user_admin.notes_library.edit.view:getNoteDetails">
+	      <x2:with-param name="this" select="{$this}"/>
+	    </x2:execute>
+      </xapl:variable>
+
+      <!-- Header -->
+      <x2:execute command="omx.user_admin.notes_library.edit.view:getHeader"/>
+      
+      <!-- Tabs -->
+      <x2:execute command="omx.user_admin.notes_library.edit.view:getContainer">
+        <x2:with-param name="pID" select="{$note/NOTE_LIBRARY/ID/@Value}"/>
+        <x2:with-param name="pEditable" select="{$note/IS_EDITABLE/@Value}"/>
+      </x2:execute>
+
+      <!-- Note Details -->
+	  <xapl:value-of select="$note/*"/>
+	  
+	  <!-- Note Types -->
+      <xcore:get-document name="//UserSecurity/CODE_MASTER_VALUE">
+        <STATUS Value="ACTIVE"/>
+        <TYPE_ID Value="NOTE_TYPE"/>                     
+      </xcore:get-document>
+
+    </xapl:return>
+    
+  </x2:command>  
+	
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+    
+      <xapl:return>
+        <x2:execute command="omx.index:getHeader">
+	  	  <x2:with-param name="pHeading" select="'Notes Library'"/>
+        </x2:execute>
+      </xapl:return> 
+
+  </x2:command>
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pID"/>
+    <x2:param name="pEditable"/>
+	
+    <xapl:variable name="helpUrl">
+      <web:get-page name="notes_library_help"/>
+    </xapl:variable>
+	
+    <xapl:return>
+      
+      <!-- TODO: why not scrolling? -->
+      <CONTAINER Id="container">
+        <HELP Url="{$helpUrl}"/>
+        
+        <STEP
+             DisplayText="Note Details" 
+             OnClick="{$pages:notes_library_datail}" 
+             Selected="true"/>
+
+		<BUTTONS>
+
+		  <BUTTON 
+		            Name="Back" 
+			          DisplayText="Back"
+			          OnClick="javascript:onBack();"/>
+
+		  <DIVIDER/>
+		  
+		  <xapl:choose>
+		    <!-- if pID = 0, adding new note -->
+		    <xapl:when test="string-length($pID) = 0">
+
+		      <BUTTON 
+		            Name="Add" 
+			        DisplayText="Save"
+			        OnClick="javascript:onAdd();"/>
+
+			</xapl:when>
+
+			<xapl:otherwise>
+
+			  <!-- if editable, show update button -->
+			  <xapl:if test="$pEditable">
+		          
+				<BUTTON 
+		              Name="Update" 
+			          DisplayText="Update"
+			          OnClick="javascript:onUpdate();"/>
+					  
+			  </xapl:if>
+			  
+		      <BUTTON 
+		            Name="Delete" 
+			        DisplayText="Delete"
+			        OnClick="javascript:onDelete();"/>
+					
+			</xapl:otherwise>
+		  </xapl:choose>
+
+        </BUTTONS>   
+
+      </CONTAINER>
+      
+    </xapl:return>
+    
+  </x2:command>
+
+   <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getNoteDetails">
+    <x2:param name="this"/>
+	
+    <xapl:return>
+      <ROOT>
+	  <xapl:choose>
+		
+		<!-- if refresh, use the form's values -->
+		<xapl:when test="{$this/REFRESH/@Value = 'true'}">
+          <NOTE_LIBRARY>
+            <xapl:value-of select="{$this/ID}"/>
+            <xapl:value-of select="{$this/DESCRIPTION}"/>
+            <xapl:value-of select="{$this/NOTE_CODE}"/>
+            <xapl:value-of select="{$this/IS_EDITABLE}"/>
+            <NOTE_TYPE Value="{$this/TYPE_ID/@Value}"/>
+          </NOTE_LIBRARY>
+          <IS_EDITABLE Value="true"/>
+        </xapl:when>
+		
+		<!-- if not refresh -->
+		<xapl:otherwise>
+		  <xapl:choose>
+		  
+		    <!-- if id = '', add new -->
+		    <xapl:when test="string-length($this/ID/@Value) = 0">
+		      <NOTE_LIBRARY/>
+              <IS_EDITABLE Value="true"/>
+		    </xapl:when>
+        
+		    <!-- otherwise, get note -->
+		    <xapl:otherwise>
+		      <xapl:variable name="result">
+                <xcore:execute-method name="//UserSecurity/getNote" entireResponse="false">
+                  <xapl:value-of select="$this/ID"/>
+                </xcore:execute-method>
+		      </xapl:variable>
+		      <xapl:value-of select="$result"/>
+              <xapl:value-of select="$result/IS_EDITABLE"/>
+		    </xapl:otherwise>
+			
+		  </xapl:choose>
+		</xapl:otherwise>
+		
+	  </xapl:choose>
+	  </ROOT>
+    </xapl:return>
+  </x2:command>
+
+   <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="i18n">
+  </x2:command>
+
+</x2:commands>
+
+

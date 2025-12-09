@@ -1,0 +1,20 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="Collect Profile">
+<ui:container id="top_container" scrollable="true">
+  <ui:step id="top_step" scrollable="true" displayText="Collect Profile">
+    <ui:field-group columns="2" showDivider="true" select="$root">
+      <ui:field-group>
+        <ui:display-field displayText="Service Name" name="SERVICE_NAME"/>
+        <ui:dropdown name="ID" id="ID" selectAll="false" displayText="Choose Template" optionSrc="$root/TEMPLATES/*" sort="ascending"/>
+      </ui:field-group>
+      <ui:field-group>
+        <ui:display-field displayText="Entity" name="ENTITY_NAME"/>
+        <ui:entry-field displayText="Profile Name" size="64" name="PROFILE_NAME"/>
+      </ui:field-group>
+    </ui:field-group>
+    <ui:buttons id="profileButtons">
+      <ui:button displayText="Back" validate="false" id="back"/>
+      <ui:button displayText="Collect Profile" validate="false" id="collect"/>
+    </ui:buttons>
+  </ui:step>
+</ui:container>
+</ui:page-group>

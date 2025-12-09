@@ -1,0 +1,44 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="Search Data Profiles" version="2">
+  <ui:container id="container">
+    <ui:step id="top_container" displayText="Search Data Profiles" select="$root">
+      <ui:container displayText="Search" collapsable="true">
+        <ui:step id="astep" displayText="Search" scrollable="true">
+          <ui:hidden-field name="SAVED_SEARCH_NAME" value="{$this/SAVED_SEARCH_NAME/@Value}" />
+          <ui:hidden-field name="SAVED_SEARCH_ID" value="{$this/SAVED_SEARCH_ID/@Value}" />
+          <ui:field-group columns="2">
+            <ui:dropdown name="SERVICE" id="SERVICE" selectAll="false" displayText="Service Name" optionSrc="$root/SERVICES/*" sort="ascending" onChange="javascript:changeService();" dataType="Constant" />
+            <ui:dropdown name="DOCUMENT" id="DOCUMENT" selectAll="false" displayText="Entity" optionSrc="$root/DOCUMENTS/*" sort="ascending" dataType="Constant" />
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="search_button" name="search_button" displayText="Search" emphasized="true" />
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="bottomTable" displayText="Data Profiles" selectedId="ID" rowId="ID" postRowIdAs="ID" rowSrc="$root/DATA_PROFILES/*" selectable="Single" doPaging="true" maxRows="10" displayTextNoRecords="" totalRowCount="$root/DATA_PROFILES/@TotalRowCount" startAtRow="$this/START_COUNT/@Value">
+        <ui:help id="bottomTableHelp" />
+        <ui:field-group id="tableColumns">
+          <ui:link-field name="TEMPLATE_NAME" id="TEMPLATE_NAME" displayText="Template Name" style="{{font:bold}">
+            <ui:url page="view.x2ps">
+              <ID select="TEMPLATE_ID/@Value" />
+              <BUTTON_ID select="'template_details'" />
+            </ui:url>
+          </ui:link-field>
+          <ui:display-field displayText="Profile Name" name="DATA_PROFILE_NAME"/>
+          <ui:display-field displayText="Last Profiled On" name="CREATTION_DATE" />
+          <ui:display-field displayText="Status" name="STATUS" />
+          <ui:display-field displayText="Created By" name="CREATED_BY" />
+        </ui:field-group>
+        <ui:buttons id="searchButtons">
+          <ui:button displayText="Collect Profile" validate="false" id="collect" />
+          <ui:button displayText="View Profile" validate="false" id="view" enabledBySelections="true"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>function changeService()
+    {
+      form.BUTTON_ID.value = "change_service";
+      form.submit();
+    }</ui:script>
+</ui:page-group>
+

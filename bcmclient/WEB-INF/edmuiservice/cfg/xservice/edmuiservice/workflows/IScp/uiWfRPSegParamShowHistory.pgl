@@ -1,0 +1,70 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="SearchContainer" displayText="RP Segment Parameter History">
+    <ui:step id="searchStep">
+      <ui:search id="srchSegParams" exportSearch="false" saveSearch="false" collapsable="true" displayText="Search">
+        <ui:field-group columns="2" id="fieldGroups">
+          <ui:field-group id="leftFields">
+            <!--            <ui:entry-field displayText="Segment" id="SRCH_SEGMENT" name="SRCH_SEGMENT">
+              <ui:links>
+                <ui:link displayText="Select Segments" targetType="popup" targetName="orderPopup">
+                  <ui:image src="pop_up_window.gif"/>
+                  <ui:url page="view.x2ps">
+                    <FIELD_NAME select="'SRCH_SEGMENT'"/>
+                    <ENTITY_NAME select="'SRCH_SEGMENT'"/>
+                    <SELECTABLE select="'All'"/>
+                    <BUTTON_ID select="'selectSegment'"/>
+                  </ui:url>
+                </ui:link>
+              </ui:links>
+            </ui:entry-field>
+-->
+            <ui:dropdown name="LIST_BOX" size="0" displayText="Segment " selectAll="true" select="Single">
+              <ui:option id="option1" value="480003800, Quaker Oats Foods" />
+              <ui:option id="option2" value="480004800, Gatorade" />
+              <ui:option id="option3" value="480005800, Tropicana" />
+              <ui:option id="option4" value="480006800, Quaker Oats Foods" />
+              <ui:option id="option5" value="480007800, Gatorade" />
+              <ui:option id="option6" value="480008800, Tropicana" />
+            </ui:dropdown>
+            <ui:entry-field id="modifiedBy" name="modifiedBy" displayText="Modified By" required="false" />
+            <!--            <ui:display-field id="modDateRange" name="modDateRange" displayText="Modified Date Range (Inclusive)"/>-->
+          </ui:field-group>
+          <ui:field-group id="rightFields">
+            <ui:entry-field displayText="Parameter" id="SRCH_PARAM" name="SRCH_PARAM">
+              <ui:links>
+                <ui:link displayText="Select Parameters" targetType="popup" targetName="orderPopup">
+                  <ui:image src="pop_up_window.gif" />
+                  <ui:url page="view.x2ps">
+                    <FIELD_NAME select="'SRCH_PARAM'" />
+                    <ENTITY_NAME select="'SRCH_PARAM'" />
+                    <SELECTABLE select="'All'" />
+                    <BUTTON_ID select="'selectParameter'" />
+                  </ui:url>
+                </ui:link>
+              </ui:links>
+            </ui:entry-field>
+          </ui:field-group>
+        </ui:field-group>
+        <ui:field-group id="dateRange">
+          <ui:date-range displayText="Modified Date" name="SRCH_MOD_DATE" fromDate="{$root/FROM_DATE/@Value}" toDate="{$root/TO_DATE/@Value}" />
+        </ui:field-group>
+      </ui:search>
+      <ui:table id="bottomTable" displayText="RP Segment Parameters" select="$root/line" rowSrc="ROW_DATA" rowId="segNumber" exportable="true" configurable="true">
+        <ui:field-group id="tableColumns">
+          <ui:display-field displayText="Segment" name="segNumber" id="segNumber" sortable="true" visibility="true" />
+          <ui:display-field displayText="Segment Description" id="segDescription" name="segDescription" sortable="true" />
+          <ui:display-field displayText="Parameter Name" name="paramName" id="paramName" sortable="true" />
+          <ui:display-field displayText="Parameter Value" name="paramValue" id="paramValue" />
+          <ui:display-field displayText="Parameter UOM" name="paramUOM" id="paramUOM" />
+          <ui:display-field displayText="Comment" name="userComment" id="userComment" />
+          <ui:display-field displayText="Modified Date" name="modDate" id="modDate" sortable="true" />
+          <ui:display-field displayText="Modified By" name="modBy" id="modBy" />
+        </ui:field-group>
+        <ui:buttons id="tableButtons">
+          <ui:button displayText="Return" id="return" name="return" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

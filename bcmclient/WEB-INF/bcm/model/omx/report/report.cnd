@@ -1,0 +1,527 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" description="_">
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+	<x2:command public="yes" description="-" name="getGeneratedReport">
+		<xapl:param name="pReportFormat"/>
+		<xapl:param name="pReportData"/>
+		<xapl:param name="this"/>
+		<!-- Handle Errors - Start::-->
+		<!-- Assumes that _ERROR tag indicates error -->
+		<xapl:if test="count($pReportData/_ERROR) > 0">
+			<xapl:return>
+				<REPORT>
+					<xapl:value-of select="$pReportData/_ERROR"/>
+				</REPORT>
+			</xapl:return>
+		</xapl:if>
+		<!-- Handle Errors - End.-->
+		<xapl:return>
+			<!-- Give default scroll -->
+			<xapl:variable name="scrollable">
+				<xapl:choose>
+					<xapl:when test="string-length($pReportFormat/@Scrollable) > 0">
+						<xapl:value-of select="$pReportFormat/@Scrollable"/>
+					</xapl:when>
+					<xapl:otherwise>no</xapl:otherwise>
+				</xapl:choose>
+			</xapl:variable>
+			<!-- Give default scroll -->
+			<xapl:variable name="totalRecordCount">
+				<xapl:choose>
+					<xapl:when test="string-length($pReportData/@TotalRowCount) > 0">
+						<xapl:value-of select="$pReportData/@TotalRowCount"/>
+					</xapl:when>
+					<xapl:otherwise>
+						<xapl:value-of select="$pReportData/TOTAL_RECORD_COUNT/@Value"/>
+					</xapl:otherwise>
+				</xapl:choose>
+			</xapl:variable>
+			<REPORT TotalRecordCount="{$totalRecordCount}" StartAtRow="{$this/START_COUNT/@Value}" MaxRows="{$this/MAX_ROWS/@Value}" NoOfRows="{count($pReportData/*)}" NoOfColumns="{count($pReportFormat/FIELDS/FIELD)}">
+				<TABLE Title="{$pReportFormat/@Title}" DoSearch="{$this/DO_SEARCH/@Value}" NoRecordsTitle="{$pReportFormat/@NoRecordsTitle}" Scrollable="{$scrollable}" PagingTitle="{$pReportFormat/@PagingTitle}" NoTitle="{$pReportFormat/@NoTitle}">
+					<!-- Help -->
+					<xapl:if test="string-length($pReportFormat/HELP/@Url) > 0">
+						<HELP Url="{$pReportFormat/HELP/@Url}"/>
+					</xapl:if>
+					<!-- Header Row-->
+					<TR Header="yes">
+						<!-- Select All -->
+						<xapl:if test="$pReportFormat/@Selectable = 'All'">
+							<TD Name="SELECT_ALL" Type="CheckBox"/>
+						</xapl:if>
+						<xapl:if test="$pReportFormat/@Selectable = 'Single'">
+							<TD/>
+						</xapl:if>
+						<!-- Header Columns -->
+						<xapl:for-each varName="col" select="$pReportFormat/FIELDS/FIELD">
+							<!-- Value -->
+							<xapl:variable name="value">
+								<xapl:choose>
+									<xapl:when test="$col/@Type = 'Hidden'">
+										<xapl:value-of select="$col/@Value"/>
+									</xapl:when>
+									<xapl:otherwise>
+										<xapl:value-of select="$col/@DisplayText"/>
+									</xapl:otherwise>
+								</xapl:choose>
+							</xapl:variable>
+							<TD Name="{$col/@Name}" Value="{$value}" Sortable="{$col/@Sortable}" Type="{$col/@Type}"/>
+						</xapl:for-each>
+					</TR>
+					<!-- Result Rows -->
+					<!-- Give default id - Used for check box (Value)-->
+					<xapl:variable name="idName">
+						<xapl:choose>
+							<xapl:when test="string-length($pReportFormat/@Id) > 0">
+								<xapl:value-of select="$pReportFormat/@Id"/>
+							</xapl:when>
+							<xapl:otherwise>ID</xapl:otherwise>
+						</xapl:choose>
+					</xapl:variable>
+					<xapl:variable name="selectedIdName1">
+						<xapl:choose>
+							<xapl:when test="string-length($pReportFormat/@SelectedId) > 0">
+								<xapl:value-of select="$pReportFormat/@SelectedId"/>
+							</xapl:when>
+							<xapl:otherwise>ID</xapl:otherwise>
+						</xapl:choose>
+					</xapl:variable>
+					<xapl:variable name="count" select="0"/>
+					<xapl:for-each varName="row" select="$pReportData/*[name() != 'TOTAL_RECORD_COUNT' and name() != 'START_AT_ROW']">
+						<TR>
+							<xapl:set-variable name="count" select="$count + 1"/>
+							<!-- Select Box -->
+							<!-- MultiSelect -->
+							<xapl:variable name="rowId">
+								<xapl:value-of select="$row/*[name() = $idName]/@Value"/>
+							</xapl:variable>
+							<xapl:variable name="checked">
+								<xapl:choose>
+									<xapl:when test="count($this/*[name()= $selectedIdName1 and ./@Value = $rowId] ) > 0">true</xapl:when>
+									<xapl:otherwise>false</xapl:otherwise>
+								</xapl:choose>
+							</xapl:variable>
+							<xapl:variable name="quote">'</xapl:variable>
+							<xapl:variable name="onSelectRow">
+								<xapl:value-of select="concat('javascript:onSelectRow(', $quote, $row/*[name() = $idName]/@Value,$quote, ');')"/>
+							</xapl:variable>
+							<xapl:if test="$pReportFormat/@Selectable = 'All'">
+								<TD Name="{$selectedIdName1}" Type="CheckBox" Value="{$row/*[name() = $idName]/@Value}" Checked="{$checked}" OnClick="{$onSelectRow}"/>
+							</xapl:if>
+							<!-- Single Select in 1 Row - Checked-->
+							<xapl:if test="$pReportFormat/@Selectable = 'Single' and $count='1'">
+								<TD Name="{$selectedIdName1}" Type="Radio" Value="{$row/*[name() = $idName]/@Value}" Checked=" "/>
+							</xapl:if>
+							<!-- Single Select not in 1 Row - unChecked-->
+							<xapl:if test="$pReportFormat/@Selectable = 'Single' and $count !='1'">
+								<TD Name="{$selectedIdName1}" Type="Radio" Value="{$row/*[name() = $idName]/@Value}"/>
+							</xapl:if>
+							<!-- Result Columns -->
+							<xapl:for-each varName="col" select="$pReportFormat/FIELDS/FIELD">
+								<!-- Default - Start:: -->
+								<!-- type -->
+								<xapl:variable name="type">
+									<xapl:choose>
+										<xapl:when test="string-length($col/@DisplayType) > 0">
+											<xapl:value-of select="$col/@DisplayType"/>
+										</xapl:when>
+										<xapl:when test="$col/@Type = 'Hidden'">None</xapl:when>
+										<xapl:when test="string-length($col/@Type) >0">
+											<xapl:value-of select="$col/@Type"/>
+										</xapl:when>
+										<xapl:otherwise>Text</xapl:otherwise>
+									</xapl:choose>
+								</xapl:variable>
+								<!-- format -->
+								<xapl:variable name="format">
+									<xapl:choose>
+										<xapl:when test="string-length($col/@Format) > 0">
+											<xapl:value-of select="$col/@Format"/>
+										</xapl:when>
+										<xapl:otherwise/>
+									</xapl:choose>
+								</xapl:variable>
+              <!-- decimals -->
+								<xapl:variable name="decimals">
+									<xapl:choose>
+										<xapl:when test="string-length($col/@Decimals) > 0">
+											<xapl:value-of select="$col/@Decimals"/>
+										</xapl:when>
+										<xapl:otherwise/>
+									</xapl:choose>
+								</xapl:variable>
+
+                
+								<!-- Value -->
+								<xapl:variable name="value">
+									<xapl:choose>
+										<!-- If Datasource Is Document Link -->
+										<xapl:when test="$col/@DataSourceType = 'Link'">
+											<xapl:value-of select="{$row/*/*[name() = $col/@DataSourceName][1]/*[name() = $col/@Name][1]/@Value}"/>
+										</xapl:when>
+										<!-- If Datasource is Self  -->
+										<xapl:otherwise>
+											<xapl:value-of select="{$row/*[name() = $col/@Name]/@Value}"/>
+										</xapl:otherwise>
+									</xapl:choose>
+								</xapl:variable>
+								<!-- Options if Select -->
+								<xapl:variable name="options">
+									<xapl:choose>
+										<xapl:when test="$col/@DataSourceType = 'Command'">
+											<x2:execute command="{$col/@DataSourceName}"/>
+										</xapl:when>
+										<xapl:when test="$col/@DataSourceType = 'Method'">
+											<xcore:execute-method name="{$col/@DataSourceName}"/>
+										</xapl:when>
+									</xapl:choose>
+								</xapl:variable>
+								<!-- Default - End. -->
+								<!-- Put the TD -->
+								<TD OnClick="{$col/@OnClick}" Url="{$col/@Url}" UrlParamName="{$col/@UrlParamName}" UrlParam="{$col/@UrlParam}" Type="{$type}" Format="{$format}" Decimals="{$decimals}" Name="{$col/@Name}" Value="{$value}" NoWrap="{$col/@DisplayNoWrap}" Editable="{$col/@Editable}" SelectAll="{$col/@SelectAll}">
+									<!-- Generate Options -->
+									<xapl:for-each varName="option" select="{$options/*}">
+										<OPTION Id="{$option/VALUE_ID/@Value}" Value="{$option/DESCRIPTION/@Value}"/>
+									</xapl:for-each>
+								</TD>
+							</xapl:for-each>
+						</TR>
+					</xapl:for-each>
+					<xapl:if test="count($this/*[name() = $selectedIdName1]) > 0">
+						<TR Type="Hidden">
+							<!-- Hide Previously selected Fields -->
+							<!-- For each selected id -->
+							<xapl:for-each select="$this/*[name() = $selectedIdName1]/@Value" varName="id">
+								<!-- if it is not in this report -->
+								<xapl:if test="count($pReportData/*/*[name() = $idName and @Value = $id]) = 0">
+									<TD Name="{$selectedIdName1}" Type="Hidden" Value="{$id}"/>
+								</xapl:if>
+							</xapl:for-each>
+						</TR>
+					</xapl:if>
+					<xapl:value-of select="$pReportFormat/BUTTONS"/>
+					<xapl:value-of select="$pReportFormat/PAGINATION"/>
+				</TABLE>
+			</REPORT>
+		</xapl:return>
+	</x2:command>
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getGeneratedReportInCSVFormat">
+		<x2:param name="pReportFormat"/>
+		<x2:param name="pReportData"/>
+		<!-- Table -->
+		<xapl:variable name="csvTable">
+			<RESULT Value=""/>
+		</xapl:variable>
+		<!-- Table Header -->
+		<xapl:variable name="tableHeader">
+			<RESULT Value=""/>
+		</xapl:variable>
+		<xapl:for-each varName="col" select="$pReportFormat/FIELDS/FIELD[string-length(@Type) = 0 or @Type !='Hidden']">
+			<!-- Get i18n col header -->
+			<xapl:variable name="colHeader">
+				<i18n:text>
+					<xapl:value-of select="$col/@DisplayText"/>
+				</i18n:text>
+			</xapl:variable>
+			<!-- Add col header  to table header -->
+			<docutil:set select="$tableHeader/@Value">
+				<xapl:value-of select="concat($tableHeader/@Value, $colHeader , ',')"/>
+			</docutil:set>
+		</xapl:for-each>
+		<!-- Add table Header to table -->
+		<docutil:set select="$csvTable/@Value">
+			<xapl:value-of select="concat($csvTable/@Value, $tableHeader/@Value , '&#10;')"/>
+		</docutil:set>
+		<xapl:variable name="tableRow">
+			<RESULT Value=""/>
+		</xapl:variable>
+		<xapl:for-each varName="row" select="$pReportData/*[name() != 'TOTAL_RECORD_COUNT' and name() != 'START_AT_ROW']">
+			<!-- Table Row -->
+			<docutil:remove select="$tableRow/@Value"/>
+			<xapl:for-each varName="col" select="$pReportFormat/FIELDS/FIELD[(string-length(@Type) = 0 ) or @Type != 'Hidden']">
+				<!-- Give default type -->
+				<xapl:variable name="type">
+					<xapl:choose>
+						<xapl:when test="string-length($col/@DisplayType) > 0">
+							<xapl:value-of select="$col/@DisplayType"/>
+						</xapl:when>
+						<xapl:when test="$col/@Type = 'Hidden'">None</xapl:when>
+						<xapl:otherwise>Text</xapl:otherwise>
+					</xapl:choose>
+				</xapl:variable>
+				<!-- TODO-  I18n: on cell data -->
+				<!-- get i18n cell Data -->
+				<xapl:variable name="cellData">
+					<xapl:choose>
+						<!-- If Datasource Is Document Link -->
+						<xapl:when test="$col/@DataSourceType = 'Link'">
+							<xapl:value-of select="$row/*/*[name() = $col/@DataSourceName]/*[name() = $col/@Name]/@Value"/>
+						</xapl:when>
+						<!-- If Datasource is Self  -->
+						<xapl:otherwise>
+							<xapl:value-of select="$row/*[name() = $col/@Name]/@Value"/>
+						</xapl:otherwise>
+					</xapl:choose>
+				</xapl:variable>
+				<xapl:variable name="cellData_i18n">
+					<x2:execute command="omx.report.report:i18nize">
+						<x2:with-param name="pData" select="$cellData"/>
+						<x2:with-param name="pType" select="$col"/>
+					</x2:execute>
+				</xapl:variable>
+				<!-- Add the cell to the Row -->
+				<docutil:set select="$tableRow/@Value">
+					<xapl:value-of select="concat($tableRow/@Value, $cellData_i18n, ',')"/>
+				</docutil:set>
+			</xapl:for-each>
+			<!-- Column -->
+			<!-- Add the row to table -->
+			<docutil:set select="$csvTable/@Value">
+				<xapl:value-of select="concat($csvTable/@Value, $tableRow/@Value, '&#10;')"/>
+			</docutil:set>
+		</xapl:for-each>
+		<!-- Row -->
+		<xapl:print> csv <xapl:value-of select="{$csvTable}"/>
+		</xapl:print>
+		<xapl:return>
+			<xapl:value-of select="$csvTable/@Value"/>
+		</xapl:return>
+	</x2:command>
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getFilledForm">
+		<x2:param name="pForm"/>
+		<!-- TODO: Dont fill advanced if in simple mode -->
+		<xapl:for-each varName="field" select="$pForm/FIELD">
+			<!-- If the field is not filled -->
+			<!--         <xapl:if test="(string-length($field/@Value) = 0 and string-length($field/@Value1) = 0 and string-length($field/@Value2) = 0)">
+      -->
+			<xapl:choose>
+				<!-- Date -->
+				<xapl:when test="$field/@Type = 'DateRange'">
+					<!-- Start -->
+					<docutil:set select="$fieldName">
+						<xapl:value-of select="concat(@Name,'_FIRST')"/>
+					</docutil:set>
+					<!--                <docutil:attribute name="Value1" select="$this/*[name() = $fieldname]/@Value"/>                 -->
+					<!-- End -->
+					<docutil:set select="$fieldName">
+						<xapl:value-of select="concat(@Name,'_LAST')"/>
+					</docutil:set>
+					<!--                <docutil:attribute name="Value2" select="$this/*[name() = $fieldname]/@Value"/>                 -->
+				</xapl:when>
+				<!-- Select -->
+				<xapl:when test="$field/@Type = 'Select' or $field/@Type = 'MultiSelect' ">
+					<!-- Value -->
+					<!--               <docutil:attribute name="Value" select="$this/*[name() = @Name]/@Value"/>                 -->
+					<!-- If data source is a command or method-->
+					<!-- 
+          -->
+					<xapl:if test="$field/@DataSourceType = 'Command' or $field/@DataSourceType = 'Method'">
+						<!--               <xapl:print> inside the datasource <xapl:value-of select="{$this}"/> </xapl:print> -->
+						<!-- Get Data -->
+						<xapl:variable name="data">
+							<xapl:choose>
+								<xapl:when test="$field/@DataSourceType = 'Command'">
+									<x2:execute command="{$field/@DataSourceName}"/>
+								</xapl:when>
+								<xapl:when test="$field/@DataSourceType = 'Method'">
+									<xcore:execute-method name="{$field/@DataSourceName}"/>
+								</xapl:when>
+							</xapl:choose>
+						</xapl:variable>
+						<!--                 <xapl:print> data this <xapl:value-of select="{$data}"/> </xapl:print> -->
+						<!-- Generate Options -->
+						<xapl:for-each varName="row" select="{$data/*}">
+							<docutil:add select="$field">
+								<OPTION Id="{$row/VALUE_ID/@Value}" Value="{$row/DESCRIPTION/@Value}"/>
+							</docutil:add>
+						</xapl:for-each>
+					</xapl:if>
+				</xapl:when>
+				<!-- Text, Currency etc. -->
+				<xapl:otherwise>
+					<!--                <docutil:attribute name="Value" select="$this/*[name() = @Name]/@Value"/> -->
+				</xapl:otherwise>
+			</xapl:choose>
+			<!--         </xapl:if>
+      -->
+		</xapl:for-each>
+		<!--       <xapl:print> pForm after filling  <xapl:value-of select="{$pForm}"/> </xapl:print>
+    -->
+		<xapl:return>
+			<xapl:value-of select="$pForm"/>
+		</xapl:return>
+	</x2:command>
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getHiddenFields">
+		<xapl:return>
+			<FIELD Type="Hidden" Name="DIRECTORY" Value="{$this/DIRECTORY[position() = 1]/@Value}"/>
+			<FIELD Type="Hidden" Name="FILE" Value="{$this/FILE[position() = 1]/@Value}"/>
+			<FIELD Type="Hidden" Name="PAGE" Value="{$this/PAGE[position() = 1]/@Value}"/>
+			<FIELD Name="SORT_BY" Type="Hidden" Value="{$this/SORT_BY[position() = 1]/@Value}"/>
+			<!-- DOC_TYPE will go -->
+			<FIELD Name="DOC_TYPE" Type="Hidden" Value="{$this/DOC_TYPE[position() = 1]/@Value}"/>
+			<FIELD Name="OBJECT_TYPE" Type="Hidden" Value="{$this/OBJECT_TYPE[position() = 1]/@Value}"/>
+			<FIELD Type="Hidden" Name="JSCRIPT" Value="{$this/JSCRIPT[position() = 1]/@Value}" Visibility="Simple"/>
+			<FIELD Type="Hidden" Name="SHOW_HEADER" Value="{$this/SHOW_HEADER[position() = 1]/@Value}" Visibility="Simple"/>
+			<FIELD Name="SORT_ORDER" Type="Hidden" Value="{$this/SORT_ORDER[position() = 1]/@Value}"/>
+			<FIELD Type="Hidden" Name="RET_PAGE" Value="{$this/RET_PAGE[position() = 1]/@Value}" Visibility="Simple"/>
+			<FIELD Type="Hidden" Name="DO_SEARCH" Value="{$this/DO_SEARCH/@Value}" Visibility="Simple"/>
+			<FIELD Type="Hidden" Name="START_COUNT" Value="{$this/START_COUNT/@Value}" Visibility="Simple"/>
+		</xapl:return>
+	</x2:command>
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getHiddenFields_saveReport">
+		<xapl:return/>
+	</x2:command>
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="saveReport">
+		<x2:param name="directory" select="$this/DIRECTORY/@Value"/>
+		<x2:param name="file" select="$this/FILE/@Value"/>
+		<x2:param name="pFormat" select="'csv'"/>
+		<xapl:variable name="getSearchFormConfig">
+			<xapl:value-of select="concat($directory,'.', $file,':getSearchFormConfig')"/>
+		</xapl:variable>
+		<xapl:variable name="getSearchReportConfig">
+			<xapl:value-of select="concat($directory,'.', $file,':getSearchReportConfig')"/>
+		</xapl:variable>
+		<xapl:variable name="getReportData">
+			<xapl:value-of select="concat($directory,'.', $file,':getReportData')"/>
+		</xapl:variable>
+		<xapl:variable name="fileName" select="concat($file, '.', $pFormat)"/>
+		<!-- Get Form Config-->
+		<xapl:variable name="form">
+			<x2:execute command="{$getSearchFormConfig}">
+				<x2:with-param name="this" select="{$this}"/>
+			</x2:execute>
+		</xapl:variable>
+		<!-- Get Report Config -->
+		<xapl:variable name="reportFormat">
+			<x2:execute command="{$getSearchReportConfig}">
+				<x2:with-param name="this" select="{$this}"/>
+			</x2:execute>
+		</xapl:variable>
+		<!-- Get Report Data -->
+		<docutil:set select="$this/DO_SEARCH/@Value">No</docutil:set>
+    
+    <docutil:set select="$form/FIELD[@Name = 'DO_SEARCH']/@Value">No</docutil:set>
+    
+		<xapl:variable name="reportData">
+			<x2:execute command="{$getReportData}">
+				<x2:with-param name="pIds">
+					<IDS>
+						<xapl:choose>
+							<xapl:when test="count($reportFormat/@SelectedId) != 0">
+								<xapl:for-each select="$this/*[name() = $reportFormat/@SelectedId]" varName="selectedId">
+									<ID Value="{$selectedId/@Value}"/>						
+								</xapl:for-each>
+							</xapl:when>
+							<xapl:otherwise>
+								<xapl:value-of select="{$this/ID}"/>
+							</xapl:otherwise>
+						</xapl:choose>
+					</IDS>
+				</x2:with-param>
+				<x2:with-param name="pForm" select="$form"/>
+				<x2:with-param name="this" select="$this"/>
+			</x2:execute>
+		</xapl:variable>
+		<!-- get Actual Report-->
+		<xapl:variable name="report">
+			<xapl:choose>
+				<xapl:when test="$pFormat = 'csv'">
+					<x2:execute command="omx.report.report:getGeneratedReportInCSVFormat">
+						<x2:with-param name="pReportData" select="$reportData"/>
+						<x2:with-param name="pReportFormat" select="$reportFormat"/>
+					</x2:execute>
+				</xapl:when>
+				<xapl:when test="$pFormat = 'xml'">
+					<xapl:value-of select="$reportData"/>
+				</xapl:when>
+			</xapl:choose>
+		</xapl:variable>
+		<!-- downloadFile-->
+		<x2:execute command="omx.common:downloadFile">
+			<x2:with-param name="pFileContents" select="$report"/>
+			<x2:with-param name="pFileName" select="$fileName"/>
+			<x2:with-param name="pFileType" select="'text'"/>
+		</x2:execute>
+	</x2:command>
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="downloadDocument">
+		<x2:param name="pFile" select="$this/FILE/@Value"/>
+		<x2:param name="pDataSourceName" select="$this/DATA_SOURCE_NAME/@Value"/>
+		<x2:param name="pDataRootName" select="concat($this/OBJECT_TYPE/@Value, 'S')"/>
+		<x2:param name="pIdFilterName" select="$this/ID_FILTER_NAME/@Value"/>
+		<xapl:variable name="fileName" select="concat($pFile, '.', 'xml')"/>
+		<!-- Get the data -->
+		<xapl:variable name="data">
+			<docutil:element name="{$pDataRootName}">
+				<xapl:for-each varName="id" select="{$this/ID}">
+					<xcore:execute-method name="{$pDataSourceName}">
+						<docutil:element name="{$pIdFilterName}" Value="{$id/@Value}"/>
+					</xcore:execute-method>
+				</xapl:for-each>
+			</docutil:element>
+		</xapl:variable>
+		<!-- downloadFile-->
+		<x2:execute command="omx.common:downloadFile">
+			<x2:with-param name="pFileContents" select="$data"/>
+			<x2:with-param name="pFileName" select="$fileName"/>
+			<x2:with-param name="pFileType" select="'xml'"/>
+		</x2:execute>
+	</x2:command>
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="i18nize">
+		<x2:param name="pData"/>
+		<x2:param name="pType"/>
+		<xapl:variable name="type">
+			<xapl:choose>
+				<xapl:when test="$pType/@Type">
+					<xapl:value-of select="$pType/@Type"/>
+				</xapl:when>
+				<xapl:otherwise>Text</xapl:otherwise>
+			</xapl:choose>
+		</xapl:variable>
+		<xapl:variable name="format">
+			<xapl:choose>
+				<xapl:when test="$pType/@Format">
+					<xapl:value-of select="$pType/@Format"/>
+				</xapl:when>
+				<xapl:otherwise>common</xapl:otherwise>
+			</xapl:choose>
+		</xapl:variable>
+		<xapl:return>
+			<xapl:choose>
+				<xapl:when test="$type='Text'">
+					<i18n:text>
+						<xapl:value-of select="$pData"/>
+					</i18n:text>
+				</xapl:when>
+				<xapl:when test="$type='Currency'">
+					<i18n:currency>
+						<xapl:value-of select="$pData"/>
+					</i18n:currency>
+				</xapl:when>
+				<xapl:when test="$type='Number'">
+					<i18n:number>
+						<xapl:value-of select="$pData"/>
+					</i18n:number>
+				</xapl:when>
+				<xapl:when test="$type='Date'">
+					<i18n:date format="{$format}">
+						<xapl:value-of select="$pData"/>
+					</i18n:date>
+				</xapl:when>
+			</xapl:choose>
+		</xapl:return>
+	</x2:command>
+</x2:commands>

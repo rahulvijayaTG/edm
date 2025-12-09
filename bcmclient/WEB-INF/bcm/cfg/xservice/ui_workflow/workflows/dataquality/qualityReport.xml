@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="10" ShowInBreadCrumbs="true" Version="1.0" Name="qualityReport" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="source" Type="string" Comment=""/>
+    <variable Name="entity" Type="string" Comment=""/>
+    <variable Name="reportId" Type="string" Comment=""/>
+    <variable Name="dqReport" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2" Description="Start Node">
+      <actions>
+      </actions>
+      <next_nodes OutputVar="{root,xml}">
+        <next_node Name="Data Quality Report" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Data Quality Report" Description="Display the entity and source selection form." InputVar="{root,xml}" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="SHOW" Template="qualityReport.pgl">
+      <pre_actions>
+        <action>
+          <SET Var="source" FromValue="{$root/SOURCE/@Value}"/>
+          <SET Var="entity" FromValue="{$root/ENTITY/@Value}"/>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Descending', $thisParam/SORT_ORDER/@Value)}"/>
+          <IF_TEST Test="$thisParam/tcontainer_SELECTED_STEP/@Value = 'rstep'">
+            <THEN>
+              <SET Var="sortByRule" FromValue="{ifElse($thisParam/SORT_BY/@Value = null or $thisParam/SORT_BY/@Value = 'ID', 'OCCURRENCE', $thisParam/SORT_BY/@Value)}"/>
+              <SET Var="sortBySev" FromValue="SEVERITY"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/tcontainer_SELECTED_STEP/@Value = 'sstep'">
+                <THEN>
+                  <SET Var="sortByRule" FromValue="OCCURRENCE"/>
+                  <SET Var="sortBySev" FromValue="{ifElse($thisParam/SORT_BY/@Value = null or $thisParam/SORT_BY/@Value = 'ID', 'SEVERITY', $thisParam/SORT_BY/@Value)}"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="sortByRule" FromValue="OCCURRENCE"/>
+                  <SET Var="sortBySev" FromValue="SEVERITY"/>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="orderByRule">
+            <ORDER_BY_RULE>
+            </ORDER_BY_RULE>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="orderPropRule">
+            <TEMP_PROP Sort="{$sortOrder}"/>
+          </TO_DOCVAR>
+          <SET_NAME Value="{$orderPropRule}" FromValue="{$sortByRule}"/>
+          <ADD_CHILD DocVar="orderByRule" ChildDocVar="orderPropRule"/>
+          <TO_DOCVAR AssignToVar="orderBySev">
+            <ORDER_BY_SEV>
+            </ORDER_BY_SEV>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="orderPropSev">
+            <TEMP_PROP Sort="{$sortOrder}"/>
+          </TO_DOCVAR>
+          <SET_NAME Value="{$orderPropSev}" FromValue="{$sortBySev}"/>
+          <ADD_CHILD DocVar="orderBySev" ChildDocVar="orderPropSev"/>
+          <IF_TEST Test="$root/BUTTON_ID/@Value = 'change_report'">
+            <THEN>
+              <SET Var="reportId" FromValue="{$root/REPORT_ID/@Value}"/>
+              <REQUEST Name="getDataQualityReport" ServiceName="E2E" AssignToVar="dqReport">
+                <SOURCE Value="{$root/SOURCE/@Value}"/>
+                <ENTITY Value="{$root/ENTITY/@Value}"/>
+                <REPORT_ID Value="{$reportId}"/>
+                <TO_XML Select="$orderByRule"/>
+                <TO_XML Select="$orderBySev"/>
+              </REQUEST>
+              <REQUEST Name="getSources" ServiceName="E2E" AssignToVar="sources"/>
+              <REQUEST Name="getEntities" ServiceName="E2E" AssignToVar="entities">
+                <SOURCE Value="{$source}"/>
+              </REQUEST>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$root/BUTTON_ID/@Value = 'get_reports'">
+                <THEN>
+                  <REQUEST Name="getDataQualityReport" ServiceName="E2E" AssignToVar="dqReport">
+                    <SOURCE Value="{$root/SOURCE/@Value}"/>
+                    <ENTITY Value="{$root/ENTITY/@Value}"/>
+                    <REPORT_ID Value="{$reportId}"/>
+                    <TO_XML Select="$orderByRule"/>
+                    <TO_XML Select="$orderBySev"/>
+                  </REQUEST>
+                  <REQUEST Name="getSources" ServiceName="E2E" AssignToVar="sources"/>
+                  <REQUEST Name="getEntities" ServiceName="E2E" AssignToVar="entities">
+                    <SOURCE Value="{$source}"/>
+                  </REQUEST>
+                  <REQUEST Name="getTrendReport" ServiceName="E2E" AssignToVar="trendReport">
+                    <SOURCE Value="{$root/SOURCE/@Value}"/>
+                    <ENTITY Value="{$root/ENTITY/@Value}"/>
+                    <IF_TEST Test="$root/FROM_REPORT_DATE/@Value != ''">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="fDate">
+                          <FROM_DATE Value="{$root/FROM_REPORT_DATE/@Value}"/>
+                        </TO_DOCVAR>
+                        <TO_XML Select="$fDate"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$root/TO_REPORT_DATE/@Value != ''">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="tDate">
+                          <TO_DATE Value="{concat($root/TO_REPORT_DATE/@Value,' 23:59:59')}"/>
+                        </TO_DOCVAR>
+                        <TO_XML Select="$tDate"/>
+                      </THEN>
+                    </IF_TEST>
+                  </REQUEST>
+                  <IF_TEST Test="$acceptableDqScore = null">
+                    <THEN>
+                      <SET Var="acceptableDqScore" FromValue="50"/>
+                    </THEN>
+                  </IF_TEST>
+                  <FOR_EACH SelectList="$trendReport/TREND_REPORT/DQ_TREND_REPORT" CurrentElement="dqtr">
+                    <SET Property="ACCEPTABLE_DQ_SCORE" DocVar="dqtr" FromValue="{$acceptableDqScore}"/>
+                    <IF_TEST Test="$dqtr/RAW_DQ_SCORE/@Value &lt;= $acceptableDqScore">
+                      <THEN>
+                        <SET Property="STATUS" DocVar="dqtr" FromValue="RED"/>
+                      </THEN>
+                      <ELSE>
+                        <SET Property="STATUS" DocVar="dqtr" FromValue="GREEN"/>
+                      </ELSE>
+                    </IF_TEST>
+                  </FOR_EACH>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$root/BUTTON_ID/@Value = 'submit'">
+                    <THEN>
+                      <SET Var="reportId" FromValue="{null}"/>
+                      <REQUEST Name="getDataQualityReport" ServiceName="E2E" AssignToVar="dqReport">
+                        <SOURCE Value="{$root/SOURCE/@Value}"/>
+                        <ENTITY Value="{$root/ENTITY/@Value}"/>
+                        <TO_XML Select="$orderByRule"/>
+                        <TO_XML Select="$orderBySev"/>
+                      </REQUEST>
+                      <REQUEST Name="getSources" ServiceName="E2E" AssignToVar="sources"/>
+                      <REQUEST Name="getEntities" ServiceName="E2E" AssignToVar="entities">
+                        <SOURCE Value="{$source}"/>
+                      </REQUEST>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$root/BUTTON_ID/@Value = 'change_source'">
+                        <THEN>
+                          <REQUEST Name="getSources" ServiceName="E2E" AssignToVar="sources"/>
+                          <REQUEST Name="getEntities" ServiceName="E2E" AssignToVar="entities">
+                            <SOURCE Value="{$source}"/>
+                          </REQUEST>
+                          <SET Var="entity" FromValue="{$entities/ENTITIES/ENTITY/@Value}"/>
+                          <!-- Setting the values to null ,so that only at Submit button we see the report -->
+                          <SET Var="dqReport" FromValue="{null}"/>
+                          <SET Var="trendReport" FromValue="{null}"/>
+                          <SET Var="bawEntities" FromValue="{null}"/>
+                        </THEN>
+                        <ELSE>
+                          <IF_TEST Test="$source != null and $entity != null">
+                            <THEN>
+                              <REQUEST Name="getSources" ServiceName="E2E" AssignToVar="sources"/>
+                              <REQUEST Name="getEntities" ServiceName="E2E" AssignToVar="entities">
+                                <SOURCE Value="{$source}"/>
+                              </REQUEST>
+                              <SET Var="reportId" FromValue="{$root/REPORT_ID/@Value}"/>
+                              <REQUEST Name="getDataQualityReport" ServiceName="E2E" AssignToVar="dqReport">
+                                <SOURCE Value="{$root/SOURCE/@Value}"/>
+                                <ENTITY Value="{$root/ENTITY/@Value}"/>
+                                <REPORT_ID Value="{$reportId}"/>
+                                <TO_XML Select="$orderByRule"/>
+                                <TO_XML Select="$orderBySev"/>
+                              </REQUEST>
+                            </THEN>
+                            <ELSE>
+                              <REQUEST Name="getSources" ServiceName="E2E" AssignToVar="sources"/>
+                              <REQUEST Name="getEntities" ServiceName="E2E" AssignToVar="entities">
+                                <SOURCE Value="{$sources/SOURCES/SOURCE[1]/@Value}"/>
+                              </REQUEST>
+                              <SET Var="source" FromValue="{$sources/SOURCES/SOURCE[1]/@Value}"/>
+                              <SET Var="entity" FromValue="{$entities/ENTITIES/ENTITY/@Value}"/>
+                            </ELSE>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/tcontainer_SELECTED_STEP/@Value = null">
+            <THEN>
+              <SET Var="selectedStep" FromValue="rstep"/>
+            </THEN>
+            <ELSE>
+              <SET Var="selectedStep" FromValue="{$thisParam/tcontainer_SELECTED_STEP/@Value}"/>
+              <IF_TEST Test="$thisParam/tcontainer_SELECTED_STEP/@Value = 'estep'">
+                <THEN>
+                  <REQUEST Name="getBestAndWorstEntitiesInDQReport" ServiceName="E2E" AssignToVar="bawEntities">
+                    <REPORT_ID Value="{$dqReport/DATA_QUALITY_REPORT/REPORT_ID/@Value}"/>
+                  </REQUEST>
+                  <CLONE_XML DocVar="bawEntities" AssignToVar="bawEntitiesClone"/>
+                  <TO_DOCVAR AssignToVar="allEntities">
+                    <ALL_ENTITIES>
+                    </ALL_ENTITIES>
+                  </TO_DOCVAR>
+                  <SET_NAME SelectList="$bawEntitiesClone/BEST_ENTITIES/BEST_ENTITY" FromValue="ENTITY"/>
+                  <APPEND_TO_XML Select="$allEntities">
+                    <TO_XML SelectList="$bawEntitiesClone/BEST_ENTITIES/ENTITY"/>
+                  </APPEND_TO_XML>
+                  <SET_NAME SelectList="$bawEntitiesClone/WORST_ENTITIES/WORST_ENTITY" FromValue="ENTITY"/>
+                  <APPEND_TO_XML Select="$allEntities">
+                    <TO_XML SelectList="$bawEntitiesClone/WORST_ENTITIES/ENTITY"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/tcontainer_SELECTED_STEP/@Value = 'search'">
+                <THEN>
+                  <!--EQ:582297 To see if the trendRprt is already populated or not -->
+                  <IF_TEST Test="$trendReport = null">
+                    <THEN>
+                      <REQUEST Name="getTrendReport" ServiceName="E2E" AssignToVar="trendReport">
+                        <SOURCE Value="{$root/SOURCE/@Value}"/>
+                        <ENTITY Value="{$root/ENTITY/@Value}"/>
+                      </REQUEST>
+                      <IF_TEST Test="$acceptableDqScore = null">
+                        <THEN>
+                          <SET Var="acceptableDqScore" FromValue="50"/>
+                        </THEN>
+                      </IF_TEST>
+                      <FOR_EACH SelectList="$trendReport/TREND_REPORT/DQ_TREND_REPORT" CurrentElement="dqtr">
+                        <SET Property="ACCEPTABLE_DQ_SCORE" DocVar="dqtr" FromValue="{$acceptableDqScore}"/>
+                        <IF_TEST Test="$dqtr/RAW_DQ_SCORE/@Value &lt;= $acceptableDqScore">
+                          <THEN>
+                            <SET Property="STATUS" DocVar="dqtr" FromValue="RED"/>
+                          </THEN>
+                          <ELSE>
+                            <SET Property="STATUS" DocVar="dqtr" FromValue="GREEN"/>
+                          </ELSE>
+                        </IF_TEST>
+                      </FOR_EACH>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="root">
+            <ROOT>
+              <TO_XML Select="$sources/SOURCES"/>
+              <TO_XML Select="$entities/ENTITIES"/>
+              <SOURCE Value="{$source}"/>
+              <ENTITY Value="{$entity}"/>
+              <TO_XML Select="$dqReport/DATA_QUALITY_REPORT"/>
+              <TO_XML Select="$dqReport/DATA_QUALITY_REPORT/REPORT_ID"/>
+              <TO_XML Select="$trendReport/TREND_REPORT"/>
+              <TO_XML Select="$bawEntities/BEST_ENTITIES"/>
+              <TO_XML Select="$bawEntities/WORST_ENTITIES"/>
+              <TO_XML Select="$allEntities"/>
+              <SELECTED_STEP Value="{$selectedStep}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <SET Var="pglFormInput" FromValue="{$root}"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction='change_source'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Data Quality Report" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction = 'submit'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Data Quality Report" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction = 'get_reports'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Data Quality Report" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction = 'change_report'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Data Quality Report" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="done6" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done6">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="10,10" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <mgcnode Name="Data Quality Report" location="116,10" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Data Quality Report" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done6 location="220,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done6" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done6>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="42,43" endpoint="116,33" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="95,41,4,4" ctrlRect2="58,31,4,4"/>
+      </start2>
+      <mgcnode Name="Data Quality Report">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="116,43" endpoint="116,33" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="39,41,4,4" ctrlRect2="39,31,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="116,43" endpoint="116,33" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="39,41,4,4" ctrlRect2="39,31,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="116,43" endpoint="116,33" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="39,41,4,4" ctrlRect2="39,31,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="116,43" endpoint="116,33" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="39,41,4,4" ctrlRect2="39,31,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="148,21" endpoint="220,32" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="200,19,4,4" ctrlRect2="164,30,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard10" location="325,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="0">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="source" Type="string" Comment=""/>
+        <variable Name="entity" Type="string" Comment=""/>
+        <variable Name="reportId" Type="string" Comment=""/>
+        <variable Name="dqReport" Type="xml" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:tree="http://www.i2.com/tree" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- *************** Use it for finding server side error response by passing your success message **************************** -->
+  <x2:command public="yes" description="_" name="getResponseStatus">
+    <x2:param name="response"/>
+    <x2:param name="successMessage"/>
+    <xapl:variable name="errorMessage"/>
+    <xapl:print select="{$response}"/>
+    <xapl:print>
+      contains==<xapl:value-of select="contains($response/RESPONSE/@Description,'Error in deleting data for document')"/>
+    </xapl:print>
+    
+<!-- added for Issue 537002-->    
+    <xapl:print select="{$response/RESPONSE/@Description}"/>
+    <xapl:variable name="descMessage"/>      
+    <xapl:set-variable name="descMessage">
+      <xapl:choose>
+        <xapl:when test="contains($response/RESPONSE/@Description, 'Context=')">
+          <xapl:value-of select="{substring-before($response/RESPONSE/@Description, 'Context=' )}"/>
+        </xapl:when>
+        <xapl:otherwise>
+          <xapl:value-of select="{$response/RESPONSE/@Description}"/>
+        </xapl:otherwise>
+      </xapl:choose>	    
+    </xapl:set-variable>  
+<!-- End of Issue 537002-->        
+    
+    <xapl:choose>
+      <xapl:when test="not(string-length($response/@Description) = 0)">
+        <xapl:choose>
+          <xapl:when test="contains($response/@Description, 'Error preparing stmt:')">
+            <xapl:set-variable name="errorMessage">
+              <xapl:value-of select="{substring-before($response/@Description, 'Error preparing stmt:' )}"/>
+            </xapl:set-variable>
+          </xapl:when>       
+          <xapl:otherwise>
+            <xapl:set-variable name="errorMessage">
+              <xapl:value-of select="{$response/@Description}"/>
+            </xapl:set-variable>
+          </xapl:otherwise>
+        </xapl:choose>
+      </xapl:when>
+      <xapl:when test="not(string-length($response/RESPONSE/@Description) = 0)">
+         <xapl:choose>
+      		<xapl:when test= "contains($response/RESPONSE/@Description,'Error in deleting data for document')">    
+			  <!-- added for Issue 491107-->
+			  <xapl:if test= "contains($response/RESPONSE/@Description,'Error in deleting data for document')">
+
+		 		<xapl:variable name="var1"/>
+		 		<xapl:variable name="var2"/>
+		 		<xapl:variable name="i18nized"/>
+
+		 		<xapl:set-variable name="var1">
+			 		<xapl:value-of select="{substring-before(substring-after($response/RESPONSE/@Description,'Error in deleting data for document '), '. Link')}"/>
+		 		</xapl:set-variable>
+
+				<xapl:set-variable name="var2">
+					<xapl:value-of select="{substring-after($response/RESPONSE/@Description,'Link path is ')}"/>
+		 		</xapl:set-variable>
+
+			  <xapl:set-variable name="i18nized">
+			     <i18n:text arg0="{$var1}" arg1="{$var2}">Error in deleting data for document {0}. Link path is {1}</i18n:text>
+			  </xapl:set-variable>
+
+			  <docutil:set select="$response/RESPONSE/@Description">
+			      <xapl:value-of select="$i18nized"/>
+			  </docutil:set>
+
+			  <xapl:print>
+			  descMessage==<xapl:value-of select="$descMessage"/>
+			  var1==<xapl:value-of select="$var1"/>
+			  var2==<xapl:value-of select="$var2"/>
+			  i18nized==<xapl:value-of select="$i18nized"/>
+			  response==<xapl:value-of select="$response"/>
+			  </xapl:print>
+
+			  </xapl:if>
+			 <!-- added for Issue 491107-->
+			<xapl:set-variable name="errorMessage">
+			  <xapl:value-of select="{$response/RESPONSE/@Description}"/>
+			</xapl:set-variable>          
+		</xapl:when>          
+ 		<xapl:otherwise>
+			<xapl:set-variable name="errorMessage">
+			  <xapl:value-of select="{$descMessage}"/>
+			</xapl:set-variable>          
+		</xapl:otherwise> 		
+	 </xapl:choose>             
+      </xapl:when>
+      <xapl:when test="$response/RESPONSE/@Status = 'Error' and count($response/RESPONSE/_RESULT) = 0 ">
+        <xapl:set-variable name="errorMessage">
+          <xapl:value-of select=" concat( 'Unknown Error :' ,  $descMessage ) "/>
+        </xapl:set-variable>
+      </xapl:when>
+      <xapl:when test="$response/RESPONSE/_RESULT/@Value = 'ERROR' and count($response/RESPONSE/_RESULT/_ERROR) != 0 ">
+				<xapl:print>ERROR Count----><xapl:value-of select="{count($response/RESPONSE/_RESULT/_ERROR)}"/></xapl:print>
+				<xapl:set-variable name="errorMessage">
+					<xapl:value-of select="{$response/RESPONSE/_RESULT/_ERROR[1]/@Value}"/>
+				</xapl:set-variable>
+      </xapl:when>
+      <xapl:when test="$response/RESPONSE/_RESULT/@Value = 'ERROR'">
+        <xapl:set-variable name="errorMessage">
+          <xapl:value-of select="{$response/RESPONSE/_RESULT/_ERROR/@Value}"/>
+        </xapl:set-variable>
+      </xapl:when>
+      <xapl:when test="$response/RESPONSE/_RESULT/@Value = 'SEVERE_ERROR' ">
+        <xapl:set-variable name="errorMessage">
+          <xapl:value-of select="{$response/RESPONSE/_RESULT/_ERROR/@Value}"/>
+        </xapl:set-variable>
+      </xapl:when>
+    </xapl:choose>
+    <xapl:print select="{count($response/RESPONSE/_RESULT/_ERROR)}"/>
+    <xapl:print select="{$errorMessage}"/>
+    <xapl:print select="{$successMessage}"/>
+    <xapl:variable name="i18nErrorMessage">
+    	<i18n:text><xapl:value-of select="$errorMessage"/></i18n:text>
+    </xapl:variable>
+    <xapl:variable name="i18nSuccessMessage">
+    	<i18n:text><xapl:value-of select="$successMessage"/></i18n:text>
+    </xapl:variable>
+    <xapl:return>
+      <xapl:choose>
+        <xapl:when test="not(string-length($errorMessage) = 0)">
+          <ERROR_MESSAGE Value="{$i18nErrorMessage}"/>
+        </xapl:when>
+        <xapl:otherwise>
+          <SUCCESS_MESSAGE Value="{$i18nSuccessMessage}"/>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:return>
+  </x2:command>
+  <!-- **************************************************************************
+  ********************************************************************************* -->
+  <x2:command public="yes" description="_" name="createXMLFromString">
+    <x2:param name="string"/>
+    <x2:param name="delimeter"/>
+    <x2:param name="tagname"/>
+    <xapl:if test="not($tagname)">
+      <xapl:set-variable name="tagname">
+        <xapl:value-of select=" 'ELEMENT' "/>
+      </xapl:set-variable>
+    </xapl:if>
+    <xapl:variable name="xmlTree">
+      <XML_TREE/>
+    </xapl:variable>
+    <xapl:print>
+           going to call getXMLElement:::
+           string=<xapl:value-of select="$string"/>
+           delimeter=<xapl:value-of select="$delimeter"/>
+           tagname=<xapl:value-of select="$tagname"/>
+           length=<xapl:value-of select="string-length($string)"/>
+           NULL=<xapl:value-of select="not($string)"/>
+    </xapl:print>
+    <xapl:if test="not(not($string))">
+      <x2:execute command="bcm.framework.util:getXMLElement">
+        <x2:with-param name="string" select="$string"/>
+        <x2:with-param name="delimeter" select="$delimeter"/>
+        <x2:with-param name="tagname" select="$tagname"/>
+        <x2:with-param name="xmlTree" select="$xmlTree"/>
+      </x2:execute>
+    </xapl:if>
+    <xapl:return>
+      <xapl:value-of select="$xmlTree"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+       *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getXMLElement">
+    <x2:param name="string"/>
+    <x2:param name="delimeter"/>
+    <x2:param name="tagname"/>
+    <x2:param name="xmlTree"/>
+    <xapl:variable name="token">
+      <xapl:choose>
+        <xapl:when test="contains($string , $delimeter )">
+          <xapl:value-of select="substring-before($string, $delimeter)"/>
+          <xapl:set-variable name="string" select="substring-after($string, $delimeter )"/>
+        </xapl:when>
+        <xapl:otherwise>
+          <xapl:value-of select="$string"/>
+          <xapl:set-variable name="string"/>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+    <xapl:print>
+
+     PRINTING ELEMENT:::
+     $string=<xapl:value-of select="$string"/>
+     $delimeter=<xapl:value-of select="$delimeter"/>
+     $tagname=<xapl:value-of select="$tagname"/>
+     $token=<xapl:value-of select="$token"/>
+    </xapl:print>
+    <xapl:if test="not(not($token))">
+      <docutil:add select="$xmlTree">
+        <docutil:element name="{$tagname}" Value="{$token}"/>
+      </docutil:add>
+    </xapl:if>
+    <xapl:if test=" not(not($string)) and string-length($string) > 0 ">
+      <x2:execute command="bcm.framework.util:getXMLElement">
+        <x2:with-param name="string" select="$string"/>
+        <x2:with-param name="delimeter" select="$delimeter"/>
+        <x2:with-param name="tagname" select="$tagname"/>
+        <x2:with-param name="xmlTree" select="$xmlTree"/>
+      </x2:execute>
+    </xapl:if>
+  </x2:command>
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="exportToExcel">
+    <x2:param name="pFormat" select="'xls'"/>
+    <x2:param name="pGetReportConfigSource"/>
+    <x2:param name="pGetReportDataSource"/>
+    <!-- Extension always .xls -->
+    <x2:param name="pFileNameWithExtension" select="{concat('Data', '.', 'xls')}"/>
+    <x2:param name="this"/>
+    
+    <xapl:variable name="fileFormat">
+        <xapl:choose>
+            <xapl:when test="string-length($this/FILE_FORMAT/@Value) > 0">
+                <xapl:value-of select="$this/FILE_FORMAT/@Value"/>
+            </xapl:when>
+            <xapl:otherwise>
+                <xapl:value-of select="xls"/>            
+            </xapl:otherwise>
+        </xapl:choose>
+    </xapl:variable>
+    
+    <xapl:variable name="fileName">
+        <xapl:choose>
+            <xapl:when test="string-length($this/FILE_NAME/@Value) > 0">
+                <xapl:value-of select="$this/FILE_NAME/@Value"/>
+            </xapl:when>
+            <xapl:otherwise>
+                <xapl:value-of select="Data"/>            
+            </xapl:otherwise>
+        </xapl:choose>
+    </xapl:variable>
+    
+    <xapl:variable name="fileNameWithExtension">
+       <xapl:value-of select="{concat($fileName,'.',$fileFormat)}"/>            
+    </xapl:variable>
+    
+    
+    <xapl:variable name="reportData"/>
+    <xapl:choose>
+        <xapl:when test="$this/EXPORT_ALL/@Value='YES'">
+            <!-- Get Report Data -->
+                <docutil:set select="$currentThis">
+                  <MAX_ROWS Value="100000"/>
+                  <DO_SEARCH Value="Yes"/>
+                  <START_COUNT Value="0"/> // Fix for issue 562663
+                </docutil:set>
+
+            <xapl:set-variable name="reportData">
+              <x2:execute command="{$currentFormsDataSource}">
+                <x2:with-param name="pReportFormat" select="$currentFormsFormat"/>
+                <x2:with-param name="this" select="{$currentThis}"/>
+              </x2:execute>
+            </xapl:set-variable>  
+        </xapl:when>       
+        <xapl:otherwise>
+            <xapl:set-variable name="reportData">
+                <xapl:clone select="$currentFormsData/RESPONSE"/>
+            </xapl:set-variable>
+
+
+            <xapl:variable name="xmlTree"/>
+            <xapl:set-variable name="xmlTree">
+             <ROOT/>
+            </xapl:set-variable>
+
+            <xapl:variable name="selectedRowNums"/>
+
+            <xapl:if test="string-length($this/SELECTED_ROW_NUMS/@Value) > 0">
+                <xapl:set-variable name="selectedRowNums">
+                  <x2:execute command="bcm.framework.util:createXMLFromString">
+                    <x2:with-param name="string" select="$this/SELECTED_ROW_NUMS/@Value"/>
+                    <x2:with-param name="delimeter" select="','"> </x2:with-param>
+                    <x2:with-param name="tagname" select="'SELECTEDROW'"></x2:with-param>
+                  </x2:execute>
+                </xapl:set-variable>
+
+                <xapl:for-each varName="selectedRow" select="$selectedRowNums/SELECTEDROW">
+                    <xapl:print>inside for loop<xapl:value-of select="$selectedRow"/></xapl:print>
+                        <xapl:if test="$reportData/JOIN_RESULT[position() = number($selectedRow/@Value)]">
+                            <docutil:add select="$xmlTree">
+                                <xapl:value-of select="$reportData/JOIN_RESULT[position() = number($selectedRow/@Value)]"/>  
+                            </docutil:add>       
+                        </xapl:if>                        
+                </xapl:for-each>
+
+                <docutil:remove select="$reportData/JOIN_RESULT"/>
+                <docutil:add select="$reportData">
+                    <xapl:value-of select="$xmlTree/*"/>
+                </docutil:add> 
+
+            </xapl:if>
+        
+        </xapl:otherwise>
+    </xapl:choose>
+           
+    
+    <xapl:print>
+    currentFormsFormat::<xapl:value-of select="$currentFormsFormat"/>
+      reportData::<xapl:value-of select="$reportData"/>
+    </xapl:print>
+    
+    <!-- get Actual Report-->
+    <xapl:variable name="report">
+      <xapl:choose>
+        <xapl:when test="$pFormat = 'csv'">
+            <x2:execute command="core.report.controller:generate_csv">
+            <x2:with-param name="pReportData" select="$reportData"/>
+            <x2:with-param name="pReportFormat" select="$currentFormsFormat"/>
+          </x2:execute>  
+        </xapl:when>
+        <xapl:when test="$pFormat = 'xls'">
+            <x2:execute command="core.report.controller:generate_csv">
+            <x2:with-param name="pReportData" select="$reportData"/>
+            <x2:with-param name="pReportFormat" select="$currentFormsFormat"/>
+          </x2:execute>  
+        </xapl:when>
+        <xapl:when test="$pFormat = 'xml'">
+          <xapl:value-of select="$currentFormsData"/>
+        </xapl:when>
+      </xapl:choose>
+    </xapl:variable>
+    
+    <xapl:print select="$report"/>
+    <!-- downloadFile-->
+    <x2:execute command="bcm.framework.common:downloadFile">
+      <x2:with-param name="pFileContents" select="$report"/>
+      <x2:with-param name="pFileName" select="$fileNameWithExtension"/>
+      <x2:with-param name="pFileType" select="'text'"/>
+    </x2:execute>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

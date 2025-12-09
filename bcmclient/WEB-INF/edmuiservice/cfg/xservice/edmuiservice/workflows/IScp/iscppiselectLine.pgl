@@ -1,0 +1,108 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="selectLine.pgl">
+  <ui:container id="srchResCont" name="srchResCont" scrollable="true">
+    <ui:entry-field name="FIELD_NAME" id="FIELD_NAME" displayText="fieldname" value="{$root/SEARCH_FIELDS/FIELD_NAME/@Value}" />
+    <ui:step id="srchResStep" name="srchResStep" displayText="Item Interchange Group Line Search Results" scrollable="true">
+      <ui:field-group columns="2" select="$root/SEARCH_FIELDS">
+        <ui:hidden-field name="FIELD_NAME" id="FIELD_NAME" displayText="fieldname" />
+        <ui:hidden-field name="FIELD_NAME_PREDID" id="FIELD_NAME_PREDID" />
+        <ui:hidden-field name="FIELD_NAME_PREDDESC" id="FIELD_NAME_PREDDESC" />
+        <ui:hidden-field name="FIELD_NAME_SUCCSSID" id="FIELD_NAME_SUCCSSID" />
+        <ui:hidden-field name="FIELD_NAME_SUCCSSDESC" id="FIELD_NAME_SUCCSSDESC" />
+        <ui:hidden-field name="FIELD_NAME_CONVERSION_RATIO" id="FIELD_NAME_CONVERSION_RATIO" />
+        <ui:hidden-field name="FIELD_NAME_INTERCHANGE_REASON" id="FIELD_NAME_INTERCHANGE_REASON" />
+        <ui:hidden-field name="STEP_ID" id="STEP_ID" />
+        <ui:hidden-field name="prevselected" id="prevselected" />
+      </ui:field-group>
+      <ui:table id="LineTable" name="LineTable" displayText="Item Interchange Line Search Results" displayTextNoRecords="No Records Found" rowId="LineIdn" postRowIdAs="LineIdentification" selectable="{$root/SEARCH_FIELDS/selectvalue/@Value}" startAtRow="$root/SEARCH_FIELDS/START_AT_ROW/@Value" rememberSelections="true" rowSrc="$root/abc" maxRows="$root/SEARCH_FIELDS/MAX_ROWS/@Value" totalRowCount="$root/SEARCH_FIELDS/TOTAL_ROW_COUNT/@Value">
+        <ui:field-group id="fg">
+          <ui:entry-field displayText="Group Line ID" name="LineIdn" editable="false" id="LineIdn" sortable="true" />
+          <ui:entry-field displayText="Predecessor Product" name="predprodIdn" editable="false" id="predprodIdn" />
+          <ui:entry-field displayText="Predecessor Product Description" name="predprodDesc" editable="false" id="predprodDesc" />
+          <ui:entry-field displayText="Successor Product" name="succssprodIdn" editable="false" id="succssprodIdn" />
+          <ui:entry-field displayText="Successor Product Description" name="succssprodDesc" editable="false" id="succssprodDesc" />
+          <ui:entry-field displayText="Conversion Factor" name="conversionFactor" editable="false" id="conversionFactor" />
+          <ui:entry-field displayText="Interchange Reason" name="interchangeReason" editable="false" id="interchangeReason" />
+        </ui:field-group>
+        <ui:buttons id="buttons1" name="buttons1">
+          <ui:button displayText="Select" id="select" name="select" enabledBySelections="true" onClick="javascript:selectLocation();" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>function selectLocation()
+    {
+		  var selectedIds =document.getElementsByName('LineIdentification');
+		  var selectedpredids=document.getElementsByName('predprodIdn');
+			var selectedsuccssids=document.getElementsByName('succssprodIdn');
+		  var selectedpreddesc=document.getElementsByName('predprodDesc');
+		  var selectedsuccssdesc=document.getElementsByName('succssprodDesc');
+		  var selectedcvratio=document.getElementsByName('conversionFactor');
+		  var selectedinterchangeReason=document.getElementsByName('interchangeReason');	  	
+		  var length = selectedIds.length;
+      var locs = document.form.prevselected.value;		
+		  var predidn=null;
+		  var preddesc=null;
+		  var succssidn=null;
+		  var succssdesc=null; 
+      var conversionratio=null;
+		  var interchangereason=null;
+		
+      for(i=0; i &lt; length; i++)
+			{
+		
+        var t = selectedIds[ i ];
+		
+        if ( t.checked)
+        {
+						if(locs)
+						{
+								locs=locs+','+t.value;
+						 }
+						 else
+						 {
+	             locs = t.value;
+							 predidn=selectedpredids[i].value;
+							 preddesc=selectedpreddesc[i].value;
+							 succssidn=selectedsuccssids[i].value;
+							 succssdesc=selectedsuccssdesc[i].value;
+							 conversionratio=selectedcvratio[i].value;
+		           interchangereason=selectedinterchangeReason[i].value;
+							}	
+        }
+      }
+
+		  
+      if (document.form.FIELD_NAME.value.length &gt; 0 &amp;&amp; document.form.STEP_ID.value =='SecondContainer')
+        {	
+					var fieldName = document.form.FIELD_NAME.value;
+					var fieldName_preid=document.form.FIELD_NAME_PREDID.value;
+		      var fieldName_predesc=document.form.FIELD_NAME_PREDDESC.value;
+		      var fieldName_succssid=document.form.FIELD_NAME_SUCCSSID.value;
+		      var fieldName_succssdesc=document.form.FIELD_NAME_SUCCSSDESC.value;
+					var fieldName_ConversionRatio=document.form.FIELD_NAME_CONVERSION_RATIO.value;
+					var fieldName_InterchangeReason=document.form.FIELD_NAME_INTERCHANGE_REASON.value;
+					
+		      eval("parent.opener.form." + fieldName + ".value = locs;");
+		     
+					eval("parent.opener.form." + fieldName_preid + ".value = predidn;");
+		      
+					eval("parent.opener.form." + fieldName_predesc + ".value = preddesc;");
+		      
+					eval("parent.opener.form." + fieldName_succssid + ".value = succssidn;");
+		      
+ 					eval("parent.opener.form." + fieldName_succssdesc + ".value = succssdesc;");
+		
+					eval("parent.opener.form." + fieldName_ConversionRatio + ".value = conversionratio;");
+		
+					eval("parent.opener.form." + fieldName_InterchangeReason + ".value = interchangereason;");
+      }
+
+		if (document.form.FIELD_NAME.value.length &gt; 0 &amp;&amp; document.form.STEP_ID.value =='Add_Locations')
+		{
+		    var fieldName = document.form.FIELD_NAME.value;
+				eval("parent.opener.form." + fieldName + ".value = locs;");
+		}
+      window.close();    
+      }</ui:script>
+</ui:page-group>
+

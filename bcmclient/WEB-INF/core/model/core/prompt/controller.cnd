@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands description="_" 
+             xmlns:cfg="http://www.i2.com/configurability" 
+             xmlns:core="http://www.i2.com/core" 
+             xmlns:omx="http://www.i2.com/omx" 
+             xmlns:perm="http://www.i2.com/permissibility" 
+             xmlns:util="http://www.i2.com/util" 
+             xmlns:web="http://www.i2.com/web" 
+             xmlns:x2="http://www.i2.com/x2" 
+             xmlns:xapl="http://www.i2.com/xapl" 
+             xmlns:xcore="http://www.i2.com/xcore" 
+             xmlns:xcore-db="http://www.i2.com/xcore-db" 
+             xmlns:docutil="http://www.i2.com/docutil" 
+             xmlns:oa="http://www.i2.com/oa" 
+             xmlns:xudl="http://www.i2.com/xudl"
+             xmlns:i18n="http://www.i2.com/i18n"
+             xmlns:identity="http://www.i2.com/identity">  
+
+   <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="display">
+      
+      <web:display-page>
+        <web:get-page name="core_prompt">
+          <xapl:value-of select="$this/*"/>
+        </web:get-page>
+    </web:display-page>
+  </x2:command>
+
+</x2:commands>

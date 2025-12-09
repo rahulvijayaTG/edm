@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="109" ShowInBreadCrumbs="true" Version="1.0" Name="wfpiGroupSelect" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="FIELD_NAME" Type="string" Comment=""/>
+    <variable Name="ROW_ID_NAME" Type="string" Comment=""/>
+    <variable Name="ROW_ID_NAME_1" Type="string" Comment=""/>
+    <variable Name="ROW_ID_NAME_2" Type="string" Comment=""/>
+    <variable Name="ROW_ID_NAME_3" Type="string" Comment=""/>
+    <variable Name="selectoption" Type="string" Comment=""/>
+    <variable Name="groupidentification" Type="string" Comment=""/>
+    <variable Name="groupstatus" Type="string" Comment=""/>
+    <variable Name="groupdescription" Type="string" Comment=""/>
+    <variable Name="prevselected" Type="string" Comment=""/>
+    <!--<variable Name="selectoption" Type="string" Comment=""/>-->
+    <!-- Fix for not showing Blocked Records in the Popup Result Grid Venkat -->
+    <variable Name="ManageSts" Type="string" Comment=""/>
+    <!-- Fix for not showing Blocked Records in the Popup Result Grid Venkat -->
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+        <action>
+          <SET DocVar="fieldName" FromValue="{$thisParam/PARAMETERS/FIELD_NAME/@Value}"/>
+          <SET DocVar="select" FromValue="{$thisParam/PARAMETERS/SELECT/@Value}"/>
+          <SET Var="selectoption" FromValue="{$thisParam/PARAMETERS/SELECT/@Value}"/>
+          <SET Var="FIELD_NAME" FromValue="{$thisParam/PARAMETERS/FIELD_NAME/@Value}"/>
+          <SET Var="ROW_ID_NAME" FromValue="{$thisParam/PARAMETERS/ROW_ID_NAME/@Value}"/>
+          <SET Var="ROW_ID_NAME_1" FromValue="{$thisParam/PARAMETERS/ENTITY_NAME/@Value}"/>
+          <SET Var="ROW_ID_NAME_2" FromValue="{$thisParam/PARAMETERS/ROW_ID_VALUE/@Value}"/>
+          <SET Var="ROW_ID_NAME_3" FromValue="{$thisParam/PARAMETERS/ROW_ID_3/@Value}"/>
+          <!-- Fix for not showing Blocked Records in the Popup Result Grid Venkat -->
+          <SET Var="ManageSts" FromValue="{$thisParam/PARAMETERS/MANAGE_STS/@Value}"/>
+          <!--<SET Var="ManageSts" FromValue="FromManageStatusUI"/>-->
+          <!-- Fix for not showing Blocked Records in the Popup Result Grid Venkat -->
+          <SET Var="prevselected" FromValue=""/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="select product interchangebility group" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done4">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="select product interchangebility group" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE" Template="iscppiGroupSelect.pgl">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <P_Itingrp/>
+          </TO_DOCVAR>
+          <!-- Fix for not showing Blocked Records in the Popup Result Grid Venkat -->
+          <SET Var="valFromMsts" FromValue="FromManageStatusUI"/>
+          <SET Var="valFromPopup" FromValue="{$thisParam/MANAGE_STS/@Value}"/>
+          <IF_TEST Test="($ManageSts = $valFromMsts)">
+            <THEN>
+              <IF_TEST Test="($valFromPopup = $valFromMsts)">
+                <THEN>
+                  <!-- MYANG RIC 271805 - PI default values sort order Start -->
+                  <GET_DOCUMENT AssignToVar="statuslist" Name="P_ItemInterchangeGroupStatus" ServiceName="PEDM_MASTER">
+                    <SELECT>
+                      <ItemInterchangeGroupStatusMnemonicValue/>
+                    </SELECT>
+                    <AND>
+                      <ItemInterchangeGroupStatusMnemonicValue Value="BLOCKED" MatchBy="NOT_EQUAL"/>
+                    </AND>
+                    <ORDER_BY>
+                      <ItemInterchangeGroupStatusMnemonicValue sort="Ascending"/>
+                    </ORDER_BY>
+                  </GET_DOCUMENT>
+                  <!-- MYANG RIC 271805 - PI default values sort order End -->
+                </THEN>
+              </IF_TEST>
+              <ELSE>
+                <!-- MYANG RIC 271805 - PI default values sort order Start -->
+                <GET_DOCUMENT AssignToVar="statuslist" Name="P_ItemInterchangeGroupStatus" ServiceName="PEDM_MASTER">
+                  <SELECT>
+                    <ItemInterchangeGroupStatusMnemonicValue/>
+                  </SELECT>
+                  <AND>
+                    <ItemInterchangeGroupStatusMnemonicValue Value="BLOCKED" MatchBy="NOT_EQUAL"/>
+                  </AND>
+                  <ORDER_BY>
+                    <ItemInterchangeGroupStatusMnemonicValue sort="Ascending"/>
+                  </ORDER_BY>
+                </GET_DOCUMENT>
+                <!-- MYANG RIC 271805 - PI default values sort order End -->
+              </ELSE>
+            </THEN>
+            <ELSE>
+              <!-- MYANG RIC 271805 - PI default values sort order Start -->
+              <GET_DOCUMENT AssignToVar="statuslist" Name="P_ItemInterchangeGroupStatus" ServiceName="PEDM_MASTER">
+                <SELECT>
+                  <ItemInterchangeGroupStatusMnemonicValue/>
+                </SELECT>
+                <ORDER_BY>
+                  <ItemInterchangeGroupStatusMnemonicValue sort="Ascending"/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+              <!-- MYANG RIC 271805 - PI default values sort order End -->
+            </ELSE>
+          </IF_TEST>
+          <!-- Fix for not showing Blocked Records in the Popup Result Grid Venkat -->
+          <TO_DOCVAR AssignToVar="statuslistvar">
+            <search/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$statuslist/P_ItemInterchangeGroupStatus/*" CurrentElement="currelem">
+            <TO_DOCVAR AssignToVar="tempstatus">
+              <Status>
+                <OPTION Value="{$currelem/@Value}"/>
+              </Status>
+            </TO_DOCVAR>
+            <APPEND_TO_XML DocVar="statuslistvar">
+              <TO_XML SelectList="$tempstatus/*"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="tempsearchcriteria">
+            <root>
+              <searchcriteria>
+                <groupidentification Value="{$groupidentification}"/>
+                <groupstatus Value="{$groupstatus}"/>
+                <groupdescription Value="{$groupdescription}"/>
+              </searchcriteria>
+            </root>
+          </TO_DOCVAR>
+          <APPEND_TO_XML DocVar="tempsearchcriteria">
+            <TO_XML SelectList="$statuslistvar"/>
+          </APPEND_TO_XML>
+          <APPEND_CHILDREN DocVar="pglFormInput" FromDocVar="tempsearchcriteria"/>
+          <!--  <GET_DOCUMENT AssignToVar="GrpVar" Name="E_O_ProductInterchangeabilityGroupMaster" ServiceName="BCM_OUTPUT_STAGING"/>-->
+          <SET Var="dataPaginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+          <SET Var="dataPgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '10', $thisParam/MAX_ROWS/@Value)}"/>
+          <FOR_EACH SelectList="$thisParam/GroupIdentification" CurrentElement="currentgrpid">
+            <SET Var="prevselected" FromValue="{ifElse($prevselected ='',$currentgrpid/@Value,concat($prevselected,',',$currentgrpid/@Value))}"/>
+          </FOR_EACH>
+          <!--  <IF_TEST Test="$userAction != 'Search'">
+    <THEN>-->
+          <!--<SET Var="sortOrder" FromValue="{ifElse((($thisParam/SORT_ORDER/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID')), 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+      <GET_DOCUMENT AssignToVar="GrpVar" Name="P_ItemInterchangeGroup" ServiceName="PEDM_MASTER" MaxRows="{$dataPgMaxRows/@Value}" StartAtRow="{$dataPaginateStart/@Value}" ReturnRowCount="true">
+        <QUERY_DOCUMENT_LINK Name="REL_2388_P_itingrp_x_itingrp_sts">
+          <QUERY_DOCUMENT_LINK Name="REL_2452">
+            <SELECT>
+              <ItemInterchangeGroupStatusMnemonicValue/>
+            </SELECT>
+          </QUERY_DOCUMENT_LINK>
+        </QUERY_DOCUMENT_LINK>
+        <SELECT>
+          <ItemInterchangeGroupMnemonicValue/>
+          <ItemInterchangeGroupDescription/>
+          <ItemInterchangeGroupIdentifier/>
+        </SELECT>
+        <ORDER_BY>
+          <ItemInterchangeGroupMnemonicValue Sort="{$sortOrder}"/>
+        </ORDER_BY>
+      </GET_DOCUMENT>
+      <FOR_EACH SelectList="$GrpVar/P_ItemInterchangeGroup" CurrentElement="currelem">
+        <TO_DOCVAR AssignToVar="tempxml">
+          <root>
+            <abc>
+              <GroupId Value="{$currelem/ItemInterchangeGroupMnemonicValue/@Value}"/>
+              <Groupdesc Value="{$currelem/ItemInterchangeGroupDescription/@Value}"/>
+              <GroupStatus Value="{$currelem/ItemInterchangeGroupStatusMnemonicValue/@Value}"/>
+            </abc>
+          </root>
+        </TO_DOCVAR>
+        <APPEND_CHILDREN DocVar="pglFormInput" FromDocVar="tempxml"/>
+      </FOR_EACH>
+    </THEN>
+    <ELSE>-->
+          <SET DocVar="thisParam" Property="EntityState" FromValue="ACTIVE"/>
+          <SET Var="sortBy" FromValue="grp_id"/>
+          <SET Var="sortOrder" FromValue="{ifElse((($thisParam/SORT_ORDER/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID')), 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+          <MAKE_INSTANCE_DOCUMENT Name="{$sortBy}" AssignToVar="sortByTag"/>
+          <SET DocVar="sortByTag" Attribute="Sort" FromValue="{$sortOrder}"/>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="grpFilters">
+            <Grp_Id MultiValued="true" InputName="groupidentification"/>
+            <Grp_Desc MultiValued="true" InputName="groupdescription"/>
+            <Grp_Sts MultiValued="true" InputName="groupstatus"/>
+            <EntityState/>
+            <!--<EntityState Value="Active"/>-->
+          </FORM_SEARCH_FILTER>
+          <!-- Fix for not showing Blocked Records in the Popup Result Grid Venkat -->
+          <IF_TEST Test="($ManageSts = $valFromMsts)">
+            <THEN>
+              <IF_TEST Test="($valFromPopup = $valFromMsts)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="grpFilters">
+                    <FILTER Name="Grp_Sts">
+                      <AND>
+                        <Grp_Sts Value="BLOCKED" MatchBy="NOT_EQUAL"/>
+                      </AND>
+                    </FILTER>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="grpFilters">
+                    <FILTER Name="Grp_Sts">
+                      <AND>
+                        <Grp_Sts Value="BLOCKED" MatchBy="NOT_EQUAL"/>
+                      </AND>
+                    </FILTER>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <APPEND_TO_XML DocVar="grpFilters">
+            <ORDER_BY>
+              <TO_XML DocVar="sortByTag"/>
+            </ORDER_BY>
+          </APPEND_TO_XML>
+          <!-- Fix for not showing Blocked Records in the Popup Result Grid Venkat -->
+          <REQUEST Name="piGroupSearch" AssignToVar="GrpVar" ServiceName="edmuiservice" ReturnRowCount="yes">
+            <criteria>
+              <TO_XML SelectList="$grpFilters"/>
+              <MaxRows Value="{$dataPgMaxRows}"/>
+              <StartAtRow Value="{$dataPaginateStart}"/>
+            </criteria>
+          </REQUEST>
+          <FOR_EACH SelectList="$GrpVar/*" CurrentElement="currelem">
+            <TO_DOCVAR AssignToVar="tempappendvar">
+              <root>
+                <abc>
+                  <GroupId Value="{$currelem/GrpId/@Value}"/>
+                  <Groupdesc Value="{$currelem/GrpDesc/@Value}"/>
+                  <GroupStatus Value="{$currelem/GrpStatus/@Value}"/>
+                </abc>
+              </root>
+            </TO_DOCVAR>
+            <APPEND_CHILDREN DocVar="pglFormInput" FromDocVar="tempappendvar"/>
+          </FOR_EACH>
+          <!--  </ELSE>
+  </IF_TEST>-->
+          <TO_DOCVAR AssignToVar="tempvars">
+            <fieldnames>
+              <FIELD_NAME Value="{$FIELD_NAME}"/>
+              <ROW_ID_NAME Value="{$ROW_ID_NAME}"/>
+              <ROW_ID_NAME_1 Value="{$ROW_ID_NAME_1}"/>
+              <ROW_ID_NAME_2 Value="{$ROW_ID_NAME_2}"/>
+              <ROW_ID_NAME_3 Value="{$ROW_ID_NAME_3}"/>
+              <prevselected Value="{$prevselected}"/>
+              <SELECT Value="{$selectoption}"/>
+            </fieldnames>
+          </TO_DOCVAR>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$tempvars"/>
+            <TotalRowCount Value="{$GrpVar/@TotalRowCount}"/>
+            <MaxRows Value="{$dataPgMaxRows/@Value}"/>
+            <StartAtRow Value="{$dataPaginateStart/@Value}"/>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='Search'">
+            <THEN>
+              <SET Var="groupidentification" FromValue="{$thisParam/groupidentification/@Value}"/>
+              <SET Var="groupdescription" FromValue="{$thisParam/groupdescription/@Value}"/>
+              <SET Var="groupstatus" FromValue="{$thisParam/groupstatus/@Value}"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='button'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save_Return'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="select product interchangebility group" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Search'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="select product interchangebility group" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done4" Description=""/>
+          <next_node Name="select product interchangebility group" Description=""/>
+          <next_node Name="select product interchangebility group" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="132,173" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <done4 location="469,161" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done4" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done4>
+      <mgcnode Name="select product interchangebility group" location="296,172" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="select product interchangebility group" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="164,195" endpoint="296,195" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="261,193,4,4" ctrlRect2="195,193,4,4"/>
+      </start2>
+      <mgcnode Name="select product interchangebility group">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="304,218" endpoint="312,218" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="302,291,4,4" ctrlRect2="294,302,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="304,172" endpoint="312,172" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="302,95,4,4" ctrlRect2="310,95,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="328,183" endpoint="469,183" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="431,181,4,4" ctrlRect2="361,181,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="328,205" endpoint="328,195" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="401,203,4,4" ctrlRect2="427,111,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="304,172" endpoint="312,172" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="302,95,4,4" ctrlRect2="164,77,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="10" textAttrsKey0="FIELD_NAME : string" textAttrsKey1="ROW_ID_NAME : string" textAttrsKey2="ROW_ID_NAME_1 : string" textAttrsKey3="ROW_ID_NAME_2 : string" textAttrsKey4="ROW_ID_NAME_3 : string" textAttrsKey5="groupdescription : string" textAttrsKey6="groupidentification : string" textAttrsKey7="groupstatus : string" textAttrsKey8="prevselected : string" textAttrsKey9="selectoption : string">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="FIELD_NAME" Type="string" Comment=""/>
+        <variable Name="ROW_ID_NAME" Type="string" Comment=""/>
+        <variable Name="ROW_ID_NAME_1" Type="string" Comment=""/>
+        <variable Name="ROW_ID_NAME_2" Type="string" Comment=""/>
+        <variable Name="ROW_ID_NAME_3" Type="string" Comment=""/>
+        <variable Name="selectoption" Type="string" Comment=""/>
+        <variable Name="groupidentification" Type="string" Comment=""/>
+        <variable Name="groupstatus" Type="string" Comment=""/>
+        <variable Name="groupdescription" Type="string" Comment=""/>
+        <variable Name="prevselected" Type="string" Comment=""/>
+        <!--<variable Name="selectoption" Type="string" Comment=""/>-->
+        <!-- Fix for not showing Blocked Records in the Popup Result Grid Venkat -->
+        <variable Name="ManageSts" Type="string" Comment=""/>
+        <!-- Fix for not showing Blocked Records in the Popup Result Grid Venkat -->
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

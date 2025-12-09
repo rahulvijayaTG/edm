@@ -1,0 +1,148 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="wfIPLocParamShowHistory.pgl">
+  <ui:container id="SearchContainer" displayText="IP Location Parameter History">
+    <ui:step id="searchStep">
+      <ui:search id="srchLocParams" exportSearch="false" saveSearch="false" collapsable="true" displayText="Search">
+        <ui:field-group columns="2" id="fieldGroups">
+          <ui:field-group id="leftFields">
+            <ui:dropdown displayText="Segment" name="STATE_ID" selectAll="true" optionSrc="$root/ORDER_STATES/*">
+              <ui:option id="480003800" value="480003800, Quaker Oats Foods" />
+              <ui:option id="480004800" value="480004800, Gatorade" />
+              <ui:option id="480005800" value="480005800, Tropicana" />
+            </ui:dropdown>
+            <workflow>
+              <nodes>
+                <ui_form2 Name="wfIPLocParamShowHistory" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE" Template="wfIPLocParamShowHistory.pgl">
+                  <pre_actions>
+                    <action>
+                      <SET Var="currDate" FromValue="{date()}" />
+                      <SET Var="fromDate" FromValue="{incrDate($currDate,duration((-90),0,0,0))}" />
+                      <TO_DOCVAR AssignToVar="pglFormInput">
+                        <root>
+                          <FROM_DATE Value="{$fromDate}" />
+                          <TO_DATE Value="{$currDate}" />
+                          <!--     <USER_ID Value="{$userId}"/>-->
+                          <line TotalRowCount="2" startRowCount="0">
+                            <ROW_DATA>
+                              <segNumber Value="480003800" />
+                              <segDescription Value="Quaker Oats Foods" />
+                              <LocNumber Value="" />
+                              <LocDesc Value="" />
+                              <LocType Value="" />
+                              <KeepInvFlag Value="Y" />
+                              <userComment Value="" />
+                              <modDate Value="10/01/2005" />
+                              <modBy Value="kkuo" />
+                            </ROW_DATA>
+                            <ROW_DATA>
+                              <segNumber Value="480004800" />
+                              <segDescription Value="Gatrode" />
+                              <LocNumber Value="" />
+                              <LocDesc Value="" />
+                              <LocType Value="" />
+                              <KeepInvFlag Value="N" />
+                              <userComment Value="" />
+                              <modDate Value="11/15/2005" />
+                              <modBy Value="kkuo" />
+                            </ROW_DATA>
+                          </line>
+                        </root>
+                      </TO_DOCVAR>
+                    </action>
+                  </pre_actions>
+                  <if_cond Value="$userAction ='search_button'">
+                    <next_nodes OutputVar="{outputXml,xml}" />
+                  </if_cond>
+                  <else_if_cond Value="$userAction ='return'">
+                    <next_nodes OutputVar="{outputXml,xml}">
+                      <next_node Name="wfIPLocParamSearch" Description="" />
+                    </next_nodes>
+                  </else_if_cond>
+                  <else_if_cond Value="$userAction ='selectSegment'">
+                    <next_nodes OutputVar="{outputXml,xml}">
+                      <next_node Name="search Segment" Description="" />
+                    </next_nodes>
+                  </else_if_cond>
+                  <else_if_cond Value="true()">
+                    <next_nodes OutputVar="{outputXml,xml}" />
+                  </else_if_cond>
+                </ui_form2>
+              </nodes>
+              <mgcview>
+                <mgcnodes>
+                  <wfIPLocParamShowHistory location="216,400" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+                    <textProps text="wfIPLocParamShowHistory" font="Verdana,0,9" textColor="186,12,12" />
+                    <iconProps iconfile="x1age80.gif" location="0,0" />
+                  </wfIPLocParamShowHistory>
+                </mgcnodes>
+                <mgcconnectors>
+                  <wfIPLocParamShowHistory>
+                    <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="232,400" endpoint="215,193" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="230,244,4,4" ctrlRect2="213,347,4,4" textRect="209,293,29,8">
+                      <textProps text="return" font="Verdana,0,9" />
+                    </nextNodeView>
+                    <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="232,400" endpoint="426,250" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="230,286,4,4" ctrlRect2="278,248,4,4" textRect="219,265,75,9">
+                      <textProps text="selectSegment" font="Verdana,0,9" />
+                    </nextNodeView>
+                  </wfIPLocParamShowHistory>
+                </mgcconnectors>
+                <mgctexts />
+              </mgcview>
+            </workflow>
+            <!-- <ui:entry-field displayText="Segment" id="SRCH_SEGMENT" name="SRCH_SEGMENT">
+              <ui:links>
+                <ui:link displayText="Select Segments" targetType="popup" targetName="orderPopup">
+                  <ui:image src="pop_up_window.gif"/>
+                  <ui:url page="view.x2ps">
+                    <FIELD_NAME select="'SRCH_SEGMENT'"/>
+                    <ENTITY_NAME select="'SRCH_SEGMENT'"/>
+                    <SELECTABLE select="'All'"/>
+                    <BUTTON_ID select="'selectSegment'"/>
+                  </ui:url>
+                </ui:link>
+              </ui:links>
+            </ui:entry-field>-->
+            <!--            <ui:display-field id="modDateRange" name="modDateRange" displayText="Modified Date Range (Inclusive)"/>-->
+          </ui:field-group>
+          <ui:field-group id="rightFields">
+            <!--<ui:entry-field id="LocNumber" name="LocNumber" displayText="Location"/>-->
+            <ui:entry-field displayText="Location" id="SRCH_LOC" name="SRCH_LOC">
+              <ui:links>
+                <ui:link displayText="Select Locations" targetType="popup" targetName="orderPopup">
+                  <ui:image src="pop_up_window.gif" />
+                  <ui:url page="view.x2ps">
+                    <FIELD_NAME select="'SRCH_LOC'" />
+                    <ENTITY_NAME select="'SRCH_LOC'" />
+                    <SELECTABLE select="'All'" />
+                    <BUTTON_ID select="'searchLocation'" />
+                  </ui:url>
+                </ui:link>
+              </ui:links>
+            </ui:entry-field>
+            <ui:entry-field id="LocDesc" name="LocDesc" displayText="Location Description" />
+            <ui:dropdown id="Location_Type" name="Location_Type" displayText="Location Type" preferredWidth="5" optionSrc="$root/LocationType/ID" selectAll="true" />
+            <ui:entry-field id="SRCH_MOD_BY" name="SRCH_MOD_BY" displayText="Modified By" rowSpan="2" />
+          </ui:field-group>
+        </ui:field-group>
+        <ui:field-group id="dateRange">
+          <ui:date-range displayText="Modified Date" name="SRCH_MOD_DATE" fromDate="{$root/FROM_DATE/@Value}" toDate="{$root/TO_DATE/@Value}" />
+        </ui:field-group>
+      </ui:search>
+      <ui:table id="bottomTable" displayText="IP Location Parameters" select="$root/line" rowSrc="ROW_DATA" rowId="segNumber" exportable="true">
+        <ui:field-group id="tableColumns">
+          <ui:display-field displayText="Segment" name="segNumber" id="segNumber" sortable="true" visibility="true" />
+          <ui:display-field displayText="Segment Description" id="segDescription" name="segDescription" sortable="true" />
+          <ui:display-field displayText="Location" name="LocNumber" id="LocNumber" sortable="true" />
+          <ui:display-field displayText="Location Description" name="LocDesc" id="LocDesc" sortable="true" />
+          <ui:display-field displayText="Location Type" name="LocType" id="LocType" sortable="true" />
+          <ui:display-field name="KeepInvFlag" id="KeepInvFlag" displayText="Keep Inventory Flag" />
+          <ui:display-field displayText="Comment" name="userComment" id="userComment" />
+          <ui:display-field displayText="Modified Date" name="modDate" id="modDate" sortable="true" />
+          <ui:display-field displayText="Modified By" name="modBy" id="modBy" sortable="true" />
+        </ui:field-group>
+        <ui:buttons id="tableButtons">
+          <ui:button displayText="Return" id="return" name="return" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

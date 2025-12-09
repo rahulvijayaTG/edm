@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands 
+             xmlns:x2="http://www.i2.com/x2" 
+             xmlns:core="http://www.i2.com/core" 
+             xmlns:xcore="http://www.i2.com/xcore" 
+             xmlns:xcore-db="http://www.i2.com/xcore-db" 
+             xmlns:xapl="http://www.i2.com/xapl" 
+             xmlns:web="http://www.i2.com/web" 
+             xmlns:docutil="http://www.i2.com/docutil" 
+             xmlns:util="http://www.i2.com/util" 
+             xmlns:FUNCTION="http://www.i2.com/FUNCTION" 
+             xmlns:REMOVE="http://www.i2.com/REMOVE" 
+             xmlns:xudl="http://www.i2.com/xudl" 
+             xmlns:cfg="http://www.i2.com/configurability" 
+             xmlns:perm="http://www.i2.com/permissibility" 
+             xmlns:omx="http://www.i2.com/omx" 
+             xmlns:identity="http://www.i2.com/identity" description="_">  
+	
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+
+	<x2:command public="yes" description="_" name="goBack">
+
+	  <web:display-page>
+	    <web:get-page name="user_domain_search_view">
+        <USER_ID Value="{$this/USER_ID/@Value}"/>
+        <ROLE_ID Value="{$this/ROLE_ID/@Value}"/>
+        <RET_PAGE Value="{$this/RET_PAGE[1]/@Value}"/>
+        <SUBPAGE Value="{$this/SUBPAGE/@Value}"/>
+        <PAGE Value="user_admin_domains"/>
+      </web:get-page>
+	  </web:display-page>
+
+	</x2:command>
+
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+
+	<x2:command public="yes" description="_" name="selectDomain">
+
+    <xcore:execute-method name="//UserSecurity/addEntitiesToDomain">
+      <USER_ID Value="{$this/USER_ID/@Value}"/>
+      <ROLE_ID Value="{$this/ROLE_ID/@Value}"/>
+      <DOMAIN_TYPE_ID Value="{$this/SUBPAGE/@Value}"/>
+      <xapl:for-each varName="id" select="{$this/ID}">
+        <ENTITY_ID Value="{$id/@Value}"/>
+      </xapl:for-each>
+    </xcore:execute-method>
+
+	  <web:display-page>
+	    <web:get-page name="user_domain_add_search_view">
+        <USER_ID Value="{$this/USER_ID/@Value}"/>
+        <ROLE_ID Value="{$this/ROLE_ID/@Value}"/>
+        <RET_PAGE Value="{$this/RET_PAGE[1]/@Value}"/>
+        <SUBPAGE Value="{$this/SUBPAGE/@Value}"/>
+        <PAGE Value="user_admin_domains_add"/>
+      </web:get-page>
+	  </web:display-page>
+
+	</x2:command>
+
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+
+    <x2:command public="yes" description="_" name="getSearchFormConfig">
+      
+      <xapl:return>
+        
+        <!-- Search Fields -->
+        <FORM  MethodName="//UserSecurity/getUnassignedDomainEntitiesForUser"  Name="search_form" Action="search.jsp" Method="GET" Target="appFrame">
+
+        
+        <FIELD 
+               Type="Text" 
+               DisplayText="Name" 
+               Name="FULL_NAME" 
+               Value="{$this/FULL_NAME/@Value}" 
+               Visibility="Simple"/>
+        
+          <!-- Always Put hidden at the end -->
+          <x2:execute command="omx.search.search:getHiddenFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>  
+          
+          <FIELD 
+             Type="Hidden" 
+             Name="ROLE_ID" 
+             Value="{$this/ROLE_ID[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+
+          <FIELD 
+             Type="Hidden" 
+             Name="USER_ID" 
+             Value="{$this/USER_ID[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+
+          <FIELD 
+             Type="Hidden" 
+             Name="SUBPAGE" 
+             Value="{$this/SUBPAGE[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+
+          <!-- Form Buttons -->
+          <BUTTONS>
+            <BUTTON 
+                    Name="search" 
+                    DisplayText="Search" 
+                    OnClick="javascript:onSearch()" 
+                    Emphasized="no"/>				
+          </BUTTONS>
+        </FORM>       
+      </xapl:return>
+      
+    </x2:command>
+    
+    
+    <!-- ********************************************************************** 
+    *********************************************************************** -->
+    <x2:command public="yes" description="_" name="getSearchReportConfig">
+			
+			<xapl:variable name="helpUrl">
+				<web:get-page name="select_help"/>
+			</xapl:variable>
+			
+      <xapl:return>
+        <REPORT Selectable="All" Scrollable="yes"  >
+          <HELP Url="{$helpUrl}"/>
+          <FIELDS>
+            
+            <FIELD 
+                   Name="FULL_NAME"  
+                   DisplayText="Name"
+			 Sortable="no"/>
+                        
+            <FIELD 
+                   Name="IN_DOMAIN"  
+                   DisplayText="Assigned"
+			 Sortable="no"/>
+                        
+            <!-- Hidden Fields -->
+            <x2:execute command="omx.report.report:getHiddenFields">
+              <x2:with-param name="this" select="$this"/>
+            </x2:execute> 
+            
+          <FIELD 
+             Type="Hidden" 
+             Name="ROLE_ID" 
+             Value="{$this/ROLE_ID[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+
+          <FIELD 
+             Type="Hidden" 
+             Name="USER_ID" 
+             Value="{$this/USER_ID[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+
+          <FIELD 
+             Type="Hidden" 
+             Name="SUBPAGE" 
+             Value="{$this/SUBPAGE[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+
+          </FIELDS>   
+        </REPORT>
+      </xapl:return>
+    </x2:command>
+    
+      
+    <!-- ********************************************************************** 
+  *********************************************************************** -->
+  
+  <x2:command public="yes" description="_" name="getReportData">
+    <x2:param name="pForm"/>
+    <x2:param name="pIds"/>
+
+	<xapl:variable name="data">
+          <!-- Get Data -->
+          <xcore:execute-method name="{$pForm/@MethodName}" StartAtRow="{$pForm/FIELD[@Name = 'START_COUNT']/@Value}" MaxRows="{$pForm/FIELD[@Name = 'MAX_ROWS']/@Value}" ReturnRowCount="yes" entireResponse="true">
+            
+            <USER_ID Value="{$pForm/FIELD[@Name = 'USER_ID']/@Value}"/>
+            <ROLE_ID Value="{$pForm/FIELD[@Name = 'ROLE_ID']/@Value}"/>
+            <DOMAIN_TYPE_ID Value="{$pForm/FIELD[@Name = 'SUBPAGE']/@Value}"/>
+
+            <!-- TODO :Genarate the FILTERS Automatically -->
+            
+            <FILTER Name="FULL_NAME">
+              <xcore:search-by property="FULL_NAME" value="{$pForm/FIELD[@Name = 'FULL_NAME']/@Value}"/>
+            </FILTER>
+			
+          </xcore:execute-method>
+    </xapl:variable>
+
+    <!-- Add the total record count  -->
+    <docutil:add select="$data/RESPONSE">
+     <TOTAL_RECORD_COUNT Value="{$data/RESPONSE/@TotalRowCount}"/>
+     <START_AT_ROW Value ="{$this/START_COUNT/@Value}"/>
+    </docutil:add>
+    <!-- Add the total record count  -->
+        <!-- TODO Do this dynamically only if timingStats are on. -->
+        <docutil:remove select="$data/TIMING_STATS"/>
+        <docutil:remove select="$data/RESPONSE/TIMING_STATS"/>
+    <xapl:return>
+      <xapl:value-of select="{$data/*}"/>
+    </xapl:return>
+    
+ </x2:command>
+
+  
+</x2:commands>
+

@@ -1,0 +1,37 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="iscpRPTopLevelCopy.pgl">
+  <ui:table id="bottomTable" displayText="" rowSrc="$root/ENGINE_LIST/ENGINE" postRowIdAs="segNO" collapsable="false" scrollable="true">
+    <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" anyFieldIsRequired="true" />
+    <ui:field-group>
+      <ui:dropdown id="EngineIdentification" name="EngineIdentification" displayText="Engine" selectOne="true" optionSrc="$root/Engine/ID" value="{$root/ENGINE_LIST/ENGINE/EngineId/@Value}" required="true" />
+      <ui:dropdown id="SegmentIdentification" name="SegmentIdentification" displayText="Segment  Identification" selectOne="true" optionSrc="$root/Segment/ID" value="{$root/ENGINE_LIST/ENGINE/SegmentIdentification/@Value}" required="true" />
+      <ui:entry-field displayText="Location Number" name="LocationIdentificationValue" id="LocationIdentificationValue" required="true">
+        <ui:links>
+          <ui:link displayText="Select Locations" onClick="javascript:selectlocation()">
+            <ui:image src="pop_up_window.gif" />
+          </ui:link>
+        </ui:links>
+      </ui:entry-field>
+      <ui:dropdown id="Enterprise" name="Enterprise" displayText="Enterprise" optionSrc="$root/Enterprise/ID" value="{$root/ENGINE_LIST/ENGINE/Enterprise/@Value}" />
+      <ui:dropdown id="InstanceId" name="InstanceId" displayText="Instance ID" optionSrc="$root/Instance/ID" value="{$root/ENGINE_LIST/ENGINE/InstanceId/@Value}" />
+      <ui:hidden-field id="EngineIdBackEnd" name="EngineIdBackEnd" />
+      <ui:hidden-field id="SourceSystemMnemonicValue" name="SourceSystemMnemonicValue" />
+      <!-- <ui:entry-field id="comment" name="comment" displayText="Comment"/>-->
+      <!-- <ui:display-field id="LAST_MODIFIED_DATE" name="LAST_MODIFIED_DATE" displayText="Date Modified"/>
+          <ui:display-field id="ModifiedBy" name="ModifiedBy" displayText="Modified By"/>-->
+    </ui:field-group>
+    <ui:buttons id="btnGrp">
+      <!-- RIC: 240988 Praneeth - Cancel button wording changes request - Start -->
+      <ui:button id="Cancel" displayText="Back to Search" emphasized="true" validate="false" />
+      <!-- RIC: 240988 Praneeth - Cancel button wording changes request - End -->
+      <ui:button id="Save" displayText="Save" emphasized="true" validate="true" />
+    </ui:buttons>
+  </ui:table>
+  <ui:script>function selectlocation(){
+		var LocationIdentificationValue=document.form.LocationIdentificationValue.value;
+    
+			window.open('view.x2ps?SERVICE_NAME=edmuiservice&amp;START_WORKFLOW=wfTLSelectLocation&amp;FIELD_NAME=LocationIdentificationValue&amp;SELECTABLE=All&amp;POPUP=true&amp;SRCH_LOC_ID='+LocationIdentificationValue,null,'height=480,width=740,screenX=400,screenY=400,top=200,left=250,toolbar=yes,menubar=no');
+     
+    
+    }</ui:script>
+</ui:page-group>
+

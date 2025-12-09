@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="45" ShowInBreadCrumbs="true" Version="1.0" Name="wfRPCopyTopLevelParam" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables/>
+  <nodes>
+    <start Name="start2">
+      <actions>
+      </actions>
+      <next_nodes>
+        <next_node Name="Copy Record" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done3">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Copy Record" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="iscpRPTopLevelCopy.pgl">
+      <pre_actions>
+        <TO_DOCVAR AssignToVar="pglFormInput">
+          <SAMPLE_XML/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="xyz1">
+          <MYDOCUMENT>
+            <INPUT>
+              <TO_XML SelectList="$thisParam/PARAMETERS/*"/>
+            </INPUT>
+            <COLLATE_LIST Value="SELECTED_ENGINE">
+              <SelectedEngineSegCombo/>
+            </COLLATE_LIST>
+          </MYDOCUMENT>
+        </TO_DOCVAR>
+        <COLLATE_XML DocVar="xyz1" AssignToVar="selectedEngines"/>
+        <TO_DOCVAR AssignToVar="engineIdList">
+          <ENGINE_LIST/>
+        </TO_DOCVAR>
+        <SET Var="trackEngine" FromValue="0"/>
+        <FOR_EACH CurrentElement="Outerid" SelectList="$selectedEngines/SELECTED_ENGINE">
+          <FOR_EACH CurrentElement="Innerid" SelectList="$thisParam/RESPONSE/SEGMENT_DETAILS">
+            <IF_TEST Test="$Outerid/SelectedEngineSegCombo/@Value=$Innerid/EngineSegCombo/@Value">
+              <THEN>
+                <SET Var="trackEngine" FromValue="1"/>
+                <TO_DOCVAR AssignToVar="engine">
+                  <ENGINE>
+                    <EngineId Value="{$Innerid/EngineId/@Value}"/>
+                    <LocationIdentificationValue Value="{$Innerid/LocationIdentificationValue/@Value}"/>
+                    <SegmentIdentification Value="{$Innerid/SegmentIdentification/@Value}"/>
+                    <Enterprise Value="{$Innerid/Enterprise/@Value}"/>
+                    <InstanceId Value="{$Innerid/InstanceId/@Value}"/>
+                    <EngineIdBackEnd Value="{$Innerid/EngineIdBackEnd/@Value}"/>
+                    <SourceSystemMnemonicValue Value="{$Innerid/SourceSystemMnemonicValue/@Value}"/>
+                  </ENGINE>
+                </TO_DOCVAR>
+                <APPEND_TO_XML DocVar="engineIdList">
+                  <TO_XML Select="$engine"/>
+                </APPEND_TO_XML>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+        </FOR_EACH>
+        <IF_TEST Test="$trackEngine/@Value=1">
+          <THEN>
+            <APPEND_TO_XML DocVar="pglFormInput">
+              <TO_XML Select="$engineIdList"/>
+            </APPEND_TO_XML>
+          </THEN>
+          <ELSE>
+            <TO_DOCVAR AssignToVar="dummytoRenderTable">
+              <ENGINE_LIST>
+                <ENGINE/>
+              </ENGINE_LIST>
+            </TO_DOCVAR>
+            <APPEND_TO_XML DocVar="pglFormInput">
+              <TO_XML Select="$dummytoRenderTable"/>
+            </APPEND_TO_XML>
+          </ELSE>
+        </IF_TEST>
+        <REQUEST AssignToVar="SEGMENTLIST" Name="getSegments" ServiceName="PEDM_MASTER">
+        </REQUEST>
+        <TO_DOCVAR AssignToVar="segmentlist">
+          <Segment>
+          </Segment>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$SEGMENTLIST/P_PartyIdentification" CurrentElement="id">
+          <TO_DOCVAR AssignToVar="seg">
+            <ID Id="{$id/PartyIdentificationValue/@Value}" Value="{concat($id/PartyIdentificationValue/@Value,'-',$id/PartyDescription/@Value)}"/>
+          </TO_DOCVAR>
+          <APPEND_TO_XML DocVar="segmentlist">
+            <TO_XML DocVar="seg"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <APPEND_TO_XML DocVar="pglFormInput">
+          <TO_XML Select="$segmentlist"/>
+        </APPEND_TO_XML>
+        <GET_DOC_SMART Name="P_AnalyticalModelSoftwareInstance" AssignToVar="ENGINELIST" HandleException="true" ServiceName="PEDM_MASTER">
+          <ORDER_BY Sort="Ascending">
+            <AnalyticalModelSoftwareInstanceMnemonicValue/>
+          </ORDER_BY>
+        </GET_DOC_SMART>
+        <TO_DOCVAR AssignToVar="enginelist">
+          <Engine>
+          </Engine>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="enterpriselist">
+          <Enterprise>
+          </Enterprise>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="instancenamelist">
+          <Instance>
+          </Instance>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$ENGINELIST/P_AnalyticalModelSoftwareInstance" CurrentElement="id">
+          <SET Var="matchesRes" FromValue="{nativeFunction('java.util.regex.Pattern', 'matches', '[0-9]*', $id/AnalyticalModelSoftwareInstanceMnemonicValue/@Value)}"/>
+          <IF_TEST Test="($matchesRes='true')">
+            <THEN>
+              <REQUEST AssignToVar="engineid" Name="getEngineIdInterfaceFormatVal" ServiceName="PEDM_MASTER">
+                <EngineId Value="{$id/AnalyticalModelSoftwareInstanceMnemonicValue/@Value}"/>
+              </REQUEST>
+              <TO_DOCVAR AssignToVar="eng">
+                <ID Value="{$engineid/EngineId/@Value}"/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="enginelist">
+                <TO_XML DocVar="eng"/>
+              </APPEND_TO_XML>
+              <TO_DOCVAR AssignToVar="enterprise">
+                <ID Value="{$id/AnalyticalModelSoftwareInstanceName/@Value}"/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="enterpriselist">
+                <TO_XML DocVar="enterprise"/>
+              </APPEND_TO_XML>
+              <TO_DOCVAR AssignToVar="instancename">
+                <ID Value="{$id/AnalyticalModelSoftwareInstanceDescription/@Value}"/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="instancenamelist">
+                <TO_XML DocVar="instancename"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <APPEND_TO_XML DocVar="pglFormInput">
+          <TO_XML Select="$enginelist"/>
+        </APPEND_TO_XML>
+        <APPEND_TO_XML DocVar="pglFormInput">
+          <TO_XML Select="$enterpriselist"/>
+        </APPEND_TO_XML>
+        <APPEND_TO_XML DocVar="pglFormInput">
+          <TO_XML Select="$instancenamelist"/>
+        </APPEND_TO_XML>
+        <IF_TEST Test="$userAction='Save' ">
+          <THEN>
+            <TO_DOCVAR AssignToVar="enteredSearchCriteria">
+              <Criteria>
+                <EngineIdentification Value="{$thisParam/EngineIdentification/@Value}"/>
+                <SegmentIdentification Value="{$thisParam/SegmentIdentification/@Value}"/>
+                <Enterprise Value="{$thisParam/Enterprise/@Value}"/>
+                <InstanceId Value="{$thisParam/InstanceId/@Value}"/>
+                <!--              <FROM_SRCH_MOD_DATE Value="$thisParam/FROM_SRCH_MOD_DATE"/>
+              <TO_SRCH_MOD_DATE Value="$thisParam/TO_SRCH_MOD_DATE"/>-->
+              </Criteria>
+            </TO_DOCVAR>
+            <APPEND_TO_XML DocVar="thisReturn">
+              <TO_XML SelectList="$enteredSearchCriteria/*"/>
+            </APPEND_TO_XML>
+            <APPEND_TO_XML DocVar="pglFormInput">
+              <TO_XML SelectList="$thisReturn/*"/>
+            </APPEND_TO_XML>
+            <TO_DOCVAR AssignToVar="record">
+              <RECORD>
+                <EngineIdentifier Value="{$thisParam/EngineIdentification/@Value}"/>
+                <BusinessOrganizationValue Value="{$thisParam/SegmentIdentification/@Value}"/>
+                <LocationValue Value="{$thisParam/LocationIdentificationValue/@Value}"/>
+                <EnterpriseValue Value="{$thisParam/Enterprise/@Value}"/>
+                <InstanceName Value="{$thisParam/InstanceId/@Value}"/>
+                <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal/@Value}"/>
+                <SourceKeyName Value="PRTY_ID|ANLYMDL_ID|PRTY_X_ANLYMDL_ROL_ID"/>
+                <SourceObjectMnemonicValue Value="P_M_PRTY_X_ANLYMDL"/>
+                <SourceKeyValue Value="default"/>
+                <ACTIONTOBDONE Value="INSERT"/>
+                <DOCUMENTNAME Value="E_TopLevelReplenishmentParameters"/>
+                <SYS_TYPE Value="INSERT"/>
+                <SOURCE Value="UI"/>
+                <FromSource Value="UI"/>
+              </RECORD>
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="massUpdateErrors">
+              <_ERRORS>
+              </_ERRORS>
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="massUpdateSuccess">
+              <SUCCESSMSG>
+              </SUCCESSMSG>
+            </TO_DOCVAR>
+            <GET_DOCUMENT Name="P_AnalyticalModelSoftwareInstance" AssignToVar="queryToplvl" HandleException="true" ServiceName="PEDM_MASTER" ReturnRowCount="True">
+              <AND>
+                <AnalyticalModelSoftwareInstanceMnemonicValue Value="{$thisParam/EngineIdBackEnd/@Value}"/>
+              </AND>
+              <QUERY_DOCUMENT_LINK Name="REL_2476_P_anlymdl">
+                <QUERY_DOCUMENT_LINK Name="REL_1135_P_prty_x_anlymdl">
+                  <SELECT>
+                    <ENTITY_STATE/>
+                    <SourceSystemMnemonicValue/>
+                  </SELECT>
+                  <AND>
+                    <ENTITY_STATE Value="DELETED"/>
+                  </AND>
+                  <QUERY_DOCUMENT_LINK Name="REL_1134">
+                    <QUERY_DOCUMENT_LINK Name="REL_844_P_prty_idn">
+                      <PartyIdentificationValue Value="{$thisParam/SegmentIdentification/@Value}"/>
+                    </QUERY_DOCUMENT_LINK>
+                  </QUERY_DOCUMENT_LINK>
+                  <QUERY_DOCUMENT_LINK Name="REL_90001">
+                    <QUERY_DOCUMENT_LINK Name="REL_863_P_loc_idn">
+                      <LocationIdentificationValue Value="{$thisParam/LocationIdentificationValue/@Value}"/>
+                    </QUERY_DOCUMENT_LINK>
+                  </QUERY_DOCUMENT_LINK>
+                </QUERY_DOCUMENT_LINK>
+              </QUERY_DOCUMENT_LINK>
+            </GET_DOCUMENT>
+            <IF_TEST Test="($queryToplvl/@TotalRowCount =0 and  $queryToplvl/P_AnalyticalModelSoftwareInstance/ENTITY_STATE/@Value!='DELETED')">
+              <THEN>
+                <REQUEST AssignToVar="thisReturn" Name="createRPTopLevelParam" ServiceName="BCM_MASTER" HandleException="true">
+                  <TO_XML SelectList="$record/*"/>
+                </REQUEST>
+                <IF_TEST Test="($thisReturn/_RESULT/@Value='SEVERE_ERROR')">
+                  <THEN>
+                    <SET Var="tp" FromValue="0"/>
+                    <SET Var="tweakedErrMsg" FromValue="{concat($thisReturn/_RESULT/_ERROR/@Value,' For ',' Segment:  ',$record/BusinessOrganizationValue/@Value,',',' Location:',$record/LocationValue/@Value,'  and Engine Id:  ',$record/EngineIdentifier/@Value)}"/>
+                    <TO_DOCVAR AssignToVar="error">
+                      <_ERROR Value="{$tweakedErrMsg/@Value}"/>
+                    </TO_DOCVAR>
+                    <APPEND_TO_XML DocVar="massUpdateErrors">
+                      <TO_XML Select="$error"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="success">
+                      <MSG Value="Records Successfully Created"/>
+                    </TO_DOCVAR>
+                    <APPEND_TO_XML DocVar="massUpdateSuccess">
+                      <TO_XML Select="$success"/>
+                    </APPEND_TO_XML>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+              <ELSE>
+                <TO_DOCVAR AssignToVar="record">
+                  <RECORD>
+                    <DOCUMENT_CONTEXT>
+                      <EngineIdentifier Value="{$thisParam/EngineIdentification/@Value}"/>
+                      <BusinessOrganizationValue Value="{$thisParam/SegmentIdentification/@Value}"/>
+                      <LocationValue Value="{$thisParam/LocationIdentificationValue/@Value}"/>
+                      <!--   <SourceSystemMnemonicValue Value="{$queryToplvl/P_AnalyticalModelSoftwareInstance/SourceSystemMnemonicValue/@Value}"/>-->
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <EnterpriseValue Value="{$thisParam/Enterprise/@Value}"/>
+                      <InstanceName Value="{$thisParam/InstanceId/@Value}"/>
+                      <SourceObjectMnemonicValue Value="default"/>
+                      <SourceKeyName Value="default"/>
+                      <SYS_TYPE Value="ACTIVATE"/>
+                      <SOURCE Value="UI"/>
+                      <FromSource Value="UI"/>
+                    </UPDATE_PROPERTIES>
+                    <ACTIONTOBDONE Value="ACTIVATE"/>
+                    <DOCUMENTNAME Value="E_TopLevelReplenishmentParameters"/>
+                    <FromActivate Value="YES"/>
+                  </RECORD>
+                </TO_DOCVAR>
+                <REQUEST AssignToVar="thisReturn" Name="updateRPTopLevelParam" ServiceName="BCM_MASTER" HandleException="true">
+                  <TO_XML SelectList="$record/*"/>
+                </REQUEST>
+                <IF_TEST Test="($thisReturn/_RESULT/@Value='SEVERE_ERROR')">
+                  <THEN>
+                    <SET Var="tp" FromValue="0"/>
+                    <SET Var="tweakedErrMsg" FromValue="{concat($thisReturn/_RESULT/_ERROR/@Value,' For ',' Segment:  ',$record/DOCUMENT_CONTEXT/BusinessOrganizationValue/@Value,',', ' Location:',$record/DOCUMENT_CONTEXT/LocationValue/@Value,'  and Engine Id:  ',$record/DOCUMENT_CONTEXT/EngineIdentifier/@Value)}"/>
+                    <TO_DOCVAR AssignToVar="error">
+                      <_ERROR Value="{$tweakedErrMsg/@Value}"/>
+                    </TO_DOCVAR>
+                    <APPEND_TO_XML DocVar="massUpdateErrors">
+                      <TO_XML Select="$error"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="success">
+                      <MSG Value="Records Successfully Created"/>
+                    </TO_DOCVAR>
+                    <APPEND_TO_XML DocVar="massUpdateSuccess">
+                      <TO_XML Select="$success"/>
+                    </APPEND_TO_XML>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+            <!--<REQUEST AssignToVar="thisReturn" Name="createRPTopLevelParamsinPEDMandOutBound" ServiceName="BCM_MASTER" HandleException="true">
+              <TO_XML SelectList="$record/*"/>
+            </REQUEST>
+            <IF_TEST Test="($thisReturn/_RESULT/@Value='SEVERE_ERROR')">
+              <THEN>
+                <SET Var="tp" FromValue="0"/>
+                <SET Var="tweakedErrMsg" FromValue="{concat($thisReturn/_RESULT/_ERROR/@Value,' For ',' Segment:  ',$record/SegmentIdentification/@Value,'  and Engine Id:  ',$record/EngineIdentification/@Value)}"/>
+                <TO_DOCVAR AssignToVar="error">
+                  <_ERROR Value="{$tweakedErrMsg/@Value}"/>
+                </TO_DOCVAR>
+                <APPEND_TO_XML DocVar="massUpdateErrors">
+                  <TO_XML Select="$error"/>
+                </APPEND_TO_XML>
+              </THEN>
+              <ELSE>
+                <TO_DOCVAR AssignToVar="success">
+                  <MSG Value="Records Successfully Created"/>
+                </TO_DOCVAR>
+                <APPEND_TO_XML DocVar="massUpdateSuccess">
+                  <TO_XML Select="$success"/>
+                </APPEND_TO_XML>
+              </ELSE>
+            </IF_TEST>-->
+            <APPEND_TO_XML DocVar="pglFormInput">
+              <TO_XML Select="$massUpdateErrors"/>
+            </APPEND_TO_XML>
+            <APPEND_TO_XML DocVar="pglFormInput">
+              <TO_XML Select="$massUpdateSuccess"/>
+            </APPEND_TO_XML>
+          </THEN>
+        </IF_TEST>
+      </pre_actions>
+      <if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Top Level Search" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Copy Record" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done3" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <sub_workflow Name="Top Level Search" InputVar="{NodeInXml,xml}" Workflow="wfRPTopLevelParams">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{NodeOutXml,xml}"/>
+      <input>
+      </input>
+    </sub_workflow>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="117,123" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <done3 location="513,145" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done3" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done3>
+      <mgcnode Name="Copy Record" location="287,146" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Copy Record" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Top Level Search" location="539,48" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Top Level Search" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="149,145" endpoint="287,169" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="250,143,4,4" ctrlRect2="181,167,4,4"/>
+      </start2>
+      <mgcnode Name="Copy Record">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="319,169" endpoint="539,71" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="482,167,4,4" ctrlRect2="372,69,4,4" textRect="369,116,120,9">
+          <textProps text="[$userAction ='Cancel']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="303,146" endpoint="303,146" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="301,69,4,4" ctrlRect2="378,100,4,4" textRect="286,82,110,9">
+          <textProps text="[$userAction ='Save']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="319,169" endpoint="513,167" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="462,167,4,4" ctrlRect2="365,165,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="0">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables/>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

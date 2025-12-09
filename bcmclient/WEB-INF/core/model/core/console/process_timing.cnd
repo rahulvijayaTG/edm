@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" 
+xmlns:xcore="http://www.i2.com/xcore" 
+xmlns:xcore-db="http://www.i2.com/xcore-db" 
+xmlns:xapl="http://www.i2.com/xapl" 
+xmlns:web="http://www.i2.com/web"
+xmlns:docutil="http://www.i2.com/docutil" 
+xmlns:util="http://www.i2.com/util" 
+xmlns:i18n="http://www.i2.com/i18n" description="_">  
+
+  <x2:command name="init" public="yes" description="_">
+    <x2:execute command="core.console.process_timing:defineCore"/>
+  </x2:command>
+  <!-- ********************************************************************** 
+     *********************************************************************** -->
+  <x2:command public="yes" description="_" name="defineCore">
+    <!-- Login -->
+    <web:define-page name="processTimings" url="/core/console/process_timing.jsp"/>
+    <web:define-page name="core_console_process_timing" url="/core/console/process_timing.jsp"/>
+    <web:define-page name="core_console_process_timing_summary" url="/core/console/process_timing_summary.jsp"/>
+  </x2:command>
+    
+  <x2:command name="getTimings" public="yes" description="Gets latest timing values from ProcessTimer.">
+    <xapl:variable name="timings">
+      <util:get-timings/>
+    </xapl:variable>
+    <xapl:return>
+      <xapl:value-of select="$timings"/>
+    </xapl:return>
+  </x2:command>
+
+  <x2:command name="resetTimers" public="yes" description="Gets latest timing values from ProcessTimer.">
+    <util:clear-timer/>
+    <web:display-page>
+      <web:get-page name="processTimings"/>
+    </web:display-page>
+  </x2:command>
+
+  <x2:command name="goToProcessTimings" public="yes" description="Gets latest timing values from ProcessTimer.">
+    <web:display-page>
+      <web:get-page name="processTimings"/>
+    </web:display-page>
+  </x2:command>
+  
+    <x2:command name="summary" public="yes" description="">
+    <web:display-page>
+      <web:get-page name="core_console_process_timing_summary"/>
+    </web:display-page>
+  </x2:command>
+
+    <x2:command name="detail" public="yes" description="">
+    <web:display-page>
+      <web:get-page name="core_console_process_timing"/>
+    </web:display-page>
+  </x2:command>
+
+</x2:commands>

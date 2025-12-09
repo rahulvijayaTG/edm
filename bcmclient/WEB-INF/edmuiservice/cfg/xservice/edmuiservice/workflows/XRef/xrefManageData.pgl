@@ -1,0 +1,307 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:dynamic-pgl select="$root/MAPDETAILS/*" />
+  <ui:dynamic-pgl select="$root/MAPDATA/*" />
+  <ui:script language="JavaScript">var tableid='MapDataTable';
+    function on_showDetails()
+		{	
+			document.form.BUTTON_ID.value = 'SHOW_DETAILS';
+	   	var table = document.getElementById("MapDataTable_data");
+				if(table != null)
+			{
+    			for(var j=0; j &lt; table.rows[0].cells.length; j++)
+						{								
+    						if( table.rows[0].cells[j].childNodes[0] !=null &amp;&amp; table.rows[0].cells[j].childNodes[0].tagName =="TABLE" )
+									{
+											
+    								var childTable= table.rows[0].cells[j].childNodes[0];
+												for(var k=0;k&lt; childTable.rows[0].cells.length;k++)
+															{
+																			if(childTable.rows[0].cells[k].childNodes[0].tagName == "INPUT" || childTable.rows[0].cells[k].childNodes[0].tagName == "SELECT")
+																			{
+																					childTable.rows[0].cells[k].childNodes[0].value="";
+																			}
+															}
+										}
+							}
+							var checkboxes;
+	
+				      if(table.document)
+				      checkboxes = table.document.getElementsByTagName("INPUT");
+				    else
+				      checkboxes = document.getElementsByTagName("INPUT");
+				
+				    if (checkboxes != null)
+				    {
+					      var len = checkboxes.length;
+					      for(var i=0; i &lt; len; i++)
+					      {
+					
+					        if (checkboxes[i].id == tableid+"_rowselector" &amp;&amp; checkboxes[i].checked == true)
+					       checkboxes[i].checked=false;
+							}
+						}
+			}
+    	document.form.submit();
+    }
+		function on_Create()
+		{
+		  noSelectedRows = i2uiGetSelectedRowNums(tableid).length;
+    
+    if(noSelectedRows &lt; 1) 
+		 	{
+					core_alert('Please select first row to Create a new record');
+				  return;
+		 	}
+		  else
+    if(noSelectedRows &gt; 1)
+		  {
+		     core_alert('Please select only first row to Create a new record');
+				  return;
+		  }
+		  else
+		  {
+    
+    var chkdRow=document.getElementsByName('Selected_ID');
+		     for( j=0; j &lt;chkdRow.length;j++)
+				 {
+		        if(chkdRow[j].checked)
+					  { 
+		    		  if((chkdRow[j].value)!='-1')
+		          {
+		            core_alert('Please select only the first row to Create a new record');   
+		            return;
+		          }
+		       	         
+		        }
+         }
+    var dataId=document.getElementsByName('IfaceRcdId');
+		     if(isNaN(dataId[0].value) || Number(dataId[0].value)&lt;=0)
+				{
+					  alert('Record Id must be a valid number&gt;0');
+						return;
+				}
+       
+      document.form.BUTTON_ID.value = 'Create';
+  			 document.form.submit();
+    }
+		}
+		function on_Edit()
+		{
+		    noSelectedRows = i2uiGetSelectedRowNums(tableid).length;	
+				if(noSelectedRows &lt; 1) 
+				{
+					core_alert('Please select a record to modify');
+				  return;
+				}
+		    else
+				{
+		      var chkdRow=document.getElementsByName('Selected_ID');
+			     for( j=0; j &lt;chkdRow.length;j++)
+					 {
+			        if(chkdRow[j].checked)
+						  { 
+			    		  if((chkdRow[j].value)=='-1')
+			          {
+			            core_alert('Static row cannot be modified');   
+			            return;
+			          }
+			       	         
+			        }
+	         }
+						if(core_confirm('Do you want to modify  the selected Cross-Reference(s)') == 'yes') 
+					{
+						document.form.BUTTON_ID.value = 'Modify';
+	  				document.form.submit();
+	  			}
+					
+				}
+		}
+		function on_Delete() 
+		{
+		  noSelectedRows = i2uiGetSelectedRowNums(tableid).length;
+			if(noSelectedRows &lt; 1)
+			{
+				core_alert('Please select record(s) to delete');
+			  return;
+			}
+			else
+			{
+		    var chkdRow=document.getElementsByName('Selected_ID');
+		     for( j=0; j &lt;chkdRow.length;j++)
+				 {
+			        if(chkdRow[j].checked)
+						  { 
+			    		  if((chkdRow[j].value)=='-1')
+			          {
+		            core_alert('Static row cannot be deleted');   
+		            return;
+		          }
+		       	         
+		        }
+         }
+    		if(core_confirm('Do you want to delete the selected Cross-Reference(s)') == 'yes') 
+				{
+					document.form.BUTTON_ID.value = 'Delete';
+  				document.form.submit();
+  			}
+			}
+		}
+		function on_DeleteAll() 
+		{
+		   	if(core_confirm('You are about to delete all Cross Reference data for this map. Are you sure you want to proceed?') == 'yes') 
+				{
+					document.form.BUTTON_ID.value = 'DeleteAll';
+  				document.form.submit();
+  			}
+		}
+		function on_Copy()
+		{
+		    noSelectedRows = i2uiGetSelectedRowNums(tableid).length;	
+				if(noSelectedRows &lt; 1) 
+				{
+					core_alert('Please select a record to Copy');
+				  return;
+				}
+		    else
+				{ 
+						if(noSelectedRows &gt; 1)
+						{
+								core_alert('Only one record can be copied at a time');
+								return;
+						}
+						else
+						{
+							var chkdRow=document.getElementsByName('Selected_ID');
+						for( j=0; j &lt;chkdRow.length;j++)
+				 		{
+		  				if(chkdRow[j].checked)
+						  { 
+			    		  if((chkdRow[j].value)=='-1')
+			          {
+		            	core_alert('Static row cannot be copied');   
+		            	return;
+		          	}
+							}
+						}
+							document.form.BUTTON_ID.value = 'Copy';
+  				  	document.form.submit();
+						}
+				}
+		}
+	
+		   function clearfilter(tableid)
+				{
+				
+				var table = document.getElementById(tableid+"_data");
+				
+				for(var j=0;j&lt; table.rows[0].cells.length;j++)
+						{
+									if( table.rows[0].cells[j].childNodes[0] !=null &amp;&amp; table.rows[0].cells[j].childNodes[0].tagName =="TABLE" )
+									{
+												var childTable= table.rows[0].cells[j].childNodes[0];
+												for(var k=0;k&lt; childTable.rows[0].cells.length;k++)
+															{
+																			if(childTable.rows[0].cells[k].childNodes[0].tagName == "INPUT" || childTable.rows[0].cells[k].childNodes[0].tagName == "SELECT")
+																			{
+																					childTable.rows[0].cells[k].childNodes[0].value="";
+																			}
+															}
+										}
+						}
+						var checkboxes;
+	
+				      if(table.document)
+				      checkboxes = table.document.getElementsByTagName("INPUT");
+				    else
+				      checkboxes = document.getElementsByTagName("INPUT");
+				
+				    if (checkboxes != null)
+				    {
+					      var len = checkboxes.length;
+					      for(var i=0; i &lt; len; i++)
+					      {
+					
+					        if (checkboxes[i].id == tableid+"_rowselector" &amp;&amp; checkboxes[i].checked == true)
+					       checkboxes[i].checked=false;
+							}
+						}
+					 var bValidFilters = true;
+				  
+				  for (var i = 0; i&lt;document.form.elements.length; i++) 
+				  {
+				    var selectedElem = document.form.elements[i];
+				    if ((selectedElem.name.indexOf('FILTER_') &gt; -1)) 
+				    {
+				      if(!isValid_field(selectedElem.name, null))
+				      {
+				        bValidFilters = false;
+				        onResize();
+				        break;
+				      }
+				    }
+				  }
+				
+				  if (bValidFilters)
+				  {
+				    document.form.START_COUNT.value = 0;
+				    document.form.action = "view.x2ps?innerAction=Filter&amp;CLEAR_ID="+tableid;
+					  document.form.BUTTON_ID.value = 'SYS_RELOAD';
+					  document.form.submit();
+				  }
+}
+function apply_filters(tableId)
+{
+	var bValidFilters = true;
+
+  for (var i = 0; i&lt;document.form.elements.length; i++) 
+  {
+    var selectedElem = document.form.elements[i];
+    if ((selectedElem.name.indexOf('FILTER_') &gt; -1)) 
+    {
+      if(!isValid_field(selectedElem.name, null))
+      {
+        bValidFilters = false;
+        onResize();
+        break;
+      }
+    }
+  }
+
+  if (bValidFilters)
+  {
+    if ( tableId != null &amp;&amp; tableId != "" )
+    {
+      eval("document.form." + tableId + "_START_COUNT.value = 0;");
+    }
+    else
+    {
+      document.form.START_COUNT.value = 0;
+    } 
+		
+		if(tableId=='')
+		{ 
+		 tableId='xrefMaps';
+		}
+		var checkboxes;
+	var table = document.getElementById(tableId+"_data");
+	if(table.document)
+    checkboxes = table.document.getElementsByTagName("INPUT");
+  else
+    checkboxes = document.getElementsByTagName("INPUT");
+
+	  if (checkboxes != null)
+	  {
+	      var len = checkboxes.length;
+	      for(var i=0; i &lt; len; i++)
+	      {
+	        if (checkboxes[i].id == tableId+"_rowselector" &amp;&amp; checkboxes[i].checked == true)
+	       checkboxes[i].checked=false;
+			  }
+		}	
+    ui_submit_param("SYS_RELOAD","innerAction=Filter&amp;FILTER_ON="+tableId);
+  }
+}
+
+		function doNothing(){}</ui:script>
+</ui:page-group>
+

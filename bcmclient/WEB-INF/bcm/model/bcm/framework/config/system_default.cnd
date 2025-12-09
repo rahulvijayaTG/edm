@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:identity="http://www.i2.com/identity" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" description="_">
+    <!-- **********************************************************************
+        *********************************************************************** -->
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="setTableEditorSystemProperties">
+    <x2:param name="pDocument"/>
+    <xapl:print>
+      before x2 defaults
+      <xapl:value-of select="$pDocument"/>
+    </xapl:print>
+    <xapl:for-each varName="param" select="$x2config/table_editor_config/all_tables/parameters/*">
+
+      <xapl:variable name="paramName">
+        <xapl:value-of select="$param/@name"/>
+      </xapl:variable>
+      <xapl:variable name="paramValue">
+        <xapl:value-of select="$param/@value"/>
+      </xapl:variable>
+
+      <xapl:choose>
+        <xapl:when test="{count($pDocument/*[name() = $paramName]) = 0}">
+          <docutil:add select="{$pDocument}">
+            <docutil:element name="{$paramName}" Value="{$paramValue}"/>
+          </docutil:add>
+        </xapl:when>
+        <xapl:when test="{string-length($pDocument/*[name() = $paramName]/@Value) = 0}">
+          <docutil:set select="$pDocument/*[name() = $paramName]/@Value">
+            <xapl:value-of select="$paramValue"/>
+          </docutil:set>
+        </xapl:when>
+        <xapl:otherwise>
+          <!-- for DO_SEARCH param set the default only for first time load-->
+          <docutil:set select="$pDocument/*[name() != 'DO_SEARCH' and name() = $paramName]/@Value">
+            <xapl:value-of select="$paramValue"/>
+          </docutil:set>
+        </xapl:otherwise>
+      </xapl:choose>
+
+    </xapl:for-each>
+
+    <xapl:print>
+      after x2 defaults
+      <xapl:value-of select="$pDocument"/>
+    </xapl:print>
+
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="setQueryFormSystemProperties">
+    <x2:param name="pDocument"/>
+    <xapl:print>
+      before x2 defaults
+      <xapl:value-of select="$pDocument"/>
+    </xapl:print>
+    <xapl:for-each varName="param" select="$x2config/query_form_config/all_forms/parameters/*">
+
+      <xapl:variable name="paramName">
+        <xapl:value-of select="$param/@name"/>
+      </xapl:variable>
+      <xapl:variable name="paramValue">
+        <xapl:value-of select="$param/@value"/>
+      </xapl:variable>
+
+      <xapl:choose>
+        <xapl:when test="{count($pDocument/*[name() = $paramName]) = 0}">
+          <docutil:add select="{$pDocument}">
+            <docutil:element name="{$paramName}" Value="{$paramValue}"/>
+          </docutil:add>
+        </xapl:when>
+        <xapl:when test="{string-length($pDocument/*[name() = $paramName]/@Value) = 0}">
+          <docutil:set select="$pDocument/*[name() = $paramName]/@Value">
+            <xapl:value-of select="$paramValue"/>
+          </docutil:set>
+        </xapl:when>
+        <xapl:otherwise>
+          <docutil:set select="$pDocument/*[name() != 'DO_SEARCH' and name() = $paramName]/@Value">
+            <xapl:value-of select="$paramValue"/>
+          </docutil:set>
+        </xapl:otherwise>
+      </xapl:choose>
+
+    </xapl:for-each>
+
+    <xapl:print>
+      after x2 defaults
+      <xapl:value-of select="$pDocument"/>
+    </xapl:print>
+
+  </x2:command>
+    <!-- **********************************************************************
+        *********************************************************************** -->
+</x2:commands>

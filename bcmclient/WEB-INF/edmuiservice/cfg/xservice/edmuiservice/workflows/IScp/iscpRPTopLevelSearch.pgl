@@ -1,0 +1,172 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="iscpRPTopLevelSearch.pgl">
+  <ui:container id="container">
+    <ui:step id="top_container" displayText="">
+      <ui:search displayText="Search" exportSearch="false" saveSearch="false" collapsable="true">
+        <ui:validation id="tst" displayCondition="asdf" />
+        <ui:field-group id="fieldGroups" columns="2" rows="3" select="$root">
+          <ui:dropdown id="SRCH_SEGMENT" name="SRCH_SEGMENT" displayText="Segment" selectAll="true" optionSrc="$root/Segment/ID" />
+          <ui:dropdown id="SRCH_ENGINE" name="SRCH_ENGINE" displayText="Engine ID" selectAll="true" optionSrc="$root/Engine/ID" />
+          <ui:entry-field displayText="Location Description" name="LOCDESC" />
+          <ui:dropdown id="LOCTYPE" name="LOCTYPE" displayText="Location Type" selectAll="true" optionSrc="$root/LocTypList/*" />
+          <ui:entry-field displayText="Location Number" name="LOC_NUM" id="LOC_NUM">
+            <ui:links>
+              <ui:link displayText="Select Locations" onClick="javascript:selectlocation()">
+                <ui:image src="pop_up_window.gif" />
+                <!-- <ui:url page="view.x2ps">
+                <FIELD_NAME select="'LocationIdentificationValue'"/>
+                <SELECTABLE select="'All'"/>
+                <BUTTON_ID select="'selectLocation'"/>
+              </ui:url>-->
+              </ui:link>
+            </ui:links>
+          </ui:entry-field>
+          <!-- <ui:entry-field id="SRCH_MOD_BY" name="SRCH_MOD_BY" displayText="Modified By" rowSpan="2"/>-->
+          <ui:entry-field name="SRCH_MOD_BY" displayText="Modified By">
+            <ui:links>
+              <ui:link displayText="Select Users" targetType="popup" targetName="catalogPopup">
+                <ui:url page="view.x2ps">
+                  <SELECTABLE select="'All'" />
+                  <BUTTON_ID select="'Select_User'" />
+                  <FIELD_NAME select="'SRCH_MOD_BY'" />
+                </ui:url>
+                <ui:image src="pop_up_window.gif" />
+              </ui:link>
+            </ui:links>
+          </ui:entry-field>
+        </ui:field-group>
+        <ui:field-group id="dateRange" select="$root">
+          <!--          <ui:date-range displayText="Modified Date" name="SRCH_MOD_DATE" fromDate="$root/FROM_DATE/@Value" toDate="$root/TO_DATE/@Value"/>-->
+          <ui:date-range name="SRCH_MOD_DATE" displayText="Modified Date Range" fromDate="{FROM_SRCH_MOD_DATE/@Value}" toDate="{TO_SRCH_MOD_DATE/@Value}" />
+        </ui:field-group>
+      </ui:search>
+    </ui:step>
+  </ui:container>
+  <ui:container id="bottomContainer" displayText="">
+    <ui:step id="c1" displayText="" editable="true">
+      <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" anyFieldIsRequired="false" id="searchres" />
+      <ui:table displayText="Search Results" rowSrc="$root/RESPONSE/SEGMENT_DETAILS " collapsable="true" totalRowCount="$root/ROWCOUNT/@Value" startAtRow="$root/STARTROWCOUNT/@Value" maxRows="10" selectable="All" rowId="EngineSegCombo" exportable="true" scrollable="true" postRowIdAs="SelectedEngineSegCombo" doPaging="true" id="TopLevelDetails" rememberSelections="true">
+        <ui:field-group>
+          <ui:entry-field editable="false" displayText="Engine ID" name="EngineId" sortable="true" />
+          <ui:entry-field editable="false" displayText="Segment Name" name="SegmentIdentification" id="SegmentIdentification" sortable="true" />
+          <ui:entry-field editable="false" displayText="Segment Description" name="SegmentDescription" id="SegmentDescription" />
+          <ui:entry-field name="LocationIdentificationValue" id="LocationIdentificationValue" displayText="Location Number" editable="false" sortable="true" />
+          <ui:entry-field name="LocationType" id="LocationType" displayText="Location Type" sortable="false" editable="false" />
+          <ui:entry-field name="LocationDescription" id="LocationDescription" displayText="Location Description" sortable="false" editable="false" />
+          <ui:hidden-field name="EngineSegCombo" />
+          <ui:hidden-field name="EngineIdHidden" />
+          <ui:hidden-field name="EngineIdAsRowId" />
+          <ui:hidden-field name="EngineIdBackEnd" />
+          <ui:choose-field name="Enterprise" displayText="Enterprise">
+            <ui:when test="(BASETAG/@Value='true') ">
+              <ui:entry-field name="Enterprise" editable="false" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:entry-field name="Enterprise" editable="false" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:choose-field name="InstanceId" displayText="Instance ID">
+            <ui:when test="(BASETAG/@Value='true') ">
+              <ui:entry-field name="InstanceId" editable="false" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:entry-field name="InstanceId" editable="false" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:entry-field id="ModifiedDate" name="ModifiedDate" displayText="Date Modified" sortable="true" dataType="Date" editable="false" />
+          <ui:entry-field id="ModifiedBy" name="ModifiedBy" displayText="Modified By" sortable="true" editable="false" />
+          <ui:textarea id="CommentValue" name="CommentValue" displayText="Comments" sortable="false" editable="false" readOnly="true" />
+          <ui:hidden-field name="SourceSystemMnemonicValue" id="SourceSystemMnemonicValue" />
+        </ui:field-group>
+        <ui:buttons id="tableButtons">
+          <ui:button displayText="Delete" id="Delete" name="Delete" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'Remove')}" onClick="javaScript:on_delete()" />
+          <ui:divider />
+          <ui:button displayText="Mass Update" id="MassUpdate" name="MassUpdate" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'Update')}" onClick="javaScript:checkMassupdate()" />
+          <ui:divider />
+          <ui:button displayText="Copy" id="copy" name="copy" enabledBySelections="true" validate="false" onClick="javaScript:checkCopy('TopLevelDetails')" displayCondition="{contains($root/AccessLevel/@Value,'Add')}" />
+          <ui:button displayText="Create" id="create" name="create" enabledBySelections="false" validate="false" displayCondition="{contains($root/AccessLevel/@Value,'Add')}" />
+          <ui:divider />
+          <!--         <ui:button displayText="Save" id="Save" name="Save" enabledBySelections="true"/>-->
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function checkCopy(tableid)
+		{
+
+		var table = document.getElementById(tableid+"_data");
+		var count=0,j;
+		var a=document.getElementsByName('SelectedEngineSegCombo');
+										//alert(a);
+		for( k=0; k &lt;a.length;k++)
+		{
+		
+		if(a[k].checked)
+		{
+		count++;
+		}
+		}
+
+		if(count&gt;=2){
+		core_alert('Copy One Record at a time');
+		}else{
+
+				 document.form.BUTTON_ID.value="copy";
+
+                document.form.submit();
+		}
+		}
+
+			function on_delete(){
+					var canSubmit='false';
+					var response = core_confirm('Are you sure you want to delete the selected record(s)?');
+
+					//if ( response == 'no' ) {
+					//	canSubmit = 'false';
+				//	} else {
+				//		canSubmit = 'true';
+				//	}
+		
+					if (response == 'yes') {
+								document.form.BUTTON_ID.value = 'Delete'; 
+							  document.form.submit();
+						}
+			else{
+							return;
+						}
+		}
+    <!--*********************Loc Popup js ******************-->
+    function selectlocation(){
+		var LocationIdentificationValue=document.form.LOC_NUM.value;
+		var locdesc= document.form.LOCDESC.value;
+		var loctype = document.form.LOCTYPE.value;
+		
+		window.open('view.x2ps?SERVICE_NAME=edmuiservice&amp;START_WORKFLOW=wfTLSelectLocation&amp;FIELD_NAME=LOC_NUM&amp;SELECTABLE=All&amp;POPUP=true&amp;SRCH_LOC_ID='+LocationIdentificationValue+'&amp;SRCH_LOC_TYPE='+loctype+'&amp;SRCH_LOC_DESC='+locdesc,null,'height=480,width=740,screenX=400,screenY=400,top=200,left=250,toolbar=yes,menubar=no');
+
+    }
+    
+    
+    function checkMassupdate()
+    		{
+    		if(document.form.TopLevelDetails_globalrowselector.checked){
+					  var decision=core_confirm("Do you want to update all records satisfying the current search criteria?");
+							if(decision=='yes')
+							{
+										document.form.BUTTON_ID.value = 'MassUpdateAll'; 
+										document.form.action = 'view.x2ps';
+										document.form.submit();  	
+					}else{
+					  				document.form.BUTTON_ID.value = 'MassUpdate'; 
+										document.form.action = 'view.x2ps';
+										document.form.submit();  	
+						}
+						}
+			else{
+										document.form.BUTTON_ID.value = 'MassUpdate'; 
+										document.form.action = 'view.x2ps';
+										document.form.submit();  
+			}
+			}
+  </ui:script>
+</ui:page-group>
+

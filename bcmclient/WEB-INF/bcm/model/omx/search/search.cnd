@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command name="init" public="yes" description="_">
+    <x2:execute command="omx.search.search:defineCore"/>
+  </x2:command>
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command name="defineCore" public="yes" description="_">
+    
+    <web:define-page name="search_page" url="/omx/search/search.jsp"/>
+    <web:define-page name="search_page_content" url="/omx/search/search_content.jsp"/>
+
+  </x2:command>
+
+  
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+    <xapl:print select="$this"/>
+    <x2:execute command = "core.search.search:setDefaults">
+      <x2:with-param name="this" select="$this"/>
+    </x2:execute>    
+    
+    <xapl:variable name="getTabs"><xapl:value-of select="concat($this/DIRECTORY/@Value,'.', 'pages',':getTabs')"/></xapl:variable>
+    <xapl:variable name="getHeader"><xapl:value-of select="concat($this/DIRECTORY/@Value,'.', 'pages',':getHeader')"/></xapl:variable>
+    <xapl:print>Header Command being called...<xapl:value-of select="$getHeader"/></xapl:print>
+
+    <xapl:variable name="searchLoadValue">
+    
+<!--
+      <xapl:if test="$this/PAGE_WINDOW_TYPE/@Value != 'POPUP' or   $this/SHOW_HEADER/@Value != 'false' or string-length($this/SHOW_HEADER/@Value) = 0">
+        <x2:execute command="core.search.search:getHeader">
+          <x2:with-param name="this" select="{$this}"/>
+        </x2:execute>
+     </xapl:if>
+-->
+      <x2:execute command="{$getHeader}">
+<!--
+        <x2:with-param name="pPage" select="$this/PAGE/@Value"/>
+        <x2:with-param name="pObjectType" select="$this/OBJECT_TYPE/@Value"/>
+-->
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+      <xapl:if test="string-length($this/ID/@Value) &gt; 0">
+        <ID Value="{$this/ID/@Value}"/>
+      </xapl:if>
+      <!-- Tabs -->  
+      <x2:execute command="{$getTabs}">
+        <x2:with-param name="pPage" select="$this/PAGE/@Value"/>
+        <x2:with-param name="pHide" select="$this/TABS_HIDE/@Value"/>
+        <x2:with-param name="pReturnLink" select="$this/RET_PAGE/@Value"/>
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+
+      <!-- Search Form/Report -->
+      <x2:execute command="core.search.search:getSearch">
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+
+      <!-- Links -->
+       <LINKS>
+        <x2:execute command="bcm.framework.common:getLinks">
+          <x2:with-param name="pPage" select="$this/PAGE/@Value"/>
+          <x2:with-param name="this" select="$this"/>
+          <x2:with-param name="pGetCurrentLink" select="'false'"/>
+        </x2:execute>
+      </LINKS>
+    </xapl:variable>
+    
+    <xapl:return><xapl:value-of select="$searchLoadValue"/></xapl:return>
+    
+  </x2:command>  
+  
+
+  
+  
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHiddenFields">
+    <xapl:return>
+      <!-- Always Put hidden at the end -->
+      <FIELD 
+             Type="Hidden" 
+             Name="DIRECTORY" 
+             Value="{$this/DIRECTORY[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+      
+      <FIELD 
+             Type="Hidden" 
+             Name="FILE" 
+             Value="{$this/FILE[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+      
+      <FIELD 
+             Type="Hidden" 
+             Name="DO_SEARCH" 
+             Value="{$this/DO_SEARCH[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+      
+      <FIELD 
+             Type="Hidden" 
+             Name="SEARCH_TYPE" 
+             Value="{$this/SEARCH_TYPE[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+      
+      <FIELD 
+             Type="Hidden" 
+             Name="SORT_BY" 
+             Value="{$this/SORT_BY[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+      
+      <FIELD 
+             Type="Hidden" 
+             Name="SORT_ORDER" 
+             Value="{$this/SORT_ORDER[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+      
+      <FIELD 
+             Type="Hidden" 
+             Name="START_COUNT" 
+             Value="{$this/START_COUNT[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+      
+      <FIELD 
+             Type="Hidden" 
+             Name="MAX_ROWS" 
+             Value="{$this/MAX_ROWS[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+      
+      <FIELD 
+             Type="Hidden" 
+             Name="DOC_TYPE" 
+             Value="{$this/DOC_TYPE[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+      
+      <FIELD 
+             Type="Hidden" 
+             Name="PAGE" 
+             Value="{$this/PAGE[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+      
+      <FIELD 
+             Type="Hidden" 
+             Name="OBJECT_TYPE" 
+             Value="{$this/OBJECT_TYPE[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+             
+       <FIELD 
+             Type="Hidden" 
+             Name="JSCRIPT" 
+             Value="{$this/JSCRIPT[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+      
+       <FIELD 
+             Type="Hidden" 
+             Name="SHOW_HEADER" 
+             Value="{$this/SHOW_HEADER[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+
+       <FIELD 
+             Type="Hidden" 
+             Name="RET_PAGE" 
+             Value="{$this/RET_PAGE[position() = 1]/@Value}" 
+             Visibility="Simple"/>
+             
+       <FIELD 
+              Type="Hidden" 
+              Name="ORDER_TYPE_ID" 
+              Value="{$this/ORDER_TYPE_ID[position() = 1]/@Value}" 
+              Visibility="Simple"/>
+
+	   <xapl:variable name="dateFormat"><identity:get-date-format format="common"/></xapl:variable>
+       
+	   <FIELD 
+              Type="Hidden" 
+              Name="DATE_FORMAT" 
+              Value="{$dateFormat}" 
+              Visibility="Simple"/>
+
+    </xapl:return>      
+    
+  </x2:command>
+  
+  <!-- ********************************************************************** 
+       *********************************************************************** -->
+    <x2:command public="yes" description="_" name="getRecordCount">
+      <x2:param name="directory" select="$this/DIRECTORY/@Value"/>
+      <x2:param name="file" select="$this/FILE/@Value"/>
+      <x2:param name="this" select="$this"/>
+    
+    <xapl:variable name="getSearchFormConfig"><xapl:value-of select="concat($directory,'.', $file,':getSearchFormConfig')"/></xapl:variable>
+    <xapl:variable name="getReportData"><xapl:value-of select="concat($directory,'.', $file,':getReportData')"/></xapl:variable>
+    
+    <!-- Get Form Config-->
+    <xapl:variable name="form">
+      <x2:execute command="{$getSearchFormConfig}">
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>  
+    </xapl:variable> 
+    
+    <!-- Get Filled Form -->
+    <xapl:variable name="filledForm">
+      <x2:execute command="omx.report.report:getFilledForm">
+        <x2:with-param name="pForm" select="{$form}"/>
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>  
+    </xapl:variable>   
+    
+    <!-- Get Report Data -->
+    <xapl:variable name="reportData">
+      <x2:execute command="{$getReportData}">
+        <x2:with-param name="pForm" select="{$filledForm}"/>
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+    </xapl:variable>   
+    
+    <xapl:return>
+        <xapl:choose>
+          <xapl:when test="string-length(@TotalRowCount) > 0">
+            <xapl:value-of select="$reportData/@TotalRowCount"/> 
+          </xapl:when>
+          <xapl:otherwise>
+            <xapl:value-of select="count($reportData/*) - 2"/>
+          </xapl:otherwise>
+        </xapl:choose>
+    </xapl:return>
+  </x2:command>
+
+<!-- ********************************************************************** 
+     *********************************************************************** -->
+</x2:commands>

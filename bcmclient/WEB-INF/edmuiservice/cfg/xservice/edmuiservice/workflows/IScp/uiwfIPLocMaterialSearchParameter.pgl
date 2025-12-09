@@ -1,0 +1,106 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="container">
+    <ui:step id="top_container" displayText="IP Item Location Exceptions Search">
+      <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" />
+      <ui:search displayText="Search" saveSearch="false" exportSearch="false">
+        <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" displayCondition="1" />
+        <ui:field-group columns="2" select="$root/SEARCH_FIELDS">
+          <ui:field-group>
+            <ui:dropdown id="PartyIdentificationValue" preferredWidth="10" name="PartyIdentificationValue" size="2" displayText="Segment" selectAll="true" selectOne="false" optionSrc="$root/Segments/*" />
+            <ui:entry-field displayText="Location Description" name="LOCDESC" />
+            <ui:dropdown id="LOCTYPE" name="LOCTYPE" displayText="Location Type" selectAll="true" optionSrc="$root/LocTypes/*" />
+            <ui:entry-field displayText="Location" name="LOC_NUM" id="LOC_NUM">
+              <ui:links>
+                <ui:link displayText="Select Locations" targetType="popup" targetName="catalogPopup">
+                  <ui:image src="pop_up_window.gif" />
+                  <ui:url page="view.x2ps">
+                    <FIELD_NAME select="'LOC_NUM'" />
+                    <SELECTABLE select="'All'" />
+                    <BUTTON_ID select="'selectLocation'" />
+                  </ui:url>
+                </ui:link>
+              </ui:links>
+            </ui:entry-field>
+            <ui:checkbox displayText="Display overrides only" id="chkDisplayOverride" name="chkDisplayOverride" />
+          </ui:field-group>
+          <ui:field-group>
+            <ui:entry-field displayText="Item Description" name="ITEMDESC" />
+            <ui:entry-field displayText="Item Number" name="Item_Number" id="Item_Number">
+              <ui:links>
+                <ui:link displayText="Select Item" targetType="popup" targetName="catalogPopup">
+                  <ui:image src="pop_up_window.gif" />
+                  <ui:url page="view.x2ps">
+                    <FIELD_NAME select="'Item_Number'" />
+                    <SELECTABLE select="'All'" />
+                    <BUTTON_ID select="'selectItem'" />
+                  </ui:url>
+                </ui:link>
+              </ui:links>
+            </ui:entry-field>
+            <ui:entry-field displayText="GTIN #" name="GTIN" id="GTIN">
+              <ui:links>
+                <ui:link displayText="Select GTIN" targetType="popup" targetName="planPopUp">
+                  <ui:image src="pop_up_window.gif" />
+                  <ui:url page="view.x2ps">
+                    <FIELD_NAME select="'GTIN'" />
+                    <!-- <ENTITY_NAME select="'GTIN'"/>-->
+                    <SELECTABLE select="'All'" />
+                    <BUTTON_ID select="'SelectGTIN'" />
+                  </ui:url>
+                </ui:link>
+              </ui:links>
+            </ui:entry-field>
+            <ui:dropdown id="MATTYPE" name="MATTYPE" displayText="Material Type" selectAll="true" optionSrc="$root/ItemTypes/*" />
+          </ui:field-group>
+        </ui:field-group>
+      </ui:search>
+      <!--			      <ui:table displayText="IP Segment Parameters" rowSrc="$root/SEGMENT_LISTS/SEGMENT_DETAILS" rowSubTreeSrc="PARAMETER_LISTS/ PARAMETER_DETAILS" collapsable="true" totalRowCount="$root/ROWCNT/@Value" startAtRow="$root/SEGMENT_LISTS/@startRowCount" maxRows="2" selectable="All" rowId="SegmentIdentification" exportable="true" configurable="true" postRowIdAs="SelectedSegment" doPaging="true">-->
+      <ui:table displayText="IP Item Location Parameters" rowSrc="$root/ITEMLOC_LISTS/ITEMLOC_DETAILS" rowSubTreeSrc="PARAMETER_LISTS/ PARAMETER_DETAILS" collapsable="false" totalRowCount="$root/ROWCNT/@Value" startAtRow="$root/StartAtRowVal/@Value" maxRows="3" selectable="All" rowId="ItemLocation" exportable="true" configurable="true" postRowIdAs="SelectedItemLocation" doPaging="true">
+        <ui:field-group>
+          <ui:treecell displayText="Item" name="ItemIdentification" id="ItemIdentification" noChildren="{count(PARAMETER_LISTS/PARAMETER_DETAILS) = 0}" depth="{count(ancestor::node()[name()='PARAMETER_LISTS'])}" column="0" />
+          <ui:display-field name="ItemDesc" id="ItemDesc" displayText="Item Description" sortable="true" />
+          <ui:display-field name="UniformCodeCouncilNumberIdentifier" id="UniformCodeCouncilNumberIdentifier" displayText="GTIN #" sortable="true" />
+          <ui:display-field name="ItemTypeDescription" id="ItemTypeDescription" displayText="Material Type" sortable="true" />
+          <ui:display-field name="SegmentIdentification" id="SegmentIdentification" displayText="Segment" />
+          <ui:entry-field editable="false" name="LocationIdentification" id="LocationIdentification" displayText="Location" sortable="true" />
+          <ui:display-field name="LocationDesc" id="LocationDesc" displayText="Location Description" sortable="true" />
+          <ui:entry-field name="ParameterName" id="ParameterName" displayText="Parameter Name" editable="false" />
+          <ui:hidden-field name="ItemIdentification_Hidden" />
+          <ui:hidden-field name="LocationIdentification_Hidden" />
+          <ui:hidden-field name="CommentFieldName" />
+          <ui:hidden-field name="SourceSystemMnemonicValue" />
+          <ui:hidden-field name="ItemLocation_Hidden" id="ItemLocation_Hidden" />
+          <!--    <ui:entry-field name="ItemIdentification_Hidden" id="" editable="false"/>-->
+          <ui:display-field name="DefaultParameterValue" id="DefaultParameterValue" displayText="Default Value" />
+          <!--<ui:display-field name="OPRPD" id="OPRPD" displayText="Override PRP Days"/>-->
+          <ui:choose-field name="OverrideParameterValue" displayText="Override Value">
+            <ui:when test="count(OverrideParameterValue) &gt; 0">
+              <ui:entry-field name="OverrideParameterValue" id="OverrideParameterValue" displayText="Override Value" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:display-field displayText="" name="OverrideParameterValue" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <!--<ui:entry-field name="OPV" id="OPV" displayText="Override Value"/>-->
+          <!--<ui:display-field name="OPRPDC" id="OPRPDC" displayText="Override PRP Days Comment" required="true"/>-->
+          <ui:choose-field name="OverrideParameterValue" displayText="Override Value">
+            <ui:when test="count(OverrideParameterValue) &gt; 0">
+              <ui:textarea name="OverrideParameterComment" id="OverrideParameterComment" displayText="Override Comment" required="true" rows="1" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:display-field displayText="" name="OverrideParameterValue" />
+            </ui:otherwise>
+          </ui:choose-field>
+        </ui:field-group>
+        <ui:buttons id="tableButtons">
+          <!-- <ui:button displayText="Show History" id="ShowHistory" name="ShowHistory" enabledBySelections="true"/>
+          <ui:divider/>-->
+          <ui:button displayText="Mass Update" id="MassUpdate" name="MassUpdate" enabledBySelections="true" />
+          <ui:divider />
+          <ui:button displayText="Save" id="Save" name="Save" enabledBySelections="true" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

@@ -1,0 +1,391 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="studio.templates.ecriwizard" source="studio.controller.load">
+  <ui:container scrollable="true" collapsable="true">
+    <ui:step id="Outer" displayText="Select MDM Table" scrollable="true" editable="false">
+      <ui:field-group name="mesg" select="$root">
+        <ui:choose-field name="BUTTON_ID">
+          <ui:when test="$root/MESSAGES/@Status = 'ERROR'">
+            <ui:display-field displayText="" name="error" value="{$root/MESSAGES/MESSAGE/@Value}" class="requiredIndicatorRed"/>
+          </ui:when>
+          <ui:when test="$root/MESSAGES/@Status= 'SUCCESS'">
+            <ui:display-field displayText="" name="success" value="{$root/MESSAGES/MESSAGE/@Value}" class="requiredIndicatorGreen"/>
+          </ui:when>
+          <ui:otherwise/>
+        </ui:choose-field>
+      </ui:field-group>
+      <ui:field-group>
+        <ui:hidden-field name="actionTaken" value="{$root/actionTaken/@Value}"/>
+        <ui:hidden-field id="clickOnCreate" name="clickOnCreate" Value="$root/clickOnCreate/@Value"/>
+      </ui:field-group>
+      <ui:grid>
+        <ui:row>
+          <ui:cell width="100%" valign="top">
+            <ui:field-group columns="1">
+              <ui:hidden-field name="selectedTableName" value=""/>
+              <ui:dropdown id="Tablename" name="Tablename" displayText="Table Name" optionSrc="$root/TABLE_NAMES/*" onChange="Javascript:onTableNameChange(document.forms[1])"/>
+            </ui:field-group>
+            <ui:table id="datatable3" displayText="{$root/DISPLAY_STRINGS/ATTRIBUTE_SETS/@Value}" select="$root/ATTRIBUTE_SETS" rowId="attributeSetID" selectable="Single" postRowIdAs="attributeSetID" rememberSelections="false" doPaging="false" maxRows="-1">
+              <ui:field-group>
+                <ui:choose-field name="attributeSetID" displayText="Attribute Set ID">
+                  <ui:when test="./@clickOnCreate = 'TRUE'">
+                    <ui:entry-field name="attributeSetID" required="true"/>
+                  </ui:when>
+                  <ui:otherwise>
+                    <ui:display-field name="attributeSetID"/>
+                  </ui:otherwise>
+                </ui:choose-field>
+                <ui:choose-field name="description" displayText="Description">
+                  <ui:when test="./@clickOnCreate = 'TRUE'">
+                    <ui:entry-field name="description"/>
+                  </ui:when>
+                  <ui:otherwise>
+                    <ui:display-field name="description"/>
+                  </ui:otherwise>
+                </ui:choose-field>
+              </ui:field-group>
+              <ui:buttons>
+                <ui:button id="GET_DETAILS_ATTR_SET" displayText="Get Details" name="getDetails" enabledBySelections="true" displayCondition="{$root/clickOnCreate/@Value='FALSE'}"/>
+                <ui:button id="CREATE_ATT_SET" displayText="Create" name="create"/>
+                <ui:button id="SAVE" displayText="Save" name="save"/>
+                <ui:button id="DELETE" displayText="Delete" name="delete" enabledBySelections="true" displayCondition="{$root/clickOnCreate/@Value='FALSE'}"/>
+                <ui:button id="CANCEL" displayText="Cancel" name="cancel" displayCondition="{$root/clickOnCreate/@Value='TRUE'}"/>
+              </ui:buttons>
+            </ui:table>
+          </ui:cell>
+        </ui:row>
+      </ui:grid>
+    </ui:step>
+  </ui:container>
+  <ui:field-group>
+    <ui:field-space displayText="" id=""/>
+  </ui:field-group>
+  <ui:container scrollable="true" collapsable="true" inner="true" displayCondition="{$root/showAttSetDetails/@Value = 'TRUE'}">
+    <ui:step id="Inner" displayText="{$root/DISPLAY_STRINGS/ATTRIBUTES/@Value}" scrollable="true" editable="false">
+      <ui:grid>
+        <ui:row>
+          <ui:cell width="45%" valign="top">
+            <ui:table id="datatable1" name="datatable1" displayText="Available Attributes" select="$root/AVAILABLE_ATTRIBUTES" displayTextNoRecords="No Record" rowId="availAttrName" selectable="All" postRowIdAs="availAttrName" doPaging="false" maxRows="-1">
+              <ui:field-group>
+                <ui:display-field id="availAttrName" name="availAttrName" displayText="Attribute Name"/>
+              </ui:field-group>
+            </ui:table>
+          </ui:cell>
+          <ui:cell width="10%" halign="center">
+            <ui:grid cellSpacing="20">
+              <ui:row>
+                <ui:cell>
+                  <ui:buttons>
+                    <ui:button id="selectAvailAttr" displayText=">>" name="selectAvailAttr"/>
+                  </ui:buttons>
+                </ui:cell>
+              </ui:row>
+              <ui:row>
+                <ui:cell>
+                  <ui:buttons>
+                    <ui:button id="deselectSelAttr" displayText="&lt;&lt;" name="deselectSelAttr"/>
+                  </ui:buttons>
+                </ui:cell>
+              </ui:row>
+            </ui:grid>
+          </ui:cell>
+          <ui:cell width="45%" valign="top">
+            <ui:table id="datatable2" name="datatable2" displayText="Selected Attributes" select="$root/SELECTED_ATTRIBUTES" displayTextNoRecords="No Record" rowId="selectedAttrName" scrollable="false" selectable="All" postRowIdAs="selectedAttrName" doPaging="false" maxRows="-1">
+              <ui:field-group>
+                <ui:display-field id="selectedAttrName" name="selectedAttrName" displayText="Attribute Name"/>
+              </ui:field-group>
+            </ui:table>
+          </ui:cell>
+        </ui:row>
+      </ui:grid>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function on_CANCEL()
+		{
+			form.BUTTON_ID.value = 'CANCEL' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		}
+		
+    function onLoad()
+	{
+    var buttonsList = 'SAVE#CREATE_ATT_SET#GET_DETAILS_ATTR_SET#DELETE' ;
+     var b_stat_arr = disableAllButtons(buttonsList);
+    
+    <!-- if Tablename  is  selected -->
+    if(!document.forms[1].Tablename.options[0].selected) {
+		  var buttonlistVar = 'CREATE_ATT_SET' ;
+ 	     enableAllButtons(b_stat_arr,buttonlistVar);
+    
+    <!-- if click on create , disable the create button and enable the save button -->
+    if(document.form.actionTaken.value == 'CREATE_ATT_SET') {
+		//	alert('document.form.clickOnCreate.value '+document.form.clickOnCreate.value)		
+		for(i=0;i&lt;document.form.elements.length;i++)
+		{
+			//	alert(document.form.elements[i].name);
+				if(document.form.elements[i].name==&quot;attributeSetID&quot;)
+				{
+					//alert('attributeSetID found...'+document.form.elements[i].value);
+						if((document.form.elements[i].checked) &amp;&amp;(document.form.elements[i].value!=&quot;&quot;) )
+						{
+								//alert(document.form.elements[i].value);
+								document.form.elements[i].checked=false;
+						}
+						else if(document.form.elements[i].value==&quot;&quot;)
+						{
+								document.form.elements[i].checked=true;
+						}
+				}
+		}
+		
+		 // var disableCreateButton = 'CREATE_ATT_SET#GET_DETAILS_ATTR_SET#DELETE' ;
+		 var disableCreateButton = 'CREATE_ATT_SET' ;
+ 	    var b_stat_arr = disableAllButtons(disableCreateButton);
+		if(document.form.clickOnCreate.value==&quot;TRUE&quot;)
+		{
+			//	alert('inside TRUE');
+			var enableSave = 'SAVE';
+ 	    enableAllButtons(b_stat_arr,enableSave);		
+		}
+		else
+		{
+		
+				//		alert('inside FALSE');
+			var disableSaveButton = 'SAVE' ;
+ 	    var b_stat_arr = disableAllButtons(disableSaveButton);
+		}
+	 	 
+	
+ }
+    
+    <!-- if click on save , disable the save button and enable the create button -->
+    if(document.form.actionTaken.value == 'SAVE') {
+			  var disableSaveButton = 'SAVE';
+ 	    var b_stat_arr = disableAllButtons(disableSaveButton);
+	 	 var enableCreate = 'CREATE_ATT_SET#DELETE#GET_DETAILS_ATTR_SET' ;
+ 	    enableAllButtons(b_stat_arr,enableCreate);
+ } 
+		
+		if(document.form.actionTaken.value == 'DELETE') {
+			  var disableSaveButton = 'SAVE#GET_DETAILS_ATTR_SET#DELETE';
+ 	    var b_stat_arr = disableAllButtons(disableSaveButton);
+	 	 var enableCreate = 'CREATE_ATT_SET' ;
+ 	    enableAllButtons(b_stat_arr,enableCreate);
+  } 
+			if(document.form.actionTaken.value == 'GET_DETAILS_ATTR_SET') {
+
+		  var disableSaveButton = 'SAVE#GET_DETAILS_ATTR_SET';
+ 	    var b_stat_arr = disableAllButtons(disableSaveButton);
+	 	 var enableCreate = 'CREATE_ATT_SET#DELETE' ;
+ 	    enableAllButtons(b_stat_arr,enableCreate);
+  } 
+	
+  }
+		 onLoadSuper();
+     scrollHelper();
+     autoCollapseRows();
+ 	}
+	   
+function enableAllButtons(buttons_stat_array, buttons){
+	var buttons_array = buttons.split('#');
+
+	for (b_count = 0; b_count&lt;buttons_array.length; b_count++) {
+		if (buttons_stat_array[b_count] == 'enabled')
+			i2uiToggleButtonState( buttons_array[b_count], 'enabled');
+		if (buttons_stat_array[b_count] == 'enabled_bold')
+			i2uiToggleButtonState( buttons_array[b_count], 'enabled','Emphasized');
+	}
+}
+
+ function disableAllButtons(buttons) {
+
+	var buttons_array = buttons.split('#');
+	var b_stat_array = new Array(buttons_array.length);
+	var b_count = 0 ;
+	while (b_count &lt; buttons_array.length) {
+		b_stat_array[b_count] = i2uiShowItemVisibility(buttons_array[b_count]) ;
+		if (b_stat_array[b_count].indexOf('enabled') != -1)
+			i2uiToggleButtonState( buttons_array[b_count], 'disabled');
+			b_count++ ;
+	}
+	return b_stat_array ;
+}
+ 
+function i2uiShowItemVisibility(id) {
+	var item;
+	var status = 'no item' ;
+	var debug = false ;
+	if (document.layers) {
+		item = document.layers[id];
+		if (item != null) {
+			if (item.visibility == 'hide')
+				status = 'disabled' ;
+			else
+				status = 'enabled' ;
+		}
+	}
+
+	item = document.getElementById(id);
+	if (item != null) {
+		if (debug == true) alert('id..item.className..'+id+'..'+item.className) ;
+		
+		if (item.className == 'buttonBorderDisabled')
+			status = 'disabled' ;
+		else {
+			status = 'enabled' ;
+			var cell = item.rows[0].cells[0];
+			if(cell.id.indexOf('Emphasized') != -1)
+				status = 'enabled_bold' ;
+		}
+	}
+	if (debug == true) alert('id..status..'+id+'..'+status) ;
+	return status;
+}
+    
+	
+    
+    
+		function onTableNameChange(form)
+		{
+				form.selectedTableName.value=form.Tablename.value;
+				form.BUTTON_ID.value = 'NEW_TABLE_AS_INPUT' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		}
+		
+
+		function on_selectAvailAttr()
+		{
+				var flag='FALSE';
+				var isWrongAttrSelected = 'FALSE';
+			for(i=0;i&lt;document.form.elements.length;i++)
+			{
+			//	alert(document.form.elements[i].name);
+				if(document.form.elements[i].name==&quot;selectedAttrName&quot;)
+				{
+					
+						if(document.form.elements[i].checked)
+						{
+									//	alert('selectedAttrName found...'+document.form.elements[i].value);
+										isWrongAttrSelected='TRUE';
+						}
+			
+			}
+		
+		
+		
+		
+				if(document.form.elements[i].name==&quot;availAttrName&quot;)
+				{
+					
+						if(document.form.elements[i].checked)
+						{
+							//	alert('availAttrName found...'+document.form.elements[i].value);
+								flag='TRUE';
+
+
+						}
+						else
+						{
+								continue;
+						}
+				}
+		}
+		
+		if(flag=='TRUE' &amp;&amp;isWrongAttrSelected=='FALSE')
+		{
+				form.selectedTableName.value=form.Tablename.value;
+				//alert('inside on_select ####');
+				form.BUTTON_ID.value = 'SELECT_AVAIL_ATTR' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		}
+		if(flag=='FALSE' &amp;&amp; isWrongAttrSelected=='TRUE')
+		{
+				core_alert('Please select atleast one attribute from Available Attributes List and Deselect from Selected Attributes');
+				return;
+		}
+		if(flag=='FALSE' &amp;&amp; isWrongAttrSelected=='FALSE')
+		{
+				core_alert('Please select atleast one attribute from Available Attributes List.');
+				return;
+		}
+		if(flag=='TRUE' &amp;&amp; isWrongAttrSelected=='TRUE')
+		{
+				core_alert('Please Deselect from Selected Attributes List');
+				return;
+		}
+		}
+		
+		function on_deselectSelAttr()
+		{
+		var isWrongAttrSelected = 'FALSE';
+			var flag='FALSE';
+			for(i=0;i&lt;document.form.elements.length;i++)
+		{
+				//	alert(document.form.elements[i].name);
+			if(document.form.elements[i].name==&quot;availAttrName&quot;)
+				{
+					
+						if(document.form.elements[i].checked)
+						{
+								//		alert('availAttrName found...'+document.form.elements[i].value);
+										isWrongAttrSelected='TRUE';
+						}
+			
+			}
+		
+		
+				if(document.form.elements[i].name==&quot;selectedAttrName&quot;)
+				{
+					
+						if(document.form.elements[i].checked)
+						{
+							//	alert('selectedAttrName found...'+document.form.elements[i].value);
+								flag='TRUE';
+								
+
+						}
+						else
+						{
+								continue;
+						}
+				}
+		}
+		
+			if(flag=='TRUE' &amp;&amp;isWrongAttrSelected=='FALSE')
+		{
+			
+				form.selectedTableName.value=form.Tablename.value;
+				//alert('inside on_deselect ####');
+				form.BUTTON_ID.value = 'DESELECT_SEL_ATTR' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		
+		
+		}
+		if(flag=='FALSE' &amp;&amp; isWrongAttrSelected=='TRUE')
+		{
+				core_alert('Please select atleast one attribute from Selected Attributes List and Deselect from Available Attributes List');
+				return;
+		}
+		if(flag=='FALSE' &amp;&amp; isWrongAttrSelected=='FALSE')
+		{
+				core_alert('Please select atleast one attribute from Selected Attributes List.');
+				return;
+		}
+		if(flag=='TRUE' &amp;&amp; isWrongAttrSelected=='TRUE')
+		{
+				core_alert('Please Deselect from Available Attributes List');
+				return;
+		}
+		
+		
+		
+
+		}
+  </ui:script>
+</ui:page-group>

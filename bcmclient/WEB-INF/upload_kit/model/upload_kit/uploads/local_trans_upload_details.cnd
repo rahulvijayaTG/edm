@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">    
+
+  <!--******************************************************************************
+  ********************************************************************************-->
+  <x2:command public="yes" description="_" name="load">
+    <x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+       <x2:with-param name="display" select="'Upload File'"/>
+       <x2:with-param name="page" select="'upload_local_transaction_details'"/>
+       <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+    <xapl:return>
+      <!-- Header -->
+      <x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>
+      <!--x2:execute command="core.history:register">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="pPage" select="'upload_local_transaction_details'"/>
+        <x2:with-param name="pPageName" select="'Upload File'"/>
+      </x2:execute-->
+       <xapl:if test="string-length($this/TEMPLATE_NAME/@Value)=0">
+	      <xapl:variable name="templateName">
+		 <xapl:value-of select="concat('Entity',$this/TABLE_NAME/@Value,'Template')"/>
+	      </xapl:variable>
+	      <docutil:set select="$this">
+		 <TEMPLATE_NAME Value="{$templateName}"/>
+	      </docutil:set>
+	      <docutil:set select="$this">
+	      		 <SHOW_TEMPLATE_FIELDS Value="yes"/>
+	      </docutil:set>
+	</xapl:if>      
+      <!-- Container -->
+      <x2:execute command="upload_kit.uploads.upload_details:getContainer">
+        <x2:with-param name="pPage" select="'local_upload_details'"/>
+        <x2:with-param name="pDataType" select="$this/DATA_TYPE/@Value"/>
+        <x2:with-param name="pTemplateName" select="$this/TEMPLATE_NAME/@Value"/>
+        <x2:with-param name="pDisplayName" select="$this/DISPLAY_NAME/@Value"/>
+      </x2:execute>
+
+      <x2:execute command="upload_kit.uploads.local_trans_upload_details:loadLocalUploadDataDetails">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+    </xapl:return>
+  </x2:command>
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+ <x2:command public="yes" description="_" name="loadLocalUploadDataDetails">
+    <x2:param name="this"/>
+      <xapl:return>
+      	<xapl:value-of select="$this/*" />
+      
+   	  <x2:execute command="upload_kit.uploads.upload_details:getDataType">
+		<x2:with-param name="pDataType" select="$this/DATA_TYPE/@Value"/>
+		<x2:with-param name="pDisplayName" select="$this/DISPLAY_NAME/@Value"/>
+   	  </x2:execute>      
+      
+	  <xapl:if test="$this/REFRESH/@Value='true'">
+	    <x2:execute command="core.alert:getAlerts">
+		<x2:with-param name="pRefresh"><xapl:value-of select="$this/REFRESH/@Value"/></x2:with-param>
+		<x2:with-param name="pERROR"><xapl:value-of select="$this/ERROR_MESSAGE/@Value"/></x2:with-param>
+	   </x2:execute>
+	  </xapl:if>
+
+  	  <xcore:execute-method  name="//DataUploadService/getTemplate">
+  	    <TEMPLATE Name="{$this/TEMPLATE_NAME/@Value}"/>
+  	  </xcore:execute-method>
+    </xapl:return>
+  </x2:command> 	
+  
+</x2:commands>

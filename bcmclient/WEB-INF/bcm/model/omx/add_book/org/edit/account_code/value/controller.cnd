@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="save">
+    <xapl:variable name="orgId"       select="$this/ORG_ID/@Value"/>
+    <xapl:variable name="segId"       select="$this/SEGMENT_ID/@Value"/>
+    <xapl:variable name="name"        select="$this/NEW_VALUE_ID/@Value"/>
+    <xapl:variable name="description" select="$this/NEW_DESCRIPTION/@Value"/>
+
+    <xapl:variable name="valuesTable">
+      <x2:execute command="omx.add_book.org.edit.account_code.model:getValuesTable">
+        <x2:with-param name="segId" select="$segId"/>
+      </x2:execute>
+    </xapl:variable>
+
+    <xapl:variable name="statusMsg">
+      <SUCCESS_MESSAGE Value="Save Successful."/>
+    </xapl:variable>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!--  insure the name is not an existing account code segment name... -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <xapl:variable name="existing" select="$valuesTable/CODE_MASTER_VALUE/VALUE_ID[@Value=$name]/@Value"/>
+    <xapl:choose>
+      <xapl:when test="string-length($existing) = 0">
+        <xapl:variable name="addResponse">
+          <xcore:execute-method name="//UserSecurity/addCodeMasterValue" entireResponse="true">
+            <TYPE_ID     Value="{$segId}"/>
+            <VALUE_ID    Value="{$name}"/>
+            <DESCRIPTION Value="{$description}"/>
+          </xcore:execute-method>
+        </xapl:variable>
+      
+        <xapl:print select="$addResponse"/>
+      </xapl:when>
+
+      <xapl:otherwise>
+        <xapl:set-variable name="statusMsg">
+          <ERROR Value="Account Code Value with this name already exists.  Please choose another name."/>
+		  <REFRESH Value="true"/>
+        </xapl:set-variable>
+      </xapl:otherwise>
+
+    </xapl:choose>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- finally, display the page                -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <web:display-page>
+      <web:get-page name="org_account_code_value">
+        <ORG_ID     Value="{$orgId}"/>
+        <SEGMENT_ID Value="{$segId}"/>
+        <xapl:value-of select="$statusMsg"/>
+      </web:get-page>
+    </web:display-page>
+
+  </x2:command>
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="update">
+    <x2:param name="orgId"  select="$this/ORG_ID/@Value"/>
+    <x2:param name="segId"  select="$this/SEGMENT_ID/@Value"/>
+
+    <xapl:variable name="updates">
+      <docutil:collate name="CODE_MASTER_VALUE" rootName="VALUES_TABLE">
+        <xapl:value-of select="$this/ID"/>
+        <xapl:value-of select="$this/VALUE_ID"/>
+        <xapl:value-of select="$this/DESCRIPTION"/>
+      </docutil:collate>
+    </xapl:variable>
+
+    <xapl:variable name="msg">
+      <SUCCESS_MESSAGE Value="Update Successful."/>
+    </xapl:variable>
+
+    <xapl:choose>
+
+      <xapl:when test="count($this/SELECTED) > 0">
+        <xapl:for-each select="$this/SELECTED" varName="selected">
+
+          <xapl:variable name="curr" select="$updates/CODE_MASTER_VALUE/ID[ @Value = $selected/@Value ]/.."/>
+
+          <xapl:variable name="modifyResponse">
+            <xcore:execute-method name="//UserSecurity/modifyCodeMasterValue" entireResponse="true">
+              <ID           Value="{$curr/ID/@Value}"/>
+              <VALUE_ID     Value="{$curr/VALUE_ID/@Value}"/>
+              <DESCRIPTION  Value="{$curr/DESCRIPTION/@Value}"/>
+            </xcore:execute-method>
+          </xapl:variable>
+        </xapl:for-each>
+      </xapl:when>
+
+      <xapl:otherwise>
+        <xapl:set-variable name="msg">
+          <ERROR Value="Please select the row(s) to be updated."/>
+		  <REFRESH Value="true"/>
+        </xapl:set-variable>
+      </xapl:otherwise>
+
+    </xapl:choose>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- finally, display the page                -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <web:display-page>
+      <web:get-page name="org_account_code_value">
+        <ORG_ID     Value="{$orgId}"/>
+        <SEGMENT_ID Value="{$segId}"/>
+        <xapl:value-of select="$msg" />
+      </web:get-page>
+    </web:display-page>
+
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="delete">
+    <x2:param name="orgId"  select="$this/ORG_ID/@Value"/>
+    <x2:param name="segId"  select="$this/SEGMENT_ID/@Value"/>
+
+    <xapl:variable name="statusMsg">
+      <SUCCESS_MESSAGE Value="Delete Successful."/>
+    </xapl:variable>
+
+    <xapl:choose>
+
+      <xapl:when test="count($this/SELECTED) > 0">
+
+        <xapl:for-each select="$this/SELECTED" varName="selected">
+          <xcore:remove-document name="//UserSecurity/CODE_MASTER_VALUE">
+            <ID Value="{$selected/@Value}"/>
+          </xcore:remove-document>
+        </xapl:for-each>
+
+      </xapl:when>
+
+      <xapl:otherwise>
+        <xapl:set-variable name="statusMsg">
+          <ERROR Value="Please select the row(s) to be deleted."/>
+		  <REFRESH Value="true"/>
+        </xapl:set-variable>
+      </xapl:otherwise>
+
+    </xapl:choose>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- finally, display the page                -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <web:display-page>
+      <web:get-page name="org_account_code_value">
+        <ORG_ID     Value="{$orgId}"/>
+        <SEGMENT_ID Value="{$segId}"/>
+        <xapl:value-of select="$statusMsg"/>
+      </web:get-page>
+    </web:display-page>
+    
+  </x2:command>
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

@@ -1,0 +1,92 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="iscpPiSelectLocation.pgl">
+  <ui:container id="srchCont" name="srchCont" scrollable="true" exportSearch="false" saveSearch="false" displayText="Search Locations" collapsable="true">
+    <ui:step id="locSearc" displayText="Location Search">
+      <ui:field-group columns="2" select="$root/SEARCH_FIELDS">
+        <ui:hidden-field name="FIELD_NAME" id="FIELD_NAME" value="{$root/FIELD_NAME/@Value}" />
+        <ui:hidden-field name="PREV_SELEC" id="PREV_SELEC" value="{$root/PREV_SEL/@Value}" />
+        <ui:entry-field name="lineSelected" id="lineSelected" value="{$root/lineSelected/@Value}" displayText="Line IDs" readOnly="true" />
+        <ui:dropdown name="segmentIds" id="segmentIds" selectOne="true" displayText="Segment ID" optionSrc="$root/SEGMENTS/P_PartyIdentification/segmentIds" value="{$root/segmentValue/@Value}" />
+      </ui:field-group>
+      <ui:buttons id="SearchButtons">
+        <ui:button name="searchButton" id="searchButton" displayText="Search" emphasized="true" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:container id="srchResCont" name="srchResCont" scrollable="true">
+    <ui:step id="srchResStep" name="srchResStep" displayText="Locations Search Results" scrollable="true">
+      <ui:table id="locTable" name="locTable" displayText="Locations Search Results" displayTextNoRecords="No Records Found" rowSrc="$root/LOC_DETAILS/abc" rowId="LocationIdn" postRowIdAs="Selected_Locations" selectable="All" startAtRow="$root/StartAtRow/@Value" rememberSelections="true" collapsable="false" maxRows="$root/MaxRows/@Value" totalRowCount="$root/TotalRowCount/@Value">
+        <ui:field-group>
+          <ui:entry-field displayText="Location" name="LocationIdn" editable="false" sortable="true" />
+          <ui:display-field displayText="Location Description" name="LocationDescription" />
+          <ui:display-field displayText="Segment Id" name="segVal" id="segVal" />
+          <ui:display-field displayText="Segment Description" name="segDesc" id="segDesc" />
+        </ui:field-group>
+        <ui:buttons id="buttons1" name="buttons1">
+          <ui:button displayText="Select" id="select" name="select" enabledBySelections="true" onClick="javascript:selectLocation();" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function selectLocation()
+    {	
+		  var selectedIds =document.getElementsByName('Selected_Locations');		
+		  var length = selectedIds.length;
+      var locs = null;
+    <!--*************************************-->
+    var prevselectedrecs=document.form.PREV_SELEC.value;		
+			 prevselectedarray= prevselectedrecs.split(",");
+			var prevlength=prevselectedarray.length;
+    <!-- alert(prevlength+prevselectedarray[0]);-->
+    <!--*************************************-->
+    for(i=0; i &lt; length; i++)
+			{		
+								var t = selectedIds[ i ];							
+								for(j=0;j&lt;prevlength;j++)
+								{
+							    
+									if((prevselectedarray[j] == t.value) &amp;&amp;t.checked)
+										{
+											prevselectedarray[j]='';
+										}
+								 }
+	        
+			    if ( t.checked )
+	        {
+	          if( locs )
+	            locs += ',' + t.value;
+	          else
+	             locs = t.value;
+	        }   
+       
+    }
+    
+   var templist='';
+		 for(k=0;k&lt;prevlength;k++)
+		{				
+		  if(templist=='')
+				templist=prevselectedarray[k];
+			else
+				templist=templist+','+prevselectedarray[k];
+		 }
+	
+    if(locs != null)
+		 { 
+				
+				if(document.form.PREV_SELEC.value.length  != 0)
+					locs=locs+','+templist;	
+		  }
+		 else
+		 {
+				locs=document.form.PREV_SELEC.value;
+		  }
+		
+      if ( document.form.FIELD_NAME.value.length &gt; 0)
+     {   var fieldName = document.form.FIELD_NAME.value;
+          eval("parent.opener.form." + fieldName + ".value = locs;");
+      }
+      window.close();    
+      }
+  </ui:script>
+</ui:page-group>
+

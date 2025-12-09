@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="18" ShowInBreadCrumbs="true" Version="1.0" Name="wfTLViewLaneDetails" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables/>
+  <nodes>
+    <start Name="start2">
+      <actions>
+      </actions>
+      <next_nodes>
+        <next_node Name="Transport Lane Details" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Transport Lane Details" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE" Template="iscpTLViewLaneDetails.pgl">
+      <pre_actions>
+        <action>
+          <REQUEST Name="searchTransLanes" AssignToVar="laneDetails" ServiceName="PEDM_MASTER">
+            <FILTER Name="SRCH_TL_ID">
+              <SRCH_TL_ID Value="{substringBefore($thisParam/ID/@Value,'.')}" MatchBy="EQUAL"/>
+              <!--<SRCH_TL_ID Value="{$thisParam/ID/@Value}" MatchBy="EQUAL"/>-->
+            </FILTER>
+            <FILTER Name="SRCH_DESTN_LOC_CLAS">
+              <SRCH_DESTN_LOC_CLAS Value="PLNT_NUM" MatchBy="EQUAL"/>
+            </FILTER>
+            <FILTER Name="SRCH_SRC_LOC_CLAS">
+              <SRCH_SRC_LOC_CLAS Value="PLNT_NUM" MatchBy="EQUAL"/>
+            </FILTER>
+            <FILTER Name="SRCH_STATE">
+              <SRCH_STATE Value="ACTIVE" MatchBy="EQUAL"/>
+            </FILTER>
+          </REQUEST>
+          <!--<FOR_EACH SelectList="$laneDetails/TL_DETAILS/P_TransportLane" CurrentElement="curElem">
+
+            <SET Var="hours" FromValue="{ifElse(int($curElem/TransportDurationTimeCount/@Value div 3600) != 0,int($curElem/TransportDurationTimeCount/@Value div 3600),'00')}"/>
+            <SET Var="minutes" FromValue="{ifElse(int(($curElem/TransportDurationTimeCount/@Value mod 3600) div 60) != 0,int(($curElem/TransportDurationTimeCount/@Value mod 3600) div 60),'00')}"/>
+            <SET Var="minutes" FromValue="{ifElse($minutes > 0 and $minutes &lt; 10,concat('0',$minutes),$minutes)}"/>
+            <SET Var="seconds" FromValue="{ifElse(int($curElem/TransportDurationTimeCount/@Value mod 60) != 0,int($curElem/TransportDurationTimeCount/@Value mod 60),'00')}"/>
+            <SET Var="seconds" FromValue="{ifElse($seconds > 0 and $seconds &lt; 10,concat('0',$seconds),$seconds)}"/>
+            <SET DocVar="curElem" Property="TransportDurationTimeCount" FromValue="{ifElse($curElem/TransportDurationTimeCount/@Value != 0,concat($hours,':',$minutes,':',$seconds),'00:00:00')}"/>
+
+          </FOR_EACH>-->
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$laneDetails/*"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <if_cond Value="$userAction ='return'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done4" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done4">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="173,103" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <mgcnode Name="Transport Lane Details" location="288,103" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Transport Lane Details" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done4 location="406,102" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done4" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done4>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="205,125" endpoint="288,126" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="264,123,4,4" ctrlRect2="223,124,4,4"/>
+      </start2>
+      <mgcnode Name="Transport Lane Details">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="320,126" endpoint="406,124" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="382,124,4,4" ctrlRect2="339,122,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="0">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables/>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

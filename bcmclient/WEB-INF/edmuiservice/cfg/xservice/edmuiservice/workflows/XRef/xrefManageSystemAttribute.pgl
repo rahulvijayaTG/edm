@@ -1,0 +1,475 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="xrefManageSystemAttribute.pgl">
+  <ui:container id="data" displayText="System Management" height="50%">
+    <ui:step id="step1">
+      <ui:field-group>
+        <ui:hidden-field name="TABLE" id="TABLE" />
+      </ui:field-group>
+      <ui:table id="search" doPaging="true" name="CrossReferenceSystem" rowId="SystemMnemonicValue" exportable="true" maxRows="5" displayText="System" filter="true" displayTextNoRecords="" rowSrc="SYSTEM" select="INPUT_SYSTEM" selectable="single" scrollable="true" postRowIdAs="SELECTED_ID" rememberSelections="false" startAtRow="$root/INPUT_SYSTEM/Start_At_Row/@Value" displayCondition="{(string-length($root/FILTER_ID/@Value) = 0) or ($root/FILTER_ID/@Value = 'search')}">
+        <ui:validation successMessage="{$root/INPUT_SYSTEM/_SUCCESS/@Value}" anyFieldIsRequired="false" />
+        <ui:header id="h1">
+          <ui:link id="l1" displayCondition="{contains($root/ACCESS_LEVEL/@Value,'Remove') or contains($root/ACCESS_LEVEL/@Value,'Add') or contains($root/ACCESS_LEVEL/@Value,'Update')}">
+            <ui:image id="img1" displayText="Import From Excel" src="/upld_avail.gif" />
+            <ui:url id="UploadSystemFile" displayText="Upload File" page="{concat($pages:upload_local_transaction_details,'?TEMPLATE_NAME=EntityE_SystemTemplate&amp;DISPLAY_NAME=E_System&amp;DATA_TYPE=xls')}" />
+          </ui:link>
+        </ui:header>
+        <ui:field-group>
+          <ui:hidden-field id="idVal" name="idVal" value="{ID/@Value}" />
+          <ui:hidden-field name="mode" value="" />
+          <ui:entry-field id="SystemMnemonicValue" displayText="Name" sortable="true" name="SystemMnemonicValue" readOnly="{not(ID/@Value='9999')}" onKeyUp="javascript:onSysMnValChange(this);" />
+          <ui:entry-field displayText="Description" id="SystemDescription" name="SystemDescription" sortable="true">
+            <ui:links>
+              <ui:link displayText="EnterSystemDescription" onClick="javascript:onSysPopUp()">
+                <ui:image src="pop_up_window.gif" />
+              </ui:link>
+            </ui:links>
+          </ui:entry-field>
+          <ui:display-field displayText="Last Modified Date" id="SystemLastModifiedDate" name="SystemLastModifiedDate" sortable="true" />
+          <ui:display-field id="SystemLastModifiedBy" name="SystemLastModifiedBy" displayText="Last Modified By" />
+          <ui:url page="{$pages:user_profile}">
+            <USER_ID select="ID/@Value" />
+          </ui:url>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="ShowAttributes" name="ShowAttributes" displayText="Show Attributes" disabled="true" />
+          <ui:button id="clear" name="clear" displayText="Clear" enableBySelections="true" />
+          <ui:button id="copy" name="copy" displayText="Copy" displayCondition="{contains($root/ACCESS_LEVEL/@Value,'Add')}" disabled="true" onClick="javascript:selectRow_onCopy()" />
+          <ui:button id="create" name="create" displayText="Create" enableBySelections="false" displayCondition="{contains($root/ACCESS_LEVEL/@Value,'Add')}" disabled="true" />
+          <ui:divider id="div" />
+          <ui:button id="Delete" displayText="Delete" enableBySelections="true" name="Delete" onClick="javascript:on_Delete()" displayCondition="{contains($root/ACCESS_LEVEL/@Value,'Remove')}" disabled="true" />
+          <ui:button id="update" name="update" displayText="Update" emphasized="yes" enableBySelections="true" displayCondition="{contains($root/ACCESS_LEVEL/@Value,'Update')}" disabled="true" />
+        </ui:buttons>
+      </ui:table>
+      <ui:table id="att" doPaging="true" name="CrossReferenceAttribute" rowId="AttributeMnemonicValue" exportable="true" displayText="{$root/TABLE_NAME/@Value}" filter="true" rowSrc="ATTRIBUTE" select="INPUT_ATTRIB" selectable="single" postRowIdAs="SELECTED_ATTRBT" scrollable="true" maxRows="10" rememberSelections="true" startAtRow="$root/INPUT_ATTRIB/Start_At_Row/@Value" displayCondition="{(string-length($root/FILTER_ID/@Value) = 0) or ($root/FILTER_ID/@Value = 'att')}">
+        <!--        <ui:validation displayCondition="$root/USER_ACTION/@Value = 'zzzzz'"/>-->
+        <ui:validation successMessage="{$root/INPUT_ATTRIB/_SUCCESS/@Value}" anyFieldIsRequired="false" />
+        <ui:header id="h2">
+          <ui:link id="link2" displayCondition="{contains($root/ACCESS_LEVEL/@Value,'Remove') or contains($root/ACCESS_LEVEL/@Value,'Add') or contains($root/ACCESS_LEVEL/@Value,'Update')}">
+            <ui:image id="img2" displayText="Import From Excel" src="/upld_avail.gif" />
+            <ui:url id="UploadAttributeFile" displayText="Upload File" page="{concat($pages:upload_local_transaction_details,'?TEMPLATE_NAME=EntityE_AttributeTemplate&amp;DISPLAY_NAME=E_Attribute&amp;DATA_TYPE=xls')}" />
+          </ui:link>
+        </ui:header>
+        <ui:field-group id="fg12">
+          <ui:hidden-field name="AttributeName" value="{AttributeName/@Value}" />
+          <ui:entry-field id="AttributeMnemonicValue" displayText="Name" sortable="true" name="AttributeMnemonicValue" readOnly="{not(ID/@Value='9999')}" onKeyUp="javascript:onAtrbtMnValChange(this);" />
+          <ui:entry-field displayText="Description" id="AttributeDescription" name="AttributeDescription" sortable="true">
+            <ui:links>
+              <ui:link displayText="EnterAttributeDescription" onClick="javascript:onAttribPopUp()">
+                <ui:image src="pop_up_window.gif" />
+              </ui:link>
+            </ui:links>
+          </ui:entry-field>
+          <ui:display-field name="AttributeLastModifiedDate" id="AttributeLastModifiedDate" displayText="Last Modified Date" sortable="true" />
+          <ui:display-field displayText="Last Modified By" id="AttributeLastModifiedBy" name="AttributeLastModifiedBy" sortable="false" />
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="showAssociatedObjects" name="ShowAssociatedObjects" displayText="Show Associated Objects" enableBySelections="true" onClick="javascript:openPopUpForAttributeObject()" disabled="true" />
+          <ui:button id="clear1" name="clear1" displayText="Clear" enableBySelections="true" />
+          <ui:button id="copy1" displayText="Copy" displayCondition="{contains($root/ACCESS_LEVEL/@Value,'Add')}" disabled="true" onClick="javascript:selectAtrbtRow_onCopy()" />
+          <ui:button id="create1" name="create" displayText="Create" enableBySelections="true" displayCondition="{contains($root/ACCESS_LEVEL/@Value,'Add')}" disabled="true" />
+          <ui:divider id="div1" />
+          <ui:button id="Delete1" displayText="Delete" enableBySelections="true" name="Delete" onClick="javascript:on_Delete1()" displayCondition="{contains($root/ACCESS_LEVEL/@Value,'Remove')}" disabled="true" />
+          <ui:button id="update1" displayText="Update" emphasized="yes" enableBySelections="true" displayCondition="{contains($root/ACCESS_LEVEL/@Value,'Update')}" disabled="true" />
+        </ui:buttons>
+      </ui:table>
+      <ui:script>
+      function getRecords(actionName, startCount,tableElement)
+    {
+
+			if(tableElement == 'att'){
+				document.form.TABLE.value = '2';
+				}
+				else{
+				document.form.TABLE.value = '1';
+				}
+      var page_form = null;
+      var search_form = null;
+      if(page_form == null)  page_form = document.form;
+      if(search_form == null)  search_form = document.form;
+      jumpTo(actionName, startCount, search_form, page_form,tableElement);
+    }
+       function onSysPopUp() {
+          var x = document.getElementsByName('SELECTED_ID');
+				  var y = document.getElementsByName('SystemDescription');	
+          var syslength = x.length;
+				  var sysdesc = y.length;
+				  var selectedSystemId = null;
+				  var selectedSystemdesc = null;
+			  	var temp=0; 
+				
+				for(i=0; i&lt;syslength; i++)
+   		{
+   			   var t = x[ i ];				 
+				   var p = y[ i ];							  				 
+   			   if ( t.checked )
+						{
+								if(t.value != 'EnterNew')
+								{	temp++;}
+						}
+				}
+				
+				if(temp &gt; 0)
+				{
+			    	for(i=0; i&lt;syslength; i++)
+   					{
+					   			   var t = x[ i ];				 
+									   var p = y[ i ];	   				 
+					   			   if ( t.checked )
+					    		          {				      
+					        		    selectedSystemId = t.value;				    
+									        selectedSystemdesc=p.value;    
+					    		           }
+    		 			}
+						           var BUTTON_ID ='EnterSystemDescription';
+										   var FIELD_NAME='SystemDescription';
+										   var ROW_ID_NAME='SELECTED_ID';  
+									
+											window.open("view.x2ps?SERVICE_NAME=edmuiservice&amp;START_WORKFLOW=uiWfXrefManageSystemDescription&amp;BUTTON_ID="+BUTTON_ID+"&amp;FIELD_NAME="+FIELD_NAME+"&amp;POPUP=true&amp;FIELD_VALUE="+selectedSystemdesc+"&amp;ROW_ID_NAME="+ROW_ID_NAME+"&amp;ROW_ID_VALUE="+selectedSystemId+"&amp;",null,'height=300,width=480,screenX=200,screenY=480,top=250,left=400,toolbar=no,menubar=no');
+
+				}
+				else
+				{			
+								core_alert('Please select a System to view its description');
+				}					
+ }
+ 
+   	function onAttribPopUp() {
+				  var x = document.getElementsByName('SELECTED_ATTRBT');
+				  var y = document.getElementsByName('AttributeDescription');	
+          var attriblength = x.length;
+				  var attribdesc = y.length;
+				  var selectedattribId = null;
+				  var selectedattribdesc = null;
+					var temp=0; 
+				
+							for(i=0; i&lt;attriblength; i++)
+   						{
+					   			   var t = x[ i ];				 
+									   var p = y[ i ];	   				 
+					   			   if ( t.checked )
+    		         		{
+												if(t.value != 'EnterNew')
+													{	temp++;}
+										}
+							}			    
+				
+							if(temp &gt; 0)
+				{
+							 for(i=0; i&lt;attriblength; i++)
+				   		{
+				   			   var t = x[ i ];				 
+								   var p = y[ i ];	   				 
+				   			   if ( t.checked )
+				    		          {				      
+				        		    selectedattribId = t.value;				    
+								        selectedattribdesc=p.value;    
+				    		           }
+				    		 }
+	           var BUTTON_ID ='EnterAttributeDescription';
+					   var FIELD_NAME='AttributeDescription';
+					   var ROW_ID_NAME='SELECTED_ATTRBT';        
+     
+       			 window.open("view.x2ps?SERVICE_NAME=edmuiservice&amp;START_WORKFLOW=uiWfXrefManageAttributeDescription&amp;BUTTON_ID="+BUTTON_ID+"&amp;FIELD_NAME="+FIELD_NAME+"&amp;POPUP=true&amp;FIELD_VALUE="+selectedattribdesc+"&amp;ROW_ID_NAME="+ROW_ID_NAME+"&amp;ROW_ID_VALUE="+selectedattribId+"&amp;",null,'height=300,width=480,screenX=200,screenY=480,top=250,left=400,toolbar=no,menubar=no');
+
+				}
+				else
+				{			
+								core_alert('Please select an Attribute to view its description');
+				}					
+
+}
+				
+        function onSysMnValChange(thisObj) {		
+			
+			if ( i2uiGetSelectedRowNums('search') == '1')
+{       
+								   disableButtons(); 
+      		enableButton('clear');	   	 
+				if (thisObj.id == 'SystemMnemonicValue')				
+			{			
+				 form.mode.value='create';
+						enableButton('clear');	   	 
+	     	 enableButton('create');
+			}
+				}
+		}	
+					
+			function onAtrbtMnValChange(thisObj) {		
+			if ( i2uiGetSelectedRowNums('att') == '1')
+{       
+			   disableButtons(); 
+      	enableButton('clear1');	   	 
+
+			if (thisObj.id == 'AttributeMnemonicValue')				
+		{			
+			 form.mode.value='create';
+     	 enableButton('create1');
+					enableButton('clear');	   	 
+     	 enableButton('create');
+				enableButton('clear1');	
+		}
+				}
+	}	
+				
+				
+        function on_Delete(){
+					var response = core_confirm('Are you sure you want to delete this records?');
+					if ( response == 'no' ) {
+						canSubmit = 'false';
+					} 
+				  if( response == 'yes' ) {
+						canSubmit = 'true';
+					}
+				
+					if (canSubmit == 'true') {
+								document.form.BUTTON_ID.value = 'ok'; 
+							document.form.action = 'view.x2ps';
+							document.form.submit();  
+						
+						
+					}
+		else{
+						
+
+						document.form.SUBMIT_AS_XML.value = 'false';
+		
+					}
+					return;
+				
+		} 
+
+				function on_Delete1(){
+					var response = core_confirm('Are you sure you want to delete this records?');
+					if ( response == 'no' ) {
+						canSubmit = 'false';
+					}
+				 if( response == 'yes' ) {
+						canSubmit = 'true';
+					}
+				
+					if (canSubmit == 'true') {
+								document.form.BUTTON_ID.value = 'ok1'; 
+							document.form.action = 'view.x2ps';
+							document.form.submit();  
+						
+						
+					}
+		else{
+						
+
+						document.form.SUBMIT_AS_XML.value = 'false';
+		
+					}
+					return;
+				
+		}				
+					
+function openPopUpForAttributeObject(){
+				  var x = document.getElementsByName('SELECTED_ID');
+				  var y = document.getElementsByName('SELECTED_ATTRBT');
+			    var syslength = x.length;
+					var atrbtlength = y.length;
+          var selectedSystemId = null;
+					var selectedAttributeId = null;
+    
+    		for(i=0; i&lt;syslength; i++)
+   			 {
+   			   var t = x[ i ];
+   			   if ( t.checked )
+    		  {
+        		selectedSystemId = t.value;
+    		  }
+    		}
+				//	alert(selectedSystemId);
+				
+				for(i=0; i&lt;atrbtlength; i++)
+   			 {
+   			   var t = y[ i ];
+   			   if ( t.checked )
+    		  {
+        		selectedAttributeId = t.value;
+    		  }
+    		}	
+				//		alert(selectedAttributeId);
+				window.open("view.x2ps?SERVICE_NAME=edmuiservice&amp;START_WORKFLOW=uiWfXrefManageAttributeObject&amp;POPUP=true&amp;SYSTEM_NAME="+selectedSystemId+"&amp;ATTRIBUTE_NAME="+selectedAttributeId,null,+"height=100,width=300,screenX=50,screenY=200,top=50,left=200,toolbar=no,menubar=no");
+				}
+		
+
+		
+				function enableXRefButtons(tableid)
+				{
+					var x = document.getElementsByName('SELECTED_ID');
+				var y = document.getElementsByName('SELECTED_ATTRBT');	
+					var selId = document.getElementsByName('idVal');
+					
+				var syslength = x.length;
+				var atrbtlength = y.length;
+        var selectedSystemId = null;
+				var selectedAttributeId = null;
+				if (tableid == 'search')
+				{
+		    for(i=0; i&lt;syslength; i++)
+   			{
+   			  var t = x[ i ];
+   			  if ( t.checked )
+    		  {
+        		selectedSystemId = t.value;
+    		  }
+    		}
+				if (selectedSystemId == 'EnterNew' )
+				{			
+						disableButton('ShowAttributes');
+						disableButton('Delete');
+						disableButton('update');
+						disableButton('copy');		
+      			enableButton('create');
+						enableButton('clear');	
+				}
+				else
+				{
+					if(selectedSystemId == null)
+					{
+								disableButton('ShowAttributes');
+								disableButton('Delete');
+								disableButton('update');
+								disableButton('copy');
+								disableButton('create');	
+								enableButton('clear');						
+					}
+					else
+					{
+						enableButton('ShowAttributes');
+						enableButton('Delete');
+						enableButton('update');
+						enableButton('copy');
+						disableButton('create');
+						enableButton('clear');	
+					}			
+				}
+				
+				}		  
+				if (tableid == 'att')
+				{
+				
+					for(i=0; i&lt;atrbtlength; i++)
+	   			{
+	   			  var t = y[ i ];
+	   			  if ( t.checked )
+	    		  {
+	        		selectedAttributeId = t.value;
+	    		  }
+	    		}
+			
+	    
+				
+					if (selectedAttributeId == 'EnterNew')
+				{				
+						disableButton('Delete1');
+						disableButton('update1');
+						disableButton('copy1');		
+						disableButton('showAssociatedObjects');						
+      			enableButton('create1');					
+						enableButton('clear1');	
+				}
+				else
+				{
+					if(selectedAttributeId == null)
+					{			
+						disableButton('Delete1');
+						disableButton('update1');
+						disableButton('copy1');
+				 		disableButton('create1');		
+						disableButton('showAssociatedObjects');		
+						enableButton('clear1');						
+					}
+					else
+					{				
+						enableButton('Delete1');
+						enableButton('update1');
+						enableButton('copy1');
+						disableButton('create1');
+						enableButton('showAssociatedObjects');			
+						enableButton('clear1');	
+					}			
+				}
+
+			}
+				}
+				
+				function i2uiRowSelectionCallback(tableid)
+				{
+					enableXRefButtons(tableid);
+				}
+				
+				  function selectRow_onCopy()
+				{
+					var x = document.getElementsByName('SELECTED_ID');
+					var y = document.getElementsByName('SystemMnemonicValue');
+					var z = document.getElementsByName('SystemDescription');
+	  			var syslength = x.length;
+					var str = y.length;	
+					var sysdesc = z.length;		
+								for(i=0; i&lt;syslength; i++)
+							{
+								   var t = x[ i ];	
+											var s = y[ i ];	
+											var u = z[ i ];							 	 
+								   if ( t.checked )
+								  {				      
+									selectedSystemId = t.value;
+									selectedId = s.value;	
+									selectedDesc = u.value;	
+									x[i].checked = false; 		  
+										x[1].checked = true;	
+									y[0].value = selectedId;
+								z[0].value = selectedDesc;	
+								   }
+							 }
+					x[0].click();
+	}		
+				
+				function selectAtrbtRow_onCopy()
+				{
+					var x1 = document.getElementsByName('SELECTED_ATTRBT');
+					var y1 = document.getElementsByName('AttributeMnemonicValue');
+					var z1 = document.getElementsByName('AttributeDescription');
+	  			var atrbtlength = x1.length;
+					var str = y1.length;	
+					var atrbtdesc = z1.length;		
+								for(i=0; i&lt;atrbtlength; i++)
+							{
+								   var t = x1[ i ];	
+											var s = y1[ i ];	
+											var u = z1[ i ];							 	 
+								   if ( t.checked )
+								  {				      
+									selectedSystemId = t.value;
+									selectedId = s.value;	
+									selectedDesc = u.value;	
+									x1[i].checked = false; 		  
+										x1[1].checked = true;	
+									y1[0].value = selectedId;
+								z1[0].value = selectedDesc;	
+								   }
+							 }
+					x1[0].click();
+	}			
+					
+				
+function onLoad()
+{
+  onLoadSuper();
+  scrollHelper();
+  autoCollapseRows(); // may be empty (default impl)
+	var x = document.getElementsByName('SELECTED_ID');
+	try{
+	 x[0].value = 'EnterNew';
+		}
+				catch(e){}		
+	enableXRefButtons('search');
+	enableXRefButtons('att');
+
+}
+      </ui:script>
+    </ui:step>
+  </ui:container>
+</ui:page-group> 

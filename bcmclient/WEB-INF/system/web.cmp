@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:components xmlns:x2="http://www.i2.com/x2" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" description="">
+
+  <x2:component name="fop" description="Converts XML data to PDF via XSL-FO.">
+    <x2:class value="com.i2.x2.components.web.Fop"/>
+    <x2:input name="xslfile" description="Path to xsl file to use for translation.  Must output XSL-FO tags." required="true"/>
+    <x2:body>
+        <x2:include-component type="ANY" />
+    </x2:body>
+  </x2:component>   
+
+  <x2:component name="base64-decode-toXml" description="Converts base-64 encoded string to an XML element.">
+    <x2:class value="com.i2.x2.components.web.Base64DecodeToXml"/>
+	
+	  <x2:input name="select" description="Contains an XPath expression that will be decoded." required="true"/>
+    
+    <x2:example type="description">
+      Below is a code snippet showing how to decode a base-64 encoded string to xml.
+    </x2:example>
+    <x2:example type="code">
+      <xapl:variable name="cxml">
+        <web:base64-decode select="{$b64/@Value}"/>
+      </xapl:variable>
+    </x2:example>
+    
+  </x2:component>
+  
+  <x2:component name="base64-decode" description="Decodes the base-64 encoded string.">
+    <x2:class value="com.i2.x2.components.web.Base64Decode"/>
+	
+	  <x2:input name="select" description="Contains an XPath expression that will be decoded." required="true"/>
+    
+    <x2:example type="description">
+      Below is a code snippet showing how to decode a base-64 encoded string.
+    </x2:example>
+    <x2:example type="code">
+      <xapl:variable name="str">
+        <web:base64-decode select="{$b64str/@Value}"/>
+      </xapl:variable>
+    </x2:example>
+    
+  </x2:component>
+
+  <x2:component name="base64-encode" description="Encodes the string to base-64 type.">
+    <x2:class value="com.i2.x2.components.web.Base64Encode"/>
+	
+	  <x2:input name="select" description="Contains an XPath expression that will be encoded." required="true"/>
+    
+    <x2:example type="description">
+      Below is a code snippet showing how to encode a string to base-64.
+    </x2:example>
+    <x2:example type="code">
+      <xapl:variable name="b64str">
+        <web:base64-encode select="{$str/@Value}"/>
+      </xapl:variable>
+    </x2:example>
+    
+  </x2:component>
+
+  <x2:component name="define-page" description="Defines a page within the context of the x2 model and sets a logical name to it.  This should be included within a 'init' command.">
+    <x2:class value="com.i2.x2.components.web.DefinePage"/>
+	
+	  <x2:input name="name" description="Logical name given to define page." required="true"/>
+	  <x2:input name="url" description="Path to desired page.  If the path starts with '/', the full application web path will be prepended to given url." required="true"/>  
+
+    <x2:example type="description">
+      Below is a code snippet showing how to define multiple pages.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="init" public="yes" description="_">    
+        <web:define-page name="login" url="/omx/login.jsp"/>
+        <web:define-page name="change_passwd" url="/omx/change_passwd.jsp"/>
+        <web:define-page name="loginSuccess" url="/omx/index.jsp"/>
+      </x2:command>
+    </x2:example>
+    
+  </x2:component>
+  
+  <x2:component name="define-xsl" description="Defines a xsl file within the context of the x2 model and sets a logical name to it.  This should be included within a 'init' command.">
+    <x2:class value="com.i2.x2.components.web.DefineXsl"/>
+	
+	  <x2:input name="name" description="Logical name given to define xsl page." required="true"/>
+	  <x2:input name="url" description="Path to desired page.  If the path starts with '/', the full application web path will be prepended to given url." required="true"/>  
+
+    <x2:example type="description">
+      Below is a code snippet showing how to define multiple pages.
+    </x2:example>
+    <x2:example type="code">
+      <x2:command name="init" public="yes" description="_">    
+        <web:define-page name="login" url="/omx/xsl/login.xsl"/>
+        <web:define-page name="change_passwd" url="/omx/xsl/change_passwd.xsl"/>
+        <web:define-page name="loginSuccess" url="/omx/xsl/index.xsl"/>
+      </x2:command>
+    </x2:example>
+    
+  </x2:component>
+  
+  <x2:component name="display-page" description="Redirects to the given page.  Will pass along any enclosed data as request parameters.">
+    <x2:class value="com.i2.x2.components.web.DisplayPage"/>
+	
+	  <x2:body>
+	    <x2:include-component type="ANY" minOccur="0"/>
+	  </x2:body>
+
+    <x2:example type="description">
+      Below is a code snippet showing how to display a page using a logical name, login, and passing a parameter, FROM.
+    </x2:example>
+    <x2:example type="code">
+      <web:display-page>
+        <web:get-page name="login">
+          <FROM Value="logout"/>
+        </web:get-page>
+      </web:display-page>
+    </x2:example>
+    
+  </x2:component>
+
+  <x2:component name="get-absolute-url" description="Retrieves the absolute url by prepending the application web path to the given path.">
+    <x2:class value="com.i2.x2.components.web.GetAbsoluteUrl"/>
+	
+	  <x2:input name="path" description="Path relative to the application web path." required="true"/>
+	  <x2:input name="forceAbsolute" default-value="true" description="Whether the outputted URL should always be absolute, or if not, it may be relative. Default is 'false'" 
+	  	required="false"/>
+
+    <x2:example type="description">
+      Below is a code snippet showing how to get the absolute url.
+    </x2:example>
+    <x2:example type="code">
+      <xapl:print>
+        <web:get-absolute-url path="/omx/discovery_catalog/addItems.x2c" forceAbsolute="true"/>
+      </xapl:print>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results: 
+    </x2:example>
+    <x2:example type="code">
+      http://111.222.333.444:8080/omxclient/omx/discovery_catalog/addItems.x2c
+    </x2:example>
+    
+  </x2:component>
+
+  <x2:component name="get-real-path" description="Retrieves the absolute url by prepending the application web path to the given path.">
+    <x2:class value="com.i2.x2.components.web.GetRealPath"/>
+	
+	  <x2:input name="path" description="Path relative to the application web path." required="true"/>
+
+    <x2:example type="description">
+      Below is a code snippet showing how to get the absolute url.
+    </x2:example>
+    <x2:example type="code">
+      <xapl:print>
+        <web:get-absolute-path path="http://111.222.333.444:8080/omxclient/omx/discovery_catalog/addItems.x2c"/>
+      </xapl:print>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results: 
+    </x2:example>
+    <x2:example type="code">
+      D:/omx_folder/web/omx/discovery_catalog/addItems.x2c
+    </x2:example>
+    
+  </x2:component>
+
+  <x2:component name="get-session-id" description="Retrieves the current session id.">
+    <x2:class value="com.i2.x2.components.web.GetSessionId"/>
+	
+    <x2:example type="description">
+      Below is a code snippet showing how to get the session id.
+    </x2:example>
+    <x2:example type="code">
+      <xapl:print>
+        <BuyerCookie>
+          <web:get-session-id/>
+        </BuyerCookie>
+      </xapl:print>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results: 
+    </x2:example>
+    <x2:example type="code">
+      <BuyerCookie>
+        302859758
+      </BuyerCookie>
+    </x2:example>
+    
+  </x2:component>
+
+  <x2:component name="get-page" description="Gets the real value of the url specified by the logical name.  Request parameters can be passed along to the page.">
+    <x2:class value="com.i2.x2.components.web.GetPage"/>
+	
+	  <x2:input name="name" description="Logical name of desired page." required="true"/>
+	  <x2:body>
+	    <x2:include-component type="ANY" minOccur="0" name=""/>
+	  </x2:body>
+    
+    <x2:example type="description">
+      Below is a code snippet showing how to display a page using a logical name, login, and passing a parameter, FROM.
+    </x2:example>
+    <x2:example type="code">
+      <web:display-page>
+        <web:get-page name="login">
+          <FROM Value="logout"/>
+        </web:get-page>
+      </web:display-page>
+    </x2:example>
+    
+  </x2:component>
+
+  <x2:component name="invalidate-session" description="Invalidates the current session.">
+    <x2:class value="com.i2.x2.components.web.InvalidateSession"/>
+	  
+    <x2:example type="description">
+      Below is a code snippet showing how to invalidate a session.
+    </x2:example>
+    <x2:example type="code">
+      <web:invalidate-session/>
+    </x2:example>
+    
+  </x2:component>
+
+  <x2:component name="url-decode" description="Decodes a string from a MIME format called 'x-www-form-urlencoded' format.  To convert to a String, each character is examined in turn:  The ASCII characters 'a' through 'z', 'A' through 'Z', and '0' through '9' remain the same. The plus sign '+'is converted into a space character ' '.  The remaining characters are represented by 3-character strings which begin with the percent sign, '%xy', where xy is the two-digit hexadecimal representation of the lower 8-bits of the character.">
+    <x2:class value="com.i2.x2.components.web.URLDecode"/>
+	
+	  <x2:input name="select" description="Contains an XPath expression that will be decoded." required="true"/>
+    
+    <x2:example type="description">
+      Below is a code snippet showing how to decode a url string.
+    </x2:example>
+    <x2:example type="code">
+      <xapl:print>
+        Before decoding the url: <xapl:value-of select="{$pRetPage}"/>
+      </xapl:print>
+      <xapl:print>
+        After decoding the url: <web:url-decode select="{$pRetPage}"/>
+      </xapl:print>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results: 
+    </x2:example>
+    <x2:example type="code">
+      Before decoding the url: http://www.yourcompany.com/search.jsp?PARAM=40MB+Hardrive
+    </x2:example>
+    <x2:example type="code">
+      After decoding the url: http://www.yourcompany.com/search.jsp?PARAM=40MB Hardrive
+    </x2:example>
+    
+  </x2:component>
+
+  <x2:component name="url-encode" description="Encodes a string into a MIME format called 'x-www-form-urlencoded' format.  To convert a String, each character is examined in turn:  The ASCII characters 'a' through 'z', 'A' through 'Z', '0' through '9', and '.', '-', '*', '_' remain the same.  The space character ' ' is converted into a plus sign '+'.  All other characters are converted into the 3-character string '%xy', where xy is the two-digit hexadecimal representation of the lower 8-bits of the character.">
+    <x2:class value="com.i2.x2.components.web.URLEncode"/>
+	
+	  <x2:input name="select" description="Contains an XPath expression that will be encoded." required="true"/>
+    
+    <x2:example type="description">
+      Below is a code snippet showing how to encode a url string.
+    </x2:example>
+    <x2:example type="code">
+      <xapl:print>
+        Before encoding the url:
+        <xapl:value-of select="{$pRetPage}"/>
+      </xapl:print>
+      <xapl:print>
+        After encoding the url:
+        <web:url-encode select="{$pRetPage}"/>
+      </xapl:print>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results: 
+    </x2:example>
+    <x2:example type="code">
+      Before encoding the url: http://www.yourcompany.com/search.jsp?PARAM=40MB Hardrive
+    </x2:example>
+    <x2:example type="code">
+      After encoding the url: http://www.yourcompany.com/search.jsp?PARAM=40MB+Hardrive
+    </x2:example>
+    
+  </x2:component>
+</x2:components>

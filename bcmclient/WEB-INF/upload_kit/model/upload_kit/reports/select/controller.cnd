@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="displayReportDetails">
+    
+    <web:display-page>
+      <web:get-page name="upload_report_details">
+        <REPORT_ID Value="{$this/ID/@Value}"/>
+      </web:get-page>
+	</web:display-page>  
+  </x2:command>
+  
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+
+  <x2:command public="yes" description="_" name="search">
+    <x2:param name="pId" select="$this/ID/@Value"/>
+
+    <web:display-page>
+      <web:get-page name="upload_select_reports">
+        <DO_SEARCH Value="Yes"/>
+        <ID Value="{$pId}"/>
+      </web:get-page>
+    </web:display-page>
+
+  </x2:command>
+  
+  <!--  ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="save">
+    <docutil:set select="$this">
+      <DOC_TYPE Value="UPLOAD_REPORT"/>
+	  <PAGE Value="upload_select_reports"/>
+    </docutil:set>
+    <x2:execute command="core.search.controller:saveInSession">
+      <x2:with-param name="this" select="$this"/>
+    </x2:execute>
+
+  </x2:command>
+ 
+  <!--  ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="saveReport">
+	
+    <x2:execute command="core.report.controller:saveReport">
+      <x2:with-param name="this" select="$this"/>
+      <x2:with-param name="pSearchFormConfigSource" select="'upload_kit.reports.select.search:getFormConfig'"/>
+      <x2:with-param name="pSearchReportConfigSource" select="'upload_kit.reports.select.search:getReportConfig'"/>
+      <x2:with-param name="pReportDataSource" select="'upload_kit.reports.select.search:getReportData_Ids'"/>
+      <x2:with-param name="pFile"  select="'upload_report'"/>
+      <x2:with-param name="pFormat" select="'xlt'"/>
+    </x2:execute>
+
+  </x2:command>
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="downloadDocument">
+    <x2:param name="pFile" select="'upload_report'"/>
+    <x2:param name="pDataSourceName" select="$this/DATA_SOURCE_NAME/@Value"/>
+    <x2:param name="pIdFilterName" select="$this/ID_FILTER_NAME/@Value"/>
+    
+    <xapl:variable name="fileName" select="concat($pFile, '.', 'xml')"/>
+	
+	<xapl:variable name="uploadReport">
+	  <FILTER Name="{$pIdFilterName}">
+	    <OR>
+          <xapl:for-each varName="id" select="{$this/ID}">
+		    <xcore:search-by property="{$pIdFilterName}" value="{$id/@Value}" matchby="EQUAL"/>
+		  </xapl:for-each>
+		</OR>
+	  </FILTER>
+	</xapl:variable>
+	
+	<!-- Get the data -->
+    <xapl:variable name="data">
+	  <xcore:execute-method name="{$pDataSourceName}">
+	    <xapl:value-of select="$uploadReport"/>
+	  </xcore:execute-method>
+	</xapl:variable>
+
+    <!-- downloadFile-->
+    <x2:execute command="core.common:downloadFile">
+      <x2:with-param name="pFileContents" select="$data"/>
+      <x2:with-param name="pFileName" select="$fileName"/>
+      <x2:with-param name="pFileType" select="'xml'"/>
+    </x2:execute>
+  </x2:command>
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  
+</x2:commands>

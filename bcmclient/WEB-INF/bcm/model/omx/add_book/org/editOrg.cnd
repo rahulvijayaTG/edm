@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands description="_" 
+             xmlns:FUNCTION="http://www.i2.com/FUNCTION" 
+             xmlns:REMOVE="http://www.i2.com/REMOVE" 
+             xmlns:cfg="http://www.i2.com/configurability" 
+             xmlns:core="http://www.i2.com/core" 
+             xmlns:omx="http://www.i2.com/omx" 
+             xmlns:perm="http://www.i2.com/permissibility" 
+             xmlns:util="http://www.i2.com/util" 
+             xmlns:web="http://www.i2.com/web" 
+             xmlns:x2="http://www.i2.com/x2" 
+             xmlns:xapl="http://www.i2.com/xapl" 
+             xmlns:xcore="http://www.i2.com/xcore" 
+             xmlns:xcore-db="http://www.i2.com/xcore-db" 
+             xmlns:docutil="http://www.i2.com/docutil" 
+             xmlns:xudl="http://www.i2.com/xudl"
+             xmlns:identity="http://www.i2.com/identity">  
+  
+  
+  <!--************************************************************************-->
+  
+  <x2:command public="yes" description="_" name="getPageData">
+    
+    <xapl:variable name="data">
+      <ROOT>
+      <x2:execute command="omx.add_book.org.pages:getTabs">
+	      <x2:with-param name="page">details</x2:with-param>
+        <x2:with-param name="orgId"><xapl:value-of select="{$this/ORG_ID/@Value}" /></x2:with-param>
+        <x2:with-param name="searchMode" select="'false'"/>
+      </x2:execute>
+      
+      <x2:execute command="omx.add_book.org.model:getOrganization">
+        <x2:with-param name="pRefresh"><xapl:value-of select="$this/REFRESH/@Value" /></x2:with-param>               
+        <x2:with-param name="orgId"><xapl:value-of select="{$this/ORG_ID/@Value}" /></x2:with-param>
+        <x2:with-param name="parentOrgId" select="{$this/PARENT_ORG_ID/@Value}" />
+      </x2:execute>
+      
+      <x2:execute command="omx.add_book.messaging:getMessagingOptions">
+        <x2:with-param name="entityType">Org</x2:with-param>
+        <x2:with-param name="pOrgId"><xapl:value-of select="{$this/ORG_ID/@Value}" /></x2:with-param>      
+        <x2:with-param name="pRefresh"><xapl:value-of select="$this/REFRESH/@Value" /></x2:with-param>      
+      </x2:execute>
+      
+      <x2:execute command="omx.add_book.org.model:getLocalCustomer">
+        <x2:with-param name="orgId"><xapl:value-of select="{$this/ORG_ID/@Value}" /></x2:with-param>
+      </x2:execute>
+      
+      <x2:execute command="omx.add_book.location.model:getFulfillmentCenters">
+        <x2:with-param name="org_id"><xapl:value-of select="$this/ORG_ID/@Value" /></x2:with-param>
+      </x2:execute>
+      
+      <x2:execute command="omx.cm:getCountries">
+        <x2:with-param name="pDefaultCountry" select="$this/DEFAULT_COUNTRY/@Value"/>
+      </x2:execute>
+      
+      <x2:execute command="omx.cm:getCustomerTypes"/>
+      <x2:execute command="omx.cm:getConversionMethods"/>
+      <x2:execute command="omx.cm:getCurrencyCodes"/>
+      <x2:execute command="omx.cm:getTaxCodes"/>
+      <x2:execute command="omx.cm:getPricingTemplates"/>  
+      
+      <x2:execute command="omx.alert:getAlerts">
+        <x2:with-param name="pRefresh"><xapl:value-of select="$this/REFRESH/@Value"/></x2:with-param>
+        <x2:with-param name="pERROR"><xapl:value-of select="$this/ERROR/@Value"/></x2:with-param>
+        <x2:with-param name="pStatusMsg"><xapl:value-of select="$this/STATUS_MSG/@Value"/></x2:with-param>
+      </x2:execute>
+      </ROOT>
+    </xapl:variable>
+      
+    <xapl:return>
+      <xapl:value-of select="$data/*"/>
+
+      <x2:execute command="omx.cm:getStatesForCountry">
+         <x2:with-param name="pCountry" select="$data/ORGANIZATION/COUNTRY/@Value"/>
+      </x2:execute>
+    </xapl:return>
+  </x2:command>
+</x2:commands>

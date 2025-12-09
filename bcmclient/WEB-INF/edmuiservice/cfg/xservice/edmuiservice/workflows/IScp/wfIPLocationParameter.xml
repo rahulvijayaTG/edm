@@ -1,0 +1,791 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="940" ShowInBreadCrumbs="true" Version="1.0" Name="wfIPLocationParameter" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="MassUpdateParamValues" Type="xml" Comment=""/>
+    <variable Name="enteredSearchCriteria" Type="xml" Comment=""/>
+    <variable Name="locParamErrors" Type="xml" Comment=""/>
+    <variable Name="locParamSuccess" Type="xml" Comment=""/>
+    <variable Name="mainSearchResults" Type="xml" Comment=""/>
+    <variable Name="massUpdateSelXml" Type="xml" Comment=""/>
+    <variable Name="parameterClassIdentifier" Type="string" Comment=""/>
+    <variable Name="selectedSegLoc" Type="xml" Comment=""/>
+    <variable Name="startRowCount" Type="int" Comment=""/>
+    <variable Name="totalRowCount" Type="int" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+      </actions>
+      <next_nodes>
+        <next_node Name="IP Location Parameter SearchIPLocation" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="IP Location Parameter SearchIPLocation" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="iscpIPLocParamSearch.pgl">
+      <pre_actions>
+        <action>
+          <REQUEST AssignToVar="resSegments" Name="getSegments" ServiceName="PEDM_MASTER">
+          </REQUEST>
+          <TO_DOCVAR AssignToVar="dropDownSegment">
+            <SAMPLE_XML/>
+          </TO_DOCVAR>
+          <REQUEST Name="getAccessLevel" ServiceName="BCM_MASTER" AssignToVar="roleAccessPerm">
+            <ACTIVITY_ID Value="iscpIPLocParams"/>
+            <USER_ID Value="{$userId}"/>
+          </REQUEST>
+          <FOR_EACH SelectList="$resSegments/P_PartyIdentification" CurrentElement="curELE">
+            <APPEND_TO_XML DocVar="dropDownSegment">
+              <P_PartyIdentification>
+                <PartyIdentificationValue Value="{$curELE/PartyIdentificationValue/@Value}"/>
+                <Description Value="{$curELE/PartyIdentificationValue/@Value}-{$curELE/PartyDescription/@Value}"/>
+              </P_PartyIdentification>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <REQUEST AssignToVar="resLocType" Name="getLocType" ServiceName="PEDM_MASTER">
+          </REQUEST>
+          <TO_DOCVAR AssignToVar="dropDownLocType">
+            <SAMPLE_XML/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$resLocType/P_LocationClass" CurrentElement="curELE">
+            <APPEND_TO_XML DocVar="dropDownLocType">
+              <P_LocationClass>
+                <LocationClassMnemonicValue Value="{$curELE/LocationClassMnemonicValue/@Value}"/>
+                <Description Value="{$curELE/LocationClassMnemonicValue/@Value}-{$curELE/LocationClassName/@Value}"/>
+              </P_LocationClass>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <!--  <SET DocVar="dropDownLocType" FromDocVar="resLocType"/>-->
+          <IF_TEST Test="count($thisParam/*[name()='START_WORKFLOW'])&lt;=0 and $userAction!='Save' and $userAction!='MassUpdate' and $userAction!='MassUpdateAll' and $userAction!='ShowHistory' and $userAction!='Cancel' and $thisParam/BUTTON_ID/@Value!=null">
+            <THEN>
+              <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value=null,'0',$thisParam/START_COUNT/@Value)}"/>
+              <SET Var="pgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value=null,'10',$thisParam/MAX_ROWS/@Value)}"/>
+              <SET Var="startRowCount" FromValue="{$paginateStart/@Value}"/>
+              <SET Var="sortBy" FromValue="{ifElse((($thisParam/SORT_BY/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID')), 'SegmentNumber', $thisParam/SORT_BY/@Value)}"/>
+              <SET Var="sortOrder" FromValue="{ifElse((($thisParam/SORT_ORDER/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID')), 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value!='SYS_RELOAD'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="massUpdateSelXml">
+                    <MASSUPDATESEL/>
+                  </TO_DOCVAR>
+                  <REMOVE_CHILDREN DocVar="thisParam" ChildName="selectedSegLocComb"/>
+                  <REQUEST AssignToVar="resParameterClass" Name="getParameterClassIdentifier" ServiceName="PEDM_MASTER">
+                    <ParameterClassMnemonicValue Value="IP"/>
+                  </REQUEST>
+                  <SET Var="parameterClassIdentifier" FromValue="{$resParameterClass/ParameterClassIdentifier/@Value}"/>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="count($thisParam/*[name()='FILTER_ID']) > 0">
+                    <THEN>
+                      <SET Property="START_COUNT" FromValue="0" DocVar="thisParam"/>
+                      <SET Property="MAX_ROWS" FromValue="65536" DocVar="thisParam"/>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                  <FOR_EACH SelectList="$thisParam/selectedSegLocComb" CurrentElement="id">
+                    <SET DocVar="massupdateSelAlready" FromSelectList="$massUpdateSelXml/*[SegLocComb[@Value=$id/@Value]]"/>
+                    <IF_TEST Test="count($massupdateSelAlready/SegLocComb)=0">
+                      <THEN>
+                        <!--  <SET Var="temp" FromValue="{$massUpdateSelXml/@RowCount + 1}"/>
+                        <SET DocVar="massUpdateSelXml" Attribute="RowCount" FromValue="{substringBefore($temp/@Value,'.')}"/>-->
+                        <SET DocVar="massUpdateSelecns" FromSelectList="$mainSearchResults/ROOOT/*[SegLocComb[@Value=$id/@Value]]"/>
+                        <APPEND_TO_XML DocVar="massUpdateSelXml">
+                          <TO_XML Select="$massUpdateSelecns"/>
+                        </APPEND_TO_XML>
+                        <!--   <APPEND_TO_XML DocVar="enteredSearchCriteria">
+                  <selectedSegLocComb Value="{$id/@Value}"/>
+                </APPEND_TO_XML>-->
+                      </THEN>
+                    </IF_TEST>
+                  </FOR_EACH>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="mainSearchResults">
+                <ABC/>
+              </TO_DOCVAR>
+              <SET DocVar="thisReturn" Property="LocationIdentificationValueDescription" FromValue="{upperCase($thisParam/LocationIdentificationValueDescription/@Value)}"/>
+              <SET DocVar="thisReturn" Property="LocationIdentificationValue" FromValue="{upperCase($thisParam/LocationIdentificationValue/@Value)}"/>
+              <SET DocVar="thisReturn" Property="LocationClassMnemonicValue" FromValue="{$thisParam/LocationClassMnemonicValue/@Value}"/>
+              <FOR_EACH SelectList="$thisParam/PartyIdentificationValue" CurrentElement="id">
+                <APPEND_TO_XML DocVar="thisReturn">
+                  <PartyIdentificationValue Value="{$id/@Value}"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <!--   <SET DocVar="thisReturn" Property="PartyIdentificationValue" FromValue="{$thisParam/PartyIdentificationValue/@Value}"/>-->
+              <FORM_SEARCH_FILTER Value="{$thisReturn}" AssignToVar="searchParamFilter">
+                <PartyIdentificationValue MultiValued="true"/>
+                <LocationIdentificationValueDescription MultiValued="false"/>
+                <LocationClassMnemonicValue MultiValued="false"/>
+                <LocationIdentificationValue MultiValued="true"/>
+              </FORM_SEARCH_FILTER>
+              <REQUEST AssignToVar="resSearchCriteria" Name="readLocParams" ServiceName="PEDM_MASTER">
+                <TO_XML SelectList="$thisParam/*"/>
+                <TO_XML SelectList="$searchParamFilter/*"/>
+                <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                <paginateStart Value="{$paginateStart/@Value}"/>
+                <pgMaxRows Value="{$pgMaxRows/@Value}"/>
+                <sortBy Value="{$sortBy/@Value}"/>
+                <sortOrder Value="{$sortOrder/@Value}"/>
+                <LocationIdentificationClassMnemonicValue Value="{$defaultLocationforISCP}"/>
+              </REQUEST>
+              <!-- <REQUEST AssignToVar="resSearchCriteria" Name="MapIPLocParamsBIFtoPEDM" ServiceName="PEDM_MASTER">
+                <TO_XML SelectList="$thisParam/*"/>
+                <TO_XML SelectList="$searchParamFilter/*"/>
+                <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+                <paginateStart Value="{$paginateStart/@Value}"/>
+                <pgMaxRows Value="{$pgMaxRows/@Value}"/>
+              </REQUEST>-->
+              <SET Var="totalRowCount" FromValue="{$resSearchCriteria/TotalRowCount/@Value}"/>
+              <TO_DOCVAR AssignToVar="mainSearchResults">
+                <RESULTS/>
+              </TO_DOCVAR>
+              <!--  <APPEND_CHILDREN DocVar="mainSearchResults" FromDocVar="rowcountt"/>-->
+              <APPEND_CHILDREN DocVar="mainSearchResults" FromDocVar="resSearchCriteria"/>
+              <TO_DOCVAR AssignToVar="partyIdn">
+                <patyIdn>
+                  <TO_XML SelectList="$thisParam/PartyIdentificationValue"/>
+                </patyIdn>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="enteredSearchCriteria">
+                <Criteria>
+                  <LocationClassMnemonicValue Value="{$thisParam/LocationClassMnemonicValue/@Value}"/>
+                  <LocationIdentificationValue Value="{$thisParam/LocationIdentificationValue/@Value}"/>
+                  <LocationIdentificationValueDescription Value="{$thisParam/LocationIdentificationValueDescription/@Value}"/>
+                  <TO_XML SelectList="$thisParam/PartyIdentificationValue"/>
+                </Criteria>
+              </TO_DOCVAR>
+              <PRINTLN Value="abc"/>
+            </THEN>
+          </IF_TEST>
+          <PRINTLN Value="user action is :::{$userAction}"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root>
+              <Inventory>
+                <ID Value="N"/>
+                <ID Value="U"/>
+                <ID Value="Y"/>
+              </Inventory>
+            </root>
+          </TO_DOCVAR>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML Select="$mainSearchResults"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <Segments>
+              <DROP_DOWN_OPTIONS SelectList="$dropDownSegment/P_PartyIdentification" Id="PartyIdentificationValue" Value="Description"/>
+            </Segments>
+            <LocTypes>
+              <DROP_DOWN_OPTIONS SelectList="$dropDownLocType/P_LocationClass" Id="LocationClassMnemonicValue" Value="Description"/>
+            </LocTypes>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$enteredSearchCriteria/*"/>
+          </APPEND_TO_XML>
+          <IF_TEST Test="$userAction='Save'">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML Select="$locParamErrors"/>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML Select="$locParamSuccess"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!--  <SET DocVar="thisParam" Property="START_COUNT" FromValue="{$startRowCount/@Value}"/>-->
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <AccessLevel Value="{$roleAccessPerm/SQL_RESULT/ACCESS_LEVEL/@Value}"/>
+            <totalRowCount Value="{$totalRowCount/@Value}"/>
+            <startatRow Value="{$startRowCount/@Value}"/>
+            <pgRowCount Value="{$mainSearchResults/pgRowCount/@Value}"/>
+          </APPEND_TO_XML>
+          <IF_TEST Test="$userAction!='search_button'">
+            <THEN>
+              <APPEND_TO_XML DocVar="thisParam">
+                <TO_XML SelectList="$enteredSearchCriteria/*"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <IF_TEST Test="$userAction='Save'">
+          <THEN>
+            <TO_DOCVAR AssignToVar="enteredSearchCriteria">
+              <Criteria>
+                <LocationClassMnemonicValue Value="{$thisParam/LocationClassMnemonicValue/@Value}"/>
+                <LocationIdentificationValue Value="{$thisParam/LocationIdentificationValue/@Value}"/>
+                <LocationIdentificationValueDescription Value="{$thisParam/LocationIdentificationValueDescription/@Value}"/>
+                <TO_XML SelectList="$thisParam/PartyIdentificationValue"/>
+              </Criteria>
+            </TO_DOCVAR>
+            <FOR_EACH SelectList="$pglFormOutput/selectedSegLocComb" CurrentElement="id">
+              <APPEND_TO_XML DocVar="enteredSearchCriteria">
+                <selectedSegLocComb Value="{$id/@Value}"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+            <TO_DOCVAR AssignToVar="xyz">
+              <MYDOCUMENT>
+                <INPUT>
+                  <TO_XML SelectList="$pglFormOutput/*"/>
+                </INPUT>
+                <COLLATE_LIST Value="SEG_LOC_DETAILS">
+                  <SegmentNumber/>
+                  <LocationNumber/>
+                  <KeepInventoryFlag/>
+                  <ParameterValueCommentText/>
+                  <ParameterValueCommentText_Hidden/>
+                  <SourceSystemMnemonicValue/>
+                  <KeepInventoryFlag_Hidden/>
+                  <LAST_MODIFIED_DATE/>
+                </COLLATE_LIST>
+              </MYDOCUMENT>
+            </TO_DOCVAR>
+            <COLLATE_XML DocVar="xyz" AssignToVar="collatedDoc"/>
+            <PRINTLN Value="{$collatedDoc}"/>
+            <TO_DOCVAR AssignToVar="records">
+              <RECORDS>
+              </RECORDS>
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="locParamErrors">
+              <_ERRORS>
+              </_ERRORS>
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="locParamSuccess">
+              <SUCCESSMSG>
+              </SUCCESSMSG>
+            </TO_DOCVAR>
+            <SET Var="trackValueChange" FromValue="0"/>
+            <SET Var="chkCommNotNull" FromValue="1"/>
+            <FOR_EACH SelectList="$collatedDoc/SEG_LOC_DETAILS" CurrentElement="outerId">
+              <FOR_EACH SelectList="$pglFormOutput/selectedSegLocComb" CurrentElement="selectedRec">
+                <SET Var="SelectedSegment" FromValue="{substringBefore($selectedRec/@Value,':')}"/>
+                <SET Var="SelectedLocation" FromValue="{substringAfter($selectedRec/@Value,':')}"/>
+                <IF_TEST Test="(($outerId/SegmentNumber/@Value=$SelectedSegment) and ($outerId/LocationNumber/@Value=$SelectedLocation) and ($outerId/KeepInventoryFlag/@Value!=$outerId/KeepInventoryFlag_Hidden/@Value))">
+                  <THEN>
+                    <SET Var="trackValueChange" FromValue="1"/>
+                    <SET_PROPS Select="$mainSearchResults/ROOOT/*[SegLocComb[@Value=$selectedRec/@Value]]">
+                      <KeepInventoryFlag Value="{$outerId/KeepInventoryFlag/@Value}"/>
+                      <ParameterValueCommentText Value="{trim($outerId/ParameterValueCommentText/@Value)}"/>
+                    </SET_PROPS>
+                    <IF_TEST Test="strlen(trim($outerId/ParameterValueCommentText/@Value))>0">
+                      <THEN>
+                        <IF_TEST Test="strlen(trim($outerId/ParameterValueCommentText/@Value))&lt;255">
+                          <THEN>
+                            <IF_TEST Test="trim($outerId/ParameterValueCommentText/@Value)!=trim($outerId/ParameterValueCommentText_Hidden/@Value)">
+                              <THEN>
+                                <TO_DOCVAR AssignToVar="record">
+                                  <RECORD>
+                                    <DOCUMENT_CONTEXT>
+                                      <BusinessOrganizationValue Value="{$outerId/SegmentNumber/@Value}"/>
+                                      <LocationValue Value="{$outerId/LocationNumber/@Value}"/>
+                                      <!--<SourceSystemMnemonicValue Value="{$outerId/SourceSystemMnemonicValue/@Value}"/>-->
+                                    </DOCUMENT_CONTEXT>
+                                    <UPDATE_PROPERTIES>
+                                      <KeepInventoryIndicator Value="{$outerId/KeepInventoryFlag/@Value}"/>
+                                      <KeepInventoryIndicatorCommentText Value="{trim($outerId/ParameterValueCommentText/@Value)}"/>
+                                      <SYS_TYPE Value="UPDATE"/>
+                                      <SOURCE Value="UI"/>
+                                    </UPDATE_PROPERTIES>
+                                    <LastModifiedDateForCheck Value="{$outerId/LAST_MODIFIED_DATE/@Value}"/>
+                                    <ValidateMultiUserEdit Value="Yes"/>
+                                    <ACTIONTOBDONE Value="UPDATE"/>
+                                    <DOCUMENTNAME Value="E_InventoryPolicyLocationParameter"/>
+                                  </RECORD>
+                                </TO_DOCVAR>
+                                <APPEND_TO_XML DocVar="records">
+                                  <TO_XML Select="$record"/>
+                                </APPEND_TO_XML>
+                              </THEN>
+                              <ELSE>
+                                <SET Var="chkCommNotNull" FromValue="0"/>
+                                <APPEND_TO_XML DocVar="locParamErrors">
+                                  <_ERROR Value="Please enter New comments for Update of Keep Inventory Flag for Segment-Location: {$selectedRec/@Value}"/>
+                                </APPEND_TO_XML>
+                              </ELSE>
+                            </IF_TEST>
+                          </THEN>
+                          <ELSE>
+                            <SET Var="chkCommNotNull" FromValue="0"/>
+                            <APPEND_TO_XML DocVar="locParamErrors">
+                              <_ERROR Value="Comments should not be greater than 255 characters for Segment-Location: {$selectedRec/@Value}"/>
+                            </APPEND_TO_XML>
+                          </ELSE>
+                        </IF_TEST>
+                      </THEN>
+                      <ELSE>
+                        <SET Var="chkCommNotNull" FromValue="0"/>
+                        <APPEND_TO_XML DocVar="locParamErrors">
+                          <_ERROR Value="Please enter comments for Update of Keep Inventory Flag for Segment-Location: {$selectedRec/@Value}"/>
+                        </APPEND_TO_XML>
+                      </ELSE>
+                    </IF_TEST>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </FOR_EACH>
+            <SET Var="tp" FromValue="1"/>
+            <!--    <IF_TEST Test="$chkCommNotNull/@Value=1">
+      <THEN>-->
+            <FOR_EACH SelectList="$records/RECORD" CurrentElement="id">
+              <DO_TRANSACTION>
+                <REQUEST AssignToVar="thisReturn" Name="updateIPLocParam" ServiceName="BCM_MASTER" HandleException="true">
+                  <TO_XML SelectList="$id/*"/>
+                </REQUEST>
+              </DO_TRANSACTION>
+              <IF_TEST Test="($thisReturn/_RESULT/@Value='SEVERE_ERROR')">
+                <THEN>
+                  <IF_TEST Test="($thisReturn/_RESULT/_ERROR/@Value=$ipLocMultiEditErrMsg)">
+                    <THEN>
+                      <SET Var="tweakedErrMsg" FromValue="{$thisReturn/_RESULT/_ERROR/@Value}"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="tweakedErrMsg" FromValue="{concat($thisReturn/_RESULT/_ERROR/@Value,' For ',' Segment:  ',$id/DOCUMENT_CONTEXT/BusinessOrganizationValue/@Value,'  and Location:  ',$id/DOCUMENT_CONTEXT/LocationValue/@Value)}"/>
+                    </ELSE>
+                  </IF_TEST>
+                  <TO_DOCVAR AssignToVar="error">
+                    <_ERROR Value="{$tweakedErrMsg/@Value}"/>
+                  </TO_DOCVAR>
+                  <SET Var="tp" FromValue="0"/>
+                  <APPEND_TO_XML DocVar="locParamErrors">
+                    <TO_XML Select="$error"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+              <SET Var="selectedSegLocComb" FromValue="{concat($id/DOCUMENT_CONTEXT/BusinessOrganizationValue/@Value,':',$id/DOCUMENT_CONTEXT/LocationValue/@Value)}"/>
+              <SET_PROPS Select="$mainSearchResults/ROOOT/*[SegLocComb[@Value=$selectedSegLocComb/@Value]]">
+                <KeepInventoryFlag_Hidden Value="{$id/UPDATE_PROPERTIES/KeepInventoryIndicator/@Value}"/>
+                <ParameterValueCommentText_Hidden Value="{trim($id/UPDATE_PROPERTIES/KeepInventoryIndicatorCommentText/@Value)}"/>
+              </SET_PROPS>
+              <IF_TEST Test="($thisReturn/_RESULT/@Value!='SEVERE_ERROR')">
+                <THEN>
+                  <SET_PROPS Select="$mainSearchResults/ROOOT/*[SegLocComb[@Value=$selectedSegLocComb/@Value]]">
+                    <LAST_MODIFIED_DATE Value="{$thisReturn/LAST_MODIFIED_DATE_NEW/@Value}"/>
+                  </SET_PROPS>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+            <IF_TEST Test="($trackValueChange/@Value=1 and $tp/@Value='1' and $chkCommNotNull/@Value=1 )">
+              <THEN>
+                <APPEND_TO_XML DocVar="locParamSuccess">
+                  <MSG Value="Records Successfully Updated"/>
+                </APPEND_TO_XML>
+              </THEN>
+            </IF_TEST>
+            <!--    </THEN>
+   
+    </IF_TEST>-->
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$userAction='MassUpdate'">
+          <THEN>
+            <TO_DOCVAR AssignToVar="tempMassUpdSel">
+              <MASSUPDATESEL/>
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="enteredSearchCriteria">
+              <Criteria>
+                <LocationClassMnemonicValue Value="{$thisParam/LocationClassMnemonicValue/@Value}"/>
+                <LocationIdentificationValue Value="{$thisParam/LocationIdentificationValue/@Value}"/>
+                <LocationIdentificationValueDescription Value="{$thisParam/LocationIdentificationValueDescription/@Value}"/>
+                <TO_XML SelectList="$thisParam/PartyIdentificationValue"/>
+              </Criteria>
+            </TO_DOCVAR>
+            <FOR_EACH SelectList="$pglFormOutput/selectedSegLocComb" CurrentElement="id">
+              <SET DocVar="massupdateSelAlready" FromSelectList="$massUpdateSelXml/*[SegLocComb[@Value=$id/@Value]]"/>
+              <SET DocVar="massUpdateSelecns" FromSelectList="$mainSearchResults/ROOOT/*[SegLocComb[@Value=$id/@Value]]"/>
+              <IF_TEST Test="count($massupdateSelAlready/SegLocComb)>0">
+                <THEN>
+                  <APPEND_TO_XML DocVar="tempMassUpdSel">
+                    <TO_XML Select="$massupdateSelAlready"/>
+                  </APPEND_TO_XML>
+                  <APPEND_TO_XML DocVar="enteredSearchCriteria">
+                    <selectedSegLocComb Value="{$id/@Value}"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="count($massUpdateSelecns/SegLocComb)>0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="tempMassUpdSel">
+                        <TO_XML Select="$massUpdateSelecns"/>
+                      </APPEND_TO_XML>
+                      <APPEND_TO_XML DocVar="enteredSearchCriteria">
+                        <selectedSegLocComb Value="{$id/@Value}"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </FOR_EACH>
+            <SET DocVar="massUpdateSelXml" FromDocVar="tempMassUpdSel"/>
+            <APPEND_TO_XML DocVar="massUpdateSelXml">
+              <userAction Value="{$userAction}"/>
+            </APPEND_TO_XML>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$userAction='MassUpdateAll'">
+          <THEN>
+            <FORM_SEARCH_FILTER Value="{$enteredSearchCriteria}" AssignToVar="searchParamFilter1">
+              <PartyIdentificationValue MultiValued="true"/>
+              <LocationIdentificationValueDescription MultiValued="false"/>
+              <LocationClassMnemonicValue MultiValued="false"/>
+              <LocationIdentificationValue MultiValued="true"/>
+            </FORM_SEARCH_FILTER>
+            <REQUEST AssignToVar="resSearchCriteriaAll" Name="readLocParams" ServiceName="PEDM_MASTER">
+              <TO_XML SelectList="$thisParam/*"/>
+              <TO_XML SelectList="$searchParamFilter1/*"/>
+              <sortBy Value="SegmentNumber"/>
+              <ParameterClassIdentifier Value="{$parameterClassIdentifier/@Value}"/>
+              <LocationIdentificationClassMnemonicValue Value="{$defaultLocationforISCP}"/>
+            </REQUEST>
+            <TO_DOCVAR AssignToVar="tempMassUpdSel">
+              <MASSUPDATESEL/>
+            </TO_DOCVAR>
+            <APPEND_TO_XML DocVar="tempMassUpdSel">
+              <TO_XML SelectList="$resSearchCriteriaAll/ROOOT/*"/>
+            </APPEND_TO_XML>
+            <SET DocVar="massUpdateSelXml" FromDocVar="tempMassUpdSel"/>
+            <APPEND_TO_XML DocVar="massUpdateSelXml">
+              <userAction Value="{$userAction}"/>
+            </APPEND_TO_XML>
+          </THEN>
+        </IF_TEST>
+      </post_actions>
+      <if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IP Location Parameter SearchIPLocation" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='MassUpdate'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Mass Update" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ShowHistory'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IP Location Parameter SearchIPLocation" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='searchLocation'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search Location" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='searchSegment'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='MassUpdateAll'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Mass Update" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IP Location Parameter SearchIPLocation" Description=""/>
+          <next_node Name="IP Location Parameter SearchIPLocation" Description=""/>
+          <next_node Name="IP Location Parameter SearchIPLocation" Description=""/>
+          <next_node Name="IP Location Parameter SearchIPLocation" Description=""/>
+          <next_node Name="done4" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done4">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Mass Update" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="iscpIPLocParamMassUpdate.pgl">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <SAMPLE_XML>
+            </SAMPLE_XML>
+          </TO_DOCVAR>
+          <IF_TEST Test="$massUpdateSelXml/userAction/@Value='MassUpdate'">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML Select="$massUpdateSelXml"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Save'">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML Select="$locParamErrors"/>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML Select="$locParamSuccess"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Save'">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML Select="$MassUpdateParamValues"/>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <PARAM_DETAILS_LIST>
+                  <PARAM_DETAILS>
+                    <ParamName Value="Keep Inventory Flag"/>
+                  </PARAM_DETAILS>
+                </PARAM_DETAILS_LIST>
+              </APPEND_TO_XML>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='Save'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="MassUpdateParamValues">
+                <PARAM_DETAILS_LIST>
+                  <PARAM_DETAILS>
+                    <ParamName Value="Keep Inventory Flag"/>
+                    <ParameterValue1 Value="{$pglFormOutput/ParameterValue1/@Value}"/>
+                    <Comments1 Value="{trim($pglFormOutput/Comments1/@Value)}"/>
+                  </PARAM_DETAILS>
+                </PARAM_DETAILS_LIST>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="records">
+                <RECORDS>
+                </RECORDS>
+              </TO_DOCVAR>
+              <!--           <TO_DOCVAR AssignToVar="allErrors">
+                <_ALLERRORS>
+                </_ALLERRORS>
+              </TO_DOCVAR>-->
+              <TO_DOCVAR AssignToVar="locParamErrors">
+                <_ERRORS>
+                </_ERRORS>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="locParamSuccess">
+                <SUCCESSMSG>
+                </SUCCESSMSG>
+              </TO_DOCVAR>
+              <SET Var="chkCommNotNull" FromValue="1"/>
+              <FOR_EACH SelectList="$massUpdateSelXml/Table" CurrentElement="outerId">
+                <IF_TEST Test="strlen(trim($pglFormOutput/Comments1/@Value))>0">
+                  <THEN>
+                    <IF_TEST Test="strlen(trim($pglFormOutput/Comments1/@Value))&lt;255">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="record">
+                          <RECORD>
+                            <DOCUMENT_CONTEXT>
+                              <BusinessOrganizationValue Value="{$outerId/SegmentNumber/@Value}"/>
+                              <LocationValue Value="{$outerId/LocationNumber/@Value}"/>
+                              <!--  <SourceSystemMnemonicValue Value="{$outerId/SourceSystemMnemonicValue/@Value}"/>-->
+                            </DOCUMENT_CONTEXT>
+                            <UPDATE_PROPERTIES>
+                              <KeepInventoryIndicator Value="{$pglFormOutput/ParameterValue1/@Value}"/>
+                              <KeepInventoryIndicatorCommentText Value="{trim($pglFormOutput/Comments1/@Value)}"/>
+                              <SYS_TYPE Value="UPDATE"/>
+                              <SOURCE Value="UI"/>
+                            </UPDATE_PROPERTIES>
+                            <ACTIONTOBDONE Value="UPDATE"/>
+                            <DOCUMENTNAME Value="E_InventoryPolicyLocationParameter"/>
+                          </RECORD>
+                        </TO_DOCVAR>
+                        <APPEND_TO_XML DocVar="records">
+                          <TO_XML Select="$record"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                      <ELSE>
+                        <SET Var="chkCommNotNull" FromValue="2"/>
+                      </ELSE>
+                    </IF_TEST>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="chkCommNotNull" FromValue="0"/>
+                  </ELSE>
+                </IF_TEST>
+              </FOR_EACH>
+              <SET Var="tp" FromValue="1"/>
+              <IF_TEST Test="$chkCommNotNull/@Value=1">
+                <THEN>
+                  <FOR_EACH SelectList="$records/RECORD" CurrentElement="id">
+                    <REQUEST AssignToVar="thisReturn" Name="updateIPLocParam" ServiceName="BCM_MASTER" HandleException="true">
+                      <TO_XML SelectList="$id/*"/>
+                    </REQUEST>
+                    <IF_TEST Test="($thisReturn/_RESULT/@Value='SEVERE_ERROR')">
+                      <THEN>
+                        <!--    <SET Var="tweakedErrMsg" FromValue="{concat($thisReturn/_RESULT/_ERROR/@Value,' For ',' Segment:  ',$id/DOCUMENT_CONTEXT/SegmentIdentification/@Value,'  and Location:  ',$id/DOCUMENT_CONTEXT/LocationIdentification/@Value)}"/>
+                <TO_DOCVAR AssignToVar="error">
+                  <_ERROR Value="{$tweakedErrMsg/@Value}"/>
+                </TO_DOCVAR>-->
+                        <SET Var="tp" FromValue="0"/>
+                        <!-- <APPEND_TO_XML DocVar="locParamErrors">
+                  <TO_XML Select="$error"/>
+                </APPEND_TO_XML>-->
+                        <TO_DOCVAR AssignToVar="locParamErrors">
+                          <_ERRORS>
+                            <_ERROR Value="{$thisReturn/_RESULT/_ERROR/@Value}"/>
+                          </_ERRORS>
+                        </TO_DOCVAR>
+                      </THEN>
+                      <ELSE>
+                        <SET Var="selectedSegLocComb" FromValue="{concat($id/DOCUMENT_CONTEXT/BusinessOrganizationValue/@Value,':',$id/DOCUMENT_CONTEXT/LocationValue/@Value)}"/>
+                        <SET_PROPS Select="$massUpdateSelXml/*[SegLocComb[@Value=$selectedSegLocComb/@Value]]">
+                          <LAST_MODIFIED_DATE Value="{$id/UPDATE_PROPERTIES/LAST_MODIFIED_DATE/@Value}"/>
+                          <KeepInventoryFlag Value="{$id/UPDATE_PROPERTIES/KeepInventoryIndicator/@Value}"/>
+                          <!--	DYanez RIC#236594 Added hidden fields for KeepInventory and Comment fields -->
+                          <KeepInventoryFlag_Hidden Value="{$id/UPDATE_PROPERTIES/KeepInventoryIndicator/@Value}"/>
+                          <ParameterValueCommentText_Hidden Value="{$id/UPDATE_PROPERTIES/KeepInventoryIndicatorCommentText/@Value}"/>
+                          <!--	RIC#236594 End-->
+                          <ParameterValueCommentText Value="{$id/UPDATE_PROPERTIES/KeepInventoryIndicatorCommentText/@Value}"/>
+                        </SET_PROPS>
+                        <SET_PROPS Select="$mainSearchResults/ROOOT/*[SegLocComb[@Value=$selectedSegLocComb/@Value]]">
+                          <LAST_MODIFIED_DATE Value="{$id/UPDATE_PROPERTIES/LAST_MODIFIED_DATE/@Value}"/>
+                          <KeepInventoryFlag Value="{$id/UPDATE_PROPERTIES/KeepInventoryIndicator/@Value}"/>
+                          <!--	DYanez RIC#236594 Added hidden fields for KeepInventory and Comment fields -->
+                          <KeepInventoryFlag_Hidden Value="{$id/UPDATE_PROPERTIES/KeepInventoryIndicator/@Value}"/>
+                          <ParameterValueCommentText_Hidden Value="{$id/UPDATE_PROPERTIES/KeepInventoryIndicatorCommentText/@Value}"/>
+                          <!--	RIC#236594 End-->
+                          <ParameterValueCommentText Value="{$id/UPDATE_PROPERTIES/KeepInventoryIndicatorCommentText/@Value}"/>
+                        </SET_PROPS>
+                      </ELSE>
+                    </IF_TEST>
+                  </FOR_EACH>
+                  <IF_TEST Test="($tp/@Value='1')">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="locParamSuccess">
+                        <MSG Value="Records Successfully Updated"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$chkCommNotNull/@Value=2">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="locParamErrors">
+                        <_ERROR Value="Comments should not be greater than 255 characters"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="locParamErrors">
+                        <_ERROR Value="Please enter comments for Update"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Mass Update" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IP Location Parameter SearchIPLocation" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <sub_workflow Name="Search Location" InputVar="{nodeInXMl,xml}" Workflow="wfTLSelectLocation">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutXml,xml}"/>
+      <input>
+        <!-- CR:94039 12/11/2007 Rahul Keshri Code Starts-->
+        <SET DocVar="thisParam" Property="SOURCE" FromValue="IPItemLocation"/>
+        <!-- CR:94039 Code Ends -->
+        <TO_XML SelectList="$thisParam/*"/>
+      </input>
+    </sub_workflow>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="77,166" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <mgcnode Name="IP Location Parameter SearchIPLocation" location="293,161" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="IP Location Parameter SearchIPLocation" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done4 location="584,149" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done4" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done4>
+      <mgcnode Name="Mass Update" location="367,416" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Mass Update" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Search Location" location="619,56" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Search Location" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="109,188" endpoint="293,183" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="245,186,4,4" ctrlRect2="153,181,4,4"/>
+      </start2>
+      <mgcnode Name="IP Location Parameter SearchIPLocation">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="309,161" endpoint="309,161" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="307,84,4,4" ctrlRect2="183,41,4,4" textRect="212,60,71,9">
+          <textProps text="search_button" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="309,206" endpoint="367,439" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="307,378,4,4" ctrlRect2="68,249,4,4" textRect="178,257,148,9">
+          <textProps text="[$userAction ='MassUpdate']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="309,161" endpoint="309,161" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="307,84,4,4" ctrlRect2="442,27,4,4" textRect="321,53,110,9">
+          <textProps text="[$userAction ='Save']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="325,183" endpoint="619,78" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="543,181,4,4" ctrlRect2="396,76,4,4" textRect="390,126,162,9">
+          <textProps text="[$userAction ='searchLocation']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="309,206" endpoint="383,416" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="307,361,4,4" ctrlRect2="381,256,4,4" textRect="265,306,162,9">
+          <textProps text="[$userAction ='MassUpdateAll']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="309,161" endpoint="309,161" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="307,84,4,4" ctrlRect2="307,84,4,4" textRect="292,82,35,9">
+          <textProps text="[true()]" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="309,161" endpoint="309,161" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="307,84,4,4" ctrlRect2="307,84,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="309,161" endpoint="309,161" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="307,84,4,4" ctrlRect2="307,84,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="309,161" endpoint="309,161" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="307,84,4,4" ctrlRect2="307,84,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="325,183" endpoint="584,171" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="516,181,4,4" ctrlRect2="387,169,4,4" textRect="388,164,35,9"/>
+      </mgcnode>
+      <mgcnode Name="Mass Update">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="367,439" endpoint="367,439" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="290,437,4,4" ctrlRect2="280,367,4,4" textRect="232,400,110,9">
+          <textProps text="[$userAction ='Save']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="383,416" endpoint="325,183" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="394,210,4,4" ctrlRect2="560,311,4,4" textRect="330,228,120,9">
+          <textProps text="[$userAction ='Cancel']" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,8" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="10" textAttrsKey0="MassUpdateParamValues : xml" textAttrsKey1="enteredSearchCriteria : xml" textAttrsKey2="locParamErrors : xml" textAttrsKey3="locParamSuccess : xml" textAttrsKey4="mainSearchResults : xml" textAttrsKey5="massUpdateSelXml : xml" textAttrsKey6="parameterClassIdentifier : string" textAttrsKey7="selectedSegLoc : xml" textAttrsKey8="startRowCount : int" textAttrsKey9="totalRowCount : int">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="MassUpdateParamValues" Type="xml" Comment=""/>
+        <variable Name="enteredSearchCriteria" Type="xml" Comment=""/>
+        <variable Name="locParamErrors" Type="xml" Comment=""/>
+        <variable Name="locParamSuccess" Type="xml" Comment=""/>
+        <variable Name="mainSearchResults" Type="xml" Comment=""/>
+        <variable Name="massUpdateSelXml" Type="xml" Comment=""/>
+        <variable Name="parameterClassIdentifier" Type="string" Comment=""/>
+        <variable Name="selectedSegLoc" Type="xml" Comment=""/>
+        <variable Name="startRowCount" Type="int" Comment=""/>
+        <variable Name="totalRowCount" Type="int" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

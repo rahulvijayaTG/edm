@@ -1,0 +1,291 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="studio.templates.simple_entry" source="studio.controller:load">
+  
+  
+  <ui:container id="parent" displayText="Measure Definition [New Measure] " scrollable="false" type="Wizard">
+    
+    
+    <ui:step displayText="Basic" id="step1" scrollable="false" editable="true">
+      
+      
+      <!-- ************** -->
+      
+      
+      <!-- needed by studio -->
+      
+      
+      <ui:field-group select="$root">
+        
+        
+        <ui:hidden-field name="EV_NAME" />
+        
+        
+        <ui:hidden-field name="EV_KEY" />
+        
+        
+        <ui:hidden-field name="CURRENT_USER_ID" value="{identity-user-id()}" />
+        
+        
+        <ui:hidden-field name="locks" id="locks" value="{$root/locks/@Value}" />
+        
+        
+        <ui:hidden-field name="buttonAction" id="buttonAction" value="{$root/buttonAction/@Value}" />
+        
+      
+      </ui:field-group>
+      
+      
+      <ui:grid id="one">
+        
+        
+        <ui:row>
+          
+          
+          <ui:cell width="20%" valign="top" align="left">
+            
+            
+            <ui:field-group>
+              
+              
+              <ui:entry-field displayText="Name" required="true" name="Name" id="Name" />
+              
+            
+            </ui:field-group>
+            
+          
+          </ui:cell>
+          
+          
+          <ui:cell width="80%" valign="top" align="left">
+            
+            
+            <ui:field-group>
+              
+              
+              <ui:image-link-field name="link1" src="/lock.gif" id="link1" displayCondition="{string-length($root/locks/@Value) = 0}">
+                
+                
+                <ui:url page="JavaScript:onunlock()" />
+                
+              
+              </ui:image-link-field>
+              
+              
+              <ui:image-link-field name="link2" src="/lockedFile.gif" id="link2" displayCondition="{string-length($root/locks/@Value) != 0}">
+                
+                
+                <ui:url page="JavaScript:onlock()" />
+                
+              
+              </ui:image-link-field>
+              
+            
+            </ui:field-group>
+            
+          
+          </ui:cell>
+          
+        
+        </ui:row>
+        
+      
+      </ui:grid>
+      
+      
+      <ui:field-group>
+        
+        
+        <ui:entry-field displayText="Description" name="Description" />
+        
+        
+        <ui:dropdown displayText="Type" name="Type" optionSrc="$root/PROGRAM_TYPES/*" onChange="JavaScript:typeCheck()">
+          
+          
+          <ui:option id="ANY" value="ANY" />
+          
+          
+          <ui:option id="BI-DIRECTIONAL" value="BI-DIRECTIONAL" />
+          
+          
+          <ui:option id="SINGLEPOINT" value="SINGLEPOINT" />
+          
+          
+          <ui:option id="COMMENT" value="COMMENT" />
+          
+        
+        </ui:dropdown>
+        
+        
+        <ui:dropdown displayText="DB DataType" name="DB_TYPE" selectAll="false" optionSrc="$root/PROGRAM_TYPES/*">
+          
+          
+          <ui:option id="ANY" value="ANY" />
+          
+          
+          <!--  <ui:option id="FLOAT" value="FLOAT"/>-->
+          
+          
+          <ui:option id="DOUBLE" value="DOUBLE" />
+          
+          
+          <ui:option id="STRING" value="STRING" />
+          
+          
+          <!--    <ui:option id="INTEGER" value="INTEGER"/>-->
+          
+        
+        </ui:dropdown>
+        
+        
+        <ui:entry-field displayText="Data Length" name="DLEN" size="2" />
+        
+        
+        <ui:entry-field displayText="Precision" name="Precision" size="2" />
+        
+        
+        <ui:dropdown displayText="Data Range" name="Range" selectAll="false" optionSrc="$root/PROGRAM_TYPES/*">
+          
+          
+          <ui:option id="POSITIVE" value="POSITIVE" />
+          
+          
+          <ui:option id="NEGATIVE" value="NEGATIVE" />
+          
+        
+        </ui:dropdown>
+        
+        
+        <ui:dropdown displayText="Profile Measure" name="profile" selectAll="false" optionSrc="$root/PROGRAM_TYPES/*">
+          
+          
+          <ui:option id="NULL" value="NULL" />
+          
+          
+          <ui:option id="R" value="R" />
+          
+          
+          <ui:option id="P" value="P" />
+          
+          
+          <ui:option id="L" value="L" />
+          
+        
+        </ui:dropdown>
+        
+        
+        <!--    <ui:dropdown displayText="External Source" name="Source" selectAll="false" optionSrc="$root/PROGRAM_TYPES/*" id="Source">
+          <ui:option id="ExtSrcADVxds" value="ExtSrcADVxds"/>
+        </ui:dropdown>
+        <ui:dropdown displayText="Fact Table" name="Fact" selectAll="false" optionSrc="$root/PROGRAM_TYPES/*" id="Fact">
+          <ui:option id="AUTOMATIC" value="AUTOMATIC"/>
+        </ui:dropdown>-->
+        
+        
+        <ui:dropdown displayText="InMem Cube" name="InMem" selectAll="false" optionSrc="$root/PROGRAM_TYPES/*" id="InMem">
+          
+          
+          <ui:option id="AUTOMATIC" value="AUTOMATIC" />
+          
+        
+        </ui:dropdown>
+        
+      
+      </ui:field-group>
+      
+      
+      <ui:buttons>
+        
+        
+        <ui:button displayText="Cancel" id="CANCEL" />
+        
+        
+        <ui:button displayText="Previous" id="PREVIOUS" disabled="true" />
+        
+        
+        <ui:button displayText="Next" id="NEXT" enabledBySelections="false" />
+        
+        
+        <ui:button displayText="Finish" id="FINISH" disabled="true" />
+        
+      
+      </ui:buttons>
+      
+      
+      <ui:script>
+			function onunlock()
+			{
+//document.form.Name.style.backgroundColor = "#E6E6E6"
+		 
+					document.form.locks.value='locked';
+		
+		document.form.BUTTON_ID.value = 'drop_select' ; 
+		document.form.submit();
+			}
+						function onlock()
+			{
+ 
+					document.form.locks.value="";
+		
+		document.form.BUTTON_ID.value = 'no_lock' ; 
+		document.form.submit();
+			}
+				
+				
+	 function onLoad()
+				{
+ 
+			if(document.form.locks.value=='locked')
+				{
+		document.form.Name.disabled=true;
+				}
+				else
+				document.form.Name.disabled=false;
+				
+				
+			
+				
+				} 
+				
+				
+				 	function typeCheck()
+				{	  
+				
+				
+		if(document.form.Type.value=='COMMENT')
+				{
+			
+				 
+						document.form.Precision.disabled=true;
+				document.form.DLEN.disabled=true;
+	
+
+				
+				}
+				else
+					{
+ 
+				document.form.DLEN.disabled=false;
+					document.form.Precision.disabled=false;
+		 
+			if(document.form.Type.value=='BI-DIRECTIONAL')
+				
+				{
+			 
+				document.form.Type.disabled=true;
+				}
+				  }
+		
+				}
+				
+				
+	 
+		</ui:script>
+      
+    
+    </ui:step>
+    
+  
+  </ui:container>
+  
+
+</ui:page-group>
+

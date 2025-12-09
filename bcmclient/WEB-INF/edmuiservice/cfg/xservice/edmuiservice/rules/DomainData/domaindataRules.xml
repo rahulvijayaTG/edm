@@ -1,0 +1,363 @@
+<DOCUMENTS>
+
+  <DEFINE_METHOD Name="getDomainTable" Comment="The rule fetches the records/table names  to be shown on the UI, users will be able to manage the data in these tables through the Domain Data UI. Data will be picked up from the CrossReferenceObject table in PELDM ">
+    <RULE>
+      <ACTION>
+        <SET Var="singleQuote" FromValue="'"/>
+        <SET Var="greater" FromValue="/>"/>
+        <SET Var="less" FromValue="&lt;"/>
+        <SET Var="doublequoute" FromValue="&quot;"/>
+        <SET Var="startRow" FromSelect="$thisParam/START_COUNT/ @Value"/>
+        <SET Var="pgMaxRowsdomain" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '3', $thisParam/MAX_ROWS/@Value)}"/>
+        <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="thischeck">
+          <CrossReferenceObjectDescription InputName="FILTER_CrossReferenceObjectDescription"/>
+          <CrossReferenceObjectName InputName="FILTER_CrossReferenceObjectName"/>
+        </FORM_SEARCH_FILTER>
+        <IF_TEST Test="$thisParam/SORT_BY/@Value !=null and $thisParam/SORT_BY/@Value !='ID'">
+          <THEN>
+            <SET Var="sortOrder" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+            <TO_DOCVAR AssignToVar="sortDoc">
+              <ORDER_BY/>
+            </TO_DOCVAR>
+            <SET_NAME DocVar="sortDoc" FromValue="{$thisParam/SORT_BY/@Value}"/>
+            <SET DocVar="sortDoc" Attribute="Sort" FromValue="{$sortOrder}"/>
+          </THEN>
+				<ELSE>
+					<SET Var="sortOrder" FromValue="Ascending"/>
+            <TO_DOCVAR AssignToVar="sortDoc">
+              <ORDER_BY/>
+            </TO_DOCVAR>
+            <SET_NAME DocVar="sortDoc" FromValue="CrossReferenceObjectName"/>
+            <SET DocVar="sortDoc" Attribute="Sort" FromValue="{$sortOrder}"/>
+				</ELSE>
+        </IF_TEST>
+        <GET_DOCUMENT Name="P_CrossReferenceObject" ServiceName="BCM_MASTER" AssignToVar="thisReturn" MaxRows="{$pgMaxRowsdomain}" ReturnRowCount="true" StartAtRow="{$startRow}">
+        <CrossReferenceObjectBaseDataTableDomainIndicator Value="Y" MatchBy="EQUAL"/>
+        <CrossReferenceObjectGenericIndicator Value="N" MatchBy="EQUAL"/>
+          <TO_XML SelectList="$thischeck/FILTER/*"/>
+          <ORDER_BY>
+            <TO_XML SelectList="$sortDoc"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+
+
+  <DEFINE_METHOD Name="getDomainTableData" Comment="The rule fetches the records from the  domain data table for which the user would like to view the records">
+    <RULE>
+      <ACTION>
+        <SET Var="singleQuote" FromValue="'"/>
+        <SET Var="greater" FromValue="/>"/>
+        <SET Var="less" FromValue="&lt;"/>
+        <SET Var="doublequoute" FromValue="&quot;"/>
+        <SET Var="startRow" FromSelect="$thisParam/ManageDataTable_START_COUNT/ @Value"/>
+        <SET Var="SelectedLogicalName" FromSelect="$thisParam/selectedTableName/@Value"/>
+        <SET Var="pgMaxRowsdomainData" FromValue="{ifElse($thisParam/ManageDataTable_MAX_ROWS/@Value = null, '10', $thisParam/ManageDataTable_MAX_ROWS/@Value)}"/>
+        <REQUEST Name="makeSearchFilter" AssignToVar="SearchFilter">
+          <SELECTEDOCUMENT Value="{$SelectedLogicalName}"/>
+        </REQUEST>
+        <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="thischeck">
+          <TO_XML SelectList="$SearchFilter/*"/>
+        </FORM_SEARCH_FILTER>
+        <IF_TEST Test="$thisParam/ManageDataTable_SORT_BY/@Value !=null and $thisParam/ManageDataTable_SORT_BY/@Value !='ID'">
+          <THEN>
+            <REQUEST AssignToVar="sortDoc" Name="getSortOrderTag">
+              <SELECTEDOCUMENT Value="{$SelectedLogicalName}"/>
+              <TAGNAME Value="{$thisParam/ManageDataTable_SORT_BY/@Value}"/>
+              <SORTORDER Value="{$thisParam/ManageDataTable_SORT_ORDER/@Value}"/>
+            </REQUEST>
+            <!--  <PRINTLN Value="SORT ORDER IN ::::::::{$sortDoc}"/>-->
+          </THEN>
+        </IF_TEST>
+        <GET_DOCUMENT Name="{$SelectedLogicalName}" ServiceName="BCM_MASTER" AssignToVar="DomainDataDetailsCheck" ReturnRowCount="true">
+          <TO_XML SelectList="$thischeck/FILTER/*"/>
+          <ORDER_BY>
+            <TO_XML SelectList="$sortDoc/*"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <!--<PRINTLN Value="GET DOC::::::AFTER FILTER::::::{$DomainDataDetailsCheck}"/>-->
+        <IF_TEST Test="$DomainDataDetailsCheck/@TotalRowCount  &lt;= $startRow  ">
+          <THEN>
+            <SET Var="startRow" FromSelect="0"/>
+          </THEN>
+        </IF_TEST>
+	 <IF_TEST Test="(strlen($thisParam/exportTableId/@Value)=0) ">
+          <THEN>
+            <SET Var="dummyVar" FromSelect="0"/>
+          </THEN>
+				<ELSE>
+					 <SET Var="dummyVar" FromSelect="1"/>
+				</ELSE>
+        </IF_TEST>
+
+        <GET_DOCUMENT Name="{$SelectedLogicalName}" ServiceName="BCM_MASTER" AssignToVar="DomainDataDetails" MaxRows="{ifElse($dummyVar/@Value=0  ,$pgMaxRowsdomainData,'65536')}" ReturnRowCount="true" StartAtRow="{ifElse($dummyVar/@Value=0,$startRow,'0')}">
+          <TO_XML SelectList="$thischeck/FILTER/*"/>
+          <ORDER_BY>
+            <TO_XML SelectList="$sortDoc/*"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <REQUEST Name="convertEnterpriseXMLINUIFormat" AssignToVar="thisReturn">
+          <SELECTEDOCUMENT Value="{$SelectedLogicalName}"/>
+          <TOTALROWCOUNT Value="{$DomainDataDetails/@TotalRowCount}"/>
+          <MAXROW Value="{$DomainDataDetails/@MaxRows}"/>
+          <TO_XML SelectList="$DomainDataDetails/*"/>
+        </REQUEST>
+        <!--<PRINTLN Value="DATA DETAILS:::::{$thisReturn}"/>-->
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="convertEnterpriseXMLINUIFormat" Comment="This is just an XML Formatter. Formats the XML which is in the PEDM format into the UI ormat">
+    <RULE>
+      <ACTION>
+        <SET Var="singleQuote" FromValue="'"/>
+        <SET Var="greater" FromValue="/>"/>
+        <SET Var="less" FromValue="&lt;"/>
+        <SET Var="doublequoute" FromValue="&quot;"/>
+        <!--<PRINTLN Value="TABLE PHYSICAL NAME::::::{$PHY_NAME}"/>-->
+        <SET Var="logicalNameForProp" FromValue="{subString($thisParam/SELECTEDOCUMENT/@Value,2)}"/>
+        <SET Var="Identifier" FromValue="{concat($logicalNameForProp,$DomainIdentifier/@Value)}"/>
+        <SET Var="Name1" FromValue="{concat($logicalNameForProp,$DomainName/@Value)}"/>
+        <SET Var="MnVal" FromValue="{concat($logicalNameForProp,$DomainMnemonicValue/@Value)}"/>
+        <SET Var="Desc" FromValue="{concat($logicalNameForProp,$DomainDescription/@Value)}"/>
+        <TO_DOCVAR AssignToVar="inputDoc">
+          <ROOT>
+            <DOMAINDATAS TotalRowCount="{$thisParam/TOTALROWCOUNT/@Value}" MaxRows="{$thisParam/MAXROW/@Value}"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <SET Var="Domaindatas" FromSelect="$inputDoc/DOMAINDATAS"/>
+        <!--<PRINTLN Value="SELCT LISTT::  and:::::::::::::::::{concat('$thisParam/',$thisParam/SELECTEDOCUMENT/@Value)}"/>-->
+        <SET Var="domainList" FromValue="{concat('$thisParam/',$thisParam/SELECTEDOCUMENT/@Value)}"/>
+        <FOR_EACH SelectList="$thisParam/*[name()=$thisParam/SELECTEDOCUMENT/@Value]" CurrentElement="currdiv">
+          <!--<PRINTLN DocVar="{$currdiv}"/>-->
+          <TO_DOCVAR AssignToVar="currDomainData">
+            <INPUTDOC>
+            </INPUTDOC>
+          </TO_DOCVAR>
+          <MAKE_INSTANCE_DOCUMENT Name="DOMAINIDENTIFIER" AssignToVar="domainid"/>
+          <SET DocVar="domainid" Attribute="Value" FromValue="{$currdiv/*[name()=$Identifier]/@Value}"/>
+          <MAKE_INSTANCE_DOCUMENT Name="DOMAINNAME" AssignToVar="domainName"/>
+          <SET DocVar="domainName" Attribute="Value" FromValue="{$currdiv/*[name()=$Name1]/@Value}"/>
+          <MAKE_INSTANCE_DOCUMENT Name="DOMAINDESCRIPTION" AssignToVar="domaindesc"/>
+          <SET DocVar="domaindesc" Attribute="Value" FromValue="{$currdiv/*[name()=$Desc]/@Value}"/>
+          <MAKE_INSTANCE_DOCUMENT Name="DOMAINMNEMONICVALUE" AssignToVar="domainmnval"/>
+          <SET DocVar="domainmnval" Attribute="Value" FromValue="{$currdiv/*[name()=$MnVal]/@Value}"/>
+          <ADD_CHILDREN DocVar="currDomainData" FromDocVar="domainid"/>
+          <ADD_CHILDREN DocVar="currDomainData" FromDocVar="domainName"/>
+          <ADD_CHILDREN DocVar="currDomainData" FromDocVar="domaindesc"/>
+          <ADD_CHILDREN DocVar="currDomainData" FromDocVar="domainmnval"/>
+          <ADD_CHILDREN DocVar="currDomainData" FromSelectList="$currdiv/*"/>
+          <TO_DOCVAR AssignToVar="intmdtRoot">
+            <ROOT>
+              <DOMAINDATA>
+                <TO_XML SelectList="$currDomainData/*"/>
+              </DOMAINDATA>
+            </ROOT>
+          </TO_DOCVAR>
+          <APPEND_CHILDREN DocVar="Domaindatas" FromDocVar="intmdtRoot"/>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <ROOT>
+            <TO_XML SelectList="$Domaindatas"/>
+          </ROOT>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="makeSearchFilter" Comment="Rule is used while generating the search filter">
+    <RULE>
+      <ACTION>
+        <SET Var="singleQuote" FromValue="'"/>
+        <SET Var="greater" FromValue="/>"/>
+        <SET Var="less" FromValue="&lt;"/>
+        <SET Var="doublequoute" FromValue="&quot;"/>
+        <SET Var="logicalNameForProp" FromValue="{subString($thisParam/SELECTEDOCUMENT/@Value,2)}"/>
+        <MAKE_INSTANCE_DOCUMENT Name="{concat($logicalNameForProp,$DomainName/@Value)}" AssignToVar="ChildName"/>
+        <SET DocVar="ChildName" Attribute="InputName" FromValue="FILTER_DOMAINNAME"/>
+        <MAKE_INSTANCE_DOCUMENT Name="{concat($logicalNameForProp,$DomainMnemonicValue/@Value)}" AssignToVar="ChildMnVal"/>
+        <SET DocVar="ChildMnVal" Attribute="InputName" FromValue="FILTER_DOMAINMNEMONICVALUE"/>
+        <MAKE_INSTANCE_DOCUMENT Name="{concat($logicalNameForProp,$DomainDescription/@Value)}" AssignToVar="ChildDesc"/>
+        <SET DocVar="ChildDesc" Attribute="InputName" FromValue="FILTER_DOMAINDESCRIPTION"/>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <INPUT>
+            <SourceSystemMnemonicValue InputName="FILTER_SourceSystemMnemonicValue"/>
+            <ENTITY_STATE InputName="FILTER_ENTITY_STATE"/>
+          </INPUT>
+        </TO_DOCVAR>
+        <ADD_CHILDREN DocVar="thisReturn" FromDocVar="ChildName"/>
+        <ADD_CHILDREN DocVar="thisReturn" FromDocVar="ChildMnVal"/>
+        <ADD_CHILDREN DocVar="thisReturn" FromDocVar="ChildDesc"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getSortOrderTag" Comment="Rule is used to generate the Sort order">
+    <RULE>
+      <ACTION>
+        <SET Var="singleQuote" FromValue="'"/>
+        <SET Var="greater" FromValue="/>"/>
+        <SET Var="less" FromValue="&lt;"/>
+        <SET Var="doublequoute" FromValue="&quot;"/>
+        <SET Var="logicalNameForProp" FromValue="{subString($thisParam/SELECTEDOCUMENT/@Value,2)}"/>
+        <SET Var="sortOrder" FromValue="{$thisParam/SORTORDER/@Value}"/>
+        <SET Var="tagName" FromValue="{$thisParam/TAGNAME/@Value}"/>
+        <IF_TEST Test="$tagName ='DOMAINNAME'">
+          <THEN>
+            <MAKE_INSTANCE_DOCUMENT Name="{concat($logicalNameForProp,$DomainName/@Value)}" AssignToVar="SortTag"/>
+            <SET DocVar="SortTag" Attribute="Sort" FromValue="{$sortOrder}"/>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$tagName ='DOMAINMNEMONICVALUE'">
+              <THEN>
+                <MAKE_INSTANCE_DOCUMENT Name="{concat($logicalNameForProp,$DomainMnemonicValue/@Value)}" AssignToVar="SortTag"/>
+                <SET DocVar="SortTag" Attribute="Sort" FromValue="{$sortOrder}"/>
+              </THEN>
+              <ELSE>
+                <IF_TEST Test="$tagName ='DOMAINDESCRIPTION'">
+                  <THEN>
+                    <MAKE_INSTANCE_DOCUMENT Name="{concat($logicalNameForProp,$DomainDescription/@Value)}" AssignToVar="SortTag"/>
+                    <SET DocVar="SortTag" Attribute="Sort" FromValue="{$sortOrder}"/>
+                  </THEN>
+                  <ELSE>
+                    <MAKE_INSTANCE_DOCUMENT Name="{$tagName}" AssignToVar="SortTag"/>
+                    <SET DocVar="SortTag" Attribute="Sort" FromValue="{$sortOrder}"/>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <INPUT>
+          </INPUT>
+        </TO_DOCVAR>
+        <ADD_CHILDREN DocVar="thisReturn" FromDocVar="SortTag"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+
+
+  <DEFINE_METHOD Name="saveDomainData" Comment="This rule is called whenever an create/edit/delete operation is performed on the dom data UI. The rule delegates the task of update/create/delete to the respective workers/api's">
+    <RULE>
+      <ACTION>
+        <SET Var="singleQuote" FromValue="'"/>
+        <SET Var="greater" FromValue="/>"/>
+        <SET Var="less" FromValue="&lt;"/>
+        <SET Var="doublequoute" FromValue="&quot;"/>
+        <REQUEST AssignToVar="tagFormed" Name="makeEnterpriseFormatXML">
+          <TO_XML SelectList="$thisParam/*"/>
+        </REQUEST>
+       <IF_TEST Test="$thisParam/selectedDOMAINIDENTIFIER/@Value ='-999999999'">
+          <THEN>
+            <REQUEST Name="CommonPedmCreate" DocumentName="{$thisParam/selectedTableName/@Value}" Action="INSERT" isBulkRequest="false" ServiceName="BCM_MASTER" SysSource="UI" AssignToVar="thisReturn">
+              <TO_XML SelectList="$tagFormed/*"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='Delete'">
+              <THEN>
+                <REQUEST Name="CommonPedmDelete" DocumentName="{$thisParam/selectedTableName/@Value}" Action="DELETE" isBulkRequest="false" ServiceName="BCM_MASTER" SysSource="UI" AssignToVar="thisReturn">
+                  <TO_XML SelectList="$tagFormed/*"/>
+                </REQUEST>
+              </THEN>
+              <ELSE>
+                <REQUEST Name="CommonPedmUpdate" DocumentName="{$thisParam/selectedTableName/@Value}" Action="UPDATE" isBulkRequest="false" ServiceName="BCM_MASTER" SysSource="UI" AssignToVar="thisReturn">
+                  <TO_XML SelectList="$tagFormed/*"/>
+                </REQUEST>
+              </ELSE>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+
+
+  <DEFINE_METHOD Name="makeEnterpriseFormatXML">
+    <RULE>
+      <ACTION>
+        <SET Var="singleQuote" FromValue="'"/>
+        <SET Var="greater" FromValue="/>"/>
+        <SET Var="less" FromValue="&lt;"/>
+        <SET Var="doublequoute" FromValue="&quot;"/>
+        <SET Var="logicalNameForProp" FromValue="{subString($thisParam/selectedTableName/@Value,2)}"/>
+        <MAKE_INSTANCE_DOCUMENT Name="{concat($logicalNameForProp,$DomainName/@Value)}" AssignToVar="ChildName"/>
+        <SET DocVar="ChildName" Attribute="Value" FromValue="{$thisParam/DomainDataDetails/DOMAINNAME/@Value}"/>
+        <MAKE_INSTANCE_DOCUMENT Name="{concat($logicalNameForProp,$DomainMnemonicValue/@Value)}" AssignToVar="ChildMnVal"/>
+        <SET DocVar="ChildMnVal" Attribute="Value" FromValue="{$thisParam/DomainDataDetails/DOMAINMNEMONICVALUE/@Value}"/>
+        <MAKE_INSTANCE_DOCUMENT Name="{concat($logicalNameForProp,$DomainDescription/@Value)}" AssignToVar="ChildDesc"/>
+        <SET DocVar="ChildDesc" Attribute="Value" FromValue="{$thisParam/DomainDataDetails/DOMAINDESCRIPTION/@Value}"/>
+        <IF_TEST Test="$thisParam/selectedDOMAINIDENTIFIER/@Value !='-999999999'">
+          <THEN>
+            <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='Delete'">
+              <THEN>
+                <TO_DOCVAR AssignToVar="input">
+                  <INPUT>
+                  </INPUT>
+                </TO_DOCVAR>
+                <MAKE_INSTANCE_DOCUMENT Name="{concat($logicalNameForProp,$DomainIdentifier/@Value)}" AssignToVar="ChildId"/>
+                <SET DocVar="ChildId" Attribute="Value" FromValue="{$thisParam/DomainDataDetails/DOMAINIDENTIFIER/@Value}"/>
+                <ADD_CHILDREN DocVar="input" FromDocVar="ChildId"/>
+                <TO_DOCVAR AssignToVar="thisReturn">
+                  <ROOT>
+                    <OR>
+                      <AND>
+                        <TO_XML SelectList="$input/*"/>
+                        <SCENARIO_ID Value="0"/>
+                      </AND>
+                    </OR>
+                  </ROOT>
+                </TO_DOCVAR>
+              </THEN>
+              <ELSE>
+                <TO_DOCVAR AssignToVar="input1">
+                  <INPUT1>
+                    <SourceSystemMnemonicValue Value="{$thisParam/DomainDataDetails/SourceSystemMnemonicValue/@Value}"/>
+                    <SourceObjectMnemonicValue Value="{$thisParam/DomainDataDetails/SourceObjectMnemonicValue/@Value}"/>
+                    <SourceKeyName Value="{$thisParam/DomainDataDetails/SourceKeyName/@Value}"/>
+                    <SourceKeyValue Value="{$thisParam/DomainDataDetails/SourceKeyValue/@Value}"/>
+                    <ENTITY_STATE Value="{$thisParam/DomainDataDetails/ENTITY_STATE/@Value}"/>
+                    <SOURCE Value="UI"/>
+                  </INPUT1>
+                </TO_DOCVAR>
+                <TO_DOCVAR AssignToVar="input">
+                  <INPUT>
+                  </INPUT>
+                </TO_DOCVAR>
+                <MAKE_INSTANCE_DOCUMENT Name="{concat($logicalNameForProp,$DomainIdentifier/@Value)}" AssignToVar="ChildId"/>
+                <SET DocVar="ChildId" Attribute="Value" FromValue="{$thisParam/DomainDataDetails/DOMAINIDENTIFIER/@Value}"/>
+                <ADD_CHILDREN DocVar="input" FromDocVar="ChildId"/>
+                <ADD_CHILDREN DocVar="input1" FromDocVar="ChildName"/>
+                <ADD_CHILDREN DocVar="input1" FromDocVar="ChildMnVal"/>
+                <ADD_CHILDREN DocVar="input1" FromDocVar="ChildDesc"/>
+                <TO_DOCVAR AssignToVar="updateprop">
+                  <UPDATE_PROPERTIES>
+                    <TO_XML SelectList="$input1/*"/>
+                  </UPDATE_PROPERTIES>
+                </TO_DOCVAR>
+                <!--<PRINTLN DocVar="{$updateprop}"/>-->
+                <TO_DOCVAR AssignToVar="thisReturn">
+                  <ROOT>
+                    <DOCUMENT_CONTEXT>
+                      <TO_XML SelectList="$input/*"/>
+                    </DOCUMENT_CONTEXT>
+                    <TO_XML SelectList="$updateprop"/>
+                  </ROOT>
+                </TO_DOCVAR>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <TO_DOCVAR AssignToVar="thisReturn">
+              <INPUT>
+                <SOURCE Value="UI"/>
+              </INPUT>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="thisReturn" FromDocVar="ChildName"/>
+            <ADD_CHILDREN DocVar="thisReturn" FromDocVar="ChildMnVal"/>
+            <ADD_CHILDREN DocVar="thisReturn" FromDocVar="ChildDesc"/>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

@@ -1,0 +1,172 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="uiwfPiGrpCreate.pgl">
+  <ui:search name="topcontainer" displayText="Select or Create Group" collapsable="true" exportSearch="false" saveSearch="fasle">
+    <ui:validation successMessage="{$root/succssmsg/message/@Value}" />
+    <ui:field-group id="fg">
+      <ui:entry-field id="Grp_Id" name="Grp_Id" displayText="Group ID" value="{$root/var/grpid/@Value}" />
+      <ui:textarea id="Grp_Desc" name="Grp_Desc" displayText="Group Description" value="{$root/var/grpdesc/@Value}" />
+      <ui:dropdown id="Grp_Sts" name="Grp_Sts" displayText="Group Status" optionSrc="$root/GrpSts/ItemInterchangeGroupStatusMnemonicValue" value="{$root/var/grpsts/@Value}" selectOne="true" />
+    </ui:field-group>
+  </ui:search>
+  <ui:container id="tablecontainer" displayText="Group Search" collapsable="true">
+    <ui:step id="steptable">
+      <!-- RIC#266168 DYanez PI Create Wizard.  Allow Add Group Line or Add Group Line Location options for RELEASED Status -->
+      <!-- <ui:table id="table" rowId="GrpId" postRowIdAs="GrpId" scrollable="true" selectable="Single" rowSrc="$root/ROOT/linelocparams" rowSelectorCondition="{GrpStatus/@Value='IN PROCESS'}" startAtRow="$root/StartAtRow/@Value" maxRows="$root/MaxRows/@Value" totalRowCount="$root/TotalRowCount/@Value" displayText="Group Search Results">  -->
+      <ui:table id="table" rowId="GrpId" postRowIdAs="PGrpId" scrollable="true" selectable="Single" rowSrc="$root/ROOT/linelocparams" rowSelectorCondition="{GrpStatus/@Value!='BLOCKED'}" startAtRow="$root/StartAtRow/@Value" maxRows="$root/MaxRows/@Value" totalRowCount="$root/TotalRowCount/@Value" displayText="Group Search Results">
+        <!-- RIC#266168 END -->
+        <ui:validation successMessage="{$root/succss/succssmsg/@Value}" anyFieldIsRequired="False" />
+        <ui:field-group id="fg_piGrp">
+          <!-- RIC#266168 DYanez PI Create Wizard. Changed field type to entry-field, non-editable  -->
+          <!--
+          <ui:display-field id="GrpId" name="GrpId" displayText="Group ID"/>
+          <ui:display-field id="GrpDesc" name="GrpDesc" displayText="Group Description"/>
+          <ui:display-field id="GrpStatus" name="GrpStatus" displayText="Group Status"/>
+           -->
+          <!-- RIC#266168 END -->
+          <ui:entry-field id="GrpId" name="GrpId" displayText="Group ID" editable="false" />
+          <ui:entry-field id="GrpDesc" name="GrpDesc" displayText="Group Description" editable="false" />
+          <ui:entry-field id="GrpStatus" name="GrpStatus" displayText="Group Status" editable="false" />
+        </ui:field-group>
+        <ui:buttons id="buttons">
+          <ui:button id="Add" name="Add" displayText="Add Group" displayCondition="{contains($root/AccessLevel/@Value,'Add')}" />
+          <!--<ui:button id="Edit" name="Edit" displayText="Edit Group" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'Update')}"/>-->
+          <!-- RIC#266168 DYanez PI Create Wizard.  Added javascripts for popup confirmation -->
+          <ui:button id="Edit_Line" name="Edit_Line" displayText="Add Group Line" onClick="javascript:agl_popup()" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'Update')}" />
+          <ui:button id="Edit_Line_Loc" name="Edit_Line_Loc" displayText="Add Line Location" onClick="javascript:all_popup()" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'Update')}" />
+          <!-- RIC#266168 END -->
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script id="disable">
+    <!-- RIC#266168 DYanez PI Create Wizard.  Javascripts to popup confirmation -->
+    function all_popup() {
+      var id=document.getElementsByName('PGrpId');
+		  var gstat=document.getElementsByName('GrpStatus');
+			var gdesc=document.getElementsByName('GrpDesc');
+		  var searchresults=document.getElementsByName('GrpId');
+		  var id_length=id.length;
+			
+	    for(i=0; i&lt;id_length;i++)
+		  {
+		   if(id[i].checked)
+		   {
+		     var j_length=gstat.length;
+		     for(j=0; j&lt;j_length;j++)
+		     {
+		       if(searchresults[j].value==id[i].value)
+		       {
+		         if(gstat[j].value=='RELEASED')
+		         {
+			        var res1= core_confirm("The Group Status for selected Group ID will change to IN PROGRESS in order to add a Line Location.  Do you wish to continue?");
+			        if (res1=='no') {   
+		             return; }
+		          else {
+		            document.form.BUTTON_ID.value = 'Edit_Line_Loc';
+	              document.form.action = 'view.x2ps';
+                this.form.submit();  }
+             } 
+				    else {
+		          document.form.BUTTON_ID.value = 'Edit_Line_Loc';
+	            document.form.action = 'view.x2ps';
+              this.form.submit();  }
+		       }
+		     }
+       }
+    }
+	}
+		
+		
+	function agl_popup() {
+      var id=document.getElementsByName('PGrpId');
+		  var gstat=document.getElementsByName('GrpStatus');
+			var gdesc=document.getElementsByName('GrpDesc');
+		  var searchresults=document.getElementsByName('GrpId');
+	    var id_length=id.length;
+		
+	    for(i=0; i&lt;id_length;i++)
+		  {
+		   if(id[i].checked)
+		   {
+		     var j_length=gstat.length;
+		     for(j=0; j&lt;j_length;j++)
+		     {
+		       if(searchresults[j].value==id[i].value)
+		       {
+		         if(gstat[j].value=='RELEASED')
+		         {
+			        var res2=core_confirm("The Group Status for selected Group ID will change to IN PROGRESS in order to add a Group Line.  Do you wish to continue?");
+	           	 if (res2=='no') {
+		             return; }
+		          else {
+		            document.form.BUTTON_ID.value = 'Edit_Line';
+	              document.form.action = 'view.x2ps';
+                this.form.submit(); }
+			        }
+		         else {
+		            document.form.BUTTON_ID.value = 'Edit_Line';
+	              document.form.action = 'view.x2ps';
+                this.form.submit(); }
+		        }
+           }
+		     }
+      }
+  }
+    <!-- RIC#266168 END -->
+    function enableButtonsIfRowSelected()
+ {
+   for (var i in tableButtons)
+   {
+     i2uiRowSelectionCallback(i);
+   }
+ }
+
+ function i2uiRowSelectionCallback(tableId)
+ {
+   var btnArray = tableButtons[tableId];
+
+   if( btnArray != null )
+   {
+     var hasNoSelections = (i2uiGetSelectedRowNums(tableId).length == 0);
+
+     for( i=0; i &lt; btnArray.length; i++ )
+     {
+       var buttonId = btnArray[i];
+
+       pglToggleButton( buttonId, hasNoSelections );
+	
+     }
+   }
+ }
+
+ function pglToggleButton(buttonId, hasNoSelections )
+ {
+   var type = btnTypes[buttonId];
+if(buttonId !='Add')
+{
+   if (hasNoSelections == true)
+   {
+     i2uiToggleButtonState(buttonId, 'disabled');
+   }
+   else
+   {
+     i2uiToggleButtonState(buttonId, 'enabled', type);
+   }
+ }
+
+else{
+				if (hasNoSelections == true)
+        {
+              i2uiToggleButtonState(buttonId, 'enabled');
+							
+        }
+        else
+       {
+							
+              i2uiToggleButtonState(buttonId, 'disabled', type);
+       }
+
+		   }
+	}
+  </ui:script>
+</ui:page-group>
+

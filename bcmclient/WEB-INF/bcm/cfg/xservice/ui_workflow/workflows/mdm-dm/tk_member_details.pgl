@@ -1,0 +1,437 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container scrollable="true" collapsable="false">
+    <ui:step id="Outer" displayText="Manage Members" scrollable="true" editable="false">
+      <!-- <ui:field-group select="$root" displayCondition="{string-length($root/errcount/@Value) != 0}" >-->
+      <ui:field-group select="$root" />
+      <ui:container collapsable="true">
+        <ui:help displayPage="{$pages:Manage_member_details_help}" />
+        <ui:step id="SearchStep" displayText="Member Detail">
+          <ui:field-group select="$root">
+            <ui:hidden-field name="EV_NAME" />
+            <ui:hidden-field name="EV_KEY" />
+            <ui:hidden-field name="CURRENT_USER_ID" value="{identity-user-id()}" />
+            <ui:hidden-field name="errcount" />
+            <ui:hidden-field name="iserror" id="iserror" value="{$root/Error/Error/@Value}" />
+            <ui:hidden-field name="hierarchy_name1" />
+            <ui:hidden-field name="hierarchy_id1" />
+            <ui:hidden-field name="parent_level_name1" />
+            <ui:hidden-field name="parent_level_id1" />
+            <ui:hidden-field name="parent_member_name1" />
+            <ui:hidden-field name="parent_member_id1" />
+            <ui:hidden-field name="showGif" />
+            <ui:hidden-field name="operation" />
+            <ui:hidden-field name="MAX_Rows" />
+            <ui:hidden-field name="hasCodeChanged" />
+            <ui:hidden-field name="hasDescChanged" />
+            <ui:hidden-field name="memberCode" />
+            <ui:hidden-field name="memberDesc" />
+            <ui:hidden-field name="memberStat" />
+            <ui:hidden-field name="currentMemberId" value="{$root/Current_member_id/@Value}" />
+          </ui:field-group>
+          <!-- ui:field-group columns="3" id="fieldGroups">
+            <ui:field-group id="leftFields">
+              <ui:dropdown displayText="Dimension Name" selectOne="true" value="1" optionSrc="$root/DIMENSION/*" id="Dimension" name="Dimension"/>           
+              <ui:entry-field id="member_name" name="member_name" required="true" displayText="Member Name"/>
+              <ui:image-link-field src="/locked_avail.gif" name="ID" dataType="Constant" onClick="javascript:unlock()">
+              </ui:image-link-field>
+              <ui:image-link-field src="/yellow_circle.gif" name="ID1" dataType="Constant" displayCondition="{$root/showGif/@Value = 'false'}" onClick="javascript:unlock()">
+              </ui:image-link-field -->
+          <!-- ui:link displayText="Unlock" onClick="javascript:unlock()">
+                  <ui:image src="/locked_avail.gif"/>
+                </ui:link -->
+          <!--              <ui:entry-field id="member_status" name="member_status" displayText="Member Status"/>
+            </ui:field-group> -->
+          <ui:field-group columns="3" id="fieldGroups">
+            <ui:field-group id="leftFields">
+              <ui:dropdown displayText="Dimension Name" optionSrc="$root/DIMENSION/*" id="Dimension" name="Dimension" onChange="javascript:ondimensionchange()" />
+              <ui:entry-field id="member_name" name="member_name" required="true" displayText="Member Name" displayNoWrap="false" size="25" />
+              <!-- ui:image-link-field src="/locked_avail.gif" name="ID" dataType="Constant" onClick="javascript:unlock()">
+              </ui:image-link-field -->
+              <!-- ui:image-link-field src="/yellow_circle.gif" name="ID1" dataType="Constant" displayCondition="{$root/showGif/@Value = 'false'}" onClick="javascript:unlock()">
+              </ui:image-link-field -->
+              <!-- ui:link displayText="Unlock" onClick="javascript:unlock()">
+                  <ui:image src="/locked_avail.gif"/>
+                </ui:link -->
+              <ui:entry-field id="member_status" name="member_status" displayText="Member Status" size="25" />
+              <!-- <ui:display-field id="member_status" name="member_status" displayText="Member Status"/>-->
+            </ui:field-group>
+            <ui:field-group width="1">
+              <ui:field-space />
+              <ui:image-link-field src="/locked_avail.gif" name="ID" dataType="Constant" onClick="javascript:unlock()" align="left" id="lckgif" />
+              <ui:field-space />
+            </ui:field-group>
+            <ui:field-group id="rightFields">
+              <ui:dropdown displayText="Level Name" optionSrc="$root/LEVEL/*" id="Level" name="Level" onChange="javascript:onlevelchange()" />
+              <ui:entry-field id="member_description" name="member_description" displayText="Member Description" displayNoWrap="false" size="45" />
+            </ui:field-group>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button displayText="Merge" idenableBySelections="true" id="merge" name="merge" />
+            <ui:divider />
+            <ui:button displayText="Close" enableBySelections="true" id="cancel" name="cancel" />
+            <ui:button displayText="Save" enableBySelections="true" id="save" name="save" />
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table displayText="Member Parent Assignement" displayTextNoRecords="No Items available" id="tab2" rowId="Hiename" select="$root/MEMBERSDETAIL" scrollable="true" collapsable="true" selectable="Single" maxRows="-1" postRowIdAs="Hiename" help="{$pages:Manage_member_details_help}">
+        <ui:help id="tab2" />
+        <ui:field-group>
+          <ui:display-field displayText="Hierarchy Name" name="Hiename" id="hiename" />
+          <ui:hidden-field id="hierarchy_id" name="hierarchy_id" />
+          <ui:display-field displayText="Parent Level Name" name="Parlevname" id="parlevname" />
+          <ui:hidden-field id="parent_level_id" name="parent_level_id" />
+          <ui:display-field displayText="Parent Member Name" name="parmemname" id="parmemname" />
+          <ui:hidden-field id="parent_member_id" name="parent_member_id" />
+          <ui:display-field displayText="Parent Member Description" name="Parmemdesc" id="parmemdesc" />
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button displayText="Show Parents" enabledBySelections="true" id="show_parents" />
+        </ui:buttons>
+      </ui:table>
+      <ui:table displayText="Valid Parent Members" displayTextNoRecords="No Items available" id="tab1" rowId="memid" select="$root/MEMBERPARENTDETAIL" scrollable="true" selectable="Single" postRowIdAs="memcode" maxRows="$root/MAX_Rows/@Value" collapsable="false">
+        <ui:field-group>
+          <ui:display-field displayText="Member Code" name="memcode" id="memcode" />
+          <ui:display-field displayText="Member Description" name="membdescription" id="memberdescription" />
+          <ui:display-field displayText="Member Status" name="membstatus" id="memberstatus" />
+          <ui:display-field displayText="Has Child" name="haschild" id="haschild" />
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button displayText="Assign" enabledBySelections="true" id="assign" name="assign" />
+          <ui:button displayText="Move" enabledBySelections="true" id="move" name="move" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function unlock()
+		{
+		//debugger;
+		//document.getElementById('Dimension').disabled=true;	
+		if(document.getElementById('member_name').disabled)
+				{
+		    document.getElementById('member_name').disabled=false;	
+				document.getElementById('lckgif').src="/mdm/i2/images/unlkd_avail.gif";
+		  }
+		else
+		{
+		    document.getElementById('member_name').disabled=true;	
+				document.getElementById('lckgif').src="/mdm/i2/images/locked_avail.gif"
+		}	
+		}
+		
+	function on_cancel()
+ { 
+		//debugger;
+		if ((document.form.member_name.value == null) || (document.form.member_name.value == ""))
+		    document.form.member_name.value = 'X ' ;
+		var bIsValid = true;  
+		document.form.SUBMIT_AS_XML.value = 'false';  
+		bIsValid = (isValid_SearchStep()); 
+		 if (bIsValid == false)  
+		     validation_alert('SearchStep');  
+		if ( bIsValid == true) 
+		{ 
+		   
+		   disableButtons(); 
+		   document.form.BUTTON_ID.value = 'cancel' ; 
+		   document.form.action = 'view.x2ps';  
+		  document.form.submit();  
+		}  
+		 onResize();  
+		 return; 
+	}
+		
+		function onLoad()
+       {
+    // debugger;
+		     onLoadSuper();
+         scrollHelper();		     
+		     document.form.memberCode.value =  document.getElementById('member_name').value;
+		     document.getElementById('member_status').disabled = true;
+		     if(document.form.operation.value=='Duplicate')
+		     {
+		     	  document.getElementById('Dimension').disabled=true;	
+    			  document.getElementById('Level').disabled=true;		
+    	  	  document.getElementById('member_name').disabled=false;	
+		        document.getElementById('lckgif').src="/mdm/i2/images/unlkd_avail.gif";	
+		     }
+		    else
+				{
+						if(document.form.operation.value=='New')
+		     {
+		     	  document.getElementById('Dimension').disabled=false;	
+    			  document.getElementById('Level').disabled=false;		
+    	  	  document.getElementById('member_name').disabled=false;	
+		        document.getElementById('lckgif').src="/mdm/i2/images/unlkd_avail.gif";	
+		     }
+		     else
+		     	{	
+		     		// edit operation
+		     	     	document.getElementById('Dimension').disabled=true;	
+			        document.getElementById('Level').disabled=true;		
+			        document.getElementById('member_name').disabled=false;
+			        document.getElementById('member_name').disabled=true;
+		        	document.getElementById('lckgif').src="/mdm/i2/images/locked_avail.gif";
+		     	}
+				}
+		  switch (	document.form.iserror.value)
+		  { 
+		     case "1": 
+		            core_alert(" Please change your earlier parent member selection " );
+		            break;
+		    case "2": 
+		             //core_alert(" No valid parent members to move to " );
+			     core_alert(" No valid parent members to display " );
+		            break;
+		    case "3": 
+		             //core_alert(" No valid parent members to move to " );
+			     core_alert(" No valid parent members to display " );
+		            break;	
+		     case "5": 
+		             core_alert(" No valid parent members to merge to " );
+		            break;
+		    case "4": 
+		             core_alert(" No valid parent members to merge to " );
+		            break;		  	  
+		  }
+		  /*  if(!i2uiIsVariableDefined('BUTTON_ID'))
+		     {
+		         document.getElementById('member_name').disabled=true;	
+		        document.getElementById('lckgif').src="/bcmclient/i2/images/locked_avail.gif";	
+		     } */ 
+		i2uiGetSelectedRowIds1('tab2');
+		if(document.form.currentMemberId.value =='')
+		     {
+			//document.getElementById('merge').disabled=true;
+			i2uiToggleButtonState( 'merge', 'disabled');
+		     }	
+         }
+		
+		function on_show_parents()
+		{
+	//alert("1");
+		//debugger;
+	
+		var bIsValid = true;  
+		document.form.SUBMIT_AS_XML.value = 'false';  
+		bIsValid = (isValid_tab2());  
+		if (bIsValid == false)  
+		   validation_alert('tab2');  
+		if ( bIsValid == true) 
+		{ 	
+		i2uiGetSelectedRowIds1('tab2');
+		  disableButtons(); 
+		  document.form.BUTTON_ID.value = 'show_parents' ; 
+		  document.form.action = 'view.x2ps';  
+		  document.form.submit();  
+		}  
+		onResize(); 	
+		}
+		
+function i2uiGetSelectedRowIds1(tableid)
+{
+//debugger;
+  var selected = new Array();
+
+  // NS4 browser not supported
+  if (document.layers != null)
+    return selected;
+
+  var tableobj = document.getElementById(tableid);
+  if (tableobj != null)
+  {
+    var checkboxes;   
+    // IE has a document object per element
+    if(tableobj.document)
+      checkboxes = tableobj.document.getElementsByTagName("INPUT");
+    else
+      checkboxes = document.getElementsByTagName("INPUT");
+
+    if (checkboxes != null)
+    {
+      var len = checkboxes.length;
+      var j = 0;
+      for(var i=0; i&lt;len; i++)
+      {
+         if (checkboxes[i].id == tableid+"_rowselector")
+        {       
+		      j++;
+          if (checkboxes[i].checked)
+          {
+    <!--alert(&quot;amit010101&quot;);
+					alert(checkboxes[i+1].value);
+	  			alert(checkboxes[i+2].value);
+					alert(checkboxes[i+3].value);
+					alert(checkboxes[i+4].value);
+					alert(checkboxes[i+5].value);-->
+    //  document.form.hierarchy_id1.value =checkboxes[i+2].value;
+			     document.form.parent_level_id1.value =checkboxes[i+2].value;
+					document.form.parent_member_id1.value =checkboxes[i+3].value;
+					
+					//alert(document.form.parent_member_id1.value);
+		        // get owning row
+            var rowobj = checkboxes[i];
+		      while (rowobj != null &amp; rowobj.tagName != "TR")
+            {
+	    
+	   
+              if (rowobj.parentElement)
+              {
+                rowobj = rowobj.parentElement;
+              }
+              else
+              {
+                rowobj = rowobj.parentNode;
+              }
+            }
+//            alert(rowobj.cells[2].innerHTML); 
+//		       document.form.parent.value=rowobj.cells[2].innerHTML;
+	//debugger;
+	//alert(rowobj.cells[1].innerHTML);
+	//alert(rowobj.cells[2].innerHTML );
+	//alert(rowobj.cells[3].innerHTML );
+		     // alert("arun");
+		      //alert(  document.form.fromECRI.value); 
+		       // document.form.hierarchy_id1.value =document.getElementById('hierarchy_id').value;
+		 				document.form.hierarchy_name1.value =rowobj.cells[1].innerHTML;
+		 				document.form.parent_level_name1.value =rowobj.cells[2].innerHTML;
+		 				//document.form.parent_level_id1.value =document.getElementById('parent_level_id').value;
+		 				document.form.parent_member_name1.value =rowobj.cells[3].innerHTML;
+		 				//document.form.parent_member_id1.value =document.getElementById('parent_member_id').value;
+		     //  alert(document.form.hierarchy_name1.value);      
+		     //alert(document.form.hierarchy_id1.value);      
+		//alert(document.form.parent_level_name1.value);      
+		//alert(document.form.parent_level_id1.value);      
+	//	alert(document.form.parent_member_name1.value);      
+		//alert(document.form.parent_member_id1.value);      
+          }
+        }
+		  
+      }
+    }
+  }
+  return selected;
+}
+		
+
+		
+			function ondimensionchange()
+	{
+		 document.form.action = "view.x2ps";
+		document.form.BUTTON_ID.value = "LOOP_DIMENSION";
+		document.form.submit();
+	}
+		
+		function onlevelchange()
+{
+		 document.form.action = "view.x2ps";
+		document.form.BUTTON_ID.value = "LOOP_LEVEL";
+		document.form.submit();
+	}
+		
+		function on_save()
+		 {		
+		  if( document.form.memberCode.value ==  document.getElementById('member_name').value)
+		   {
+							document.form.hasCodeChanged.value = false;
+		   }
+		  else
+		  {
+		    document.form.memberCode.value =  document.getElementById('member_name').value;
+		    document.form.hasCodeChanged.value = true;
+		  }
+		  if( document.form.memberDesc.value ==  document.getElementById('member_description').value)
+		   {
+			document.form.hasDescChanged.value = false;
+		   }
+		  else
+		   {
+		    document.form.memberDesc.value =  document.getElementById('member_description').value;
+		    document.form.hasDescChanged.value = true;
+		   }
+		  if(document.getElementById('member_description').value == "")
+		  {
+		     document.form.member_description.value = document.form.memberCode.value;
+		  }
+		  document.form.memberStat.value =  document.getElementById('member_status').value;
+		  //document.form.memberDesc.value =  document.getElementById('member_description').value;
+		
+		  var bIsValid = true;  
+			document.form.SUBMIT_AS_XML.value = 'false';  
+			bIsValid = (isValid_SearchStep()); 
+			 if (bIsValid == false)  
+					validation_alert('SearchStep'); 
+			 if ( bIsValid == true) 
+			{ 
+				disableButtons(); 
+				document.form.BUTTON_ID.value = 'save' ; 
+				document.form.action = 'view.x2ps';  
+				document.form.submit();  
+			}  
+			onResize(); 
+			return; 
+		}
+		
+		function i2uiRowSelectionCallback(tableid)
+		         {
+		          //debugger;
+		          if (tableid == null) { }
+		           
+		           else if(tableid == 'tab2')
+			      {
+			       try
+			       {
+				  hasNoSelections = (i2uiGetSelectedRowNums(tableid).length == 0);
+
+			      if (hasNoSelections == true)
+			      {
+			       i2uiToggleButtonState('show_parents','disabled');
+			      }
+			      else
+			       i2uiToggleButtonState('show_parents','enabled','Regular');
+			      }catch(e){}
+          }
+		         
+		           else if(tableid == 'tab1')
+		           {
+		            try
+		            {
+		               hasNoSelections = (i2uiGetSelectedRowNums(tableid).length == 0);
+		              
+		             
+		                    if( document.form.parent_member_id1.value != "")
+				     {
+				    	if (hasNoSelections == true)
+				    	{
+				    	      i2uiToggleButtonState('assign','disabled');
+				              i2uiToggleButtonState('move','disabled');
+				    		
+				    	}	
+				        else
+				        {
+				             i2uiToggleButtonState('move','enabled','Regular');
+		                   	}
+				           
+				    }
+				    else
+				    {				    	
+				    	if (hasNoSelections == true)
+					{
+					      i2uiToggleButtonState('assign','disabled');
+					      i2uiToggleButtonState('move','disabled');
+
+					}	
+					else
+					{
+					     i2uiToggleButtonState('assign','enabled','Regular');
+		                   	}				    		
+		   		    }		                    
+		                   
+		           }catch(e){}
+		          }
+		         
+		
+         }
+  </ui:script>
+</ui:page-group>
+

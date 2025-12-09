@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:oa="http://www.i2.com/oa" 
+             xmlns:x2="http://www.i2.com/x2" 
+             xmlns:core="http://www.i2.com/core" 
+             xmlns:xcore="http://www.i2.com/xcore" 
+             xmlns:xcore-db="http://www.i2.com/xcore-db" 
+             xmlns:xapl="http://www.i2.com/xapl" 
+             xmlns:web="http://www.i2.com/web" 
+             xmlns:docutil="http://www.i2.com/docutil"
+             xmlns:util="http://www.i2.com/util"
+             xmlns:xudl="http://www.i2.com/xudl" 
+             xmlns:cfg="http://www.i2.com/configurability" 
+             xmlns:perm="http://www.i2.com/permissibility" 
+      	     xmlns:identity="http://www.i2.com/identity"
+             xmlns:omx="http://www.i2.com/omx" description="_">  
+
+
+             
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="init">
+    <!--xapl:variable name="sSearchCriteria" resolver="session" global="true"/-->
+  </x2:command>
+  
+  
+   <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHiddenFields">
+  <xapl:return>
+  
+       <FIELD 
+               Type="Hidden" 
+               Name="SAVED_SEARCH_NAME" 
+               Value="{$this/SAVED_SEARCH_NAME/@Value}" 
+               Visibility="Simple"/>
+        
+        <FIELD 
+               Type="Hidden" 
+               Name="SAVED_SEARCH_ID" 
+               Value="{$this/SAVED_SEARCH_ID/@Value}" 
+               Visibility="Simple"/>
+        
+        <FIELD  
+               Type="Hidden" 
+               Name="SAVED_DOC_TYPE" 
+               Value="{$this/SAVED_DOC_TYPE/@Value}" 
+               Visibility="Simple"/>
+               
+          <!-- Always Put hidden at the end -->
+  </xapl:return>          
+  </x2:command>      
+          
+  
+    <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="saveSearch">
+
+    <xapl:variable name="userId"><identity:get-user-id/></xapl:variable> 
+ 
+    <!-- Create A Session variable which contains the search params -->
+    <xapl:set-variable name="sSearchCriteria">
+    <ROOT>
+      <xapl:if test="{string-length($this/SAVED_SEARCH_NAME/@Value) != 0}">
+        <SAVED_SEARCH_NAME Value="{$this/SAVED_SEARCH_NAME[1]/@Value}"/>
+      </xapl:if>
+      <xapl:if test="{string-length($this/SAVED_SEARCH_ID/@Value) != 0}">
+        <SAVED_SEARCH_ID Value="{$this/SAVED_SEARCH_ID[1]/@Value}"/>
+      </xapl:if>
+      <SAVED_DOC_TYPE Value="{$this/DOC_TYPE[1]/@Value}"/>
+      <FIELDS>
+        <xapl:for-each varName="param" select="{$this/*[name() != 'SAVED_SEARCH_NAME' and name() != 'SAVED_SEARCH_ID'  and name() != 'SAVED_DOC_TYPE']}">
+          <xapl:if test="{string-length($param/@Value) !=0}">
+            <xapl:if test="{name($param) != 'DOC_TYPE'}">
+              <xapl:variable name="fieldName">
+                <xapl:value-of select="{name($param)}"/>
+              </xapl:variable>
+              <FIELD>
+                <FIELD_NAME Value="{$fieldName}"/>
+                <FIELD_VALUE Value="{$param/@Value}"/>
+              </FIELD>
+            </xapl:if> 
+          </xapl:if>
+        </xapl:for-each>
+      </FIELDS>
+      </ROOT>
+    </xapl:set-variable>
+    
+    <xapl:choose>
+     <!-- If in update mode -->
+      <xapl:when test="{string-length($this/SAVED_SEARCH_NAME/@Value) !=0}">
+        <x2:execute command="omx.report.custom_reports:update"/>
+      </xapl:when>
+      <!-- If in create mode. Ask for the search name -->
+      <xapl:otherwise>
+        <web:display-page>
+          <web:get-page name="save_search">
+            <xapl:value-of select="{$this/DOC_TYPE}"/>
+          </web:get-page>
+        </web:display-page>
+      </xapl:otherwise>
+    </xapl:choose>
+    
+    
+  </x2:command>
+  
+
+   <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <!-- Save Search : After user enters a search name and presses OK -->
+  <x2:command public="yes" description="_" name="saveSearchOk">
+
+
+    <xapl:variable name="userId"><identity:get-user-id/></xapl:variable> 
+    <!-- API Call -->    
+    <xapl:variable name="responses">
+      <xcore:execute-method name="//UserSecurity/addSavedSearch" entireResponse="true">
+        <NAME Value="{$this/SAVED_SEARCH_NAME/@Value}"/>
+        <DOC_TYPE Value="{$sSearchCriteria/SAVED_DOC_TYPE/@Value}"/>
+        <xapl:value-of select="{$sSearchCriteria/*}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+
+    <!-- Display Error Message -->    
+    <xapl:if test="{count($responses/RESPONSE/_RESULT/_ERROR) > 0 or $responses/@Status = 'ERROR'}">
+      
+      <xapl:variable name="msg">
+        <xapl:choose>
+          <xapl:when test="string-length($responses/RESPONSE/_RESULT/_ERROR/@Value) > 0">
+            <xapl:value-of select="$responses/RESPONSE/_RESULT/_ERROR/@Value"/>
+          </xapl:when>
+          <xapl:otherwise>
+            <xapl:value-of select="$responses/RESPONSE/@Description"/>
+          </xapl:otherwise>
+        </xapl:choose>
+      </xapl:variable>
+      <web:display-page>
+        <web:get-page name="message_page">
+          <MESSAGE Value="{$responses/RESPONSE/_RESULT/_ERROR/@Value}"/>
+          <TITLE Value="Saving Search Error"/>
+          <RETURN Value="true"/>
+          <CANCEL/>
+        </web:get-page>
+      </web:display-page>
+    </xapl:if>
+    
+    
+    <!-- Display Success Message -->
+    <xapl:variable name="docType">
+      <xapl:value-of select="{$sSearchCriteria/DOC_TYPE}"/>
+    </xapl:variable>
+    
+    <xapl:variable name="idLink">
+      <xapl:value-of select="{concat('report/custom_reports/view.cmd?ID=',$responses/RESPONSE/ID/@Value,'&amp;NAME=',$this/SAVED_SEARCH_NAME/@Value)}"/>
+    </xapl:variable>
+    
+    <web:display-page> 
+      <web:get-page name="message_page">
+        <MESSAGE Value="Your Search Criteria has been successfully saved!"/>
+        <TITLE Value="Confirmation"/>
+        <OK Value="true"/>
+        <ID Value="{$responses/RESPONSE/ID/@Value}"/>
+        <ID_LINK Value="{$idLink}"/>
+        <DOC_TYPE Value="Search"/>
+      </web:get-page>
+    </web:display-page>
+    
+  </x2:command>
+  
+
+   <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="displayCurrentSearchPage">
+
+    <!-- Construct the Search Parameters -->
+    <xapl:variable name="params">	
+      <PARAMETERS>
+        <xapl:for-each varName="field" select="{$sSearchCriteria/FIELDS/FIELD}">
+          <docutil:element name="{$field/FIELD_NAME/@Value}" Value="{$field/FIELD_VALUE/@Value}"/>
+        </xapl:for-each>
+      </PARAMETERS>
+    </xapl:variable>
+    
+    <!-- Display the Page -->
+    <x2:execute command="omx.report.custom_reports:display">
+      <x2:with-param name="pSearchParameters">
+        <xapl:value-of select="{$params/*}"/>
+      </x2:with-param>
+      
+      <x2:with-param name="pDocType">
+        <xapl:value-of select="{$sSearchCriteria/SAVED_DOC_TYPE/@Value}"/>
+      </x2:with-param>
+    </x2:execute>
+    
+  </x2:command> 
+  
+
+  
+<!-- ********************************************************************** 
+ *********************************************************************** -->
+</x2:commands>

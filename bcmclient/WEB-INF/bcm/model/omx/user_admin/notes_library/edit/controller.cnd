@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+
+  <x2:command public="yes" description="_" name="deleteNote">
+
+    <xapl:variable name="result">
+      <xcore:execute-method name="//UserSecurity/deleteNote" entireResponse="true">
+        <xapl:value-of select="$this/ID"/>
+      </xcore:execute-method>
+    </xapl:variable>
+
+    <xapl:if test="string-length($result/RESPONSE/_RESULT/_ERROR/@Value) != 0">
+      
+      <web:display-page>
+        <web:get-page name="notes_library_detail">
+          <xapl:value-of select="{$this/*}"/>
+          <REFRESH Value="true"/>
+          <ERROR_MESSAGE Value="{$result/RESPONSE/_RESULT/_ERROR/@Value}"/>
+        </web:get-page>
+      </web:display-page>
+      
+    </xapl:if>
+
+    <xapl:variable name="statusMsg">
+      <i18n:text>System Note deleted successfully.</i18n:text>
+    </xapl:variable>
+
+  	<web:display-page>
+	  <web:get-page name="notes_library_detail">
+        <SUCCESS_MESSAGE Value="{$statusMsg}"/>
+	  </web:get-page>
+	</web:display-page>
+
+  </x2:command>
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+
+  <x2:command public="yes" description="_" name="addNote">
+	
+    <xapl:variable name="addNoteParam">
+      <xapl:value-of select="{$this/NOTE_CODE}"/>
+      <xapl:value-of select="{$this/DESCRIPTION}"/>
+      <NOTE_TYPE Value="{$this/TYPE_ID/@Value}"/>
+      <xapl:value-of select="{$this/IS_EDITABLE}"/>
+    </xapl:variable>
+    
+    <xapl:variable name="result">
+      <xcore:execute-method name="//UserSecurity/addNote" entireResponse="true">
+        <xapl:value-of select="{$addNoteParam}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    
+    <xapl:if test="string-length($result/RESPONSE/_RESULT/_ERROR/@Value) != 0">
+      
+      <web:display-page>
+        <web:get-page name="notes_library_detail">
+          <xapl:value-of select="{$this/*}"/>
+          <REFRESH Value="true"/>
+          <ERROR_MESSAGE Value="{$result/RESPONSE/_RESULT/_ERROR/@Value}"/>
+        </web:get-page>
+      </web:display-page>
+      
+    </xapl:if>
+
+    <xapl:if test="string-length($this/DESCRIPTION/@Value) >= 256">
+      
+      <web:display-page>
+        <web:get-page name="notes_library_detail">
+          <xapl:value-of select="{$this/*}"/>
+          <REFRESH Value="true"/>
+          <ERROR_MESSAGE Value="The Details field must contain less than 256 characters."/>
+        </web:get-page>
+      </web:display-page>
+      
+    </xapl:if>
+    
+    <xapl:variable name="statusMsg">
+      <i18n:text>System Note added successfully.</i18n:text>
+    </xapl:variable>
+  
+  	<web:display-page>
+	  <web:get-page name="notes_library_detail">
+        <ID Value="{$result/RESPONSE/ID/@Value}"/>
+        <SUCCESS_MESSAGE Value="{$statusMsg}"/>
+	  </web:get-page>
+	</web:display-page>
+
+  </x2:command>
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+
+  <x2:command public="yes" description="_" name="updateNote">
+	
+    <xapl:variable name="updateNoteParam">
+      <xapl:value-of select="{$this/ID}"/>
+      <xapl:value-of select="{$this/DESCRIPTION}"/>
+      <xapl:value-of select="{$this/IS_EDITABLE}"/>
+    </xapl:variable>
+    
+    <xapl:variable name="result">
+      <xcore:execute-method name="//UserSecurity/modifyNote" entireResponse="true">
+        <xapl:value-of select="{$updateNoteParam}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+	
+    <xapl:if test="string-length($result/RESPONSE/_RESULT/_ERROR/@Value) != 0">
+      
+      <web:display-page>
+        <web:get-page name="notes_library_detail">
+          <xapl:value-of select="{$this/*}"/>
+          <REFRESH Value="true"/>
+          <ERROR_MESSAGE Value="{$result/RESPONSE/_RESULT/_ERROR/@Value}"/>
+        </web:get-page>
+      </web:display-page>
+      
+    </xapl:if>
+
+    <xapl:if test="string-length($this/DESCRIPTION/@Value) >= 256">
+      
+      <web:display-page>
+        <web:get-page name="notes_library_detail">
+          <xapl:value-of select="{$this/*}"/>
+          <REFRESH Value="true"/>
+          <ERROR_MESSAGE Value="The Details field must contain less than 256 characters."/>
+        </web:get-page>
+      </web:display-page>
+      
+    </xapl:if>
+    
+    <xapl:variable name="statusMsg">
+      <i18n:text>System Note updated successfully.</i18n:text>
+    </xapl:variable>
+ 
+ 	<web:display-page>
+	  <web:get-page name="notes_library_detail">
+        <xapl:value-of select="{$this/ID}"/>
+        <SUCCESS_MESSAGE Value="{$statusMsg}"/>
+	  </web:get-page>
+	</web:display-page>
+
+  </x2:command>
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+
+</x2:commands>
+

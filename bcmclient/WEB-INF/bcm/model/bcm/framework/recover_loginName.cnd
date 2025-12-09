@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<x2:commands description="_" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:cfg="http://www.i2.com/configurability" xmlns:core="http://www.i2.com/core" xmlns:omx="http://www.i2.com/omx" xmlns:perm="http://www.i2.com/permissibility" xmlns:util="http://www.i2.com/util" xmlns:web="http://www.i2.com/web" xmlns:x2="http://www.i2.com/x2" xmlns:xapl="http://www.i2.com/xapl" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:docutil="http://www.i2.com/docutil" xmlns:xudl="http://www.i2.com/xudl">
+  <!--************************************************************************-->
+  <x2:command public="yes" description="_" name="recover_loginName">
+    <xapl:print select="recover_loginName"/>
+    <xapl:print select="{$this}"/>
+    <!--
+<REQUESTS ServiceName="USER_SECURITY">
+	<REQUEST Name="recoverPassword">
+	  <USER_ID Value="user3"/>
+	  <PWD_QUESTION Value="LAST_4_DIGITS_OF_SSN"/>
+	  <PWD_ANSWER Value="my_pwd_answer"/>
+	</REQUEST>
+</REQUESTS>
+
+-->
+    <xapl:variable name="isSuccess">
+      <xcore:execute-method name="//UserSecurity/recoverLoginName" entireResponse="true">
+        <EMAIL_ADDRESS Value="{$this/EMAIL_ADDRESS/@Value}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    <xapl:print select="{$isSuccess}"/>
+    <xapl:choose>
+      <xapl:when test="{$isSuccess/RESPONSE/@Status = 'Error'}">
+        <web:display-page>
+          <web:get-page name="forgotLoginName">
+            <ERROR Value="true"/>
+            <DESCRIPTION Value="{$isSuccess/RESPONSE/_RESULT/_ERROR/@Value}"/>
+          </web:get-page>
+        </web:display-page>
+      </xapl:when>
+      <xapl:otherwise>
+        <web:display-page>
+          <web:get-page name="forgotLoginName">
+            <ERROR Value="false"/>
+            <DESCRIPTION Value="Your Login Name has been sent to your email address."/>
+          </web:get-page>
+        </web:display-page>
+      </xapl:otherwise>
+    </xapl:choose>
+  </x2:command>
+  <!--************************************************************************-->
+</x2:commands>

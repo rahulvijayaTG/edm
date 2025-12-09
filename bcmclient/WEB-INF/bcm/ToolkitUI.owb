@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+  <Property Name="com.i2.omxwb.xcorestudio.XcoreStudio" Value="true"/>
+  <Property Name="CURRENT_TAB" Value="i2.Xcore Studio"/>
+  <Property Name="DEFAULT_FRAME_HEIGHT" Value="700"/>
+  <Property Name="DEFAULT_FRAME_WIDTH" Value="950"/>
+  <Property Name="DEFAULT_FRAME_X" Value="10"/>
+  <Property Name="DEFAULT_FRAME_Y" Value="5"/>
+  <Property Name="FRAME_HEIGHT" Value="500"/>
+  <Property Name="FRAME_WIDTH" Value="700"/>
+  <Property Name="FRAME_X" Value="10"/>
+  <Property Name="FRAME_Y" Value="5"/>
+  <Property Name="i2.Xcore Studio.DividerLocation" Value="300"/>
+  <Property Name="i2.Xcore Studio.NodeStr" Value="Model Instance - [ui_workflow]"/>
+  <Property Name="i2.Xcore Studio.SelectedTab" Value=".\cfg\properties\xserver.xml"/>
+  <Property Name="i2.Xcore Studio.Tabs" Value=".\cfg\properties\xserver.xml"/>
+  <Property Name="LAST_SELECTED_DIR" Value="E:\build\web\weblogic\bcmclient\WEB-INF\lib"/>
+  <Property Name="PRJ_CLASSPATH">
+    <Property Value="."/>
+    <Property Value=".\cfg\properties"/>
+    <Property Value=".\cfg"/>
+    <Property Value="..\lib\bpe-server.jar"/>
+    <Property Value="..\lib\bpe-services.jar"/>
+    <Property Value="..\lib\bcm_xservice.jar"/>
+    <Property Value="..\lib\mdm-server.jar"/>
+    <Property Value="..\lib\6xServices.jar"/>
+    <Property Value="..\lib\db2jcc.jar"/>
+    <Property Value="..\lib\db2jcc_license_cisuz.jar"/>
+    <Property Value="..\lib\db2jcc_license_cu.jar"/>
+    <Property Value="..\lib\MessagingLocalization.jar"/>
+    <Property Value="..\lib\bpe-tools.jar"/>
+    <Property Value="..\lib\bpe-util.jar"/>
+    <Property Value="..\lib\classes12.zip"/>
+    <Property Value="..\lib\jdom.jar"/>
+    <Property Value="..\lib\xml-apis.jar"/>
+    <Property Value="..\lib\xercesImpl.jar"/>
+    <Property Value="..\lib\xalan.jar"/>
+  </Property>
+  <Property Name="PRJ_RESOURCES_CLASSPATH_APPENDED" Value="true"/>
+  <Property Name="RUN_LAST_SELECTED_SERVICES" Value="UI_WORKFLOW@.\cfg\properties\ui_workflow.xml"/>
+  <Property Name="SERVER_FILE_PATH" Value=".\cfg\properties\xserver.xml"/>
+  <Property Name="SERVER_PROJECT_REMOTE" Value="false"/>
+  <Property Name="SERVICE_NATURE">
+    <PropertyMap>
+      <Property Name="ui_workflow_xml" Value="BPE"/>
+    </PropertyMap>
+  </Property>
+  <Property Name="SERVICES">
+    <services>
+      <service Value=".\cfg\properties\ui_workflow.xml"/>
+    </services>
+  </Property>
+  <Property Name="SQL_DATA_ui_workflow" Value=".\cfg\xservice\ui_workflow\sql"/>
+  <Property Name="STAGING_DIR" Value=".\ToolkitUI\"/>
+  <Property Name="STATIC_DATA_ui_workflow" Value=".\cfg\xservice\ui_workflow\data"/>
+  <Property Name="WorkbenchTheme" Value="XP"/>
+  <Property Name="XSERVER_DB_CONFIG">
+    <database-configs>
+      <database-config Name="myOracleDB" Filename="xserver.xml">
+        <userid Value="swativ"/>
+        <password Value="swativ"/>
+        <db-url Value="jdbc:oracle:thin:@localhost:60003:orcl"/>
+        <db-driver Value="oracle.jdbc.driver.OracleDriver"/>
+        <db-meta-info-file Value="com/i2/xcore/dblib/oracle_10g.xml"/>
+        <initial-pool-size Value="1"/>
+        <max-pool-size Value="2"/>
+        <isJdbc2Driver Value="true"/>
+        <connection-retry-count Value="3"/>
+        <connection-retry-delay Value="1000"/>
+      </database-config>
+    </database-configs>
+  </Property>

@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+
+<head>
+
+<link rel="STYLESHEET" type="text/css" href="includes/style_sheet_core.css">
+
+<link rel="STYLESHEET" type="text/css" href="includes/style_sheet_doc.css">
+
+</head>
+
+<body>
+
+<h1>Measure Dimensionality</h1>
+
+<div id="overDiv" style="position:absolute; visibility:hidden; z-index:1000;"></div>
+
+<script language="JavaScript" src="overlib.js"></script>
+
+<a name="top">
+
+<table border="0" cellpadding="0" cellspacing="0">
+
+<tr><td class="largeheadline"><script language="JavaScript" src="titleline.js"></script></td>
+
+</tr>
+
+</table>
+
+<hr>
+
+<!-- Begin Page Layout -->
+
+<p>When defining the dimensionality of a measure, remember the following rules
+(as they are in Demand Manager 6.1.5).</p>
+
+<p>&nbsp;</p>
+
+<table class="shadow" cellspacing="0" cellpadding="0"width="100%" border="0">
+
+<tr>
+
+<td class="tableHeader">&nbsp;What you can do
+
+
+
+</td>
+
+</tr>
+
+<tr>
+
+<td>
+
+            <table class="tableBorder" cellspacing="1" cellpadding="0" width="100%" border="0">
+
+            <tr class="tableRow0">
+
+            <td>
+
+                        <p class="Header2">Dimensionality Rules</p>
+
+                        <p class="Header3">Bi-Direction Measure rules</p>
+
+                        <ul>
+                          <li>A Bi-directional measure should have atleast one
+                            KEY &amp; BLOCK (time) dimension&nbsp;</li>
+                          <li>The aggregation type has to be SUM in all
+                            dimensions.
+                        </a>It <a name="top">cannot vary for time.&nbsp;</a></li>
+                          <li>It <a name="top">can have exactly one lower bound
+                            and multiple upper bounds&nbsp;</a></li>
+                          <li>It <a name="top">can have exactly one IOLEVELs
+                            combination.</a> It s<a name="top">hould have one
+                            IOLEVEL in a dimension for each IOLEVEL combination.
+                            IOLEVEL should be enveloped between upper and lower
+                            bounds.</a></li>
+                          <li><a name="top">Lookup levels cannot be defined.</a></li>
+                          <li>It <a name="top">does not support string datatype.</a></li>
+                          <li><a name="top">A unique path must exist between a
+                            upper and lower bound (aggregation &amp;
+                            disaggregation).</a></li>
+            </ul>
+            <p class="Header3">SinglePoint Measure Rules</p>
+            <ul>
+              <li>A SinglePoint measure should have atleast one KEY &amp; BLOCK
+                (time) dimension.</li>
+              <li>The aggregation type in non-key dimension is not allowed. It
+                can be either SUM or AVERAGE in block (time usually) dimension,
+                if specified explicitly (else no aggregation will be supported).</li>
+              <li>It can have exactly one lower bound and multiple upper
+                bounds.&nbsp;</li>
+              <li>It can have multiple Iolevels combinations.&nbsp;</li>
+              <li>It must have one IOLEVEL in a dimension for each IOLEVEL
+                combination. IOLEVEL should be enveloped between upper and lower
+                bounds.</li>
+              <li>Multiple lookup levels can be defined. Each Lookup-level
+                should be enveloped between upper and lower bounds.&nbsp;</li>
+              <li>It does not support string datatype.</li>
+            </ul>
+            <p class="Header3">COMMENT measure rules</p>
+            <ul>
+              <li>It requires one dimension. No constraint such as KEY &amp;
+                BLOCK dimension.</li>
+              <li>Aggregation is not supported in any dimension.</li>
+              <li>It can have exactly one lower bound and multiple upper bounds.</li>
+              <li>It supports only string type data.&nbsp;</li>
+              <li>It can have multiple IOLEVELs combinations. It should have one
+                IOLEVEL in a dimension for each IOLEVEL combination. IOLEVEL
+                should be enveloped between upper and lower bounds.&nbsp;</li>
+              <li>Multiple lookup levels can be defined. Each Lookup-level
+                should be enveloped between upper and lower bounds.</li>
+            </ul>
+            <p class="Header2">Adding a new dimension</p>
+            <ol>
+              <li>You can only add a new dimension for a new/duplicate
+                measure.&nbsp;</li>
+              <li>Select the dimension from the Dimension drop down box and
+                define the type, aggregation (if allowed), Upper bound, lower
+                bound and the lookup levels (if applicable).&nbsp;</li>
+              <li>Click on <b>Apply</b> button.</li>
+            </ol>
+            <p class="Header2">Modifying properties in a dimension</p>
+            <ol>
+              <li>Select the dimension from the <b>Dimensionality</b> table and
+                click on <b>Modify</b> button. </li>
+              <li>Enter the specifications in the bottom panel and click on <b>Apply</b>
+                button. You can modify the Upper bound, lower bound and the
+                lookup levels (if applicable) for a new/duplicate and an
+                existing measure. </li>
+            </ol>
+            <p class="Header2">Removing a measure’s dimension</p>
+            <ol>
+              <li>You can only remove a dimension for a new/duplicate measure. </li>
+              <li>Select the measure from the top table, click on <b>Remove</b>
+                button. </li>
+              <li>Click on <b>Finish</b> button to save the measure’s
+                definition to the database.</li>
+            </ol>
+                        <p class="Header2">Adding a IO Level combination </p>
+                        <ol>
+                          <li><a name="top">To add a new IO Level combination,
+                            click on New button.
+            </a></li>
+                          <li><a name="top">Set the IO Level for each dimension
+                            the measure is valid in.</a></li>
+                          <li><a name="top">You can add as many IO Level
+                            combinations as the business requires.</a></li>
+                          <li><a name="top">To remove a IO Level combination,
+                            select the IO Level and click on <b>Remove</b>. </a></li>
+                          <li><a name="top">To accept all changes, click on <b>Submit</b>
+                            button. The dialog box closes. </a></li>
+                          <li><a name="top">Click on <b>Finish</b> button to
+                            save the measure’s definition to the database.</li>
+                          </ol>
+                        </a><a name="top">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            </a>
+                        <p>&nbsp;</p>
+                        <p>&nbsp;
+
+            </td>
+
+            </tr>
+
+            </table>
+
+<td>
+
+</tr>
+
+</table>
+
+<!-- End Page Layout -->
+
+<hr>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+
+<tr>
+
+<td class="breadcrumbs"><script language="JavaScript" src="tagline.js"></script></td>
+
+</tr>
+
+</table>
+
+<DIV id="waterMark" style="position:absolute"><a href="javascript:history.back();" onClick="window.scrollTo(0,0)"><img src="includes/top_of_page.gif" border="0" alt="top of page"></a></DIV>
+
+<script language="JavaScript" src="topfloat.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,39 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="uiWfIPSegParamMassUpdate.pgl">
+  <ui:container id="topContainer">
+    <ui:step id="c1" displayText="IP Segment Parameters" editable="true">
+      <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" />
+      <ui:table displayText="Mass Update Selections" rowSrc="$root/SEGMENTS/SEGMENT_DETAILS" rowSubTreeSrc="PARAMETER_LISTS/ PARAMETER_DETAILS" collapsable="true" totalRowCount="$segmentTableRowCnt" startAtRow="0" maxRows="3" rowId="SegmentIdentification" exportable="false" scrollable="true">
+        <ui:field-group>
+          <ui:treecell displayText="Segment" name="SegmentIdentification" noChildren="{count(PARAMETER_LISTS/PARAMETER_DETAILS) = 0}" depth="{count(ancestor::node()[name()='PARAMETER_LISTS'])}" column="0" />
+          <ui:display-field displayText="Segment Description" name="SegmentDescription" />
+          <ui:display-field displayText="Parameter Name" name="ParameterName" />
+          <ui:display-field displayText="Parameter Description" name="ParameterDesc" />
+          <ui:display-field displayText="Parameter Value" name="ParameterValue" />
+          <ui:display-field displayText="Parameter UOM" name="ParameterUOM" />
+          <!--  <ui:entry-field id="Comment" name="Comment" displayText="Comment"/>-->
+          <ui:display-field id="LAST_MODIFIED_DATE" name="LAST_MODIFIED_DATE" displayText="Date Modified" sortable="true" />
+          <ui:display-field id="isCapacity" name="isCapacity" displayText="Modified By" sortable="true" />
+          <ui:display-field id="ENTITY_STATE" name="ENTITY_STATE" displayText="State" sortable="false" />
+        </ui:field-group>
+      </ui:table>
+      <!--   </ui:step>-->
+      <!--<ui:container id="bottomContainer" displayText="Mass Update">-->
+      <!--<ui:step id="c2" displayText="" editable="true">-->
+      <!--  <ui:validation/>-->
+      <ui:table displayText="Updateable Parameters" rowSrc="$root/PARAMETER_NAMES/PARAMETER_NAME" postRowIdAs="SelecttedParameterName" totalRowCount="$paramTableRowCnt" startAtRow="0" maxRows="10" rowId="ParameterName" exportable="false" selectable="All" scrollable="true">
+        <ui:field-group>
+          <ui:entry-field displayText="Parameter Name" name="ParameterName" id="ParameterName" editable="false" />
+          <ui:entry-field displayText="Parameter Value" name="PARAMVAL" required="false" value="{$root/PARAM_DETAILS_LIST/PARAM_DETAILS/PARAMVAL/@Value}" />
+          <ui:textarea name="Comments" displayText="Comments" required="true" />
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button displayText="Save" id="Save" name="Save" enabledBySelections="true" />
+          <ui:button displayText="Cancel" id="Cancel" name="Cancel" enabledBySelections="false" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <!--</ui:container>-->
+  <!--<ui:dynamic-pgl select="$root/PARAM/*"/>-->
+</ui:page-group>
+

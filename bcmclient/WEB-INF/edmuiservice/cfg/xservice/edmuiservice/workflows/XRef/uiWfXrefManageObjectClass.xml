@@ -1,0 +1,701 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="721" ShowInBreadCrumbs="true" Version="1.0" Name="uiWfXrefManageObjectClass" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="BottomPaneVal" Type="xml" Comment=""/>
+    <variable Name="Desc1" Type="string" Comment=""/>
+    <variable Name="Name1" Type="string" Comment=""/>
+    <variable Name="SelectedId" Type="string" Comment=""/>
+    <variable Name="StatusXml" Type="xml" Comment=""/>
+    <variable Name="Success_Error_Msg" Type="xml" Comment=""/>
+    <variable Name="Success_Error_Msg_Btm" Type="xml" Comment=""/>
+    <variable Name="UpdObjectClass" Type="xml" Comment=""/>
+    <variable Name="XRefVar" Type="xml" Comment=""/>
+    <variable Name="moddel" Type="xml" Comment=""/>
+    <variable Name="outXml" Type="xml" Comment=""/>
+    <variable Name="paginateStart" Type="int" Comment=""/>
+    <variable Name="pgMaxRows" Type="int" Comment=""/>
+    <variable Name="BottomPaneValUpd" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <done Name="done2">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <start Name="start3">
+      <actions>
+        <TO_DOCVAR AssignToVar="BottomPaneVal">
+          <CrossReferenceObjectClass/>
+        </TO_DOCVAR>
+      </actions>
+      <next_nodes>
+        <next_node Name="Object Class" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Object Class" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="xrefManageObjectClass.pgl">
+      <pre_actions>
+        <action>
+          <SET Var="exportTableId" FromValue="{ifElse($thisParam/FILTER_ID/@Value=null, '', $thisParam/FILTER_ID/@Value)}"/>
+          <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+          <SET Var="pgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '10', $thisParam/MAX_ROWS/@Value)}"/>
+          <SET Var="sortBy" FromValue="{$thisParam/SORT_BY/@Value}"/>
+          <SET Var="sortOrder" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+          <IF_TEST Test="$userAction = 'DELETE' or $thisParam/innerAction/@Value = 'Filter' or $userAction='ShowDetail' or $userAction='UPDATE' or $userAction='CREATE'">
+            <THEN>
+              <SET Var="paginateStart" FromValue="0"/>
+            </THEN>
+            <ELSE>
+              <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+            </ELSE>
+          </IF_TEST>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filter">
+            <ObjectClassMnemonicValue InputName="FILTER_ObjectClassMnemonicValue"/>
+            <ObjectClassDescription InputName="FILTER_ObjectClassDescription"/>
+            <ObjectClassDomain InputName="FILTER_ObjectClassDomain"/>
+            <ObjectClassStatus InputName="FILTER_ObjectClassStatus"/>
+            <LastModifiedDate InputName="FILTER_LastModifiedDate"/>
+            <LastModifiedBy InputName="FILTER_LastModifiedBy"/>
+            <ObjectClassNotes InputName="FILTER_ObjectClassNotes"/>
+          </FORM_SEARCH_FILTER>
+          <IF_TEST Test="count($filter/FILTER)!=0">
+            <THEN>
+              <TO_DOCVAR AssignToVar="CIfilters">
+                <FILTERS>
+                  <TO_XML SelectList="$filter/FILTER/*"/>
+                </FILTERS>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <FOR_EACH CurrentElement="tempElem" SelectList="$CIfilters/*">
+            <SET Var="thisValue" FromValue="{$tempElem/@Value}"/>
+            <REMOVE_ATTRIBUTE DocVar="tempElem" Name="Value"/>
+            <SET Attribute="ScalarFn" FromValue="upperCase" DocVar="tempElem"/>
+            <SET Attribute="Value" FromValue="{upperCase($thisValue)}" DocVar="tempElem"/>
+          </FOR_EACH>
+          <IF_TEST Test="strlen($sortBy) != 0">
+            <THEN>
+              <REQUEST AssignToVar="modsys" Name="readObjectClass" ServiceName="BCM_MASTER" ReturnRowCount="yes" MaxRows="{$pgMaxRows}" StartAtRow="{ifElse($exportTableId='',$paginateStart,'0')}">
+                <TO_XML SelectList="$CIfilters/*"/>
+                <SORT_ORDER Value="{$sortOrder}"/>
+                <SORT_BY Value="{$sortBy}"/>
+              </REQUEST>
+            </THEN>
+            <ELSE>
+              <REQUEST AssignToVar="modsys" Name="readObjectClass" ServiceName="BCM_MASTER" ReturnRowCount="yes" MaxRows="{$pgMaxRows}" StartAtRow="{ifElse($exportTableId='',$paginateStart,'0')}">
+                <TO_XML SelectList="$CIfilters/*"/>
+              </REQUEST>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <RESPONSE>
+              <ROOT TotalRowCount="{$modsys/TOTAL_ROW_COUNT/@Value}"/>
+              <TO_XML SelectList="$moddel/*"/>
+              <TO_XML SelectList="$modsys/*"/>
+              <StartAtRow Value="{$paginateStart}"/>
+              <TO_XML SelectList="$thisParam/*"/>
+              <TO_XML SelectList="$Success_Error_Msg/*"/>
+              <User_Action Value="{$userAction}"/>
+              <SELECTED>
+                <TO_XML SelectList="$BottomPaneVal/*"/>
+                <TO_XML SelectList="$Success_Error_Msg_Btm/*"/>
+              </SELECTED>
+            </RESPONSE>
+          </TO_DOCVAR>
+          <IF_TEST Test="count($pglFormInput/_ERRORS) > 0 and $userAction = 'CREATE'">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <ERR_STS Value="True"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <PRINTLN Value="Value of pglFormInput in Pre-processing is {$pglFormInput}"/>
+          <REQUEST Name="getAccessLevel" ServiceName="BCM_MASTER" AssignToVar="getAccessRoles">
+            <ACTIVITY_ID Value="edmXRefStructure"/>
+            <USER_ID Value="{$userId}"/>
+          </REQUEST>
+          <SET Var="accessLevel" FromValue="{$getAccessRoles/SQL_RESULT/ACCESS_LEVEL/@Value}"/>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <AccessLevel Value="{$accessLevel}"/>
+          </APPEND_TO_XML>
+        </action>
+        <!--<action>
+  <SET Var="myinput" FromValue="{string($pglFormOutput)}"/>
+  <SET Var="outXml" FromVar="pglFormOutput"/>
+  <REQUEST Name="getObjectTypeAll" AssignToVar="temp">
+    <TO_XML SelectList="$thisParam/*"/>
+  </REQUEST>
+  <REQUEST Name="getCrossReferenceObjectClassStatus" AssignToVar="status">
+    <TO_XML SelectList="$thisParam/*"/>
+  </REQUEST>
+  <TO_DOCVAR AssignToVar="inXml">
+    <ROOT>
+      <STATUSOPTION/>
+    </ROOT>
+  </TO_DOCVAR>
+  <SET Var="optionsVar" FromSelect="$inXml/STATUSOPTION"/>
+  <FOR_EACH CurrentElement="currOption" SelectList="$status/ CrossReferenceObjectClassStatus">
+    <TO_DOCVAR AssignToVar="currOptionVar">
+      <OPTION/>
+    </TO_DOCVAR>
+    <TO_DOCVAR AssignToVar="curroption1">
+      <ROOT>
+        <TO_XML SelectList="$currOptionVar"/>
+      </ROOT>
+    </TO_DOCVAR>
+    <APPEND_CHILDREN DocVar="optionsVar" FromDocVar="curroption1"/>
+  </FOR_EACH>
+  <SET DocVar="StatusXml" FromDocVar="inXml"/>
+  <TO_DOCVAR AssignToVar="pglFormInput">
+    <RESPONSE>
+      <ROOT TotalRowCount="{$temp/@TotalRowCount}">
+        <TO_XML SelectList="$temp/*"/>
+        <SELECTED>
+          <TO_XML SelectList="$XRefVar/*"/>
+        </SELECTED>       
+      </ROOT>
+    </RESPONSE>
+  </TO_DOCVAR>
+</action>
+
+-->
+      </pre_actions>
+      <post_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="Success_Error_Msg">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="Success_Error_Msg_Btm">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction ='ShowDetail'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="outputlines">
+                <MY_DOC>
+                  <INPUT>
+                    <TO_XML SelectList="$pglFormOutput/*"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="LINE">
+                    <ObjectClassMnemonicValue/>
+                    <ObjectClassDescription/>
+                    <ObjectClassDomain/>
+                    <ObjectClassNotes/>
+                  </COLLATE_LIST>
+                </MY_DOC>
+              </TO_DOCVAR>
+              <COLLATE_XML DocVar="outputlines" AssignToVar="collateDoc"/>
+              <FOR_EACH SelectList="$collateDoc/LINE" CurrentElement="CurLine">
+                <IF_TEST Test="$pglFormOutput/selectedObjectClassMnemonicValue/@Value = $CurLine/ObjectClassMnemonicValue/@Value">
+                  <THEN>
+                    <SET_NAME SelectList="$CurLine/ObjectClassNotes" FromValue="Notes"/>
+                    <TO_DOCVAR AssignToVar="BottomPaneVal">
+                      <CrossReferenceObjectClass>
+                        <!-- <TO_XML SelectList="$CurLine/*"/>-->
+                        <BtmObjectClassMnemonicValue Value="{$CurLine/ObjectClassMnemonicValue/@Value}"/>
+                        <BtmObjectClassDescription Value="{$CurLine/ObjectClassDescription/@Value}"/>
+                        <BtmObjectClassDomain Value="{$CurLine/ObjectClassDomain/@Value}"/>
+                        <BtmNotes Value="{$CurLine/Notes/@Value}"/>
+                      </CrossReferenceObjectClass>
+                    </TO_DOCVAR>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction ='CLEAR'">
+            <THEN>
+              <SET_PROPS Select="$thisParam">
+                <FILTER_ObjectClassMnemonicValue Value=""/>
+                <FILTER_ObjectClassDescription Value=""/>
+                <FILTER_ObjectClassDomain Value=""/>
+                <FILTER_ObjectClassStatus Value=""/>
+                <FILTER_LastModifiedDate Value=""/>
+                <FILTER_LastModifiedBy Value=""/>
+                <FILTER_ObjectClassNotes Value=""/>
+              </SET_PROPS>
+              <TO_DOCVAR AssignToVar="BottomPaneVal">
+                <CrossReferenceObjectClass>
+                  <BtmObjectClassMnemonicValue Value=""/>
+                  <BtmObjectClassDescription Value=""/>
+                  <BtmObjectClassDomain Value=""/>
+                  <BtmNotes Value=""/>
+                </CrossReferenceObjectClass>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction ='CREATE'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="outputlines">
+                <MY_DOC>
+                  <INPUT>
+                    <TO_XML SelectList="$pglFormOutput/*"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="LINE">
+                    <BtmObjectClassMnemonicValue/>
+                    <BtmObjectClassDescription/>
+                    <BtmObjectClassDomain/>
+                    <BtmNotes/>
+                  </COLLATE_LIST>
+                </MY_DOC>
+              </TO_DOCVAR>
+              <COLLATE_XML DocVar="outputlines" AssignToVar="collateDoc"/>
+              <TO_DOCVAR AssignToVar="BottomPaneVal">
+                <CrossReferenceObjectClass>
+                  <ObjectClassMnemonicValue Value="{$collateDoc/LINE/BtmObjectClassMnemonicValue/@Value}"/>
+                  <ObjectClassDescription Value="{$collateDoc/LINE/BtmObjectClassDescription/@Value}"/>
+                  <ObjectClassDomain Value="{$collateDoc/LINE/BtmObjectClassDomain/@Value}"/>
+                  <Notes Value="{$collateDoc/LINE/BtmNotes/@Value}"/>
+                </CrossReferenceObjectClass>
+              </TO_DOCVAR>
+              <GET_DOCUMENT Name="P_CrossReferenceObject" AssignToVar="ObjectClassId" ReturnRowCount="true" ServiceName="PEDM_MASTER" HandleException="true">
+                <CrossReferenceObjectMnemonicValue Value="{$BottomPaneVal/ObjectClassMnemonicValue/@Value}" MatchBy="EQUAL"/>
+                <ENTITY_STATE Value="DELETED" MatchBy="EQUAL"/>
+              </GET_DOCUMENT>
+              <IF_TEST Test="count($ObjectClassId/P_CrossReferenceObject) > 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="UpdObjectClass">
+                    <CrossReferenceObjectClass>
+                      <DOCUMENT_CONTEXT>
+                        <ObjectClassMnemonicValue Value="{$collateDoc/LINE/BtmObjectClassMnemonicValue/@Value}"/>
+                      </DOCUMENT_CONTEXT>
+                      <UPDATE_PROPERTIES>
+                        <ObjectClassDescription Value="{$collateDoc/LINE/BtmObjectClassDescription/@Value}"/>
+                        <ObjectClassDomain Value="{$collateDoc/LINE/BtmObjectClassDomain/@Value}"/>
+                        <ObjectClassStatus Value="Active"/>
+                        <ObjectClassGenericIndicator Value="Y"/>
+                        <CrossReferenceObjectDataEntityName Value="Generic"/>
+                        <SourceSystemMnemonicValue Value="EDM"/>
+                        <Notes Value="{$collateDoc/LINE/BtmNotes/@Value}"/>
+                      </UPDATE_PROPERTIES>
+                      <ACTIONTOBDONE Value="ACTIVATE"/>
+                      <SYS_TYPE Value="ACTIVATE"/>
+                    </CrossReferenceObjectClass>
+                  </TO_DOCVAR>
+                  <REQUEST AssignToVar="modsys" Name="ActivateObjectClass" ServiceName="BCM_MASTER" ReturnRowCount="yes" HandleException="true">
+                    <TO_XML SelectList="$UpdObjectClass/*"/>
+                  </REQUEST>
+                  <!-- Error Handling for Object Class Activation -->
+                  <IF_TEST Test="$modsys/_RESULT/@Value != 'SEVERE_ERROR' and $modsys/@Status !='Error'">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="Success_Error_Msg_Btm">
+                        <_SUCCESS Value="Object Class Successfully Activated" Details="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$modsys/@Status ='Error'">
+                        <THEN>
+                          <APPEND_TO_XML DocVar="Success_Error_Msg">
+                            <_ERRORS Value="SEVERE_ERROR">
+                              <_ERROR Value="{$modsys/@Description}" Severity="SEVERE_ERROR"/>
+                            </_ERRORS>
+                          </APPEND_TO_XML>
+                        </THEN>
+                        <ELSE>
+                          <APPEND_TO_XML DocVar="Success_Error_Msg">
+                            <_ERRORS Value="SEVERE_ERROR">
+                              <_ERROR Value="{$modsys/_RESULT/_ERROR/@Value}" Severity="SEVERE_ERROR"/>
+                            </_ERRORS>
+                          </APPEND_TO_XML>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                  <!-- Error Handling for Object Activation-->
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="BottomPaneVal">
+                    <ObjectClassGenericIndicator Value="Y"/>
+                    <CrossReferenceObjectDataEntityName Value="Generic"/>
+                    <ObjectClassStatus Value="Active"/>
+                    <ACTIONTOBDONE Value="INSERT"/>
+                    <SYS_TYPE Value="INSERT"/>
+                  </APPEND_TO_XML>
+                  <REQUEST AssignToVar="modsys" Name="CreateObjectClass" ServiceName="BCM_MASTER" ReturnRowCount="yes" HandleException="true">
+                    <TO_XML SelectList="$BottomPaneVal/*"/>
+                  </REQUEST>
+                  <!-- Error Handling for Object Class-->
+                  <IF_TEST Test="$modsys/_RESULT/@Value != 'SEVERE_ERROR' and $modsys/@Status !='Error'">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="Success_Error_Msg_Btm">
+                        <_SUCCESS Value="Object Class Successfully Created" Details="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$modsys/@Status ='Error'">
+                        <THEN>
+                          <APPEND_TO_XML DocVar="Success_Error_Msg">
+                            <_ERRORS Value="SEVERE_ERROR">
+                              <_ERROR Value="{$modsys/@Description}" Severity="SEVERE_ERROR"/>
+                            </_ERRORS>
+                          </APPEND_TO_XML>
+                        </THEN>
+                        <ELSE>
+                          <APPEND_TO_XML DocVar="Success_Error_Msg">
+                            <_ERRORS Value="SEVERE_ERROR">
+                              <_ERROR Value="{$modsys/_RESULT/_ERROR/@Value}" Severity="SEVERE_ERROR"/>
+                            </_ERRORS>
+                          </APPEND_TO_XML>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                  <!-- Error Handling for Object Class-->
+                </ELSE>
+              </IF_TEST>
+              <SET_NAME SelectList="$BottomPaneVal/ObjectClassMnemonicValue" FromValue="BtmObjectClassMnemonicValue"/>
+              <SET_NAME SelectList="$BottomPaneVal/ObjectClassDescription" FromValue="BtmObjectClassDescription"/>
+              <SET_NAME SelectList="$BottomPaneVal/ObjectClassDomain" FromValue="BtmObjectClassDomain"/>
+              <SET_NAME SelectList="$BottomPaneVal/Notes" FromValue="BtmNotes"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'UPDATE'">
+            <THEN>
+              <SET Var="NewVar" FromValue="{$pglFormOutput/Notes/@Value}"/>
+              <PRINTLN Value="Value of pglformoutput in UPDATE is {$pglFormOutput}"/>
+              <TO_DOCVAR AssignToVar="outputlines">
+                <MY_DOC>
+                  <INPUT>
+                    <TO_XML SelectList="$pglFormOutput/*"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="LINE">
+                    <BtmObjectClassMnemonicValue/>
+                    <BtmObjectClassDescription/>
+                    <BtmObjectClassDomain/>
+                    <BtmNotes/>
+                  </COLLATE_LIST>
+                </MY_DOC>
+              </TO_DOCVAR>
+              <COLLATE_XML DocVar="outputlines" AssignToVar="collateDoc"/>
+              <TO_DOCVAR AssignToVar="UpdObjectClass">
+                <CrossReferenceObjectClass>
+                  <DOCUMENT_CONTEXT>
+                    <ObjectClassMnemonicValue Value="{$collateDoc/LINE/BtmObjectClassMnemonicValue/@Value}"/>
+                  </DOCUMENT_CONTEXT>
+                  <UPDATE_PROPERTIES>
+                    <ObjectClassDescription Value="{$collateDoc/LINE/BtmObjectClassDescription/@Value}"/>
+                    <ObjectClassDomain Value="{$collateDoc/LINE/BtmObjectClassDomain/@Value}"/>
+                    <ObjectClassStatus Value="Active"/>
+                    <ObjectClassGenericIndicator Value="Y"/>
+                    <CrossReferenceObjectDataEntityName Value="Generic"/>
+                    <SourceSystemMnemonicValue Value="EDM"/>
+                    <Notes Value="{$collateDoc/LINE/BtmNotes/@Value}"/>
+                  </UPDATE_PROPERTIES>
+                  <ACTIONTOBDONE Value="UPDATE"/>
+                  <SYS_TYPE Value="UPDATE"/>
+                </CrossReferenceObjectClass>
+              </TO_DOCVAR>
+              <REQUEST AssignToVar="modsys" Name="UpdateObjectClass" ServiceName="BCM_MASTER" ReturnRowCount="yes" HandleException="true">
+                <TO_XML SelectList="$UpdObjectClass/*"/>
+              </REQUEST>
+              <TO_DOCVAR AssignToVar="BottomPaneVal">
+                <CrossReferenceObjectClass/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="BottomPaneVal">
+                <TO_XML SelectList="$collateDoc/LINE/*"/>
+              </APPEND_TO_XML>
+              <IF_TEST Test="$modsys/_RESULT/@Value != 'SEVERE_ERROR' and $modsys/@Status !='Error'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="Success_Error_Msg_Btm">
+                    <_SUCCESS Value="Object Class Successfully Updated" Details="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$modsys/@Status ='Error'">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="Success_Error_Msg">
+                        <_ERRORS Value="SEVERE_ERROR">
+                          <_ERROR Value="{$modsys/@Description}" Severity="SEVERE_ERROR"/>
+                        </_ERRORS>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="Success_Error_Msg">
+                        <_ERRORS Value="SEVERE_ERROR">
+                          <_ERROR Value="{$modsys/_RESULT/_ERROR/@Value}" Severity="SEVERE_ERROR"/>
+                        </_ERRORS>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <PRINTLN Value="Value of pglFormOutput After Updation is {$pglFormOutput}"/>
+              <!--   <TO_DOCVAR AssignToVar="outputlines">
+        <MY_DOC>
+          <INPUT>
+            <TO_XML SelectList="$pglFormOutput/*"/>
+          </INPUT>
+          <COLLATE_LIST Value="LINE">
+            <ObjectClassMnemonicValue/>
+            <ObjectClassDomain/>
+            <ObjectClassDescription/>
+            <ObjectClassNotes/>
+            <Notes/>
+          </COLLATE_LIST>
+        </MY_DOC>
+      </TO_DOCVAR>-->
+              <!-- <COLLATE_XML DocVar="outputlines" AssignToVar="collateDoc"/>
+      <PRINTLN Value="Value of collateDoc After Updation is {$collateDoc}"/>-->
+              <!-- <FOR_EACH SelectList="$collateDoc/LINE" CurrentElement="CurLine">
+        <IF_TEST Test="$pglFormOutput/selectedObjectClassMnemonicValue/@Value = $CurLine/ObjectClassMnemonicValue/@Value">
+          <THEN>
+            <SET_NAME SelectList="$CurLine/ObjectClassNotes" FromValue="Notes"/>
+            <TO_DOCVAR AssignToVar="BottomPaneVal">
+              <CrossReferenceObjectClass>
+                <TO_XML SelectList="$CurLine/*"/>
+                <Notes Value="{$pglFormOutput/Notes/@Value}"/>
+              </CrossReferenceObjectClass>
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+      </FOR_EACH>-->
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction ='DELETE'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="outputlines">
+                <MY_DOC>
+                  <INPUT>
+                    <TO_XML SelectList="$pglFormOutput/*"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="LINE">
+                    <ObjectClassMnemonicValue/>
+                    <ObjectClassDescription/>
+                    <ObjectClassDomain/>
+                    <ObjectClassStatus/>
+                    <ObjectClassGenericIndicator/>
+                  </COLLATE_LIST>
+                </MY_DOC>
+              </TO_DOCVAR>
+              <COLLATE_XML DocVar="outputlines" AssignToVar="collateDoc"/>
+              <FOR_EACH SelectList="$collateDoc/LINE" CurrentElement="CurLine">
+                <IF_TEST Test="$pglFormOutput/selectedObjectClassMnemonicValue/@Value = $CurLine/ObjectClassMnemonicValue/@Value">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="BottomPaneVal">
+                      <CrossReferenceObjectClass>
+                        <TO_XML SelectList="$CurLine/*"/>
+                      </CrossReferenceObjectClass>
+                    </TO_DOCVAR>
+                    <APPEND_TO_XML DocVar="BottomPaneVal">
+                      <CrossReferenceObjectDataEntityName Value="Generic"/>
+                      <ACTIONTOBDONE Value="DELETE"/>
+                      <SYS_TYPE Value="DELETE"/>
+                      <SourceSystemMnemonicValue Value="EDM"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <REQUEST AssignToVar="moddel" Name="DeleteObjectClass" ServiceName="BCM_MASTER" ReturnRowCount="yes" HandleException="true">
+                <TO_XML SelectList="$BottomPaneVal/*"/>
+              </REQUEST>
+              <IF_TEST Test="$moddel/_RESULT/@Value != 'SEVERE_ERROR' and $moddel/@Status !='Error'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="Success_Error_Msg">
+                    <_SUCCESS Value="Object Class Successfully Deleted" Details="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$moddel/@Status ='Error'">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="Success_Error_Msg">
+                        <_ERRORS Value="SEVERE_ERROR">
+                          <_ERROR Value="{$moddel/@Description}" Severity="SEVERE_ERROR"/>
+                        </_ERRORS>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="Success_Error_Msg">
+                        <_ERRORS Value="SEVERE_ERROR">
+                          <_ERROR Value="{$moddel/_RESULT/_ERROR/@Value}" Severity="SEVERE_ERROR"/>
+                        </_ERRORS>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+        <!--<action>
+  <IF_TEST Test="$userAction = 'UPDATE'">
+    <THEN>
+      <MODIFY_DOCUMENT Name="CrossReferenceObjectClass">
+        <DOCUMENT_CONTEXT>
+          <CrossReferenceObjectIdentifier Value="{$SelectedId/@Value}"/>
+        </DOCUMENT_CONTEXT>
+        <UPDATE_PROPERTIES>
+          <CrossReferenceObjectName Value="{$pglFormOutput/CrossReferenceObjectName/@Value}"/>
+          <CrossReferenceObjectDescription Value="{$pglFormOutput/CrossReferenceObjectDescription/@Value}"/>
+          <CrossReferenceObjectBaseDataTableDomainIndicator Value="{$pglFormOutput/Category/@Value}"/>
+          <CrossReferenceObjectStatusIdentifier Value="{$pglFormOutput/Status/@Value}"/>
+        </UPDATE_PROPERTIES>
+      </MODIFY_DOCUMENT>
+      <TO_DOCVAR AssignToVar="XRefVar">
+        <CrossReferenceObjectClass>
+          <CrossReferenceObjectName Value=""/>
+          <CrossReferenceObjectBaseDataTableDomainIndicator Value=""/>
+          <CrossReferenceObjectDescription Value=""/>
+          <CrossReferenceObjectStatusIdentifier Value=""/>
+          <Result Value="Record has been successfully Updated"/>
+        </CrossReferenceObjectClass>
+      </TO_DOCVAR>
+    </THEN>
+  </IF_TEST>
+  <IF_TEST Test="$userAction ='CREATE'">
+    <THEN>   
+      <CREATE_DOCUMENT_ID Name="CrossReferenceObjectClass" AssignToVar="Test"/>
+      <ADD_DOCUMENT Name="CrossReferenceObjectClass" AssignToVar="CrossRefClass">
+        <CrossReferenceObjectIdentifier Value="{$Test/@Value}"/>
+        <CrossReferenceObjectDescription Value="{$pglFormOutput/CrossReferenceObjectDescription/@Value}"/>
+        <CrossReferenceObjectBaseDataTableDomainIndicator Value="{$pglFormOutput/Category/@Value}"/>
+        <CrossReferenceObjectGenericIndicator Value="T"/>
+        <CrossReferenceObjectName Value="{$pglFormOutput/CrossReferenceObjectName/@Value}"/>
+        <CrossReferenceObjectStatusIdentifier Value="{$pglFormOutput/Status/@Value}"/>
+        <CrossReferenceObjectDataEntityName Value="Generic"/>
+      </ADD_DOCUMENT>
+    </THEN>
+  </IF_TEST>
+  <IF_TEST Test="$userAction ='ShowDetail'">
+    <THEN>
+      <SET Var="SelectedId" FromValue="{$pglFormOutput/selectedCrossReferenceObjectClassIdentifier/@Value}"/>
+      <GET_DOCUMENT Name="CrossReferenceObjectClass" AssignToVar="XRefVar">
+        <CrossReferenceObjectIdentifier Value="{$pglFormOutput/selectedCrossReferenceObjectClassIdentifier/@Value}" MatchBy="EQUAL"/>
+      </GET_DOCUMENT>
+    </THEN>
+  </IF_TEST>
+  <IF_TEST Test="$userAction ='DELETE'">
+    <THEN>
+      <TO_DOCVAR AssignToVar="XRefVar">
+        <CrossReferenceObjectClass>
+          <ResultDel Value="Record has been successfully Deleted"/>
+        </CrossReferenceObjectClass>
+      </TO_DOCVAR>    
+    </THEN>
+  </IF_TEST>
+  <IF_TEST Test="$userAction ='CLEAR'">
+    <THEN>
+      <TO_DOCVAR AssignToVar="XRefVar">
+        <CrossReferenceObjectClass>
+          <CrossReferenceObjectName Value=""/>
+          <CrossReferenceObjectBaseDataTableDomainIndicator Value=""/>
+          <CrossReferenceObjectDescription Value=""/>
+          <CrossReferenceObjectStatusIdentifier Value=""/>
+        </CrossReferenceObjectClass>
+      </TO_DOCVAR>
+    </THEN>
+  </IF_TEST>
+</action>
+
+-->
+      </post_actions>
+      <if_cond Value="$userAction ='DELETE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Object Class" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='CREATE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Object Class" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SAVE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SAVEANDRETURN'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='EDIT'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='UPDATE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Object Class" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ShowDetail'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Object Class" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='MOVETO'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CLEAR'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Object Class" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <done2 location="601,172" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done2>
+      <start3 location="22,225" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start3" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start3>
+      <mgcnode Name="Object Class" location="287,135" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Object Class" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start3>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="54,247" endpoint="287,158" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="226,245,4,4" ctrlRect2="110,156,4,4"/>
+      </start3>
+      <mgcnode Name="Object Class">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="287,158" endpoint="287,158" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="210,156,4,4" ctrlRect2="178,82,4,4" textRect="133,117,127,9">
+          <textProps text="[$userAction ='DELETE']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="319,158" endpoint="319,158" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="392,156,4,4" ctrlRect2="625,91,4,4" textRect="446,121,129,9">
+          <textProps text="[$userAction ='CREATE']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="303,135" endpoint="303,135" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="301,58,4,4" ctrlRect2="268,16,4,4" textRect="221,35,130,9">
+          <textProps text="[$userAction ='UPDATE']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="303,181" endpoint="303,181" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="301,254,4,4" ctrlRect2="361,261,4,4" textRect="263,255,141,9">
+          <textProps text="[$userAction ='ShowDetail']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="319,158" endpoint="319,158" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="392,156,4,4" ctrlRect2="480,34,4,4" textRect="378,93,121,9">
+          <textProps text="[$userAction ='CLEAR']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="319,158" endpoint="601,194" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="528,156,4,4" ctrlRect2="387,192,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="12,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="11" textAttrsKey0="BottomPaneVal : xml" textAttrsKey1="BottomPaneValUpd : xml" textAttrsKey2="Desc1 : string" textAttrsKey3="Name1 : string" textAttrsKey4="SelectedId : string" textAttrsKey5="StatusXml : xml" textAttrsKey6="Success_Error_Msg : xml" textAttrsKey7="Success_Error_Msg_Btm : xml" textAttrsKey8="UpdObjectClass : xml" textAttrsKey9="XRefVar : xml" textAttrsKey10="... and 4 more">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="BottomPaneVal" Type="xml" Comment=""/>
+        <variable Name="Desc1" Type="string" Comment=""/>
+        <variable Name="Name1" Type="string" Comment=""/>
+        <variable Name="SelectedId" Type="string" Comment=""/>
+        <variable Name="StatusXml" Type="xml" Comment=""/>
+        <variable Name="Success_Error_Msg" Type="xml" Comment=""/>
+        <variable Name="Success_Error_Msg_Btm" Type="xml" Comment=""/>
+        <variable Name="UpdObjectClass" Type="xml" Comment=""/>
+        <variable Name="XRefVar" Type="xml" Comment=""/>
+        <variable Name="moddel" Type="xml" Comment=""/>
+        <variable Name="outXml" Type="xml" Comment=""/>
+        <variable Name="paginateStart" Type="int" Comment=""/>
+        <variable Name="pgMaxRows" Type="int" Comment=""/>
+        <variable Name="BottomPaneValUpd" Type="xml" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

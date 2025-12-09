@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands 
+             xmlns:x2="http://www.i2.com/x2" 
+             xmlns:core="http://www.i2.com/core" 
+             xmlns:xcore="http://www.i2.com/xcore" 
+             xmlns:xcore-db="http://www.i2.com/xcore-db" 
+             xmlns:xapl="http://www.i2.com/xapl" 
+             xmlns:web="http://www.i2.com/web" 
+             xmlns:docutil="http://www.i2.com/docutil" 
+             xmlns:util="http://www.i2.com/util" 
+             xmlns:xudl="http://www.i2.com/xudl" 
+             xmlns:cfg="http://www.i2.com/configurability" 
+             xmlns:perm="http://www.i2.com/permissibility" 
+             xmlns:omx="http://www.i2.com/omx" 
+             xmlns:identity="http://www.i2.com/identity" description="_">  
+    
+
+  <!-- ********************************************************************** 
+    *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+    <x2:param name="pPage" select="'core_search_select_saved_search'"/>
+  
+    <!-- Search Param Overrides - Start:-->
+    <xapl:variable name="searchParams">
+      <SEARCH_PARAM>
+        <PAGE Value="{$pPage}"/><!-- Required --><!-- Has to be same as the define-page -->
+        <SORT_BY Value="CREATION_DATE"/>
+      </SEARCH_PARAM>
+    </xapl:variable>
+    <!-- Search Param Overrides.  End-->
+
+    <xapl:return>
+
+      <!-- Header -->
+      <x2:execute command="core.search.select.saved_search.view:getHeader"/>
+
+      <!-- Container -->
+      <x2:execute command="core.search.select.saved_search.view:getContainer">
+        <x2:with-param name="this" select="{$this}"/>
+        <x2:with-param name="pPage" select="$pPage"/>
+      </x2:execute>
+
+      <!-- Search / Form and Report -->
+      <x2:execute command="core.search.search:getSearch">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="pSearchParams" select="{$searchParams}"/>
+        <x2:with-param name="pSearchFormConfigSource" select="'core.search.select.saved_search.search:getFormConfig'"/>
+        <x2:with-param name="pSearchReportConfigSource" select="'core.search.select.saved_search.search:getReportConfig'"/>
+        <x2:with-param name="pReportDataSource" select="'core.search.select.saved_search.search:getReportData'"/>
+      </x2:execute>
+
+      <!-- Links -->
+      <x2:execute command="core.search.select.saved_search.view:getLinks">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+
+    </xapl:return>
+
+  </x2:command>
+
+  <!-- ********************************************************************** 
+       *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+
+    <xapl:return>
+      <x2:execute command="core.page.view:getHeader">
+        <x2:with-param name="pHeading" select="'Select Saved Searches'"/>
+      </x2:execute>
+    </xapl:return>
+
+  </x2:command>
+
+  <!-- ********************************************************************** 
+     *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pPage" select="$this/PAGE/@Value"/>
+
+    <xapl:return>
+
+      <CONTAINER>
+
+        <!--HELP Url="{$pages:core_search_select_saved_search_help}"/-->
+
+        <STEP
+						 DisplayText="Select Saved Searches" 
+             OnClick="{$pages:core_search_select_saved_search}" 
+             Selected="{$pPage = 'core_search_select_saved_search'}">				
+
+        </STEP>
+
+      </CONTAINER>
+
+    </xapl:return>
+
+  </x2:command>
+
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getLinks">
+    <x2:param name="this"/>
+
+    <xapl:return>
+      <LINKS>
+        <x2:execute command="core.links.controller:register">
+          <x2:with-param name="this" select="$this"/>
+        </x2:execute>
+      </LINKS>
+    </xapl:return>
+
+  </x2:command>
+  <!-- ********************************************************************** 
+       *********************************************************************** -->
+</x2:commands>

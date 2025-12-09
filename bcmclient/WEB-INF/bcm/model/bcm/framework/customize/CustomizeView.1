@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:identity="http://www.i2.com/identity" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" description="_">
+  <!-- **********************************************************************
+       *********************************************************************** -->
+<x2:command public="yes" description="_" name="load">
+     <xapl:print >
+     before customize
+     </xapl:print>
+     <xapl:print select="$this"/>
+     <xapl:print select="$currentPref"/>
+    
+    <!-- BREADCRUMBS AT TOP OR AFTER CLEAN-CONTEXT-->
+    <x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+      <x2:with-param name="display" select="'Customize'"/>
+      <x2:with-param name="page" select="'customize'"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+
+      <xapl:variable name="sort_details"/>  
+       
+     <docutil:set select="$this">
+                 <FROM_PAGE_FORM_NAME Value="{$this/FORM_NAME/@Value}"/>
+         </docutil:set>              
+         
+     <xapl:choose>
+       <xapl:when test="count($this/PAGE) = 1  and string-length($this/PAGE/@Value) > 0">
+         <x2:execute command="bcm.framework.queryform.Form:create">
+              <x2:with-param name="pFormName" select="{$this/FROM_PAGE_FORM_NAME/@Value}"/>
+              <x2:with-param name="pServiceName" select="$this/SERVICE/@Value"/>
+         </x2:execute>
+        
+        <xapl:print>
+        <xapl:value-of select="$currentForm"/>
+        </xapl:print>
+        
+        <xapl:variable name="docList">
+            <DOC_LIST>
+                <DOC name="{$currentForm/DOCUMENT_TRAVERSAL/@PrimaryDocument}"/>
+            </DOC_LIST>    
+        </xapl:variable>
+        
+         <xapl:print>
+	        doclist chk
+	        <xapl:value-of select="$docList"/>
+        </xapl:print>
+        
+        <xapl:for-each varName="queryPath" select="$currentForm/DOCUMENT_TRAVERSAL/QUERY_PATH">
+              <xapl:if test="string-length($docList/*[@name = $queryPath/@FromDoc]/@name) = 0"> 
+                    <docutil:add select="$docList">
+                        <DOC name="{$queryPath/@FromDoc}"/>
+                    </docutil:add>
+              </xapl:if> 
+              <xapl:if test="string-length($docList/*[@name = $queryPath/@ToDoc]/@name) = 0"> 
+                    <docutil:add select="$docList">
+                        <DOC name="{$queryPath/@ToDoc}"/>
+                    </docutil:add>
+              </xapl:if> 
+        </xapl:for-each>
+        
+        <xapl:print>docList....<xapl:value-of select="$docList"/></xapl:print> 
+        <xapl:print select="$this"/>
+         
+                <xapl:set-variable name="sort_details">
+                 <SORT_COLUMNS  TableDisplayName="{$currentForm/@DisplayName}" TableName="{$this/FROM_PAGE_FORM_NAME/@Value}">
+                    <xapl:value-of select="$currentForm/RESULT_PROPERTIES/*[PRESENTATION/SORTABLE/@Value = 'yes']"/>
+                 </SORT_COLUMNS>
+                 </xapl:set-variable>
+           
+       </xapl:when>
+       <xapl:otherwise>
+            <xapl:print>x2 defaults values<xapl:value-of select="$x2config"/></xapl:print> 
+            <xapl:print>current db table <xapl:value-of select="$currentDbTable"/></xapl:print> 
+            <xapl:variable name="currentDoc">
+                <xapl:value-of select="$x2config/table_editor_config/override_tables/table[@name=$this/TABLE_NAME/@Value]"/>
+            </xapl:variable>
+            
+                <xapl:set-variable name="sort_details">
+                     <SORT_COLUMNS TableEditor="yes" TableDisplayName="{$currentDbTable/TABLE_NAME/@DisplayName}" TableName="{$this/TABLE_NAME/@Value}">
+                        <xapl:value-of select="$currentDbTable/TABLE_NAME/COLUMNS/*[. /PRESENTATION/SORTABLE/@Value = 'yes'  and ./@Name!='ENTITY_STATE' and ./@Name!='SCENARIO_ID' ]"/>
+                     </SORT_COLUMNS>
+                 </xapl:set-variable>
+                <!--/xapl:otherwise>
+             </xapl:choose-->
+       </xapl:otherwise>
+     </xapl:choose>
+     
+      <xapl:print>
+      <xapl:value-of select="$sort_details"/>
+      </xapl:print>
+     
+     
+    <xapl:return>
+       <xapl:value-of select="$sort_details"/> 
+      <!-- Page Header-->
+      <x2:execute command="bcm.framework.customize.CustomizeView:getHeader">
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+     <!-- Top Level Container -->
+        <x2:execute command="bcm.framework.customize.CustomizeView:getContainer">
+          <x2:with-param name="this" select="$this"/>
+          <x2:with-param name="pPage" select="'customize'"/>
+        </x2:execute>
+     <xapl:value-of select="$this/*"/>      
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+    <xapl:return>
+     <x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <xapl:return>
+      <CONTAINER Scrollable="yes">
+        <HELP Url="../../help/filter_expression_help.htm"/>
+        <STEP
+          Name="FilterTable"
+          DisplayText="{$this/TABLE_NAME/@Value}"
+          Selected="true"
+        >
+          <BUTTONS>
+              <BUTTON Id="cancel_button" Name="Cancel" DisplayText="Cancel" OnClick="javascript:back()"/>
+              <DIVIDER/>
+                <BUTTON Id="apply_button" Name="Apply" DisplayText="Apply And Return" OnClick="javascript:onApplyAndReturn()"/>
+          </BUTTONS>
+       </STEP>
+      </CONTAINER>
+    </xapl:return>
+  </x2:command>
+ 
+   
+    <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="sortdisplay">
+  <xapl:print>
+  inside sort display
+  <xapl:value-of select="$this"/>
+  </xapl:print>
+   <xapl:if test="$this/firstsort/@Value = '-Select-'">
+   <docutil:remove select="$this/firstsort"/>
+    <docutil:remove select="$this/firstsort_order"/>  
+    </xapl:if> 
+    <xapl:if test="$this/secondsort/@Value = '-Select-'">
+       <docutil:remove select="$this/secondsort"/>
+       <docutil:remove select="$this/secondsort_order"/>
+    </xapl:if> 
+     <xapl:if test="$this/thirdsort/@Value = '-Select-'">
+           <docutil:remove select="$this/thirdsort"/>
+           <docutil:remove select="$this/thirdsort_order"/>
+    </xapl:if> 
+    
+    <xapl:choose>
+    <xapl:when test="count($this/PAGE) = 1  and string-length($this/PAGE/@Value) > 0 "> 
+    <xapl:if test="count($this/firstsort) = 1 or count($this/SecondSort) = 1 or  count($this/ThirdSort) = 1">
+     <docutil:set select="$currentPref/SERVICE/FORM">
+         <ORDER_BY>
+         </ORDER_BY>
+        </docutil:set> 
+    </xapl:if>     
+    </xapl:when>
+    <xapl:otherwise>
+    <xapl:if test="count($this/firstsort) = 1 or count($this/SecondSort) = 1 or  count($this/ThirdSort) = 1">
+    <docutil:set select="$currentPref/SERVICE[@Name=$this/SERVICE/@Value]/TABLE[@Name = $this/TABLE_NAME/@Value]">
+     <ORDER_BY>
+     </ORDER_BY>
+    </docutil:set> 
+    </xapl:if>
+    </xapl:otherwise>
+    </xapl:choose>
+        <xapl:if test="count($this/firstsort) = 1">
+        <xapl:variable name="FirstSort">
+        <xapl:value-of select="$this/firstsort/@Value"/>
+        </xapl:variable> 
+        <xapl:variable name="FirstSort_Order">
+	<xapl:value-of select="$this/firstsort_order/@Value"/>
+        </xapl:variable> 
+        <xapl:variable name="FirstSort_column" select="{substring-after($FirstSort ,'.')}"/> 
+        <xapl:variable name="FirstSort_table" select="{substring-before($FirstSort ,'.')}"/> 
+        <xapl:print>
+        table of form
+        <xapl:value-of select="$FirstSort_table"/>
+        </xapl:print>
+        <xapl:choose>
+        <xapl:when test="count($this/PAGE) = 1  and string-length($this/PAGE/@Value) > 0 "> 
+        <docutil:add select="$currentPref/SERVICE/FORM/ORDER_BY">
+		  <docutil:element name="{$FirstSort_column}" Document="{$FirstSort_table}" Sort="{$FirstSort_Order}"/>       
+          </docutil:add> 
+        </xapl:when>
+        <xapl:otherwise>
+          <docutil:add select="$currentPref/SERVICE[@Name=$this/SERVICE/@Value]/TABLE[@Name = $this/TABLE_NAME/@Value]/ORDER_BY">
+	  <docutil:element name="{$FirstSort_column}" Sort="{$FirstSort_Order}"/>       
+          </docutil:add> 
+         </xapl:otherwise> 
+         </xapl:choose>
+       <docutil:remove select="$this/firstsort"/>
+       <docutil:remove select="$this/firstsort_order"/>  
+        </xapl:if>
+        
+       <xapl:if test="count($this/secondsort) = 1"> 
+       <xapl:variable name="SecondSort">
+       <xapl:value-of select="$this/secondsort/@Value"/>
+       </xapl:variable> 
+       <xapl:variable name="SecondSort_Order">
+       <xapl:value-of select="$this/secondsort_order/@Value"/>
+       </xapl:variable> 
+       <xapl:variable name="SecondSort_column" select="{substring-after($SecondSort ,'.')}"/>
+        <xapl:variable name="SecondSort_table" select="{substring-before($SecondSort ,'.')}"/> 
+       <xapl:choose>
+       <xapl:when test="count($this/PAGE) = 1  and string-length($this/PAGE/@Value) > 0 "> 
+               <docutil:add select="$currentPref/SERVICE/FORM/ORDER_BY">
+       		  <docutil:element name="{$SecondSort_column}" Document="{$SecondSort_table}"  Sort="{$SecondSort_Order}"/>       
+                 </docutil:add> 
+               </xapl:when>
+               <xapl:otherwise>
+                 <docutil:add select="$currentPref/SERVICE[@Name=$this/SERVICE/@Value]/TABLE[@Name = $this/TABLE_NAME/@Value]/ORDER_BY">
+       	  <docutil:element name="{$SecondSort_column}" Sort="{$SecondSort_Order}"/>       
+                 </docutil:add> 
+         </xapl:otherwise> 
+         </xapl:choose>
+       <!--docutil:add select="$currentPref/SERVICE[@Name=$this/SERVICE/@Value]/TABLE[@Name = $this/TABLE_NAME/@Value]/ORDER_BY">
+       <docutil:element name="{$SecondSort_column}" Sort="{$SecondSort_Order}"/>       
+       </docutil:add-->
+       <docutil:remove select="$this/secondsort"/>
+       <docutil:remove select="$this/secondsort_order"/>
+       </xapl:if>
+       
+       
+       <xapl:if test="count($this/thirdsort) = 1"> 
+       <xapl:variable name="ThirdSort">
+       <xapl:value-of select="$this/thirdsort/@Value"/>
+       </xapl:variable> 
+       <xapl:variable name="ThirdSort_Order">
+       <xapl:value-of select="$this/thirdsort_order/@Value"/>
+       </xapl:variable>               
+       <xapl:variable name="ThirdSort_column" select="{substring-after($ThirdSort ,'.')}"/> 
+       <xapl:variable name="ThirdSort_table" select="{substring-before($ThirdSort ,'.')}"/>
+       
+       <xapl:choose>
+       <xapl:when test="count($this/PAGE) = 1  and string-length($this/PAGE/@Value) > 0 "> 
+                      <docutil:add select="$currentPref/SERVICE/FORM/ORDER_BY">
+              		  <docutil:element name="{$ThirdSort_column}" Document="{$ThirdSort_table}" Sort="{$ThirdSort_Order}"/>       
+                        </docutil:add> 
+                      </xapl:when>
+                      <xapl:otherwise>
+                        <docutil:add select="$currentPref/SERVICE[@Name=$this/SERVICE/@Value]/TABLE[@Name = $this/TABLE_NAME/@Value]/ORDER_BY">
+              	  <docutil:element name="{$ThirdSort_column}" Sort="{$ThirdSort_Order}"/>       
+                        </docutil:add> 
+         </xapl:otherwise> 
+         </xapl:choose>
+       <!--docutil:add select="$currentPref/SERVICE[@Name=$this/SERVICE/@Value]/TABLE[@Name = $this/TABLE_NAME/@Value]/ORDER_BY">
+       	  <docutil:element name="{$ThirdSort_column}" Sort="{$ThirdSort_Order}"/>       
+          </docutil:add-->
+       <docutil:remove select="$this/thirdsort"/>
+       <docutil:remove select="$this/thirdsort_order"/>
+       </xapl:if>
+       
+      <xapl:print>
+             working
+       </xapl:print>            
+       <xapl:print select="$currentPref"/>       
+              
+       <!--docutil:set select="$this">
+       <xapl:value-of select="{$currentPref/SERVICE[@Name=$this/SERVICE/@Value]/TABLE[@Name = $this/TABLE_NAME/@Value]/ORDER_BY}"/>
+       </docutil:set--> 
+       
+       <xapl:print>
+              poonam
+       </xapl:print>
+        <xapl:print select="$this"/>
+        
+       <xapl:choose>
+         <xapl:when test="count($this/PAGE) = 1  and string-length($this/PAGE/@Value) > 0 "> 
+         <web:display-page>
+            <web:get-page name="{$this/PAGE/@Value}">
+          <USE_OLD_FILTER Value="TRUE"/>
+            </web:get-page>
+         </web:display-page>
+       </xapl:when>
+       <xapl:otherwise>  
+        <web:display-page>
+            <web:get-page name="tableeditor">
+             <xapl:value-of select="$this/*"/>
+              <USE_OLD_FILTER Value="TRUE"/>
+             </web:get-page>
+        </web:display-page>
+        </xapl:otherwise>
+        </xapl:choose>
+        
+         <xapl:return>
+         <xapl:value-of select="$this"/> 
+         </xapl:return>
+     </x2:command>
+<!-- **********************************************************************
+  *********************************************************************** -->     
+</x2:commands>

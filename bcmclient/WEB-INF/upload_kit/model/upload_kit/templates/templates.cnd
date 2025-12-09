@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">    
+  <!--************************************************************************-->
+  <x2:command public="yes" description="_" name="init">
+    <xapl:variable name="tempProperty" resolver="session" global="true"/>
+	  <xapl:variable name="tempType" resolver="session" global="true"/>
+  </x2:command>
+  
+  
+  <!--******************************************************************************
+  ********************************************************************************-->
+  <x2:command public="yes" description="_" name="load">
+    <xapl:variable name="templates">
+      <x2:execute command="upload_kit.templates.templates:loadTemplates"/>  
+    </xapl:variable>
+  
+  	<xapl:return>
+      <!-- Header -->
+      <x2:execute command="upload_kit.templates.templates:getHeader"/>
+      
+      <!-- Container -->
+      <x2:execute command="upload_kit.templates.templates:getContainer">
+        <x2:with-param name="pNumTemplates" select="count($templates/*)"/>
+      </x2:execute>
+
+      <xapl:value-of select="$templates"/>
+  	</xapl:return>
+  </x2:command>
+
+  <!-- *************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+
+    <xapl:variable name="origHeader" enforceList="true">
+      <x2:execute command="core.page.view:getHeader">
+      </x2:execute>
+    </xapl:variable>
+
+    <xapl:return>
+	    <HEADER>
+        <HEADING Value="Templates"/>
+        <xapl:value-of select="$origHeader/*"/>
+	    </HEADER>
+    </xapl:return>
+  </x2:command>
+  
+  
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pNumTemplates" select="'0'"/>
+    
+    <xapl:return>
+      <!-- Container -->
+      <CONTAINER Scrollable="yes" Editable="false">
+        <HELP Url="{$pages:upload_templates_help}"/>
+        <STEP
+             DisplayText="Templates" 
+             Selected="true">
+          <xapl:if test="$pNumTemplates > 0">
+            <BUTTONS>
+    	        <BUTTON
+                Name="delete"
+                DisplayText="Delete"
+                OnClick="javascript:deleteTemplate();"
+          			/>
+    	        <BUTTON
+                Name="add"
+                DisplayText="Add"
+                OnClick="javascript:addTemplate();"
+          			/>
+             </BUTTONS>
+           </xapl:if>
+        </STEP>
+      </CONTAINER>
+    </xapl:return>
+  </x2:command>
+  
+  <!--************************************************************************-->
+  <x2:command public="yes" description="_" name="loadTemplates">
+    <xapl:variable name="templates">
+	    <xcore:execute-method  name="//DataUploadService/getAllTemplates">
+	    </xcore:execute-method>
+	  </xapl:variable>
+	  <xapl:set-variable name="tempProperty" resolver="session">
+	    <TEMPLATE_PROPERTIES/>
+	  </xapl:set-variable>
+	  <xapl:set-variable name="tempType" resolver="session">
+	    <TEMPLATE_TYPES/>
+	  </xapl:set-variable>
+	  
+    <xapl:return>
+      <xapl:value-of select="$templates" />
+    </xapl:return>
+  </x2:command>
+
+
+
+        
+
+
+    
+  <!--************************************************************************-->
+  <x2:command public="yes" description="_" name="deleteTemplate">
+    <xapl:for-each varName="templateName" select="{$this/TEMPLATE_NAME/@Value}">  
+      <xcore:execute-method name="//DataUploadService/deleteTemplate">
+        <TEMPLATE Name="{$templateName}"/>
+      </xcore:execute-method>
+    </xapl:for-each>
+	<web:display-page>
+      <web:get-page name="displayTemplatesContentPage">
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  
+  <!--************************************************************************-->
+  <x2:command public="yes" description="_" name="showAddTemplatePage">
+	<web:display-page>
+      <web:get-page name="add_upload_templates">
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+    		 
+</x2:commands>

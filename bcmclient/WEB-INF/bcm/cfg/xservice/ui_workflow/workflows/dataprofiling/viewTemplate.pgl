@@ -1,0 +1,30 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="Data Profile Template Details">
+  <ui:container id="container">
+    <ui:step id="top_container" displayText="Data Profile Template Details" select="$root">
+      <ui:field-group columns="2" showDivider="true" select="$root/DATA_PROFILE_TEMPLATE">
+        <ui:field-group>
+          <ui:display-field displayText="Profile Template Name" name="TEMPLATE_NAME"/>
+          <ui:textarea displayText="Description" name="TEMPLATE_DESC" rows="4" editable="false"/>
+        </ui:field-group>
+        <ui:field-group>
+          <ui:checkbox displayText="Data type" name="DATA_TYPE" editable="false"/>
+          <ui:checkbox displayText="Primary Key" name="PRIMARY_KEY" editable="false"/>
+          <ui:checkbox displayText="Num Distinct" name="NUM_DISTINCT" editable="false"/>
+          <ui:checkbox displayText="Num Nulls" name="NUM_NULLS" editable="false"/>
+          <ui:checkbox displayText="Count" name="COUNT" editable="false"/>
+          <ui:checkbox displayText="Data Availability" name="DATA_AVAILABILITY" editable="false"/>
+          <ui:checkbox displayText="Min" name="MIN" editable="false"/>
+          <ui:checkbox displayText="Max" name="MAX" editable="false"/>
+          <ui:checkbox displayText="Average" name="AVG" editable="false"/>
+          <ui:checkbox displayText="Min Length" name="MIN_LENGTH" editable="false"/>
+          <ui:checkbox displayText="Max Length" name="MAX_LENGTH" editable="false"/>
+          <ui:checkbox displayText="Average Length" name="AVG_LENGTH" editable="false"/>
+          <ui:checkbox displayText="Most Common" name="MOST_COMMON" editable="false"/>
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons id="templateButtons">
+        <ui:button displayText="Back" validate="false" id="back"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

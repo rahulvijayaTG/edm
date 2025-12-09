@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+    
+	<!-- Reset the current org id session variable -->
+	<xapl:set-variable name="addBookCurrOrgId">
+	  <ORG_ID/>
+	</xapl:set-variable>
+	
+    <!-- Search Param Overrides - Start:-->    
+    <xapl:variable name="searchParams">
+      <SEARCH_PARAM>
+      </SEARCH_PARAM>
+    </xapl:variable>  
+    <!-- Search Param Overrides.  End-->    
+    
+    <xapl:return>
+
+      <!-- Header -->
+      <x2:execute command="omx.add_book.org.select.org.view:getHeader"/>
+      
+      <!-- Tabs -->
+      <x2:execute command="omx.add_book.org.select.org.view:getContainer">
+        <x2:with-param name="pPage" select="'select_org'"/>
+        <x2:with-param name="pHide" select="$this/TABS_HIDE/@Value"/>
+        <x2:with-param name="pReturnLink" select="$this/RET_PAGE/@Value"/>
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+	  
+      <!-- Search / Form and Report -->  
+      <x2:execute command="core.search.search:getSearch">
+        <x2:with-param name="this" select="{$this}"/>
+        <x2:with-param name="pSearchParam" select="{$searchParam}"/>
+        <x2:with-param name="pSearchFormConfigSource" select="'omx.add_book.org.select.org.view:getFormConfig'"/>
+        <x2:with-param name="pSearchReportConfigSource" select="'omx.add_book.org.select.org.view:getReportConfig'"/>
+        <x2:with-param name="pReportDataSource" select="'omx.add_book.org.select.org.view:getReportData'"/>
+      </x2:execute>
+      
+      <xapl:print> returning from load this <xapl:value-of select="{$this}"/> </xapl:print>
+    </xapl:return>
+    
+  </x2:command>  
+	
+  <!-- ********************************************************************** 
+     *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+    
+	<xapl:variable name="origHeader" enforceList="true">
+      <x2:execute command="bcm.framework.index:getHeader">
+      </x2:execute>
+    </xapl:variable>
+
+    <xapl:return>
+      <HEADER>
+      <HEADING Value="Enterprise Model"/>
+      <xapl:value-of select="$origHeader/*"/>
+      </HEADER>
+    </xapl:return>
+
+  </x2:command>	
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pPage"/>
+    
+    <xapl:return>
+      
+      <CONTAINER>
+        
+        <xapl:variable name="url">
+          <web:get-page name="select_org_help"/>
+        </xapl:variable>
+    
+        <HELP Url="{$url}"/>
+        
+        <STEP
+             DisplayText="Search Enterprise Model" 
+             OnClick="{$pages:select_org}" 
+             Selected="{$pPage = 'select_org'}">
+        </STEP>
+	  </CONTAINER>
+      
+    </xapl:return>
+    
+  </x2:command>
+
+  
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormConfig">
+	
+	<xapl:variable name="user">
+	  <xcore:execute-method name="//UserSecurity/getUser">
+	    <ID Value="{identity-user-id()}"/>
+	  </xcore:execute-method>
+	</xapl:variable>
+	  
+	<xapl:print select="$user"/>
+	    
+    <xapl:return>
+      
+      <!-- Search Fields -->
+      <FORM  MethodName="//UserSecurity/getOrganizations" Name="search_form"  Target="appFrame">
+        
+        <FIELD
+		  Type="Text" 
+		  DisplayText="Name" 
+		  Name="FULL_NAME" 
+		  Value="{$this/FULL_NAME/@Value}" 
+		  Visibility="Simple"/>
+			
+        <FIELD 
+		  Type="CheckBox" 
+		  DisplayText="Show Inactive" 
+		  Name="INACTIVE_STATUS"
+		  Value="{$this/INACTIVE_STATUS/@Value}" 
+		  CheckedValue="true" 
+		  Visibility="Simple"/>
+		  
+	    <FIELD 
+		  Type="Select"
+		  SelectAll="No" 
+		  DisplayText="Org. Type"
+		  Name="STATUS" 
+		  Value="{$this/STATUS/@Value}" 
+		  Visibility="Advanced"
+		  DataSourceType="Command"
+		  DataSourceName="omx.cm:getOrgTypes" />
+        
+		<FIELD 
+		  Type="Text" 
+		  DisplayText="Parent Org Name" 
+		  Name="PARENT_ORG_NAME" 
+		  Value="{$this/PARENT_ORG_NAME/@Value}" 
+		  Visibility="Advanced"/>
+		
+        <FIELD 
+		  Type="Select"
+		  SelectAll="No" 
+		  DisplayText="Country" 
+		  Name="COUNTRY" 
+		  Value="{$this/COUNTRY/@Value}" 
+		  Visibility="Advanced"
+		  DataSourceType="Command"
+		  DataSourceName="omx.cm:getCountries" />
+        
+        <!-- Always Put hidden at the end -->
+        <x2:execute command="omx.search.search:getHiddenFields">
+          <x2:with-param name="this" select="$this"/>
+        </x2:execute>  
+        
+        <!-- Form Buttons -->
+        <BUTTONS>
+          <BUTTON 
+                  Name="search" 
+                  DisplayText="Search" 
+                  OnClick="javascript:onSearch()" 
+                  Emphasized="no"/>				
+        </BUTTONS>
+        
+      </FORM>       
+    </xapl:return>
+      
+    </x2:command>
+    
+    
+    <!-- ********************************************************************** 
+    *********************************************************************** -->
+    <x2:command public="yes" description="_" name="getReportConfig">
+      
+	  <xapl:variable name="helpUrl">
+        <web:get-page name="select_help"/>
+      </xapl:variable>
+      <xapl:return>
+        <REPORT Selectable="Single" Scrollable="yes">
+          <HELP Url="{$helpUrl}"/>
+          <FIELDS>
+          
+          <FIELD 
+		    Name="FULL_NAME"  
+			DisplayText="Name"
+			Sortable="yes"
+			Url="org/controller/details.cmd"
+			UrlParam="All"/>
+         
+          <FIELD 
+		    Name="CUSTOMER_STATUS"          
+			DisplayText="Customer Status"  
+			Sortable="no"/>
+			
+		  <FIELD 
+		    Name="SELLER_STATUS"          
+			DisplayText="Seller Status"  
+			Sortable="no"/>	   
+		  
+		  <FIELD
+		    DisplayType="Hidden"
+			Type="None"
+			Name="IN_PRIMARY_DOMAIN"/>
+          
+          <!-- Hidden Fields -->
+          <x2:execute command="omx.report.report:getHiddenFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute> 
+		  
+        </FIELDS>
+		<BUTTONS>
+		  <perm:is-allowed document="ORGANIZATION" action="edit_global">
+		    <BUTTON 
+			  Name="AddNewOrg" 
+			  DisplayText="Add New Organization" 
+			  OnClick="javascript:addNewOrg();" 
+			  Disabled="no"/>
+		  </perm:is-allowed>
+		  <BUTTON 
+		    Name="OrganizationOverview" 
+			DisplayText="Organization Overview"
+			Emphasized="yes" 
+			OnClick="javascript:orgOverview();" 
+			Disabled="report"/>
+        </BUTTONS>   
+		<PAGINATION/>
+      </REPORT>
+    </xapl:return>
+
+    </x2:command>
+    
+ 
+    <!-- ********************************************************************** 
+    *********************************************************************** -->
+    <x2:command public="yes" description="_" name="getReportData">
+      <x2:param name="pForm"/>
+      <x2:param name="this"/>
+
+    <xapl:variable name="statusFilter"><ROOT/></xapl:variable>
+    
+    <xapl:variable name="userId"><identity:get-user-id/></xapl:variable>
+    
+    <!-- setting the org status-->
+    <xapl:choose>
+      <xapl:when test=" ($pForm/FIELD[@Name = 'STATUS']/@Value = 'SELLER') ">
+        <xapl:set-variable name="statusFilter">
+          <FILTER Name="STATUS"> 
+            <xapl:choose>
+              <xapl:when test=" ($pForm/FIELD[@Name = 'INACTIVE_STATUS']/@Value = 'true') ">
+                <AND>
+                  <xcore:search-by property="SELLER_STATUS"  value="INACTIVE" matchby="NOT_EQUAL"/>
+                  <xcore:search-by property="SELLER_STATUS"  value="NONE" matchby="NOT_EQUAL"/>
+                </AND>                 
+              </xapl:when>
+              <xapl:otherwise>
+                <AND>
+                  <xcore:search-by property="SELLER_STATUS" value="ACTIVE"/>
+                  <xcore:search-by property="CUSTOMER_STATUS"  value="INACTIVE" matchby="NOT_EQUAL"/>
+                </AND>        
+              </xapl:otherwise>
+            </xapl:choose>
+          </FILTER>
+        </xapl:set-variable>
+      </xapl:when>
+      <xapl:when test=" ($pForm/FIELD[@Name = 'STATUS']/@Value = 'CUSTOMER') ">
+        <xapl:set-variable name="statusFilter">
+          <FILTER Name="STATUS">
+            <xapl:choose>
+              <xapl:when test=" ($pForm/FIELD[@Name = 'INACTIVE_STATUS']/@Value = 'true') ">
+               <AND>
+                  <xcore:search-by property="CUSTOMER_STATUS"  value="INACTIVE" matchby="NOT_EQUAL"/>
+                  <xcore:search-by property="CUSTOMER_STATUS"  value="NONE" matchby="NOT_EQUAL"/>
+                </AND> 
+              </xapl:when>
+              <xapl:otherwise>
+                <AND>
+                  <xcore:search-by property="CUSTOMER_STATUS" value="ACTIVE"/>
+                  <xcore:search-by property="SELLER_STATUS"  value="INACTIVE" matchby="NOT_EQUAL"/>
+                </AND>            
+              </xapl:otherwise>
+            </xapl:choose>
+          </FILTER>
+        </xapl:set-variable>
+      </xapl:when>
+      <xapl:when test=" ($pForm/FIELD[@Name = 'STATUS']/@Value = 'BOTH') ">
+        <xapl:set-variable name="statusFilter">
+          <FILTER Name="STATUS">
+            <xapl:choose>
+              <xapl:when test=" ($pForm/FIELD[@Name = 'INACTIVE_STATUS']/@Value = 'true') ">
+			    <xcore:search-by property="CUSTOMER_STATUS"  value="NONE" matchby="NOT_EQUAL"/>
+				<xcore:search-by property="SELLER_STATUS"  value="NONE" matchby="NOT_EQUAL"/>
+              </xapl:when>
+              <xapl:otherwise>
+                <AND>
+                  <xcore:search-by property="CUSTOMER_STATUS" value="ACTIVE"/>
+                  <xcore:search-by property="SELLER_STATUS"  value="ACTIVE" />
+                </AND>            
+              </xapl:otherwise>
+            </xapl:choose>
+          </FILTER>
+        </xapl:set-variable>
+      </xapl:when>      
+      <xapl:otherwise>
+        <xapl:set-variable name="statusFilter">
+          <FILTER Name="STATUS">
+            <xapl:choose>
+              <xapl:when test=" ($pForm/FIELD[@Name = 'INACTIVE_STATUS']/@Value = 'true') ">
+                <AND>
+                  <xcore:search-by property="CUSTOMER_STATUS" value="INACTIVE" matchby="NOT_EQUAL"/>
+                  <xcore:search-by property="SELLER_STATUS"  value="INACTIVE" matchby="NOT_EQUAL"/>
+                </AND>
+              </xapl:when>
+              <xapl:otherwise>
+                <OR>
+                  <xcore:search-by property="CUSTOMER_STATUS" value="ACTIVE"/>
+                  <xcore:search-by property="SELLER_STATUS"  value="ACTIVE"/>
+                </OR>
+              </xapl:otherwise>
+            </xapl:choose>
+          </FILTER>
+        </xapl:set-variable>
+      </xapl:otherwise>
+    </xapl:choose>
+    <!-- end of setting the org status-->
+    
+    <xapl:variable name="data">
+	  <!-- pDoSearch and user has entered any Search Field on the form-->
+	  <xapl:if test="{($pForm/FIELD[@Name = 'DO_SEARCH']/@Value = 'Yes' ) and count($pForm/FIELD[@Type !='Hidden' and (string-length(@Value) > 0  or string-length(@Value1) >0 or string-length(@Value2) > 0)]) > 0}">
+        <xcore:execute-method name="{$pForm/@MethodName}" StartAtRow="{$pForm/FIELD[@Name = 'START_COUNT']/@Value}" MaxRows="{$pForm/FIELD[@Name = 'MAX_ROWS']/@Value}" ReturnRowCount="{$this/RETURN_ROW_COUNT/@Value}">
+          <!-- To determine if the org has is in primary domain -->
+		  <WITH_PERMISSIONS/>
+          <!-- TODO :Genarate the FILTERS Automatically -->
+          <FILTER Name="ID">
+		    <xcore:search-by property="ID" value="{$pForm/FIELD[@Name = 'ID']/@Value}"/>
+          </FILTER>
+            
+          <FILTER Name="FULL_NAME">
+            <xcore:search-by property="FULL_NAME" value="{$pForm/FIELD[@Name = 'FULL_NAME']/@Value}" matchby="STARTS_WITH"/>
+          </FILTER>
+			
+		  <FILTER Name="ADDRESS">
+		    <xcore:search-by property="COUNTRY" value="{$pForm/FIELD[@Name = 'COUNTRY']/@Value}"/>
+          </FILTER>
+
+          <xapl:value-of select="$statusFilter"/>
+            
+		  <xapl:if test="{string-length($pForm/FIELD[@Name = 'PARENT_ORG_NAME']/@Value) > 0}">
+		    <FILTER Name="PARENT_ORG_FILTER">
+			  <xcore:search-by property="FULL_NAME" value="{$pForm/FIELD[@Name = 'PARENT_ORG_NAME']/@Value}"/>
+			</FILTER>		
+		  </xapl:if>
+			
+		  <xapl:if test="string-length($pForm/FIELD[@Name = 'SORT_BY']/@Value) > 0 and string-length($pForm/FIELD[@Name = 'SORT_ORDER']/@Value) > 0">
+			<ORDER_BY>
+			  <docutil:element name="{$pForm/FIELD[@Name = 'SORT_BY']/@Value}" Sort="{$pForm/FIELD[@Name = 'SORT_ORDER']/@Value}"/>
+			</ORDER_BY>
+          </xapl:if>            
+        </xcore:execute-method>
+	  </xapl:if>
+        
+    </xapl:variable>
+    
+    <!-- <xapl:variable name="IdentityOrgId" select="identity-user-org()"/>
+    
+    <xapl:if test=" count( $data/ORGANIZATION[ ID/@Value = $IdentityOrgId ] ) = 0 ">
+      <docutil:add select="$data">
+        <xcore:execute-method name="//UserSecurity/getOrganization">
+          <ID Value="{$IdentityOrgId}"/>
+        </xcore:execute-method>
+      </docutil:add>
+    </xapl:if> -->   
+
+    <docutil:add select="$data">
+      <TOTAL_RECORD_COUNT Value="{$data/@TotalRowCount}"/>
+      <START_AT_ROW Value ="{$this/START_COUNT/@Value}"/>
+    </docutil:add>
+	    
+	<xapl:print> Total record Count 
+	  <xapl:value-of select="{$data}"/>
+	</xapl:print>
+	
+    <xapl:return>
+      <xapl:value-of select="{$data}"/>
+    </xapl:return>
+    
+ </x2:command>
+ <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

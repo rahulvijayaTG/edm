@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dom-config>
+  <service-config Name="edmuiservice" Register="true" TransactionCache="false">
+    <logger>
+      <file Name="../logs/edmuiservice.log"/>
+      <brief-console Value="true"/>
+      <logLevels>
+        <!--logLevel Value="All"/-->
+        <logLevel Value="Exception"/>
+        <logLevel Value="Error"/>
+        <logLevel Value="SqlCallTrace"/>
+      </logLevels>
+    </logger>
+    <register-handlers>
+      <handler TagName="workflow" ClassName="com.i2.xcore.workflow.WorkflowConfigHandler"/>
+      <handler TagName="MDM" ClassName="com.i2.bcm.xcore.tool.MDMPreInitHandler"/>
+    </register-handlers>
+    <extensionFiles>
+      <extensionFile Name="com/i2/bcm/xcore/serverutil/xml/bcm_rule_extension.xml"/>
+    </extensionFiles>
+    <ruleDefnFiles>
+      <ruleDefnFile Name="xservice/edmuiservice/rules/edmCustomerRules.xml"/>
+      <ruleDefnFile Name="xservice/edmuiservice/rules/DomainData/domaindataRules.xml"/>
+      <ruleDefnFile Name="xservice/edmuiservice/rules/IScp/tlTransAssetRules.xml"/>
+      <ruleDefnFile Name="xservice/edmuiservice/rules/IScp/fscLCAndOXLCRules.xml"/>
+      <ruleDefnFile Name="xservice/edmuiservice/rules/IScp/piSearchnEdit.xml"/>
+    </ruleDefnFiles>
+    <docDefnFiles>
+      <docDefnFile Name="xservice/edmuiservice/documents/midocs.xml"/>
+    </docDefnFiles>
+    <workflow>
+      <workflowDefnFiles>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/DomainData/manageDomainDataFirstScreen.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/edmCustomerWf.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/DomainData/manageDomainDataFirstScreen.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/DomainData/uiWfDomainDataManageDataDescription.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/XRef/uiWfXrefManageSystemAttribute.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/XRef/uiWfXrefManageObjectAttribute.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/XRef/uiWfXrefManageObjectClass.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/XRef/uiWfXrefManageMap.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/XRef/uiWfXrefManageData.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/XRef/uiWfXrefManageSourceObject.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/XRef/uiWfXrefManageSystemAttribute.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/XRef/uiWfXrefManageTargetObject.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/XRef/uiWfXrefManageAttributeDescription.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/XRef/uiWfXrefManageSystemDescription.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/XRef/uiWfXrefManageAttributeObject.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/XRef/uiWfXrefManageComments.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfIPSearchItem.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfIPSearchLocation.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfIPLocationMaterialParameter.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfIPLocMaterialParamShowHist.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfIPSerachGTIN.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfIPLocationParameter.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfIPLocParamShowHist.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfIPSegmentParameter.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfIPSegParamManageParam.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfIPSearchParameter.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfTLManageTransAssets.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfTLManageTransLanes.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfTLSelectItem.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfTLSelectLocation.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfTLManageTLaneXTAsset.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfTLManageTLaneXItem.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfTLSelectLane.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfTLViewLaneDetails.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfPiSelectLine.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfPiGrpCreate.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfpiSearchnEdit.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfpiGroupSelect.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfpiManagepiGrp.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfpiShowHistory.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfPiSelecLocation.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfFscCreate.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfFscSearchEdit.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfFSCSelectSegment.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfFSCShowHistory.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfRPInventoryPolicyParameter.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfRPLayers.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfRPLayersShowHistory.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfRPSearchLayers.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfRPTopLevelParams.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfRPTopLevelShowHistory.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfRPCopyTopLevelParam.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfRPCreateTopLevelParam.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfRPCreateLayer.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfRPSegmentParameter.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfRPSegParamShowHist.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/uiWfFscSearchEdit.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfRPSegParamManageParam.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfTLShowHistory.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfIPShowHistory.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfCommonSelectUser.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfRPShowHistory.xml"/>
+        <workflowDefnFile Name="xservice/edmuiservice/workflows/IScp/wfpigrpsearchnedit.xml"/>
+      </workflowDefnFiles>
+      <uiWorkflowDefnFiles/>
+      <nodeHandlers>
+        <nodeHandler Name="ui_form2" ClassName="com.i2.xcore.workflow.UINodeHandler"/>
+      </nodeHandlers>
+    </workflow>
+    <eventDefnFiles/>
+    <statetransition>
+      <stateTransitionFiles/>
+      <stateMappingFiles/>
+    </statetransition>
+    <messaging>
+      <messageTemplateFiles/>
+      <messageRecipientGroupFiles/>
+      <messagingEventDefFiles/>
+      <messagingEventFiles/>
+    </messaging>
+    <validationSpecFiles/>
+    <dd-instance Value="../../xservice/edmuiservice/model-instance"/>
+    <service-params>
+      <!--IP Specific Params-->
+      <param Value="PLNT_NUM" Name="defaultLocationforISCP"/>
+      <param Value="SAP_MAT_NUM" Name="defaultItemforISCP"/>
+      <param Value="01" Name="ItemStatPending"/>
+      <param Value="02" Name="ItemStatActiveNational"/>
+      <param Value="03" Name="ItemStatActiveSubNational"/>
+      <param Value="05" Name="ItemStatAllocHold"/>
+      <!-- RIC#248936 DYanez - Added 06 and 07 DChain codes -->
+      <param Value="06" Name="ItemStatPendingInactv"/>
+      <param Value="07" Name="ItemStatOffSeasonInactv"/>
+      <!-- RIC#248936 End -->
+      <param Value="1000" Name="PartyDesc1000"/>
+      <param Value="Project1 Up" Name="PartyDescProject1up"/>
+      <param Value="300000000" Name="defaultGrpIdStart"/>
+      <!-- SRC Field default value -->
+      <param Value="EDM" Name="ui_sourceSystemMnemonicVal"/>
+      <param Value="PepsiCo" Name="orgTyp"/>
+      <param Value="TRAN" Name="itemTyp"/>
+      <param Value="NO" Name="isCacheEnabled"/>
+      <param Value="true" Name="ScenarioEnabled"/>
+      <param Value="false" Name="PartitionRequired"/>
+      <param Value="YES" Name="isDataAuthorizationEnabled"/>
+      <param Value="false" Name="InstanceEnabled"/>
+      <param Value="YES" Name="DataSourceValidationEnabled"/>
+      <param Name="DomainIdentifier" Value="Identifier"/>
+      <param Name="DomainName" Value="Name"/>
+      <param Name="DomainMnemonicValue" Value="MnemonicValue"/>
+      <param Name="DomainDescription" Value="Description"/>
+      <param Name="GenericIndicator" Value="Y"/>
+      <param Name="defaultitemIdentificationClassMnemonicValue" Value="SAP_MAT_NUM"/>
+      <param Name="defaultLocationIdnMnemonicVal" Value="PLNT_NUM"/>
+      <param Name="iscpUOMCls" Value="ISCP_PARM_UOM"/>
+      <!-- Multi User Enhancement Dt:02/11/2008 Venkat Mekala Code Start -->
+      <param Name="multiUserEditError" Value="ERR-PI-UPD-0903: Record modified by another user. Please refresh and re-enter."/>
+      <param Name="fscMultiUserEditError" Value="ERR-FSC-UPD-0901: Record modified by another user. Please refresh and re-enter."/>
+      <!-- Multi User Enhancement Dt:02/11/2008 Venkat Mekala Code End -->
+      <param Name="ipMultiEditErrMsg" Value="ERR-IP-UPD-0199: Record modified by another user. Please refresh and re-enter."/>
+      <param Name="ipLocMultiEditErrMsg" Value="ERR-SP-UPD-0991:Record modified by another user. Please refresh and re-enter."/>
+    </service-params>
+    <schemaGenerate Value="true">
+      <file Value="test.sql"/>
+      <generateTables Value="true"/>
+      <maxTableNameLength Value="25"/>
+      <maxColumnNameLength Value="29"/>
+    </schemaGenerate>
+  </service-config>
+</dom-config>

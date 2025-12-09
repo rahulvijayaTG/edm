@@ -1,0 +1,264 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="studio.templates.simple_entry" source="studio.controller:load" version="2">
+  <ui:container id="parent" displayText="Measure Definition [New Measure] " scrollable="false">
+    <ui:help displayPage="{$pages:createmeasure_help}" />
+    <ui:step displayText="{$root/headertitle/@Value}" id="step1" scrollable="false" editable="true">
+      <!-- ************** -->
+      <!-- needed by studio -->
+      <ui:field-group select="$root">
+        <ui:hidden-field name="EV_NAME" />
+        <ui:hidden-field name="EV_KEY" />
+        <ui:hidden-field name="CURRENT_USER_ID" value="{identity-user-id()}" />
+        <ui:hidden-field name="locks" id="locks" value="{$root/locks/@Value}" />
+        <ui:hidden-field name="headertitle" id="headertitle" />
+        <ui:hidden-field name="buttonAction" id="buttonAction" value="{$root/buttonAction/@Value}" />
+        <ui:hidden-field name="buttonname" id="buttonname" value="{$root/buttonname/@Value}" />
+      </ui:field-group>
+      <ui:grid id="one">
+        <ui:row>
+          <ui:cell width="14%" valign="top" align="left">
+            <ui:field-group>
+              <ui:display-field name="dd" id="dd" displayText="Name" />
+            </ui:field-group>
+          </ui:cell>
+          <ui:cell width="16%" valign="top" align="left">
+            <ui:field-group>
+              <ui:entry-field required="true" name="name" id="name" />
+            </ui:field-group>
+          </ui:cell>
+          <ui:cell width="70%" valign="top" align="left">
+            <ui:field-group>
+              <ui:image-link-field name="link1" src="/unlkd_avail.gif" id="link1" displayCondition="{string-length($root/locks/@Value) = 0}">
+                <ui:url page="JavaScript:onunlock()" />
+              </ui:image-link-field>
+              <ui:image-link-field name="link2" src="/locked_avail.gif" id="link2" displayCondition="{string-length($root/locks/@Value) != 0}">
+                <ui:url page="JavaScript:onlock()" />
+              </ui:image-link-field>
+            </ui:field-group>
+          </ui:cell>
+        </ui:row>
+      </ui:grid>
+      <ui:field-group>
+        <ui:entry-field displayText="Description" name="description" id="description" />
+        <ui:dropdown displayText="Type" name="type" id="type" value="{$root/type/@Value}" onChange="JavaScript:typeCheck()">
+          <!--ui:option id="ANY" value="ANY" /-->
+          <ui:option id="SPM" value="SINGLEPOINT" />
+          <ui:option id="BDM" value="BI-DIRECTIONAL" />
+          <ui:option id="CMN" value="COMMENT" />
+        </ui:dropdown>
+        <ui:dropdown displayText="Database Type" name="measureDBType" selectAll="false" optionSrc="$root/PROGRAM_TYPES/*" id="measureDBType">
+          <!--<ui:option id="ANY" value="ANY" />-->
+          <!--  <ui:option id="FLOAT" value="FLOAT"/>-->
+          <ui:option id="DOUBLE" value="DOUBLE" />
+          <ui:option id="STRING" value="STRING" />
+          <!--    <ui:option id="INTEGER" value="INTEGER"/>-->
+        </ui:dropdown>
+        <ui:entry-field displayText="Data Length" name="numDigits" size="2" id="numDigits" defaultValue="7" />
+        <ui:entry-field displayText="Precision" name="numDecimals" size="2" id="Precision" defaultValue="2" />
+        <ui:dropdown displayText="Data Range" name="sign" selectAll="false" optionSrc="$root/PROGRAM_TYPES/*" id="sign">
+          <ui:option id="P" value="POSITIVE" />
+          <ui:option id="N" value="NEGATIVE" />
+        </ui:dropdown>
+        <!--ui:dropdown displayText="Profile Measure" name="profileMeasureType" selectAll="false" optionSrc="$root/PROGRAM_TYPES/*" id="profileMeasureType">
+           <ui:option id="P" value="P" />
+          
+          <ui:option id="NULL" value="NULL" />
+          
+          
+          <ui:option id="R" value="R" />
+          
+          
+         
+          
+          
+          <ui:option id="L" value="L" />
+          
+        
+        </ui:dropdown-->
+        <!--   
+        <ui:dropdown displayText="Fact Table" name="Fact" selectAll="false" optionSrc="$root/PROGRAM_TYPES/*" id="Fact">
+          <ui:option id="AUTOMATIC" value="AUTOMATIC"/>
+        </ui:dropdown>-->
+        <ui:entry-field displayText="InMem Cube" name="cube" id="cube" defaultValue="AUTOMATIC" />
+        <ui:dropdown displayText="External Source" name="defaultSource" selectAll="false" optionSrc="$root/SOURCE/*" id="defaultSource" />
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button displayText="Cancel" id="CANCEL" />
+        <ui:button displayText="Previous" id="PREVIOUS" disabled="true" />
+        <ui:button displayText="Next" id="NEXT" enabledBySelections="false" />
+        <ui:button displayText="Finish" id="FINISH" disabled="{$root/buttonname/@Value='new'}" />
+        <!-- Issue  558615 to disable the Finish Button in new condition  -->
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function onunlock()
+			{
+//document.form.name.style.backgroundColor = "#E6E6E6"
+		 document.form.name.enabled=true;
+					document.form.locks.value='locked';
+		
+		document.form.BUTTON_ID.value = 'drop_select' ; 
+		document.form.submit();
+			}
+						function onlock()
+			{
+ 	document.form.name.enabled=true;
+					document.form.locks.value="";
+		
+		document.form.BUTTON_ID.value = 'no_lock' ; 
+		document.form.submit();
+			}
+				
+				
+	 function onLoad()
+				{
+	//	alert(document.form.type.value);
+	//alert(document.form.buttonname.value);
+		
+	
+		
+ 	if(document.form.description.value.length=='0')
+document.form.description.value=document.form.name.value;
+		
+						if(document.form.buttonAction.value == 'edit')  			
+		{
+						document.form.locks.value=='locked';
+ 	document.form.measureDBType.disabled=true;
+			document.form.numDigits.disabled=true;
+			document.form.numDecimals.disabled=true;
+			document.form.type.disabled=true;
+		document.form.defaultSource.disabled=true;
+		document.form.cube.disabled=true;
+		
+		
+		
+		}
+		else
+		{
+			document.form.measureDBType.disabled=true;
+document.form.measureDBType.value='DOUBLE';
+			document.form.numDigits.disabled=false;
+			document.form.numDecimals.disabled=false;
+	document.form.type.disabled=false;
+			document.form.defaultSource.disabled=false;
+		document.form.cube.disabled=false;
+		
+		}
+			if(document.form.locks.value=='locked')
+				{
+		document.form.name.disabled=true;
+			 
+		
+				}
+				else
+		{
+				document.form.name.disabled=false;
+				
+				
+		}
+			
+				
+				} 
+				
+				
+				 	function typeCheck()
+				{	  
+	 
+				 
+				 
+		if(document.form.type.value=='CMN')
+				{
+			 document.form.measureDBType.disabled=true;
+			 	document.form.measureDBType.value='STRING';
+						document.form.numDecimals.disabled=true;
+				document.form.numDigits.disabled=true;
+		document.form.sign.disabled=true;
+		 		document.form.numDecimals.value='0';
+				document.form.numDigits.value='0';
+
+				
+				}
+				else
+					{
+				
+			document.form.numDecimals.disabled=false;
+		document.form.numDigits.disabled=false;
+		document.form.measureDBType.disabled=true;
+document.form.measureDBType.value='DOUBLE';
+ document.form.sign.disabled=false;
+				
+				
+		  	document.form.numDecimals.value='2';
+				document.form.numDigits.value='7';
+	
+		
+				  } 
+		
+				}
+				
+		function on_NEXT() 
+			
+{ 
+			document.form.defaultSource.disabled=false;
+		document.form.cube.disabled=false;
+		
+			document.form.numDecimals.disabled=false;
+				document.form.numDigits.disabled=false;
+		document.form.sign.disabled=false;
+		 
+					document.form.name.disabled=false;
+		document.form.measureDBType.disabled=false;
+			document.form.numDigits.disabled=false;
+			document.form.numDecimals.disabled=false;
+			document.form.type.disabled=false;
+				var bIsValid = true;  
+document.form.SUBMIT_AS_XML.value = 'false'; 
+bIsValid = (isValid_step1()); 
+if (bIsValid == false)  
+validation_alert('step1'); 
+if ( bIsValid == true) 
+{ disableButtons();
+document.form.BUTTON_ID.value = 'NEXT' ; 
+document.form.action = 'view.x2ps';
+document.form.submit(); 
+}
+    <!-- Issue 559442  Blank Cube name at the time of creation of new measure -->
+    if(document.form.cube.value=='')
+		{
+		core_alert ('InMem Cube name required');		
+				document.form.BUTTON_ID.value = 'NEXT' ; 
+				document.form.submit();  
+			  
+		}
+
+onResize();
+return;
+}   
+	 function on_FINISH() 
+				{ 
+						 	document.form.defaultSource.disabled=false;
+		document.form.cube.disabled=false;
+		
+						document.form.name.disabled=false;
+			document.form.measureDBType.disabled=false;
+			document.form.numDigits.disabled=false;
+			document.form.numDecimals.disabled=false;
+			document.form.type.disabled=false;
+				var bIsValid = true;  
+				document.form.SUBMIT_AS_XML.value = 'false'; 
+				 bIsValid = (isValid_step1()); 
+				 if (bIsValid == false) 
+				 validation_alert('step1');
+				  if ( bIsValid == true) 
+				{
+				 disableButtons();
+				 document.form.BUTTON_ID.value = 'FINISH' ; 
+				document.form.action = 'view.x2ps';
+				  document.form.submit();  
+				}  
+				onResize();  
+				return; 
+				}
+  </ui:script>
+</ui:page-group>
+

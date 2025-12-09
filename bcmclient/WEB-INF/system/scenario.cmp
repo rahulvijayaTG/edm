@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:components xmlns:x2="http://www.i2.com/x2" xmlns:xapl="http://www.i2.com/xapl" xmlns:scenario="http://www.i2.com/scenario" description="">
+
+  <x2:component name="set-scenario" description="sets scenario id. default is 0">
+    <x2:class value="com.i2.bcm.x2.components.scenario.ScenarioHandler"/>	
+    <x2:input name="ScenarioId" description="id of the scenario" required="false"/>
+  	
+    <x2:body>
+  	  <x2:include-component type="ANY" minOccur="0"/>
+  	</x2:body>
+    
+    <x2:example type="description">
+      Below is a code snippet showing how to set scenario.
+    </x2:example>
+    
+    <x2:example type="code">
+      <scenario:set-scenario ScenarioId="0"/>
+    </x2:example>
+  </x2:component>    
+  
+  <x2:component name="get-scenario-id" description="Returns the id of the current scenario.">
+    <x2:class value="com.i2.bcm.x2.components.scenario.GetScenarioIdHandler"/>
+     
+    <x2:example type="description">
+      Below is a code snippet showing how to retrieve the scenario id from the session. return 0 if no scenario id exists
+    </x2:example>    
+    <x2:example type="code">
+      <xapl:print>Scenario ID: <scenario:get-scenario-id/></xapl:print>
+    </x2:example>
+    <x2:example type="description">
+      The code snippet would display the following results: 
+    </x2:example>
+    <x2:example type="code">
+      Scenario ID: 0
+    </x2:example>
+
+  </x2:component>
+  
+</x2:components>

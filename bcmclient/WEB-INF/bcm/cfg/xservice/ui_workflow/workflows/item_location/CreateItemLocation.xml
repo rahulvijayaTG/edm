@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="285" ShowInBreadCrumbs="true" Version="1.0" Name="CreateItemLocation" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="createItemLocation" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+
+    <start Name="start">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="nodeOutput">
+            <PARAMETERS>
+              <TO_XML SelectList="$thisParam/*"/>
+            </PARAMETERS>
+          </TO_DOCVAR>
+           <TO_DOCVAR AssignToVar="createItemLocation">
+            <ROOT>
+            </ROOT>
+            </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="Select Item" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done4">
+      <actions>
+        <action>
+        </action>
+      </actions>
+      <next_nodes/>
+    </done>
+
+     <sub_workflow Name="Select Item" Description="Select Item" InputVar="{nodeInputXml,xml}" 
+     Workflow="SelectItem">
+      <pre_actions>
+        <action>
+        </action>
+      </pre_actions>
+      <post_actions>
+      <action>
+       <REMOVE_CHILDREN DocVar="createItemLocation" ChildName="items"/>
+       <APPEND_TO_XML DocVar="createItemLocation">
+         <TO_XML SelectList="$selectedItem/items"/>
+       </APPEND_TO_XML>
+      </action>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutputXml,xml}">
+        <next_node Name="Select Item Next" Description=""/>
+      </next_nodes>
+      <input>
+      </input>
+      <output AssignToVar="selectedItem"/>
+    </sub_workflow>
+
+  <sub_workflow Name="Select Location" Description="Select Location" InputVar="{nodeInputXml,xml}" 
+     Workflow="SelectLocation">
+      <pre_actions>
+        <action>
+        </action>
+      </pre_actions>
+       <post_actions>
+      <action>
+       <REMOVE_CHILDREN DocVar="createItemLocation" ChildName="locations"/>
+       <APPEND_TO_XML DocVar="createItemLocation">
+         <TO_XML Select="$selectedLocations/locations"/>
+       </APPEND_TO_XML>
+      </action>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutputXml,xml}">
+        <next_node Name="Select Location Next" Description=""/>
+      </next_nodes>
+      <input>
+        <TO_XML SelectList="$nodeInputXml/ERROR_MESSAGE"/>
+        <TO_XML Select="$createItemLocation/items/item/itemID"/>
+      </input>
+      <output AssignToVar="selectedLocations"/>
+    </sub_workflow>
+
+ 
+    <decision Name="Select Location Next" Description="Will check if any non relational location is selected " InputVar="{nodeInputXml,xml}">
+      <actions>
+        <action>
+        <TO_DOCVAR AssignToVar="errorXml">
+                <PARAMETERS>
+                    <ERROR_MESSAGE Value="All selected locations already have ItemLocation defined."/>
+                </PARAMETERS>
+              </TO_DOCVAR>
+        </action>
+      </actions>
+    
+      <condition Value="$createItemLocation/locations/location = null"/>
+      <if_true>
+        <next_nodes OutputVar="{errorXml,xml}">
+          <next_node Name="Select Location" Description=""/>
+        </next_nodes>
+      </if_true>
+      <if_false>
+        <next_nodes OutputVar="{nodeOutputXml,xml}">
+          <next_node Name="Define Attributes" Description=""/>
+        </next_nodes>
+      </if_false>
+    </decision>
+ 
+ <task Name="Select Item Next" InputVar="{nodeInput,xml}">
+      <actions>
+      </actions>
+      <next_nodes OutputVar="{nodeInput,xml}">
+        <next_node Name="Select Location" Description=""/>
+      </next_nodes>
+    </task>
+
+
+ <sub_workflow Name="Define Attributes" Description="Define Attributes" InputVar="{nodeInputXml,xml}" 
+     Workflow="DefineAttributes">
+      <pre_actions>
+        <action>
+        </action>
+      </pre_actions>
+       <post_actions>
+      <action>
+       <APPEND_TO_XML DocVar="createItemLocation">
+        <TO_XML Select="$definedAttributes"/>
+       </APPEND_TO_XML>
+      </action>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutputXml,xml}">
+        <next_node Name="done4" Description=""/>
+      </next_nodes>
+      <input>
+        <TO_XML Select="$createItemLocation/items"/>
+        <TO_XML Select="$createItemLocation/locations"/>
+      </input>
+      <output AssignToVar="definedAttributes"/>
+    </sub_workflow>
+
+    <done Name="done4">
+      <actions>
+        <action>
+        <SET Var="url" FromValue="{concat($webuiContextPath, '/bcm/itemLocation/bufferSearchView.jsp?DO_SEARCH=Yes&amp;SERVICE=BCMMasterService&amp;FORM_NAME=MST_BUFFER_SRCH_FORM&amp;PAGE=bufferSearchView&amp;MODE=START&amp;Auth_Enabled=true')}"/>
+        <SET Var="url" FromValue="{concat($url, '&amp;F_Item_name=', $createItemLocation/items/item/itemID/@Value)}"/>
+        
+        <SET_REDIRECT_URL Value="{$url}"/>
+        </action>
+      </actions>
+      <next_nodes/>
+    </done>
+  
+  </nodes>
+  
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+
+</workflow>

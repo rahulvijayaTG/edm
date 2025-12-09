@@ -1,0 +1,59 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="xrefManageSearchSourceObjects.pgl">
+  <ui:table id="SysObjtable" name="SysObjtable" collapsable="true" displayText="Select System/Object" filter="true" rowId="ObjectMnemonicValue" rowSrc="SYSTEM_OBJECT" select="SYS_OBJ" selectable="Single" doPaging="true" postRowIdAs="SELECTED_ITEM" maxRows="10" startAtRow="$root/StartAtRow/@Value">
+    <ui:field-group id="fg1">
+      <ui:hidden-field id="CrossReferenceSystemIdentifier" name="CrossReferenceSystemIdentifier" displayText="Id" />
+      <ui:entry-field id="SystemMnemonicValue" name="SystemMnemonicValue" sortable="true" displayText="System Name" editable="false" />
+      <ui:display-field id="SystemDescription" name="SystemDescription" sortable="true" displayText="System Description" preferredWidth="20" />
+      <ui:entry-field id="ObjectMnemonicValue" name="ObjectMnemonicValue" sortable="true" displayText="Object Name" editable="false" />
+      <ui:display-field id="ObjectDescription" name="ObjectDescription" sortable="true" displayText="Object Description" />
+      <ui:hidden-field id="ObjectClassName" name="ObjectClassName" displayText="Id" value="{ObjectClassName/@Value}" />
+    </ui:field-group>
+    <ui:buttons id="bg1">
+      <ui:button id="Cancel" name="Cancel" displayText="Cancel" onClick="javascript:window.close();" />
+      <ui:divider id="div1" />
+      <ui:button id="Select" name="Select" displayText="Select and Return" onClick="javascript:on_select()" />
+    </ui:buttons>
+  </ui:table>
+  <ui:script>function on_select()
+  {
+    var x = document.getElementsByName( 'SELECTED_ITEM' );
+		var y = document.getElementsByName('SystemMnemonicValue');
+		var z = document.getElementsByName('ObjectClassName');
+
+    var length = x.length;
+    var selectedSysObj = null;
+		var selectedSysName = null;	
+		var ObjClass = null;			 
+    
+		for(i=0; i&lt;length; i++)
+    {		
+      var t = x[ i ];	
+			var sys = y[ i ];
+			var objcls = z[ i ];
+		
+		  if ( t.checked )
+      {			
+        selectedSysObj = t.value;	
+				selectedSysName = sys.value;
+				ObjClass = objcls .value;
+			//	alert(selectedSysObj);
+			//	alert(selectedSysName);
+			//	alert(ObjClass);
+      }		
+		
+    }
+		
+	if(selectedSysObj == '' || selectedSysObj == null)
+				{
+					core_alert('Please select a valid System - Object value.');
+				}
+				else{
+					parent.opener.form.SourceSystem.value = selectedSysName;
+					parent.opener.form.SourceObject.value =selectedSysObj;
+					parent.opener.onValueChange('SourceSystem');	  
+					parent.opener.onValueChange('SourceObject');	  
+					window.close();
+					}
+}</ui:script>
+</ui:page-group>
+

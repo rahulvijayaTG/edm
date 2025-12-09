@@ -1,0 +1,341 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="TLLaneAssetMassUpdate.pgl">
+  <ui:container id="topContainer" scrollable="true" collapsable="true">
+    <ui:step id="c1" displayText="Lane Asset Mass Update Selections" editable="true">
+      <!--      <ui:hidden-field name="SEQ_NUM" id="SEQ_NUM"/>
+      <ui:hidden-field id="PREV_START_COUNT" name="PREV_START_COUNT"/>-->
+      <ui:table id="TassetTable" name="TassetTable" displayText="Lane Asset Assignments" displayTextNoRecords="Not found" rowSrc="P_TransportLaneXTransportEquipmentItem" select="$root" rowId="SeqNum" scrollable="true" exportable="false" freeze="4" collapsable="false" rememberSelections="false" displayCondition="{$root/ABC/displayTableFlag/@Value ='true'}">
+        <ui:field-group>
+          <ui:link-field displayText="Lane Name" name="TransportLaneName" targetType="popup" targetName="catalogPopup">
+            <ui:url page="view.x2ps">
+              <ID select="TransportLaneIdentifier/@Value" />
+              <BUTTON_ID select="'view_tlane'" />
+            </ui:url>
+          </ui:link-field>
+          <!--          <ui:entry-field displayText="Source Location" name="SourceLocationIdn" editable="false"/>
+          <ui:entry-field displayText="Destination Location" name="DestinationLocationIdn" editable="false" />
+          <ui:entry-field displayText="Transport Mode" name="TransMode" editable="false"/>-->
+          <ui:entry-field displayText="Asset Number" name="ItemId" editable="false" />
+          <ui:display-field displayText="Asset Description" name="ItemDescription" />
+          <ui:entry-field displayText="Asset Priority" name="AssetPriority" editable="false" />
+          <ui:entry-field displayText="Valid Day Of Week" name="ValidDaysOfWeek" editable="false" />
+          <ui:hidden-field name="SeqNum" />
+          <ui:hidden-field name="TransportLaneIdentifier" />
+          <ui:display-field displayText="Lane Asset Start Date" name="EffectiveStartDate" dataType="Date" />
+          <ui:display-field displayText="Lane Asset End Date" name="EffectiveEndDate" dataType="Date" />
+          <ui:display-field displayText="Min Target Cube" name="MinCubetarget" dataType="Number" decimals="0" unFormat="true" maxlength="13" />
+          <ui:display-field displayText="Target Cube Value" name="TargetCubeValue" dataType="Number" decimals="0" unFormat="true" maxlength="13" />
+          <ui:display-field displayText="Max Target Cube" name="MaxCubetarget" dataType="Number" decimals="0" unFormat="true" maxlength="13" />
+          <ui:display-field displayText="Target Weight Value" name="TargetWeightValue" dataType="Number" decimals="0" unFormat="true" maxlength="13" />
+          <ui:display-field displayText="Target Pallet Value" name="TargetPalletValue" dataType="Number" maxlength="11" unFormat="true" decimals="0" />
+          <ui:display-field displayText="Number Of Assets Available" name="NumberofAssetsAvailable" dataType="Number" maxlength="11" unFormat="true" decimals="0" />
+          <ui:textarea displayText="Comments" name="TransportLaneXTransportEquipmentItemCommentText" editable="false" />
+        </ui:field-group>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:container id="bottomContainer" displayText="Mass Update" scrollable="true">
+    <ui:step id="c1" displayText="Mass Update" editable="true" scrollable="true">
+      <ui:validation anyFieldIsRequired="true" successMessage="{$root/SUCCESS_MESSAGE/@Value}" />
+      <!-- cannot have dates on the mass update page, 'coz of the overlapping date check -->
+      <!-- MYANG RIC266165 - Update Asset Priority Start -->
+      <ui:field-group columns="6" id="fieldGroups1">
+        <ui:field-group id="leftFields">
+          <ui:checkbox id="chkAssetPriority" name="chkAssetPriority" onClick="javascript:valChk();" />
+        </ui:field-group>
+        <ui:field-group id="middleFields" columns="11">
+          <ui:dropdown displayText="Asset Priority" name="upd_AssetPriority" selectOne="true" optionSrc="$root/ASST_PRIR/*" required="false" preferredWidth="14" />
+        </ui:field-group>
+      </ui:field-group>
+      <!-- MYANG  RIC266165 - Update Asset Priority End -->
+      <ui:field-group columns="6" id="fieldGroups1">
+        <ui:field-group id="leftFields">
+          <!--<ui:checkbox id="chkAsstStrtDate" name="chkAsstStrtDate"/>-->
+          <ui:checkbox id="chkAsstEndDate" name="chkAsstEndDate" onClick="javascript:valChk();" />
+        </ui:field-group>
+        <ui:field-group id="middleFields" columns="11">
+          <!--          <ui:entry-field displayText="Lane Asset Start Date " name="upd_EffectiveStartDate" dataType="Date"/>-->
+          <ui:entry-field displayText="Lane Asset End Date " name="upd_EffectiveEndDate" dataType="Date" />
+        </ui:field-group>
+      </ui:field-group>
+      <ui:field-group columns="6" id="fieldGroups2">
+        <ui:field-group id="leftFields">
+          <ui:checkbox id="chkMinCubeVol" name="chkMinCubeVol" onClick="javascript:valChk();" />
+        </ui:field-group>
+        <ui:field-group id="middleFields" columns="16">
+          <ui:entry-field displayText="Min Target Cube" name="upd_MinCubetarget" dataType="Number" decimals="0" maxlength="13" colSpan="18" unFormat="true" minValue="1" />
+          <ui:checkbox id="chkTgtCubeVol" name="chkTgtCubeVol" onClick="javascript:valChk();" />
+          <ui:entry-field displayText="Target Cube Value" name="upd_TargetCubeValue" dataType="Number" decimals="0" maxlength="13" unFormat="true" minValue="1" />
+        </ui:field-group>
+      </ui:field-group>
+      <ui:field-group columns="6" id="fieldGroups2">
+        <ui:field-group id="leftFields">
+          <ui:checkbox id="chkMaxCubeVol" name="chkMaxCubeVol" onClick="javascript:valChk();" />
+        </ui:field-group>
+        <ui:field-group id="middleFields" columns="11">
+          <ui:entry-field displayText="Max Target Cube" name="upd_MaxCubetarget" dataType="Number" decimals="0" maxlength="13" colSpan="18" unFormat="true" minValue="1" />
+          <ui:checkbox id="chkTgtWght" name="chkTgtWght" onClick="javascript:valChk();" />
+          <ui:entry-field displayText="Target Weight Value" name="upd_TargetWeightValue" dataType="Number" decimals="0" maxlength="13" unFormat="true" minValue="1" />
+        </ui:field-group>
+      </ui:field-group>
+      <ui:field-group columns="6" id="fieldGroups2">
+        <ui:field-group id="leftFields">
+          <ui:checkbox id="chkAvailAsst" name="chkAvailAsst" onClick="javascript:valChk();" />
+        </ui:field-group>
+        <ui:field-group id="middleFields" columns="11">
+          <ui:entry-field displayText="Number of Assets Available" name="upd_NumberofAssetsAvailable" dataType="Number" maxlength="11" decimals="0" unFormat="true" minValue="1" />
+          <ui:checkbox id="chkTgtPallet" name="chkTgtPallet" onClick="javascript:valChk();" />
+          <ui:entry-field displayText="Target Pallet Value" name="upd_TargetPalletValue" dataType="Number" maxlength="11" decimals="0" unFormat="true" minValue="1" />
+        </ui:field-group>
+      </ui:field-group>
+      <ui:field-group columns="8" id="fieldGroups2">
+        <ui:field-group id="leftFields">
+          <ui:textarea displayText="Comments" name="TransportLaneXTransportEquipmentItemCommentText" required="true" />
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons>
+        <!-- RIC: 240988 Praneeth - Cancel button wording changes request - Start -->
+        <ui:button displayText="Back to Search" id="cancel" validate="false" />
+        <!-- RIC: 240988 Praneeth - Cancel button wording changes request - End -->
+        <ui:button displayText="Save" id="save_upd" disabled="{count($root/*/_ERRORS) = 0 and count($root/_ERRORS) = 0}" onClick="javascript:valSave();" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function valChk(){	
+		//alert("in CHK!");
+    <!-- MYANG RIC 266165 - Update Asset Priority Start -->
+    var chkAssetPriority = document.getElementsByName("chkAssetPriority");
+    <!-- MYANG RIC 266165 - Update Asset Priority End -->
+    var chkNewAsstEndDate = document.getElementsByName("chkAsstEndDate");
+			var chkNewMinCubeVol  = document.getElementsByName("chkMinCubeVol");
+			var chkNewTgtCubeVol  = document.getElementsByName("chkTgtCubeVol");
+			var chkNewMaxCubeVol  = document.getElementsByName("chkMaxCubeVol");
+	 		var chkNewTgtWght  = document.getElementsByName("chkTgtWght");
+  		var chkNewAvailAsst  = document.getElementsByName("chkAvailAsst");
+		  var chkNewTgtPallet   =  document.getElementsByName("chkTgtPallet");
+    <!-- MYANG RIC 266165 - Update Asset Priority Start -->
+    if(chkAssetPriority[0].checked || chkNewAsstEndDate[0].checked ||  chkNewMinCubeVol[0].checked || 
+		chkNewTgtCubeVol[0].checked || chkNewMaxCubeVol[0].checked || chkNewTgtWght[0].checked || 
+		chkNewAvailAsst[0].checked || chkNewTgtPallet[0].checked)
+    <!-- MYANG RIC 266165 - Update Asset Priority End -->
+    {
+
+				 i2uiToggleButtonState('save_upd', 'enabled');
+			}		
+		else{
+
+		 i2uiToggleButtonState('save_upd', 'disabled');
+		}
+		}
+		
+		
+		
+		function valSave(){
+    <!-- MYANG RIC 266165 - Update Asset Priority Start -->
+    var chkAssetPriority = document.getElementsByName("chkAssetPriority");
+    <!-- MYANG RIC 266165 - Update Asset Priority End -->
+    var chkAsstEndDate = document.getElementsByName("chkAsstEndDate");
+		var chkMinCubeVol = document.getElementsByName("chkMinCubeVol");
+		var chkTgtCubeVol = document.getElementsByName("chkTgtCubeVol");
+		var chkMaxCubeVol = document.getElementsByName("chkMaxCubeVol");
+		var chkTgtWght = document.getElementsByName("chkTgtWght");		
+		var chkAvailAsst = document.getElementsByName("chkAvailAsst");
+		var chkTgtPallet = document.getElementsByName("chkTgtPallet");
+    <!-- MYANG RIC 266165 - Update Asset Priority Start -->
+    var chkAssetPriorityVal = document.form.upd_AssetPriority.value;
+    <!-- MYANG RIC 266165 - Update Asset Priority End -->
+    var chkAsstEndDateVal = document.form.upd_EffectiveEndDate_DC.value;		
+		var chkMinCubeVal = document.form.upd_MinCubetarget.value;
+		var chkTgtCubeVal = document.form.upd_TargetCubeValue.value;
+		var chkMaxCubeVal = document.form.upd_MaxCubetarget.value;
+		var chkTgtWghtVal = document.form.upd_TargetWeightValue.value;
+		var chkAvailAsstVal = document.form.upd_NumberofAssetsAvailable.value;
+		var chkTgtPalletVal = document.form.upd_TargetPalletValue.value;										
+		
+		var chkComments = document.form.TransportLaneXTransportEquipmentItemCommentText.value;	
+		var canSave = "false";
+    <!-- MYANG RIC 266165 - Update Asset Priority Start -->
+    var canSaveAP = "false";
+    <!-- MYANG RIC 266165 - Update Asset Priority Start -->
+    <!--  MYANG RIC 232895 - TL X Asset MU - numeric fields validation START -->
+    var anum=/(^\d+$)|(^\d+\.\d+$)/;
+    <!--  MYANG RIC 232895 - TL X Asset MU - numeric fields validation  END -->
+    <!-- MYANG RIC 266165 - Update Asset Priority Start -->
+    if(chkAssetPriority[0].checked || chkAsstEndDate[0].checked || chkMinCubeVol[0].checked || 
+			chkTgtCubeVol[0].checked || chkMaxCubeVol[0].checked || chkTgtWght[0].checked || 
+			chkAvailAsst[0].checked || chkTgtPallet[0].checked)
+		{
+		if(chkAssetPriority[0].checked) {
+				if (chkAssetPriorityVal.length == 0) {
+						core_alert("Please select the value for Asset Priority.");
+						canSaveAP = "false";
+						return;
+				}
+				else {
+						canSaveAP = "true";
+				}
+		}
+    <!-- MYANG RIC 266165 - Update Asset Priority End -->
+    if(chkAsstEndDate[0].checked &amp;&amp; chkAsstEndDateVal.length == 0)
+		{
+
+		core_alert("Please enter the value for Lane Asset End Date!");
+				canSave = "false";
+		return;
+		}
+		else{
+						canSave = "true";
+		}		
+		if(chkMinCubeVol[0].checked &amp;&amp; chkMinCubeVal.length == 0)
+		{
+		core_alert("Please enter the value for Min Target Cube!");
+				canSave = "false";
+				return;				
+		}
+		else{
+						canSave = "true";
+		}
+    <!--  MYANG RIC 203580 - Validation for focused fields when save START -->
+    if(chkMinCubeVol[0].checked &amp;&amp; chkMinCubeVal.length &gt; 0)
+		{
+				if (!anum.test(chkMinCubeVal)) {
+					core_alert("Please enter a positive value for Min Target Cube!");
+					canSave = "false";
+					return;				
+				}
+		}
+    <!--  MYANG RIC 203580 - Validation for focused fields when save END -->
+    if(chkTgtCubeVol[0].checked &amp;&amp; chkTgtCubeVal.length == 0)
+		{
+		core_alert("Please enter the value for Target Cube Value!");
+				canSave = "false";
+				return;				
+		}
+		else{
+						canSave = "true";
+		}
+    <!--  MYANG RIC 203580 - Validation for focused fields when save START -->
+    if(chkTgtCubeVol[0].checked &amp;&amp; chkTgtCubeVal.length &gt; 0)
+		{
+				if (!anum.test(chkTgtCubeVal)) {
+					core_alert("Please enter a positive value for Target Cube Value!");
+					canSave = "false";
+					return;				
+				}
+		}
+    <!--  MYANG RIC 203580 - Validation for focused fields when save END -->
+    if(chkMaxCubeVol[0].checked &amp;&amp; chkMaxCubeVal.length == 0)
+		{
+		core_alert("Please enter the value for Max Target Cube!");
+				canSave = "false";
+				return;				
+		}
+		else{
+						canSave = "true";
+		}
+    <!--  MYANG RIC 203580 - Validation for focused fields when save START -->
+    if(chkMaxCubeVol[0].checked &amp;&amp; chkMaxCubeVal.length &gt; 0)
+		{
+				if (!anum.test(chkMaxCubeVal)) {
+					core_alert("Please enter a positive value for Max Target Cube!");
+					canSave = "false";
+					return;				
+				}
+		}
+    <!--  MYANG RIC 203580 - Validation for focused fields when save END -->
+    if(chkTgtWght[0].checked &amp;&amp; chkTgtWghtVal.length == 0)
+		{
+		core_alert("Please enter the value for Target Weight Value!");
+				canSave = "false";
+				return;				
+		}
+		else{
+						canSave = "true";
+		}
+    <!--  MYANG RIC 203580 - Validation for focused fields when save START -->
+    if(chkTgtWght[0].checked &amp;&amp; chkTgtWghtVal.length &gt; 0)
+		{
+				if (!anum.test(chkTgtWghtVal)) {
+					core_alert("Please enter a positive value for Target Weight Value!");
+					canSave = "false";
+					return;				
+				}
+		}
+    <!--  MYANG RIC 203580 - Validation for focused fields when save END -->
+    if(chkAvailAsst[0].checked &amp;&amp; chkAvailAsstVal.length == 0)
+		{
+		core_alert("Please enter the Number of Assets Available!");
+				canSave = "false";
+				return;				
+		}
+		else{
+						canSave = "true";
+		}
+    <!--  MYANG RIC 203580 - Validation for focused fields when save START -->
+    if(chkAvailAsst[0].checked &amp;&amp; chkAvailAsstVal.length &gt; 0)
+		{
+				if (!anum.test(chkAvailAsstVal)) {
+					core_alert("Please enter a positive value for Number of Assets Available!");
+					canSave = "false";
+					return;				
+				}
+		}
+    <!--  MYANG RIC 203580 - Validation for focused fields when save END -->
+    if(chkTgtPallet[0].checked &amp;&amp; chkTgtPalletVal.length == 0)
+		{
+		core_alert("Please enter the value for Target Pallet Value!");
+				canSave = "false";
+				return;				
+		}
+		else{
+						canSave = "true";
+		}
+    <!--  MYANG RIC 203580 - Validation for focused fields when save START -->
+    if(chkTgtPallet[0].checked &amp;&amp; chkTgtPalletVal.length &gt; 0)
+		{
+				if (!anum.test(chkTgtPalletVal)) {
+					core_alert("Please enter a positive value for Target Pallet Value!");
+					canSave = "false";
+					return;				
+				}
+		}
+    <!--  MYANG RIC 203580 - Validation for focused fields when save END -->
+    if(trimString(chkComments).length == 0){
+		core_alert("Please enter comments before saving!");
+				canSave = "false";
+				return;				
+		}			
+		else{
+						canSave = "true";
+		}
+		if(trimString(chkComments).length &gt; 255){
+		core_alert("Comments should not be greater than 255 characters!");
+				canSave = "false";
+				return;				
+		}			
+		else{
+						canSave = "true";
+		}		
+    }		
+		else{
+		core_alert("Please enter value for at least one field and proceed!");
+		canSave = "false";
+		}
+    <!-- MYANG RIC 266165 - Update Asset Priority Start -->
+    if (canSave == "false" &amp;&amp; canSaveAP == "false") {
+		}
+		else if (canSaveAP == "true") {
+							document.form.BUTTON_ID.value = 'save_upd_ap'; 
+							document.form.action = 'view.x2ps';
+							document.form.submit();  		
+		}
+		else {
+							document.form.BUTTON_ID.value = 'save_upd'; 
+							document.form.action = 'view.x2ps';
+							document.form.submit();  		
+		}
+    <!-- MYANG RIC 266165 - Update Asset Priority End -->
+    }
+  </ui:script>
+</ui:page-group>
+

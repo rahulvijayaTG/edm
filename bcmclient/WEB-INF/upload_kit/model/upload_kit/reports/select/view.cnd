@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="load">
+		<x2:param name="this"/>
+		<xapl:print>INSIDE SELECT VIEW LOAD<xapl:value-of select="$this"/></xapl:print>
+		<!-- Search Param Overrides - Start:-->
+		<xapl:variable name="searchParams">
+			<SEARCH_PARAM/>
+		</xapl:variable>
+		<xapl:if test="string-length($this/START_COUNT_RPT/@Value) &gt; 0" >
+			<docutil:set select="$this">				
+				<START_COUNT Value="{$this/START_COUNT_RPT/@Value}"/>
+				<MAX_ROWS Value="{$this/MAX_ROWS_RPT/@Value}"/>
+			</docutil:set>		
+		</xapl:if> 
+		<xapl:if test="string-length($this/REPORT_ID/@Value) &gt; 0" >
+		  <docutil:remove select="$this/ID"/>	
+		  <docutil:set select="$this">
+		  	<ID Value="{$this/REPORT_ID/@Value}"/>
+		  </docutil:set>
+		</xapl:if>
+		<docutil:set select="$this">				
+		   <UPLOAD_RET_PAGE Value="{concat('?ID=', $this/ID/@Value,'&amp;TEMPLATE_NAME=', $this/TEMPLATE_NAME/@Value,'&amp;PROGRESS=', $this/PROGRESS/@Value,'&amp;START_TIME_FIRST=',$this/START_TIME_FIRST/@Value,'&amp;START_TIME_LAST=',$this/START_TIME_LAST/@Value,'&amp;START_COUNT_RPT=',$this/START_COUNT/@Value,'&amp;MAX_ROWS_RPT=',$this/MAX_ROWS/@Value)}"/>
+		</docutil:set>
+		
+		<x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+			<x2:with-param name="display" select="'Reports'"/>
+			<x2:with-param name="page" select="'upload_reports_back'"/>
+			<x2:with-param name="this" select="{$this}"/>
+    		</x2:execute>
+		<!-- Search Param Overrides.  End-->
+		<xapl:return>
+			<!-- Header -->
+			<x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>
+			   <!--x2:execute command="core.history:clear"/>
+			   <x2:execute command="core.history:register">
+			     <x2:with-param name="this" select="$this"/>
+			     <x2:with-param name="pPage" select="'upload_reports_back'"/>
+			     <x2:with-param name="pPageName" select="'Reports'"/>
+			   </x2:execute-->
+			<!-- Tabs -->
+			<x2:execute command="upload_kit.reports.select.view:getContainer">
+				<x2:with-param name="pPage" select="'upload_report_details'"/>
+				<x2:with-param name="pHide" select="$this/TABS_HIDE/@Value"/>
+				<x2:with-param name="pReturnLink" select="$this/RET_PAGE/@Value"/>
+				<x2:with-param name="this" select="{$this}"/>
+			</x2:execute>
+			<xapl:print>INSIDE SELECT VIEW LOAD222<xapl:value-of select="$this"/></xapl:print>
+			<!-- Search / Form and Report -->
+			<x2:execute command="core.search.search:getSearch">
+				<x2:with-param name="this" select="{$this}"/>
+				<x2:with-param name="pSearchParam" select="{$searchParam}"/>
+				<x2:with-param name="pSearchFormConfigSource" select="'upload_kit.reports.select.search:getFormConfig'"/>
+				<x2:with-param name="pSearchReportConfigSource" select="'upload_kit.reports.select.search:getReportConfig'"/>
+				<x2:with-param name="pReportDataSource" select="'upload_kit.reports.select.search:getReportData'"/>
+			</x2:execute>
+			<!-- Links -->
+			<x2:execute command="upload_kit.reports.select.view:getLinks">
+				<x2:with-param name="this" select="$this"/>
+				<x2:with-param name="pPage" select="'upload_report_details'"/>
+			</x2:execute>			
+		</xapl:return>
+	</x2:command>
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getContainer">
+		<x2:param name="pPage"/>
+		<xapl:return>
+			<CONTAINER>
+				<xapl:variable name="url">
+					<web:get-page name="upload_report_details_help"/>
+				</xapl:variable>
+				<HELP Url="{$url}"/>
+				<STEP DisplayText="Search Reports" OnClick="{$pages:upload_report_details}" Selected="{$pPage = 'upload_report_details'}"/>
+			</CONTAINER>
+		</xapl:return>
+	</x2:command>
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+	<x2:command public="yes" description="_" name="getLinks">
+		<x2:param name="this"/>
+		<xapl:return>
+			<LINKS>
+				<x2:execute command="core.common:getLinks">
+					<x2:with-param name="this" select="$this"/>
+				</x2:execute>
+			</LINKS>
+		</xapl:return>
+	</x2:command>
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+</x2:commands>

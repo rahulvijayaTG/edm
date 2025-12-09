@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:page-group xmlns:ui="http://www.i2.com/ui" displayText="Retrieve x2 Command Path" source="core.console.get_command:load">
+  <ui:container>
+    <ui:step id="c1" displayText="Retrieve x2 Command Path" editable="true">
+      <ui:field-group select="TEST_DATA">
+        <ui:entry-field displayText="Command Name" name="COMMAND_NAME" size="64"/>
+        <ui:display-field displayText="Command Path" name="COMMAND_PATH" size="64"/>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button displayText="Submit" submitTo="get_command/submit.x2c" emphasized="true"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

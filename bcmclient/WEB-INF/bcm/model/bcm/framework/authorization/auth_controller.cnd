@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:identity="http://www.i2.com/identity" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" description="_">
+
+    <!-- **********************************************************************
+        *********************************************************************** -->
+    <x2:command public="yes" description="_" name="init">
+        <xapl:variable name="loadedAccess" resolver="session" global="true"/>
+        <xapl:variable name="userDocAccessControlList" resolver="session" global="true"/>
+        <xapl:variable name="userAccessibleDocuments" resolver="session" global="true"/>
+        <xapl:variable name="userAccessibleAuditTrailDocuments" resolver="session" global="true"/>
+        <xapl:variable name="userAccessibleErrorDocuments" resolver="session" global="true"/>
+        <xapl:variable name="userCurrentAccessibleDocument" resolver="session" global="true"/>
+    </x2:command>
+<!-- **********************************************************************
+     *********************************************************************** -->
+    <x2:command public="yes" description="_" name="loadUserDocAccessControlList">
+      <xapl:variable name="userId">
+        <identity:get-user-id/>        
+      </xapl:variable>
+      <!-- fetch the doc access control list for the user -->
+      <xapl:variable name="usrDocList">
+        <xcore:execute-method name="//UserSecurity/getDocumentAccessControlList" entireResponse="true">
+          <USER_ID Value="{$userId}"/>
+                </xcore:execute-method>
+            </xapl:variable>
+
+      <xapl:print>
+        <xapl:value-of select="$usrDocList"/>
+      </xapl:print>
+
+      <xapl:set-variable name="userDocAccessControlList" select="{$usrDocList/RESPONSE/UIFORM_ACTIVITIES}"/>
+          
+      <xapl:print select="{$userDocAccessControlList}"/>
+      <!-- 
+          Iterate through every ACTIVITY node and create ACCESS_LEVEL tag list
+        -->      
+      <xapl:for-each select="$userDocAccessControlList/UIFORM_ACTIVITY" varName="currentActivity">
+
+        <xapl:variable name="accessLevelDoc">
+          <x2:execute command="bcm.framework.util:createXMLFromString">
+            <x2:with-param name="string" select="{$currentActivity/@AccessLevel}"/>
+            <x2:with-param name="delimeter" select="'+'"/>
+            <x2:with-param name="tagname" select="'ACCESS_LEVEL'"/>
+          </x2:execute>
+        </xapl:variable>
+        
+        <docutil:add select="{$currentActivity}">
+          <xapl:value-of select="{$accessLevelDoc/*}"/>
+        </docutil:add>
+        
+        <docutil:remove select="{$currentActivity/@AccessLevel}"/>
+        
+        <xapl:print select="{$currentActivity}"/>
+      </xapl:for-each>
+    
+      <xapl:print select="{$userDocAccessControlList}"/>
+          
+        <!-- document access control list -->
+        <xapl:set-variable name="userAccessibleDocuments">
+          <USER_ACCESSIBLE_DOCS/>
+        </xapl:set-variable>
+        <xapl:set-variable name="userAccessibleAuditTrailDocuments">
+          <USER_ACCESSIBLE_AUDIT_TRAIL_DOCS/>
+        </xapl:set-variable>
+        <xapl:set-variable name="userAccessibleErrorDocuments">
+          <USER_ACCESSIBLE_ERROR_DOCS/>
+        </xapl:set-variable>
+        
+        
+         <xapl:set-variable name="loadedAccess" select="'yes'"/>
+          
+        </x2:command>
+<!-- **********************************************************************
+     *********************************************************************** -->
+    <x2:command description="_" public="yes" name="setAccessibilityOnDocument" >
+      <x2:param name="documentObj"/>  
+      <x2:param name="serviceName"/>  
+      <x2:param name="xCoreSrvcName"/>
+      <x2:param name="allDocActivityName"/>
+
+    <!-- load the document access control list for user -->
+     <xapl:choose>
+      <xapl:when test="$loadedAccess = 'yes'"></xapl:when>
+      <xapl:otherwise>
+        <x2:execute command="bcm.framework.authorization.auth_controller:loadUserDocAccessControlList"/>
+      </xapl:otherwise>
+    </xapl:choose>
+
+      <xapl:variable name="docName" select="{$documentObj/@Name}"/>
+
+<!--      <xapl:variable name="xCoreSrvcName">
+        <x2:get-xcore-service-name name="{$serviceName}"/>
+      </xapl:variable>-->
+
+      <xapl:variable name="docActivityName" select="{concat( $xCoreSrvcName , ':' , $docName )}"/>
+
+      <xapl:print select="$docActivityName"/>
+      <xapl:print select="$documentObj"/>
+      <xapl:print select="$allDocActivityName"/>
+  
+
+      <xapl:variable name="accessControlDocObj">
+        <ROOT>
+          <xapl:choose>
+            <!-- Specific Doc Permissions -->
+            <xapl:when test="{$userDocAccessControlList/UIFORM_ACTIVITY[@Value = $docActivityName ]}">
+               <xapl:value-of select="{$userDocAccessControlList/UIFORM_ACTIVITY[@Value = $docActivityName ]}"/>
+            </xapl:when>
+            <!-- All Doc Permissions -->
+            <xapl:when test="$userDocAccessControlList/UIFORM_ACTIVITY[@Value = $allDocActivityName ]">
+              <xapl:print>
+                ANISH ALL DOC PERMISSION FOR:: <xapl:value-of select="$xCoreSrvcName"/>
+                $documentObj::=<xapl:value-of select="$documentObj"/>
+              </xapl:print>
+              <UIFORM_ACTIVITY Value="{concat($xCoreSrvcName , ':' , $docName)}" >
+                <xapl:value-of select="$userDocAccessControlList/UIFORM_ACTIVITY[@Value = $allDocActivityName ]/*"/>
+              </UIFORM_ACTIVITY>
+            </xapl:when>
+          </xapl:choose>
+        </ROOT>
+      </xapl:variable>
+
+      <xapl:print select="$accessControlDocObj"/>
+
+      <!-- If doc not found ... set NoAccess and return back -->
+      <xapl:if test="(count($accessControlDocObj/*) = 0) "> 
+        <docutil:set select="$documentObj/@NoAccess">yes</docutil:set>
+        <xapl:return/> 
+      </xapl:if>
+
+      <docutil:set select="$documentObj/@CanUpdate">no</docutil:set>
+      <xapl:if test="$accessControlDocObj/UIFORM_ACTIVITY/ACCESS_LEVEL/@Value = 'Update' ">
+        <docutil:set select="$documentObj/@CanUpdate">yes</docutil:set>
+      </xapl:if>
+
+      <docutil:set select="$documentObj/@CanAdd">no</docutil:set>
+      <xapl:if test="$accessControlDocObj/UIFORM_ACTIVITY/ACCESS_LEVEL/@Value = 'Add' "> 
+        <docutil:set select="$documentObj/@CanAdd">yes</docutil:set>
+      </xapl:if>
+
+      <docutil:set select="$documentObj/@CanRemove">no</docutil:set>
+      <xapl:if test="$accessControlDocObj/UIFORM_ACTIVITY/ACCESS_LEVEL/@Value = 'Remove' "> 
+        <docutil:set select="$documentObj/@CanRemove">yes</docutil:set>
+      </xapl:if>
+
+      <docutil:set select="$documentObj/@CanView">no</docutil:set>
+      <xapl:if test="$accessControlDocObj/UIFORM_ACTIVITY/ACCESS_LEVEL/@Value = 'View' ">
+        <docutil:set select="$documentObj/@CanView">yes</docutil:set>
+      </xapl:if>
+
+    </x2:command>
+<!-- **********************************************************************
+     *********************************************************************** -->
+    <x2:command public="yes" description="_" name="setAccessibleDocumentList">
+      <x2:param name="foldersDoc"/> 
+      <x2:param name="serviceName"/>  
+      <x2:param name="isAuditTrail"/>        
+      <x2:param name="isError"/>        
+
+      <!-- If the docs for service already present then quit -->
+      <xapl:choose>
+        <xapl:when test="$isAuditTrail = 'yes'">
+          <xapl:if test="$userAccessibleAuditTrailDocuments/SERVICE[@Name = $serviceName]">
+            <xapl:return/>
+          </xapl:if>
+        </xapl:when>
+        <xapl:when test="$isError = 'yes'">
+          <xapl:if test="$userAccessibleErrorDocuments/SERVICE[@Name = $serviceName]">
+            <xapl:return/>
+          </xapl:if>
+        </xapl:when>
+        <xapl:otherwise>
+          <xapl:if test="$userAccessibleDocuments/SERVICE[@Name = $serviceName]">
+            <xapl:return/>
+          </xapl:if>
+        </xapl:otherwise>
+      </xapl:choose>
+      
+      <!--Dont mess up with the original Doc ... so get a clone -->
+      <xapl:variable name="foldersDocRef">
+        <ROOT>
+          <xapl:value-of select="{$foldersDoc}"/>
+        </ROOT>
+      </xapl:variable>
+      
+      <xapl:variable name="foldersDocClone">
+        <xapl:clone select="$foldersDocRef"/>
+      </xapl:variable>
+
+     <xapl:variable name="xCoreSrvcName">
+        <x2:get-xcore-service-name name="{$serviceName}"/>
+      </xapl:variable>
+
+      <xapl:variable name="allDocActivityName" select="{concat( $xCoreSrvcName , ':' , 'All' )}"/>
+
+      <!-- browse through the list and add the attributes in the document tag-->
+      <xapl:for-each select="$foldersDocClone/ALL_FOLDERS//DOCUMENT" varName="document">
+        
+        <x2:execute command="bcm.framework.authorization.auth_controller:setAccessibilityOnDocument">
+          <x2:with-param name="documentObj" select="{$document}"/>
+          <x2:with-param name="serviceName" select="{$serviceName}"/>
+          <x2:with-param name="xCoreSrvcName" select="{$xCoreSrvcName}"/>
+          <x2:with-param name="allDocActivityName" select="{$allDocActivityName}"/>
+        </x2:execute>
+
+      </xapl:for-each>
+
+      <!-- remove the documents with 'NoAccess' -->
+      <docutil:remove select="{$foldersDocClone/ALL_FOLDERS//DOCUMENT[@NoAccess]}"/>
+      
+      <!-- remove the folders with no documents >
+      <docutil:remove select="{$foldersDocClone/ALL_FOLDERS/FOLDER[count(./DOCUMENTS/*) = 0]}"/-->
+
+      <xapl:variable name="serviceAccessibilityDoc">
+        <SERVICE Name="{$serviceName}">
+          <xapl:value-of select="{$foldersDocClone/*}"/>
+        </SERVICE>
+      </xapl:variable>
+
+      <xapl:print select="{$serviceAccessibilityDoc}"/>
+
+      <xapl:choose>
+        <xapl:when test="$isAuditTrail = 'yes'">
+          <docutil:add select="$userAccessibleAuditTrailDocuments">
+            <xapl:value-of select="{$serviceAccessibilityDoc}"/>
+          </docutil:add>
+        </xapl:when>
+        <xapl:when test="$isError = 'yes'">
+          <docutil:add select="$userAccessibleErrorDocuments">
+            <xapl:value-of select="{$serviceAccessibilityDoc}"/>
+          </docutil:add>
+        </xapl:when>
+        <xapl:otherwise>
+          <docutil:add select="$userAccessibleDocuments">
+            <xapl:value-of select="{$serviceAccessibilityDoc}"/>
+          </docutil:add>
+        </xapl:otherwise>
+      </xapl:choose>
+
+      <!--xapl:if test="$isError = 'yes' ">
+          <xapl:set-variable name="userAccessibleErrorDocuments">
+            <xapl:clone select="$userAccessibleDocuments"/>
+          </xapl:set-variable>
+      </xapl:if-->
+      
+
+    </x2:command>
+  <!-- **********************************************************************
+     *********************************************************************** -->
+
+     <!--
+    <x2:command description="_" public="yes" name="canDo" >
+      <x2:param name="docName"/>  
+      <x2:param name="serviceName"/>  
+      <x2:param name="doAction"/>
+      
+      <x2:print select="{$doAction}"/>
+      <x2:print select="{$serviceName}"/>
+      <x2:print select="{$docName}"/>
+
+      <xapl:variable name="xCoreSrvcName">
+        <x2:get-xcore-service-name name="{$serviceName}"/>
+      </xapl:variable>
+
+      <xapl:print select="{$xCoreSrvcName}"/>
+      <xapl:variable name="docActivityName" select="{concat( $xCoreSrvcName , ':' , $docName )}"/>
+      <xapl:print select="{$docActivityName}"/>
+      
+      <xapl:variable name="docObj">
+        <ROOT>
+          <xapl:value-of select="{$userDocAccessControlList/UIFORM_ACTIVITY[@Value = $docActivityName ]}"/>
+        </ROOT>
+      </xapl:variable>
+      <xapl:if test="count($docObj/*) = 0">
+        <xapl:print select="'NNNNNN UUUUUUUUUUUUUUU LLLLLLLLLL LLLLLLLLLL'"/>
+      </xapl:if>
+      <xapl:if test="count($docObj/*) &gt; 0">
+        <xapl:print select="$docObj"/>
+      </xapl:if>
+            
+      <xapl:return>
+        <CAN_DO Value="yes"/>
+      </xapl:return>
+      
+    </x2:command>
+    -->
+<!-- **********************************************************************
+     *********************************************************************** -->
+     <!--
+    <x2:command public="yes" description="_" name="canUpdate">
+      <x2:param name="docName"/>
+      <x2:param name="serviceName"/>  
+
+      <xapl:return>
+        <x2:execute command="bcm.framework.authorization.auth_controller:canDo">
+          <x2:with-param name="serviceName" select="{$serviceName}"/>
+          <x2:with-param name="docName" select="{$docName}"/>
+          <x2:with-param name="doAction" select="'Update'"/>
+        </x2:execute>      
+      </xapl:return>
+      
+    </x2:command>
+    -->
+<!-- **********************************************************************
+     *********************************************************************** -->
+     <!--
+    <x2:command public="yes" description="_" name="canAdd">
+      <x2:param name="docName"/>
+      <x2:param name="serviceName"/>  
+
+      <xapl:return>
+        <x2:execute command="bcm.framework.authorization.auth_controller:canDo">
+          <x2:with-param name="serviceName" select="{$serviceName}"/>
+          <x2:with-param name="docName" select="{$docName}"/>
+          <x2:with-param name="doAction" select="'Add'"/>
+        </x2:execute>      
+      </xapl:return>            
+      
+    </x2:command>
+    -->
+<!-- **********************************************************************
+     *********************************************************************** -->
+     <!--
+    <x2:command public="yes" description="_" name="canRemove">
+      <x2:param name="docName"/>
+      <x2:param name="serviceName"/>  
+
+      <xapl:return>
+        <x2:execute command="bcm.framework.authorization.auth_controller:canDo">
+          <x2:with-param name="serviceName" select="{$serviceName}"/>
+          <x2:with-param name="docName" select="{$docName}"/>
+          <x2:with-param name="doAction" select="'Remove'"/>
+        </x2:execute>      
+      </xapl:return>            
+      
+    </x2:command>
+    -->
+<!-- **********************************************************************
+     *********************************************************************** -->
+
+</x2:commands>

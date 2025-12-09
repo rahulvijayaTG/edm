@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="62" ShowInBreadCrumbs="true" Version="1.0" Name="DataGrpDetails" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables/>
+  <nodes>
+    <start Name="start" Description="start">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="outXml">
+            <TO_XML SelectList="$thisParam"/>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{outXml,xml}">
+        <next_node Name="Data Group Details" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done" Description="done">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Data Group Details" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="SHOW" Template="dataGrpDetails.pgl" Description="Data Group Details Form" InputVar="{root,xml}">
+      <pre_actions>
+        <action>
+          <PRINTLN Value="$root: {$root}"/>
+          <PRINTLN Value="$thisParam: {$thisParam}"/>
+          <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+          <SET Var="maxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '10', $thisParam/MAX_ROWS/@Value)}"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+            </ROOT>
+          </TO_DOCVAR>
+          <REQUEST ServiceName="BPE_META" Name="getEntityDetails" AssignToVar="response">
+            <DATA_PKG Value="{$root/DATA_PKG/@Value}"/>
+            <ENTITY_NAME Value="{$root/DATA_GRP/@Value}"/>
+            <ENTITY_TYPE Value="DATA_GRP"/>
+          </REQUEST>
+          <APPEND_CHILDREN DocVar="pglFormInput" FromDocVar="response"/>
+          <IF_TEST Test="$thisParam/details_STEP_ID/@Value != 'business_rules_tab'">
+            <THEN>
+              <!-- code for data elements -->
+              <SET Var="sortBy" FromValue="{ifElse($thisParam/SORT_BY/@Value = null or $thisParam/SORT_BY/@Value = 'ID', 'ENTITY_NAME', $thisParam/SORT_BY/@Value)}"/>
+              <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+              <TO_DOCVAR AssignToVar="orderBy">
+                <ORDER_BY>
+                </ORDER_BY>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="orderProp">
+                <TEMP_PROP Sort="{$sortOrder}"/>
+              </TO_DOCVAR>
+              <SET_NAME Value="{$orderProp}" FromValue="{$sortBy}"/>
+              <ADD_CHILD DocVar="orderBy" ChildDocVar="orderProp"/>
+              <REQUEST ServiceName="BPE_META" Name="getMetaDataSearchResult" AssignToVar="response" UserId="{$userId}" ReturnRowCount="yes" MaxRows="{$maxRows}" StartAtRow="{$paginateStart}">
+                <FILTER Name="DATA_PKG">
+                  <DATA_PKG Value="{$root/DATA_PKG/@Value}" MatchBy="EQUAL"/>
+                </FILTER>
+                <FILTER Name="DATA_GRP">
+                  <DATA_GRP Value="{$root/DATA_GRP/@Value}" MatchBy="EQUAL"/>
+                </FILTER>
+                <FILTER Name="ENTITY_TYPE">
+                  <ENTITY_TYPE Value="DATA_ELMNT" MatchBy="EQUAL"/>
+                </FILTER>
+                <TO_XML Select="$orderBy"/>
+              </REQUEST>
+              <APPEND_CHILDREN DocVar="pglFormInput" FromDocVar="response"/>
+            </THEN>
+            <ELSE>
+              <!-- code for business rules -->
+              <GET_DOCUMENT ServiceName="BPE_META" Name="DATA_RULE_TEMPLATE" AssignToVar="response" UserId="{$userId}" ReturnRowCount="yes" MaxRows="{$maxRows}" StartAtRow="{$paginateStart}">
+                <SELECT>
+                  <RULE_ID/>
+                  <RULE_NAME/>
+                  <CATEGORY/>
+                  <TOUCH_DATE/>
+                  <RULE_TYPE/>
+                  <DESCRIPTION/>
+                </SELECT>
+                <SERVICE Value="{$root/DATA_PKG/@Value}"/>
+                <DOCUMENT Value="{$root/DATA_GRP/@Value}"/>
+                <ORDER_BY>
+                  <RULE_NAME Sort="Ascending"/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+              <APPEND_TO_XML Select="$pglFormInput">
+                <MDS TotalRowCount="{$response/@TotalRowCount}">
+                  <TO_XML SelectList="$response/*"/>
+                </MDS>
+              </APPEND_TO_XML>
+            </ELSE>
+          </IF_TEST>
+          <SET DocVar="pglFormInput" Property="DATA_PKG" FromValue="{$root/DATA_PKG/@Value}"/>
+          <SET DocVar="pglFormInput" Property="DATA_GRP" FromValue="{$root/DATA_GRP/@Value}"/>
+        </action>
+      </pre_actions>
+      <if_cond Value="true()">
+        <next_nodes>
+          <next_node Name="done" Description=""/>
+        </next_nodes>
+      </if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start location="107,117" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start>
+      <done location="402,196" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done>
+      <mgcnode Name="Data Group Details" location="259,137" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Data Group Details" font="Times New Roman,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="139,139" endpoint="259,160" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="227,137,4,4" ctrlRect2="167,158,4,4"/>
+      </start>
+      <mgcnode Name="Data Group Details">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="291,160" endpoint="402,218" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="371,158,4,4" ctrlRect2="316,216,4,4" textRect="333,185,25,8">
+          <textProps text="Done" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Times New Roman,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="0">
+      <textProps text="Pipeline" font="Times New Roman,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables/>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands description="user_search_view" 
+             xmlns:FUNCTION="http://www.i2.com/FUNCTION"    xmlns:REMOVE="http://www.i2.com/REMOVE" 
+             xmlns:cfg="http://www.i2.com/configurability"      xmlns:core="http://www.i2.com/core" 
+             xmlns:omx="http://www.i2.com/omx"                  xmlns:perm="http://www.i2.com/permissibility" 
+             xmlns:util="http://www.i2.com/util"                        xmlns:web="http://www.i2.com/web" 
+             xmlns:x2="http://www.i2.com/x2"                        xmlns:xapl="http://www.i2.com/xapl" 
+             xmlns:xcore="http://www.i2.com/xcore"              xmlns:xcore-db="http://www.i2.com/xcore-db" 
+             xmlns:docutil="http://www.i2.com/docutil"              xmlns:xudl="http://www.i2.com/xudl"
+             xmlns:identity="http://www.i2.com/identity">
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+    <xapl:print select="$this"/>
+    <x2:param name="this" select="$this"/>
+    <xapl:if test="$this/MODE/@Value = 'START'">        
+      <docutil:remove select="$this/MODE"/>
+      <x2:execute command="bcm.context.controller:cleanContext"/>
+    </xapl:if>
+    
+    <xapl:variable name="pageVar">
+        <xapl:choose>
+            <xapl:when test="string-length($this/USER_GROUP_ID/@Value) &gt; 0 and $this/WHERE/@Value = 'VIEW_USERS' ">
+                <xapl:value-of select="'user_admin_search'"/>
+            </xapl:when>
+            <xapl:otherwise>
+                <xapl:value-of select="'user_search_view'"/>
+            </xapl:otherwise>
+        </xapl:choose>
+    </xapl:variable>
+    <!-- BREADCRUMBS AT TOP OR AFTER CLEAN-CONTEXT-->
+    <x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+      <x2:with-param name="display" select="'User_Search'"/>
+      <x2:with-param name="page" select="{$pageVar}"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+    
+    <docutil:set select="$this">
+      <DO_SEARCH Value="Yes"/>
+      <SERVICE Value="UserSecurity"/>
+      <FORM_NAME Value="USER_SEARCH_FORM"/>
+    </docutil:set>
+    
+    <!-- 'STATUS' field being checkbox, $this needs to be updated when the field not checked(made false) -->
+    <xapl:if test="count($this/F_USER_PROFILE_STATUS) = 0">
+      <docutil:add select="$this">
+        <F_USER_PROFILE_STATUS Value="false"/>
+      </docutil:add>
+    </xapl:if>    
+    
+    <xapl:variable name="formConfig">
+        <xapl:if test="string-length($this/USER_GROUP_ID/@Value) = 0">
+            <xapl:value-of select="'omx.user_admin.user_search_view:getFormConfig'"/>
+        </xapl:if>
+    </xapl:variable>
+        
+    <xapl:variable name="userSearchForm">
+        <x2:execute command="bcm.framework.queryform.Form:getFormContainer">
+          <x2:with-param name="this" select="$this"/>
+          <x2:with-param name="pSearchParam" select="$searchParam"/>
+          <x2:with-param name="pFormName" select="'USER_SEARCH_FORM'"/>
+          <x2:with-param name="pServiceName" select="'UserSecurity'"/>          
+          <x2:with-param name="pSearchFormConfigSource" select="{$formConfig}"/>   
+          <x2:with-param name="pSearchReportConfigSource" select="'omx.user_admin.user_search_view:getReportConfig'"/>
+          <x2:with-param name="pReportDataSource" select="'omx.user_admin.user_search_view:getReportData'"/>
+        </x2:execute>
+    </xapl:variable>    
+    
+    <xapl:return>
+      <!-- Page Header as breadcrumbs-->
+      <x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>
+      <!-- Container-->
+      <x2:execute command="omx.user_admin.user_search_view:getContainer">
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+      <xapl:value-of select="$userSearchForm"/>
+      <!-- return parameters-->
+      <xapl:value-of select="$this/*[string-length(@Value) &gt; 0]"/>
+      <xapl:value-of select="$context"/>
+    </xapl:return>
+  </x2:command>
+
+ <!-- ********************************************************************** 
+    *********************************************************************** -->  
+  <x2:command public="yes" description="_" name="getFormConfig">      
+    <xapl:print select="$this" />       
+    <xapl:variable name="request"/>
+    <xapl:set-variable name="request" select="{concat('//', 'UserSecurity', '/getFormData')}"/>
+    <xapl:return>
+      <FORM Name="search_form" Action="UserSearchView.jsp" method="POST" Target="appFrame">
+        <!--get all search form fields -->
+        <x2:execute command="bcm.framework.queryform.Form:getFormSearchFields">
+          <x2:with-param name="this" select="$this"/>
+        </x2:execute>
+        <!-- Hidden Fields : general fields-->
+        <x2:execute command="bcm.framework.queryform.Form:getFormSearchHiddenFields">
+          <x2:with-param name="this" select="$this"/>
+        </x2:execute>
+        <BUTTONS>
+          <BUTTON Name="search" DisplayText="Search" OnClick="javascript:onSearch()" Emphasized="no"/>
+        </BUTTONS>
+      </FORM>
+    </xapl:return>
+  </x2:command>
+
+   <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportConfig">
+    <x2:param name="this" select="$this"/>
+    <xapl:variable name="selectable" select="'Single'"/>
+    <xapl:if test="$this/WHERE/@Value = 'ASSIGN_USERS' ">
+        <xapl:set-variable name="selectable" select="'All'"/>
+    </xapl:if>
+    <xapl:return>
+      <REPORT Action="UserSearchView.jsp" Scrollable="yes" ScrollableContainer="no" Selectable="{$selectable}" ShowFilter="no" Id="USER_PROFILE.ID" SelectedId="SELECTED_USER_ID" PagingTitle="yes">
+        <FIELDS>
+          <FIELD Name="UPDATE_ALL" DisplayType="Hidden" Value="NO"/>
+          <FIELD Name="USER_GROUP_ID" DisplayType="Hidden" Value="{$this/USER_GROUP_ID/@Value}"/>
+          <FIELD Name="WHERE" DisplayType="Hidden" Value="{$this/WHERE/@Value}"/>
+          <!-- get form's report fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+          <!-- get hidden Fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportHiddenFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>          
+        </FIELDS>
+        <BUTTONS>
+            <xapl:choose>
+                <xapl:when test="string-length($this/USER_GROUP_ID/@Value) = 0">
+                      <BUTTON DisplayText="Reset Password" OnClick="javascript:onResetPassword();" DisableOnClick="true" Disabled="report"/>
+                      <DIVIDER/>
+                      <BUTTON DisplayText="User Details" OnClick="javascript:edit();" DisableOnClick="true" Disabled="report"/>
+                </xapl:when>
+                <xapl:otherwise>
+                    <xapl:choose>
+                        <xapl:when test="$this/WHERE/@Value = 'ASSIGN_USERS'">
+                            <BUTTON DisplayText="Add to Group" OnClick="javascript:addUsersToGroup();" DisableOnClick="true" Disabled="report" Emphasized="yes"/>
+                        </xapl:when>
+                        <xapl:otherwise>
+                            <BUTTON DisplayText="User Details" OnClick="javascript:edit();" DisableOnClick="true" Disabled="report"/>
+                        </xapl:otherwise>   
+                    </xapl:choose>                      
+                    <DIVIDER/>
+                    <BUTTON DisplayText="Done" OnClick="javascript:viewUsersDone();" DisableOnClick="true"/>
+                </xapl:otherwise>
+            </xapl:choose>  
+        </BUTTONS>
+        <PAGINATION/>
+      </REPORT>
+    </xapl:return>
+  </x2:command>
+  
+ <!-- ********************************************************************** 
+  *********************************************************************** -->  
+  <x2:command public="yes" description="_" name="getReportData">
+    <x2:param name="this"/>
+
+    <xapl:variable name="xfilters">     <ROOT/>   </xapl:variable>        
+    <xapl:variable name="identityUserId"> <identity:get-user-id/> </xapl:variable>    
+      
+    <xapl:set-variable name="xfilters">
+      <FILTER Name="STATUS" Document="USER_PROFILE"> 
+        <xapl:choose>
+          <xapl:when test=" ($this/F_USER_PROFILE_STATUS/@Value = 'true') ">
+            <OR>
+              <xcore:search-by property="STATUS" value="INACTIVE" matchby="EQUAL"/>
+              <xcore:search-by property="STATUS" value="ACTIVE" matchby="EQUAL"/>
+            </OR>
+          </xapl:when>
+          <xapl:otherwise>
+            <xcore:search-by property="STATUS" value="ACTIVE"/>
+          </xapl:otherwise>
+        </xapl:choose>
+      </FILTER>
+            
+      <xapl:if test="{string-length($this/F_USER_GRP_PROFILE_GRP_NAME/@Value) &gt; 0}">
+          <FILTER Name="GRP_NAME" Document="USER_GRP_PROFILE">
+              <xcore:search-by property="GRP_NAME" value="{$this/F_USER_GRP_PROFILE_GRP_NAME/@Value}" matchby="STARTS_WITH"/>
+          </FILTER>
+      </xapl:if>    
+      
+      <xapl:if test="{string-length($this/F_USER_PROFILE_LOGIN_NAME/@Value) &gt; 0}">
+          <FILTER Name="LOGIN_NAME" Document="USER_PROFILE">
+              <xcore:search-by property="LOGIN_NAME" value="{$this/F_USER_PROFILE_LOGIN_NAME/@Value}" matchby="STARTS_WITH"/>
+          </FILTER>
+      </xapl:if>    
+
+      <xapl:if test="{string-length($this/F_CONTACT_FIRST_NAME/@Value) &gt; 0}">
+          <FILTER Name="FIRST_NAME" Document="CONTACT">
+              <xcore:search-by property="FIRST_NAME" value="{$this/F_CONTACT_FIRST_NAME/@Value}" matchby="STARTS_WITH"/>
+          </FILTER>
+      </xapl:if>    
+
+      <xapl:if test="{string-length($this/F_CONTACT_LAST_NAME/@Value) &gt; 0}">
+          <FILTER Name="LAST_NAME" Document="CONTACT">
+              <xcore:search-by property="LAST_NAME" value="{$this/F_CONTACT_LAST_NAME/@Value}" matchby="STARTS_WITH"/>
+          </FILTER>
+      </xapl:if>          
+
+      <!-- do not bring the user details for the logged-in user -->
+      <FILTER Name="ID" Document="USER_PROFILE">
+          <xcore:search-by property="ID" value="{$identityUserId}" matchby="NOT_EQUAL"/>
+      </FILTER>
+
+      <!-- if the user comes from the user-group screen -->
+      <xapl:if test="{string-length($this/USER_GROUP_ID/@Value) &gt; 0}">
+          <FILTER Name="ID" Document="USER_GRP_PROFILE">
+            <xapl:if test="$this/WHERE/@Value = 'ASSIGN_USERS' ">
+              <xcore:search-by property="ID" value="{$this/USER_GROUP_ID/@Value}" matchby="NOT_EQUAL"/>
+            </xapl:if>
+            <xapl:if test="$this/WHERE/@Value = 'VIEW_USERS' ">
+              <xcore:search-by property="ID" value="{$this/USER_GROUP_ID/@Value}" matchby="EQUAL"/>
+            </xapl:if>
+          </FILTER>
+      </xapl:if>
+      
+    </xapl:set-variable>
+
+    <xapl:variable name="request" select="{concat('//' , $this/SERVICE[1]/@Value, '/', 'getFormData')}"/>
+
+    <xapl:variable name="response">
+      <xapl:choose>        
+        <xapl:when test="$this/DO_SEARCH/@Value = 'Yes' ">              
+          <xcore:execute-method name="{$request}" 
+                        StartAtRow="{$this/START_COUNT/@Value}" 
+                        MaxRows="{$this/MAX_ROWS/@Value}" 
+                        ReturnRowCount="yes" entireResponse="true">            
+
+            <ID Value="{$currentForm/@Id}"/>
+            
+            <xapl:value-of select="$xfilters"/>
+            
+            <xapl:if test="string-length($this/*[name() = 'SORT_BY']/@Value) > 0
+                  and $currentForm/RESULT_PROPERTIES/RESULT_PROPERTY
+                  [@Property = substring-after( ($this/*[name() = 'SORT_BY']/@Value) , '.' )]
+                  and $currentForm/RESULT_PROPERTIES/RESULT_PROPERTY
+                  [@Document = substring-before( ($this/*[name() = 'SORT_BY']/@Value) , '.' )]">                  
+              <ORDER_BY>
+                <docutil:element name="{$this/*[name() = 'SORT_BY']/@Value}" 
+                    Document="{substring-before($this/*[name() = 'SORT_BY']/@Value, '.' )}" 
+                    Sort="{$this/*[name() = 'SORT_ORDER']/@Value}"/>
+              </ORDER_BY>
+            </xapl:if>            
+         </xcore:execute-method>
+        </xapl:when>
+        <xapl:otherwise/>
+      </xapl:choose>    
+    </xapl:variable>
+    
+    <docutil:add select="$response/RESPONSE">
+          <TOTAL_RECORD_COUNT Value="{$response/RESPONSE/@TotalRowCount}"/>
+          <START_AT_ROW Value ="{$this/START_COUNT[position() = 1 ] /@Value}"/>
+    </docutil:add>
+    <!-- TODO Do this dynamically only if timingStats are on. -->
+    <docutil:remove select="$response/TIMING_STATS"/>
+    <docutil:remove select="$response/RESPONSE/TIMING_STATS"/>
+    <xapl:return>
+          <xapl:value-of select="{$response/RESPONSE}"/>
+    </xapl:return>    
+  </x2:command>
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->  
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pPage"/>
+    <xapl:variable name="helpUrl">
+      <web:get-page name="user_admin_search_help"/>
+    </xapl:variable>
+    <xapl:return>
+      <CONTAINER Scrollable="yes">
+        <HELP Url="{$helpUrl}"/>                          
+        <STEP Name="ViewForm" DisplayText="User_Search" OnClick="{$pages:user_search_view}" Selected="true"/>
+      </CONTAINER>
+    </xapl:return>
+  </x2:command>
+  
+  <!-- **********************************************************************
+  ************************************************************************ -->
+</x2:commands>

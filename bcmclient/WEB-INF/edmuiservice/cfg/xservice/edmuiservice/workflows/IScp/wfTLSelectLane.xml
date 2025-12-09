@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="51" ShowInBreadCrumbs="true" Version="1.0" Name="wfTLSelectLane" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="fieldName" Type="string" Comment=""/>
+    <variable Name="popField" Type="string" Comment=""/>
+    <variable Name="select" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+        <action>
+          <SET DocVar="fieldName" FromValue="{$thisParam/FIELD_NAME/@Value}"/>
+          <SET DocVar="popField" FromValue="{$thisParam/POP_LANE_NAME/@Value}"/>
+          <SET DocVar="srcLocIdn" FromValue="{$thisParam/SRC_LOC_IDN/@Value}"/>
+          <SET DocVar="select" FromValue="{$thisParam/SELECTABLE/@Value}"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Select Lane" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Select Lane" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE" Template="iscpTLSelectTLane.pgl">
+      <pre_actions>
+        <action>
+          <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+          <SET Var="pgMaxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '10', $thisParam/MAX_ROWS/@Value)}"/>
+          <SET DocVar="thisParam" Property="SRCH_STATE" FromValue="ACTIVE"/>
+          <SET Var="sortBy" FromValue="{ifElse((($thisParam/SORT_BY/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID')), 'TransportLaneIdentifier', $thisParam/SORT_BY/@Value)}"/>
+          <SET Var="sortOrder" FromValue="{ifElse((($thisParam/SORT_ORDER/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID')), 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+          <MAKE_INSTANCE_DOCUMENT Name="{$sortBy}" AssignToVar="sortByTag"/>
+          <SET DocVar="sortByTag" Attribute="Sort" FromValue="{$sortOrder}"/>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="tlaneFilters">
+            <SRCH_SRC_LOC MultiValued="true"/>
+            <SRCH_SRC_LOC_NAME/>
+            <SRCH_SRC_LOC_DESC/>
+            <SRCH_SRC_LOC_TYPE/>
+            <SRCH_DESTN_LOC MultiValued="true"/>
+            <SRCH_DESTN_LOC_NAME/>
+            <SRCH_DESTN_LOC_DESC/>
+            <SRCH_DESTN_LOC_TYPE/>
+            <SRCH_TL_MODE MultiValued="true"/>
+          </FORM_SEARCH_FILTER>
+          <APPEND_TO_XML DocVar="tlaneFilters">
+            <ORDER_BY>
+              <TO_XML DocVar="sortByTag"/>
+            </ORDER_BY>
+          </APPEND_TO_XML>
+          <REQUEST Name="readTransLanes" ServiceName="BCM_MASTER" AssignToVar="tlSrchResult" ReturnRowCount="yes">
+            <MaxRows Value="{$pgMaxRows}"/>
+            <StartAtRow Value="{$paginateStart}"/>
+            <IS_SEARCH Value="YES"/>
+            <TO_XML SelectList="$tlaneFilters/*"/>
+            <FILTER Name="SRCH_DESTN_LOC_CLAS">
+              <SRCH_DESTN_LOC_CLAS Value="PLNT_NUM" MatchBy="EQUAL"/>
+            </FILTER>
+            <FILTER Name="SRCH_SRC_LOC_CLAS">
+              <SRCH_SRC_LOC_CLAS Value="PLNT_NUM" MatchBy="EQUAL"/>
+            </FILTER>
+            <FILTER Name="SRCH_STATE">
+              <SRCH_STATE Value="ACTIVE" MatchBy="EQUAL"/>
+            </FILTER>
+            <ORDER_BY>
+              <TO_XML DocVar="sortByTag"/>
+            </ORDER_BY>
+          </REQUEST>
+          <TO_DOCVAR AssignToVar="formattedLocTypes">
+            <LOC_TYPES/>
+          </TO_DOCVAR>
+          <FOR_EACH CurrentElement="curLocType" SelectList="$tlSrchResult/LOC_TYPES/*">
+            <APPEND_TO_XML DocVar="formattedLocTypes">
+              <OPTION Value="{concat($curLocType/LocationClassMnemonicValue/@Value,' - ',$curLocType/LocationClassName/@Value)}" Id="{$curLocType/LocationClassMnemonicValue/@Value}"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <SET DocVar="prevSel" FromValue=""/>
+          <FOR_EACH SelectList="$thisParam/*" CurrentElement="curElem">
+            <IF_TEST Test="name($curElem) = 'SELECTED_TL_ID'">
+              <THEN>
+                <SET DocVar="prevSel" FromValue="{ifElse(contains(prevSel,$curElem/@Value),'',concat($prevSel,',',$curElem/@Value))}"/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <SEARCH_FIELDS>
+                <TO_XML SelectList="$thisParam/SRCH_SRC_LOC"/>
+                <TO_XML SelectList="$thisParam/SRCH_SRC_LOC_NAME"/>
+                <TO_XML SelectList="$thisParam/SRCH_SRC_LOC_DESC"/>
+                <TO_XML SelectList="$thisParam/SRCH_SRC_LOC_TYPE"/>
+                <TO_XML SelectList="$thisParam/SRCH_DESTN_LOC"/>
+                <TO_XML SelectList="$thisParam/SRCH_DESTN_LOC_NAME"/>
+                <TO_XML SelectList="$thisParam/SRCH_DESTN_LOC_DESC"/>
+                <TO_XML SelectList="$thisParam/SRCH_DESTN_LOC_TYPE"/>
+                <TO_XML SelectList="$thisParam/SRCH_TL_MODE"/>
+                <FIELD_NAME Value="{$fieldName}"/>
+                <POP_LANE_NAME Value="{$popField}"/>
+                <SRC_LOC_IDN Value="{$srcLocIdn}"/>
+                <PREV_SEL2 Value="{substringAfter($prevSel,',')}"/>
+              </SEARCH_FIELDS>
+              <START_AT_ROW Value="{$paginateStart}"/>
+              <SORT_BY Value="{$sortBy}"/>
+              <SORT_ORDER Value="{$sortOrder}"/>
+              <TotalRowCount Value="{$tlSrchResult/TL_DETAILS/@TotalRowCount}"/>
+              <TL_MODES>
+                <OPTION Value="Select All" Id="*"/>
+                <DROP_DOWN_OPTIONS SelectList="$tlSrchResult/TL_MODE/P_TransportMode" Id="TransportModeMnemonicValue" Value="TransportModeMnemonicValue"/>
+              </TL_MODES>
+              <LOC_TYPES>
+                <OPTION Value="Select All" Id="*"/>
+                <TO_XML SelectList="$formattedLocTypes/*"/>
+                <!--        <DROP_DOWN_OPTIONS SelectList="$tlSrchResult/LOC_TYPES/P_LocationClass" Id="LocationClassMnemonicValue" Value="LocationClassName"/>-->
+              </LOC_TYPES>
+              <TO_XML SelectList="$tlSrchResult/*"/>
+              <SELECT Value="{$select}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select Lane" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='select'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Select_Src_Loc_id'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Select_Destn_Loc_id'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done4" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done4">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="196,165" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <mgcnode Name="Select Lane" location="279,90" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Select Lane" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done4 location="385,162" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done4" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done4>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="212,165" endpoint="279,112" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="210,124,4,4" ctrlRect2="226,110,4,4"/>
+      </start2>
+      <mgcnode Name="Select Lane">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="295,90" endpoint="295,90" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="293,13,4,4" ctrlRect2="338,48,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="311,112" endpoint="401,162" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="385,88,4,4" ctrlRect2="401,156,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="3" textAttrsKey0="fieldName : string" textAttrsKey1="popField : string" textAttrsKey2="select : string">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="fieldName" Type="string" Comment=""/>
+        <variable Name="popField" Type="string" Comment=""/>
+        <variable Name="select" Type="string" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

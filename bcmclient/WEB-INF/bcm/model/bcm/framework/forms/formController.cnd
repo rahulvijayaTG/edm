@@ -1,0 +1,538 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:identity="http://www.i2.com/identity" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="init">
+    <xapl:variable name="requestParams" resolver="session" global="true"/>
+    <xapl:variable name="groupEditMetaData" resolver="session" global="true"/>
+    <x2:execute command="bcm.framework.forms.formController:initSessionVars"/>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="initSessionVars" public="yes">
+    <x2:execute command="bcm.framework.forms.formController:initRequestParams"/>
+    <x2:execute command="bcm.framework.forms.formController:initGroupEditMetaData"/>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="initRequestParams" public="yes">
+    <xapl:set-variable name="requestParams"/>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="initGroupEditMetaData" public="yes">
+    <xapl:set-variable name="groupEditMetaData"/>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="updateFormProperties" public="yes">
+        <xapl:print>
+         MASS UPDATE :::
+         <xapl:value-of select="$this"/>
+        </xapl:print>
+    <xapl:variable name="updateProperties">
+      <x2:execute command="bcm.framework.forms.formController:getUpdateProperties">
+        <x2:with-param name="tableName" select="$this/TABLE_NAME/@Value"/>
+        <x2:with-param name="formId" select="{$this/FORM_ID/@Value}"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:print>
+       updateFormProperties::
+      <xapl:value-of select="$updateProperties"/>
+    </xapl:print>
+    <xapl:variable name="status">
+      <xapl:choose>
+        <xapl:when test="$this/UPDATE_MODE/@Value = 'MULTIPLE'">
+          <x2:execute command="bcm.framework.forms.formController:updateDocument">
+            <x2:with-param name="this" select="$this"/>
+            <x2:with-param name="updateProperties" select="$updateProperties"/>
+          </x2:execute>
+        </xapl:when>
+        <xapl:otherwise>
+          <x2:execute command="bcm.framework.forms.formController:updateForm">
+            <x2:with-param name="this" select="$this"/>
+            <x2:with-param name="updateProperties" select="$updateProperties"/>
+          </x2:execute>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+
+    <web:display-page>
+      <xapl:choose>
+        <xapl:when test="name($status) = 'SUCCESS_MESSAGE'">
+          <web:get-page name="{$this/PAGE/@Value}">
+            <xapl:if test="string-length($this/FILTER_TEXT/@Value) &gt; 0">
+              <FILTER_TEXT Value="{$this/FILTER_TEXT/@Value}"/>
+            </xapl:if>
+            <xapl:if test="string-length($this/START_COUNT/@Value) &gt; 0">
+              <START_COUNT Value="{$this/START_COUNT/@Value}"/>
+            </xapl:if>
+            <DO_SEARCH Value="Yes"/>
+            <xapl:value-of select="$status"/>
+            <USE_OLD_FILTER Value="TRUE"/>
+          </web:get-page>
+        </xapl:when>
+        <xapl:otherwise>
+          <web:get-page name="groupEditForm">
+            <!--<xapl:value-of select="$this/*"/>-->
+            <xapl:value-of select="$status"/>
+          </web:get-page>
+        </xapl:otherwise>
+      </xapl:choose>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="getFilters">
+    <x2:param name="this" select="$this"/>
+    <xapl:return>
+      <xapl:if test="count($filterXml/*) > 0">
+        <FILTER_DETAILS>
+          <xapl:value-of select="$filterXml/LOGICAL"/>
+        </FILTER_DETAILS>
+      </xapl:if>
+            <xapl:value-of select="$filtersApplied"/>
+            <!--xapl:for-each varName="column" select="$currentForm/RESULT_PROPERTIES/RESULT_PROPERTY">
+        <xapl:variable name="propName" select="$column/@Property"/>
+        <xapl:variable name="docName" select="$column/@Document"/>
+        <xapl:variable name="type" select="$column/@Type"/>
+        <xapl:variable name="filterName" select="concat('F_',$column/@Document , '.', $column/@Property)"/>
+        <xapl:variable name="filterNameForDate" select="concat('F_',$column/@Document , '_', $column/@Property)"/>
+        <xapl:if test="{string-length($this/*[name() = $filterName]/@Value) != 0 and ($type = 'string' or $type = 'LongString') }">
+          <FILTER Name="{$propName}" Document="{$docName}">
+            <xcore:search-by property="{$propName}" value="{$this/*[name() = $filterName]/@Value}"/>
+          </FILTER>
+        </xapl:if>
+        <xapl:if test="{string-length($this/*[name() = $filterName]/@Value) != 0  and ($type = 'int' or $type = 'float')}">
+          <FILTER Name="{$propName}" Document="{$docName}">
+            <xcore:search-by property="{$propName}" value="{$this/*[name() = $filterName]/@Value}" matchby="{$this/*[name() = concat($filterName , '_OPERATOR')]/@Value}"/>
+          </FILTER>
+        </xapl:if>
+        <xapl:if test="{$type = 'date' or $type = 'datetime'}">
+          <xapl:if test="string-length($this/*[name() = concat($filterNameForDate , '_DS')]/@Value) > 0 ">
+            <FILTER Name="{$propName}" Document="{$docName}">
+              <xcore:search-by property="{$propName}" value="{$this/*[name() = concat($filterNameForDate, '_DS')]/@Value}" matchby="GREATER_EQUAL"/>
+            </FILTER>
+          </xapl:if>
+          <xapl:if test="string-length($this/*[name() = concat($filterNameForDate , '_DE')]/@Value) > 0 ">
+            <xapl:variable name="toDate">
+              <xapl:value-of select="concat($this/*[name() = concat($filterNameForDate, '_DE')]/@Value,' 23:59:59'"/>
+            </xapl:variable>
+            <FILTER Name="{$propName}" Document="{$docName}">
+              <xcore:search-by property="{$propName}" value="{$toDate}" matchby="LESS_EQUAL"/>
+            </FILTER>
+          </xapl:if>
+        </xapl:if>
+            </xapl:for-each-->
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="updateForm">
+    <x2:param name="this"/>
+    <x2:param name="updateProperties"/>
+    <xapl:print select="$this"/>
+    <xapl:variable name="param">
+      <DATA>
+        <ID Value="{$this/FORM_ID/@Value}"/>
+        <x2:execute command="bcm.framework.forms.formController:getFilters">
+          <x2:with-param name="this" select="$this"/>
+        </x2:execute>
+        <xapl:variable name="updateDocument">
+          <UPDATE_DOCUMENTS>
+            <xapl:for-each select="$currentForm/UPDATE_DOCUMENTS/DOCUMENT" varName="child">
+              <UPDATE_DOCUMENT Name="{$child/@Name}"/>
+            </xapl:for-each>
+          </UPDATE_DOCUMENTS>
+        </xapl:variable>
+        
+        <!-- For each TABLE in $updateProperties, fill in the appropriate UPDATE_DOCUMENT structure with its properties to be updated -->
+        <xapl:for-each select="$updateProperties/TABLE" varName="child">
+          <xapl:for-each select="$child/PROPERTY" varName="currentProperty">
+                        <!--xapl:variable name="requestPropertyName" select="concat($child/@Name, '.', $currentProperty/@Name)"/>
+                        <xapl:variable name="requestPropertyNameOfDate" select="concat($child/@Name, '_', $currentProperty/@Name)"/-->
+                        <xapl:variable name="requestPropertyName" select="$currentProperty/@Name"/>
+                        <xapl:variable name="requestPropertyNameOfDate" select="$currentProperty/@Name"/>
+
+            <!-- Do an update IFF checkbox corresponding to this field is present -->
+                        <xapl:if test="$this/*[name() = concat($requestPropertyName, '_cb')]/@Value = 'on'  or $this/*[name() = concat($requestPropertyNameOfDate, '_cb')]/@Value = 'on'">
+              <xapl:choose>
+                                <xapl:when test="$currentProperty/@Type = 'int' or $currentProperty/@Type = 'float' or $currentProperty/@Type = 'double'">
+                  <xapl:variable name="operator" select="$this/*[name() = concat($requestPropertyName, '_OPERATOR')]/@Value"/>
+                  <xapl:variable name="operatorValue" select="$this/*[name() = concat($requestPropertyName, '_OPERATOR_VALUE')]/@Value"/>
+                  <xapl:print select="$operatorValue"/>
+                  <xapl:print select="$currentProperty"/>
+                  <xapl:choose>
+                    <!-- When checkbox is selected and no value has been entered, just update the property with null -->
+                    <xapl:when test="string-length($operatorValue) = 0">
+                      <docutil:add select="$updateDocument/UPDATE_DOCUMENT[@Name = $child/@Name]">
+                        <docutil:element name="{$currentProperty/@Name}"/>
+                      </docutil:add>
+                    </xapl:when>
+                    <!-- When checkbox is selected and some value has been entered, do processing -->
+                    <xapl:when test="string-length($operatorValue) &gt; 0">
+                      <xapl:variable name="expression">
+                        <x2:execute command="bcm.framework.forms.formController:getExpression">
+                          <x2:with-param name="operator" select="$operator"/>
+                          <x2:with-param name="operatorValue" select="$operatorValue"/>
+                          <x2:with-param name="currentProperty" select="$currentProperty"/>
+                        </x2:execute>
+                      </xapl:variable>
+                      <xapl:choose>
+                        <xapl:when test="$operator = 'SET'">
+                          <docutil:add select="$updateDocument/UPDATE_DOCUMENT[@Name = $child/@Name]">
+                            <docutil:element name="{$currentProperty/@Name}" Value="{$operatorValue}"/>
+                          </docutil:add>
+                        </xapl:when>
+                        <xapl:otherwise>
+                          <docutil:add select="$updateDocument/UPDATE_DOCUMENT[@Name = $child/@Name]">
+                            <docutil:element name="{$currentProperty/@Name}" Expression="{$expression}"/>
+                          </docutil:add>
+                        </xapl:otherwise>
+                      </xapl:choose>
+                                        </xapl:when>
+                                    </xapl:choose>
+                                </xapl:when>
+                                <xapl:when test="$currentProperty/@Type = 'date' or $currentProperty/@Type = 'datetime' ">
+                                    <xapl:choose>
+                                        <xapl:when test="string-length($this/*[name() = $requestPropertyNameOfDate]/@Value) &gt; 0">
+                                            <docutil:add select="$updateDocument/UPDATE_DOCUMENT[@Name = $child/@Name]">
+                                                <docutil:element name="{$currentProperty/@Name}" Value="{$this/*[name() = $requestPropertyNameOfDate]/@Value}"/>
+                                            </docutil:add>
+                                        </xapl:when>
+                                        <xapl:when test="string-length($this/*[name() = $requestPropertyNameOfDate]/@Value) = 0">
+                                            <docutil:add select="$updateDocument/UPDATE_DOCUMENT[@Name = $child/@Name]">
+                                                <docutil:element name="{$currentProperty/@Name}"/>
+                                            </docutil:add>
+                    </xapl:when>
+                  </xapl:choose>
+                </xapl:when>
+                <xapl:otherwise>
+                  <!-- String or other property -->
+                  <xapl:choose>
+                    <xapl:when test="string-length($this/*[name() = $requestPropertyName]/@Value) &gt; 0">
+                      <docutil:add select="$updateDocument/UPDATE_DOCUMENT[@Name = $child/@Name]">
+                        <docutil:element name="{$currentProperty/@Name}" Value="{$this/*[name() = $requestPropertyName]/@Value}"/>
+                      </docutil:add>
+                    </xapl:when>
+                    <xapl:when test="string-length($this/*[name() = $requestPropertyName]/@Value) = 0">
+                      <docutil:add select="$updateDocument/UPDATE_DOCUMENT[@Name = $child/@Name]">
+                        <docutil:element name="{$currentProperty/@Name}"/>
+                      </docutil:add>
+                    </xapl:when>
+                  </xapl:choose>
+                </xapl:otherwise>
+              </xapl:choose>
+            </xapl:if>
+          </xapl:for-each>
+        </xapl:for-each>
+        <xapl:value-of select="$updateDocument"/>
+      </DATA>
+    </xapl:variable>
+    <!-- Remove UPDATE_DOCUMENT nodes which don't have any properties to be updated; not needed; server throws error if empty tags are present -->
+    <docutil:remove select="$param/UPDATE_DOCUMENTS/UPDATE_DOCUMENT[count(*) = 0]"/>
+    <xapl:print select="$param"/>
+
+    <xapl:variable name="serverResponse">
+      <xcore:execute-method name="//BCMMasterService/updateFormData" entireResponse="true">
+        <xapl:value-of select="{$param/*}"/>
+      </xcore:execute-method>
+    </xapl:variable>
+    <xapl:print select="$serverResponse"/>
+
+    <xapl:variable name="status">
+      <x2:execute command="bcm.framework.util:getResponseStatus">
+        <x2:with-param name="response" select="$serverResponse"/>
+        <x2:with-param name="successMessage" select="'Record(s) successfully updated.' "/>
+      </x2:execute>
+    </xapl:variable>
+
+    <xapl:print select="$status"/>
+
+    <xapl:return>
+      <xapl:value-of select="$status"/>
+    </xapl:return>
+
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="updateDocument">
+    <x2:param name="this"/>
+    <x2:param name="updateProperties"/>
+
+    <xapl:print select="$updateProperties"/>
+    <xapl:variable name="serverResponse"/>
+    <xapl:variable name="status"/>
+    <!-- For each TABLE in $updateProperties, call modifyDocSmart api for the respective document -->
+    <xapl:for-each select="$updateProperties/TABLE" varName="child">
+      <xapl:variable name="param">
+        <DATA>
+          <xapl:variable name="updateDocument">
+            <UPDATE_PROPERTIES/>
+          </xapl:variable>
+          <xapl:for-each select="$child/PROPERTY" varName="currentProperty">
+                        <!--xapl:variable name="requestPropertyName" select="concat($child/@Name, '.', $currentProperty/@Name)"/>
+                        <xapl:variable name="requestPropertyNameOfDate" select="concat($child/@Name, '_', $currentProperty/@Name)"/-->
+                        <xapl:variable name="requestPropertyName" select="$currentProperty/@Name"/>
+                        <xapl:variable name="requestPropertyNameOfDate" select="$currentProperty/@Name"/>
+
+                        <!-- Do an update IFF checkbox corresponding to this field is present -->
+                        <xapl:if test="$this/*[name() = concat($requestPropertyName, '_cb')]/@Value = 'on' or  $this/*[name() = concat($requestPropertyNameOfDate, '_cb')]/@Value = 'on' ">
+                          <xapl:print>
+                             INSIDE updateDocument :::
+                           </xapl:print>
+                            <xapl:choose>
+                                <xapl:when test="$currentProperty/@Type = 'int' or $currentProperty/@Type = 'float' or $currentProperty/@Type = 'double' ">
+                  <xapl:variable name="operator" select="$this/*[name() = concat($requestPropertyName, '_OPERATOR')]/@Value"/>
+                  <xapl:variable name="operatorValue" select="$this/*[name() = concat($requestPropertyName, '_OPERATOR_VALUE')]/@Value"/>
+                  <xapl:print select="$operator"/>
+                  <xapl:print select="$operatorValue"/>
+                  <xapl:print select="$currentProperty"/>
+                  <xapl:choose>
+                    <!-- When checkbox is selected and no value has been entered, just update the property with null -->
+                    <xapl:when test="string-length($operatorValue) = 0">
+                      <docutil:add select="$updateDocument">
+                        <docutil:element name="{$currentProperty/@Name}"/>
+                      </docutil:add>
+                    </xapl:when>
+                    <!-- When checkbox is selected and some value has been entered, do processing -->
+                    <xapl:when test="string-length($operatorValue) &gt; 0">
+                      <xapl:variable name="expression">
+                        <x2:execute command="bcm.framework.forms.formController:getExpression">
+                          <x2:with-param name="operator" select="$operator"/>
+                          <x2:with-param name="operatorValue" select="$operatorValue"/>
+                          <x2:with-param name="currentProperty" select="$currentProperty"/>
+                        </x2:execute>
+                      </xapl:variable>
+                      <xapl:choose>
+                        <xapl:when test="$operator = 'SET'">
+                          <docutil:add select="$updateDocument">
+                            <docutil:element name="{$currentProperty/@Name}" Value="{$operatorValue}"/>
+                          </docutil:add>
+                        </xapl:when>
+                        <xapl:otherwise>
+                          <docutil:add select="$updateDocument">
+                            <docutil:element name="{$currentProperty/@Name}" Expression="{$expression}"/>
+                          </docutil:add>
+                        </xapl:otherwise>
+                      </xapl:choose>
+                    </xapl:when>
+                  </xapl:choose>
+                </xapl:when>
+                                <xapl:when test="$currentProperty/@Type = 'date' or $currentProperty/@Type = 'datetime' ">
+                                  <xapl:print>
+                                    DATE:::  <xapl:value-of select="$requestPropertyNameOfDate"/>
+                                      <xapl:value-of select="$this"/>
+                                  </xapl:print>
+                                    <xapl:choose>
+                                        <xapl:when test="string-length($this/*[name() = $requestPropertyNameOfDate]/@Value) &gt; 0">
+                                            <docutil:add select="$updateDocument">
+                                                <docutil:element name="{$currentProperty/@Name}" Value="{$this/*[name() = $requestPropertyNameOfDate]/@Value}"/>
+                                            </docutil:add>
+                                              <xapl:print>
+                                                UPDATE:::  <xapl:value-of select="$updateDocument"/>
+                                                 Value:: <xapl:value-of select="$this/*[name() = $requestPropertyNameOfDate]/@Value"/>
+                                              </xapl:print>                                     
+                                        </xapl:when>
+                                        <xapl:when test="string-length($this/*[name() = $requestPropertyNameOfDate]/@Value) = 0">
+                                            <docutil:add select="$updateDocument">
+                                                <docutil:element name="{$currentProperty/@Name}"/>
+                                            </docutil:add>
+                                        </xapl:when>
+                                    </xapl:choose>
+                                </xapl:when>                                
+                <xapl:otherwise>
+                  <!-- String or other property -->
+                  <xapl:choose>
+                    <xapl:when test="string-length($this/*[name() = $requestPropertyName]/@Value) &gt; 0">
+                      <docutil:add select="$updateDocument">
+                        <docutil:element name="{$currentProperty/@Name}" Value="{$this/*[name() = $requestPropertyName]/@Value}"/>
+                      </docutil:add>
+                    </xapl:when>
+                    <xapl:when test="string-length($this/*[name() = $requestPropertyName]/@Value) = 0">
+                      <docutil:add select="$updateDocument">
+                        <docutil:element name="{$currentProperty/@Name}"/>
+                      </docutil:add>
+                    </xapl:when>
+                  </xapl:choose>
+                </xapl:otherwise>
+              </xapl:choose>
+            </xapl:if>
+          </xapl:for-each>
+
+          <x2:execute command="bcm.framework.forms.formController:getDocumentContext">
+            <x2:with-param name="this" select="$this"/>
+            <x2:with-param name="updateProperties" select="$child"/>
+          </x2:execute>
+                    
+          <xapl:value-of select="$updateDocument"/>
+        </DATA>
+      </xapl:variable>
+      <xapl:print>
+        $param::::
+         <xapl:value-of select="$param"/>
+      </xapl:print>
+      <xapl:print select="$param"/>
+      <xapl:set-variable name="serverResponse">
+        <xcore:execute-method name="//BCMMasterService/modifyDocSmart" DocumentName="{$child/@Name}" entireResponse="true">
+          <xapl:value-of select="{$param/*}"/>
+        </xcore:execute-method>
+      </xapl:set-variable>
+      <xapl:print select="$serverResponse"/>
+      <xapl:set-variable name="status">
+        <x2:execute command="bcm.framework.util:getResponseStatus">
+          <x2:with-param name="response" select="$serverResponse"/>
+          <x2:with-param name="successMessage" select="'Record(s) successfully updated.' "/>
+        </x2:execute>
+      </xapl:set-variable>
+      <xapl:print select="$status"/>
+    </xapl:for-each>
+
+    <xapl:return>
+      <xapl:value-of select="$status"/>
+    </xapl:return>
+
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="getDocumentContext">
+    <x2:param name="this"/>
+    <x2:param name="updateProperties"/>
+    <xapl:variable name="pkList">
+      <PK_LIST>
+        <xapl:value-of select="$metaData/SERVICE[@Name = 'BCMMasterService']/DOCUMENTS/DOCUMENT[@Name = $updateProperties/@Name]/PROPERTY[@PrimaryKey='yes']"/>
+      </PK_LIST>
+    </xapl:variable>
+    <xapl:variable name="docContext">
+      <DOCUMENT_CONTEXT>
+        <OR/>
+      </DOCUMENT_CONTEXT>
+    </xapl:variable>
+    <xapl:for-each select="$this/SELECTED_ID" varName="selectedId">
+      <xapl:variable name="selectedIdXMLTree">
+        <x2:execute command="bcm.framework.tableeditor.Table:createXMLFromSelectedId">
+          <x2:with-param name="selectedId" select="$selectedId/@Value"/>
+        </x2:execute>
+      </xapl:variable>
+      <xapl:variable name="andDoc">
+        <AND/>
+      </xapl:variable>
+      <xapl:for-each select="$pkList/PROPERTY" varName="currentProperty">
+        <xapl:if test="$currentProperty/@PrimaryKey = 'yes' ">
+          <docutil:add select="$andDoc">
+            <xapl:if test="string-length($selectedIdXMLTree/*[name() = concat($updateProperties/@Name, '.', $currentProperty/@Name)]/@Value) > 0">
+              <docutil:element name="{$currentProperty/@Name}" Value="{$selectedIdXMLTree/*[name() = concat($updateProperties/@Name, '.', $currentProperty/@Name)]/@Value}"/>
+            </xapl:if>
+          </docutil:add>
+        </xapl:if>
+      </xapl:for-each>
+      <docutil:add select="$docContext/OR">
+        <xapl:value-of select="$andDoc"/>
+      </docutil:add>
+    </xapl:for-each>
+    <xapl:return>
+      <xapl:value-of select="$docContext"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="getExpression">
+    <x2:param name="operator"/>
+    <x2:param name="operatorValue"/>
+    <x2:param name="currentProperty"/>
+    <xapl:return>
+      <xapl:choose>
+        <xapl:when test="$operator = 'INCREMENT'">
+          <xapl:value-of select="concat('#|', $currentProperty/@Name, '|# + #[', $operatorValue, '^', $currentProperty/@Type, ']#' )"/>
+        </xapl:when>
+        <xapl:when test="$operator = 'DECREMENT'">
+          <xapl:value-of select="concat('#|', $currentProperty/@Name, '|# - #[', $operatorValue, '^', $currentProperty/@Type, ']#' )"/>
+        </xapl:when>
+        <xapl:when test="$operator = 'INFLATE'">
+          <xapl:value-of select="concat('#|', $currentProperty/@Name, '|# * #[', (100 + number($operatorValue)) div 100, '^', $currentProperty/@Type, ']#' )"/>
+        </xapl:when>
+        <xapl:when test="$operator = 'DEFLATE'">
+          <xapl:value-of select="concat('#|', $currentProperty/@Name, '|# * #[', (100 - number($operatorValue)) div 100, '^', $currentProperty/@Type, ']#' )"/>
+        </xapl:when>
+      </xapl:choose>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="getUpdateProperties">
+    <x2:param name="tableName"/>
+    <x2:param name="formId"/>
+    <xapl:variable name="tables">
+      <TABLES>
+        <xapl:for-each select="$currentForm/UPDATE_DOCUMENTS/DOCUMENT" varName="child">
+          <TABLE Name="{$child/@Name}">
+            <xapl:for-each select="$currentForm/RESULT_PROPERTIES/RESULT_PROPERTY[PRESENTATION/GROUP_EDITABLE/@Value = 'yes' ]" varName="column">
+              <xapl:if test="$column/@Document = $child/@Name">
+                <PROPERTY Name="{$column/@Property}" Type="{$column/@Type}"/>
+              </xapl:if>
+            </xapl:for-each>
+          </TABLE>
+        </xapl:for-each>
+      </TABLES>
+    </xapl:variable>
+    <xapl:return>
+      <xapl:value-of select="$tables"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="exportToExcel" public="yes">
+
+
+   <xapl:variable name="pSearchReportConfigSource" select="'bcm.framework.forms.formView:getReportConfig'"/>
+   <xapl:variable name="pReportDataSource" select="'bcm.framework.forms.formView:getReportData'"/>
+
+
+    <xapl:if test="string-length($this/DIRECTORY/@Value) > 0 and string-length($this/FILE/@Value) > 0">
+       <xapl:set-variable name="pSearchReportConfigSource" select="concat($this/DIRECTORY/@Value, '.' , $this/FILE/@Value , ':' , 'getReportConfig' )"/>
+      <xapl:set-variable name="pReportDataSource" select="concat($this/DIRECTORY/@Value, '.' , $this/FILE/@Value , ':' , 'getReportData' )"/>
+    </xapl:if>
+
+    <x2:execute command="bcm.framework.util:exportToExcel">
+      <x2:with-param name="pGetReportConfigSource" select="$pSearchReportConfigSource"/>
+      <x2:with-param name="pGetReportDataSource" select="$pReportDataSource"/>
+      <x2:with-param name="pFileNameWithExtension" select="{concat($this/FORM_NAME[1]/@Value, '.xls')}"/>
+      <x2:with-param name="this" select="$this"/>
+    </x2:execute>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command name="goToGroupEditPage" public="yes">
+
+    <docutil:remove select="$this/*[string-length(@Value) = 0]"/>
+
+    <xapl:print select="$this"/>
+
+
+    <xapl:variable name="selectedIdXMLTree">
+      <xapl:if test="count($this/SELECTED_ID) = 1">
+        <x2:execute command="bcm.framework.tableeditor.Table:createXMLFromSelectedId">
+          <x2:with-param name="selectedId" select="$this/SELECTED_ID/@Value"/>
+        </x2:execute>
+      </xapl:if>
+    </xapl:variable>
+    <xapl:set-variable name="requestParams">
+      <ROOT>
+        <xapl:value-of select="$this/*"/>
+      </ROOT>
+    </xapl:set-variable>
+    <web:display-page>
+      <web:get-page name="groupEditForm">
+        <xapl:value-of select="$selectedIdXMLTree/*"/>
+        <!--
+        <xapl:if test="string-length($this/START_COUNT/@Value) &gt; 0">
+          <START_COUNT Value="{$this/START_COUNT/@Value}"/>
+        </xapl:if>
+-->
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+
+</x2:commands>

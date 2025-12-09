@@ -1,0 +1,384 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="iscpRPLayersSearch.pgl">
+  <ui:search displayText="Search " exportSearch="false" saveSearch="false" collapsable="true">
+    <ui:validation id="tst" displayCondition="asdf" />
+    <ui:field-group id="fieldGroups" columns="2" select="$root">
+      <ui:dropdown id="SRCH_ENGINE" name="SRCH_ENGINE" displayText="Engine ID" selectAll="true" optionSrc="$root/Engine/ID" />
+      <ui:entry-field displayText="Layer Name" id="SRCH_LAYER" name="SRCH_LAYER">
+        <ui:links>
+          <ui:link displayText="Select Layer" targetType="popup" targetName="orderPopup">
+            <ui:image src="pop_up_window.gif" />
+            <ui:url page="view.x2ps">
+              <FIELD_NAME select="'SRCH_LAYER'" />
+              <ENTITY_NAME select="'SRCH_LAYER'" />
+              <SELECTABLE select="'All'" />
+              <BUTTON_ID select="'selectLayers'" />
+            </ui:url>
+          </ui:link>
+        </ui:links>
+      </ui:entry-field>
+      <ui:hidden-field name="pgRowCount" id="pgRowCount" value="{$root/pgRowCount/@Value}" />
+      <ui:dropdown name="SRCH_DMNDTYP" displayText="Demand Type " selectAll="true" optionSrc="$root/DemandType/ID" />
+      <!--<ui:entry-field id="SRCH_MOD_BY" name="SRCH_MOD_BY" displayText="Modified By" rowSpan="2"/>-->
+      <ui:entry-field name="SRCH_MOD_BY" displayText="Modified By">
+        <ui:links>
+          <ui:link displayText="Select Users" targetType="popup" targetName="catalogPopup">
+            <ui:url page="view.x2ps">
+              <SELECTABLE select="'All'" />
+              <BUTTON_ID select="'Select_User'" />
+              <FIELD_NAME select="'SRCH_MOD_BY'" />
+            </ui:url>
+            <ui:image src="pop_up_window.gif" />
+          </ui:link>
+        </ui:links>
+      </ui:entry-field>
+    </ui:field-group>
+    <ui:field-group id="dateRange" select="$root">
+      <!--          <ui:date-range displayText="Modified Date" name="SRCH_MOD_DATE" fromDate="$root/FROM_DATE/@Value" toDate="$root/TO_DATE/@Value"/>-->
+      <ui:date-range name="SRCH_MOD_DATE" displayText="Modified Date Range" fromDate="{FROM_SRCH_MOD_DATE/@Value}" toDate="{TO_SRCH_MOD_DATE/@Value}" />
+      <ui:dropdown name="ENTITYSTATE" displayText="State" selectOne="false" selectAll="false" defaultValue="ACTIVE">
+        <ui:option id="ACTIVE" value="ACTIVE" />
+        <ui:option id="DELETED" value="DELETED" />
+        <!--   <ui:option id="DELETED" value="DELETED"/>-->
+      </ui:dropdown>
+    </ui:field-group>
+  </ui:search>
+  <ui:container id="container" name="container" scrollable="true">
+    <ui:step id="top_container" name="top_container" scrollable="true" displayText="">
+      <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" anyFieldIsRequired="false" />
+      <ui:table displayText="Search Results" rowSrc="$root/LAYER_DETAILS_LIST/LAYER_DETAILS" startAtRow="$root/STARTROWCOUNT/@Value" totalRowCount="$root/ROWCOUNT/@Value" maxRows="10" selectable="All" rowId="EngineIdLayerNameCombo" postRowIdAs="SelectedLayer" id="LayerDetails" rememberSelections="true" exportable="true" freeze="2">
+        <ui:field-group>
+          <ui:entry-field displayText="Engine ID" name="EngineId" editable="false" sortable="true" />
+          <ui:hidden-field name="EngineIdLayerNameCombo" />
+          <ui:hidden-field name="AnalyticalModelIdentifier" />
+          <ui:hidden-field name="DemandCategoryIdentifier" />
+          <ui:hidden-field name="SourceSystemMnemonicValue" />
+          <ui:entry-field displayText="Layer Name" name="DemandCategoryName" editable="false" sortable="true" />
+          <ui:entry-field displayText="State" name="LayerEntityState" editable="false" sortable="false" />
+          <ui:hidden-field displayText="Analytical Model Name" name="AnalyticalModelName" editable="false" />
+          <ui:choose-field id="AllocationBandText" displayText="Allocation Band">
+            <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+              <ui:entry-field displayText="Allocation Band" id="AllocationBandText" name="AllocationBandText" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:display-field displayText="Allocation Band " name="AllocationBandText" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:hidden-field id="AllocationBandText_Hidden" name="AllocationBandText_Hidden" />
+          <ui:choose-field id="LayerEffectiveStartDayNumber" displayText="Effective Start Day">
+            <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+              <ui:entry-field id="LayerEffectiveStartDayNumber" displayText="Effective Start Day" name="LayerEffectiveStartDayNumber" dataType="Number" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:display-field displayText="Effective Start Day " name="LayerEffectiveStartDayNumber" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:hidden-field id="LayerEffectiveStartDayNumber_Hidden" name="LayerEffectiveStartDayNumber_Hidden" type="Number" />
+          <ui:choose-field id="LayerEffectiveEndDayNumber" displayText="Effective End Day">
+            <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+              <ui:entry-field id="LayerEffectiveEndDayNumber" displayText="Effective End Day" name="LayerEffectiveEndDayNumber" dataType="Number" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:display-field displayText="Effective End Day " name="LayerEffectiveEndDayNumber" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:hidden-field id="LayerEffectiveEndDayNumber_Hidden" name="LayerEffectiveEndDayNumber_Hidden" type="Number" />
+          <!--<ui:entry-field displayText="DemandType" name="DemandType"/>-->
+          <ui:choose-field id="DemandType" displayText="Demand Type">
+            <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+              <ui:dropdown id="DemandType" displayText="Demand Type" name="DemandType" value="{DemandType/@Value}" optionSrc="$root/DemandType/ID" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:display-field displayText="Demand Type " name="DemandType" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:hidden-field id="DemandType_Hidden" name="DemandType_Hidden" />
+          <ui:choose-field id="DemandCategoryPriorityNumber" displayText="Priority" unFormat="true" dataType="Number">
+            <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+              <ui:entry-field id="DemandCategoryPriorityNumber" name="DemandCategoryPriorityNumber" displayText="Priority" sortable="flase" dataType="Number" minValue="1" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:display-field displayText="Priority " name="DemandCategoryPriorityNumber" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:hidden-field id="DemandCategoryPriorityNumber_Hidden" name="DemandCategoryPriorityNumber_Hidden" sortable="flase" type="Number" />
+          <ui:choose-field id="AllocationBandTextCommentText" displayText="Allocation Band Comments">
+            <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+              <ui:textarea id="AllocationBandTextCommentText" displayText="Allocation Band Comments" name="AllocationBandTextCommentText" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:textarea displayText="Allocation Band Comments " name="AllocationBandTextCommentText" editable="false" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:choose-field id="DemandCategoryClassCommentText" displayText="Demand Type Comments">
+            <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+              <ui:textarea id="DemandCategoryClassCommentText" displayText="Demand Type Comments" name="DemandCategoryClassCommentText" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:textarea displayText="Demand Type Comments " name="DemandCategoryClassCommentText" editable="false" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:choose-field id="LayerEffectiveStartDayComment" displayText="Effective Start Day Comments">
+            <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+              <ui:textarea id="LayerEffectiveStartDayComment" displayText="Effective Start Day Comments" name="LayerEffectiveStartDayComment" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:textarea displayText="Effective Start Day Comments " name="LayerEffectiveStartDayComment" editable="false" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:choose-field id="LayerEffectiveEndDayComment" displayText="Effective End Day Comments">
+            <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+              <ui:textarea id="LayerEffectiveEndDayComment" displayText="Effective End Day Comments" name="LayerEffectiveEndDayComment" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:textarea displayText="Effective End Day Comments " name="LayerEffectiveEndDayComment" editable="false" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:choose-field id="DemandPriorityNumberComment" displayText="Priority Comments">
+            <ui:when test="contains($root/AccessLevel/@Value,'Update') or contains($root/AccessLevel/@Value,'Add')">
+              <ui:textarea id="DemandPriorityNumberComment" displayText="Priority Comments" name="DemandPriorityNumberComment" />
+            </ui:when>
+            <ui:otherwise>
+              <ui:textarea displayText="Priority Comments " name="DemandPriorityNumberComment" editable="false" />
+            </ui:otherwise>
+          </ui:choose-field>
+          <ui:hidden-field id="AllocationBandTextCommentText_Hidden" name="AllocationBandTextCommentText_Hidden" />
+          <ui:hidden-field id="DemandCategoryClassCommentText_Hidden" name="DemandCategoryClassCommentText_Hidden" />
+          <ui:hidden-field id="LayerEffectiveStartDayComment_Hidden" name="LayerEffectiveStartDayComment_Hidden" />
+          <ui:hidden-field id="LayerEffectiveEndDayComment_Hidden" name="LayerEffectiveEndDayComment_Hidden" />
+          <ui:hidden-field id="DemandPriorityNumberComment_Hidden" name="DemandPriorityNumberComment_Hidden" />
+          <ui:display-field id="ModifiedBy" name="ModifiedBy" displayText="Modified By" sortable="true" />
+          <ui:entry-field id="LAST_MODIFIED_DATE" name="LAST_MODIFIED_DATE" displayText="Date Modified" sortable="true" editable="false" />
+          <ui:hidden-field name="SourceSystemMnemonicValue" id="SourceSystemMnemonicValue" />
+        </ui:field-group>
+        <ui:buttons id="tableButtons">
+          <ui:button displayText="Delete" id="Delete" name="Delete" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'Remove') and $root/ENTITYSTATE/@Value!='DELETED'}" onClick="javaScript:on_delete()" />
+          <ui:divider />
+          <ui:button displayText="Activate" id="Activate" name="Activate" enabledBySelections="true" validate="false" displayCondition="{contains($root/AccessLevel/@Value,'Update') and $root/ENTITYSTATE/@Value='DELETED'}" />
+          <ui:divider />
+          <ui:button displayText="Mass Update" id="MassUpdate" name="MassUpdate" enabledBySelections="true" validate="false" displayCondition="{contains($root/AccessLevel/@Value,'Update') and $root/ENTITYSTATE/@Value!='DELETED'}" onClick="javaScript:checkMassupdate('LayerDetails')" />
+          <ui:divider />
+          <ui:button displayText="Copy" id="copy" name="copy" enabledBySelections="true" validate="false" onClick="javaScript:checkCopy('LayerDetails')" displayCondition="{contains($root/AccessLevel/@Value,'Add') and $root/ENTITYSTATE/@Value!='DELETED'}" />
+          <ui:button displayText="Create" id="create" name="create" enabledBySelections="false" validate="false" displayCondition="{contains($root/AccessLevel/@Value,'Add')}" />
+          <ui:divider />
+          <ui:button displayText="Save" id="Save" name="Save" enabledBySelections="true" validate="true" displayCondition="{contains($root/AccessLevel/@Value,'Update') and $root/ENTITYSTATE/@Value!='DELETED'}" onClick="javaScript:checkCommentsOnSave('LayerDetails')" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function checkCopy(tableid)
+		{
+
+		var table = document.getElementById(tableid+"_data");
+		var count=0,j;
+		var a=document.getElementsByName('SelectedLayer');
+										//alert(a);
+		for( k=0; k &lt;a.length;k++)
+		{
+		
+		if(a[k].checked)
+		{
+		count++;
+		}
+		}
+
+		if(count&gt;=2){
+		core_alert('Copy One Record at a time');
+		}else{
+
+				 document.form.BUTTON_ID.value="copy";
+
+                document.form.submit();
+		}
+		}
+		
+		
+		
+			function checkCommentsOnSave(tableid)
+		{
+
+		var a=document.getElementsByName('SelectedLayer');
+		
+var PrevAllocbandsVal = document.getElementsByName('AllocationBandText');
+var CurrentAllocbandsVal = document.getElementsByName('AllocationBandText_Hidden');
+var PrevAllocbandsComments = document.getElementsByName('AllocationBandTextCommentText');
+var CurrentAllocbandsComments = document.getElementsByName('AllocationBandTextCommentText_Hidden');
+//alert(a);
+var PrevDemandTypeVal = document.getElementsByName('DemandType');
+var CurrentDemandTypeVal = document.getElementsByName('DemandType_Hidden');
+var PrevDemandTypeComments = document.getElementsByName('DemandCategoryClassCommentText');
+var CurrentDemandTypeComments = document.getElementsByName('DemandCategoryClassCommentText_Hidden');
+//
+var PrevEndDayVal = document.getElementsByName('LayerEffectiveEndDayNumber');
+var CurrentEndDayVal = document.getElementsByName('LayerEffectiveEndDayNumber_Hidden');
+var PrevEndDayComments = document.getElementsByName('LayerEffectiveEndDayComment');
+var CurrentEndDayComments = document.getElementsByName('LayerEffectiveEndDayComment_Hidden');
+//
+var PrevStartDayVal = document.getElementsByName('LayerEffectiveStartDayNumber');
+var CurrentStartDayVal = document.getElementsByName('LayerEffectiveStartDayNumber_Hidden');
+var PrevStartDayComments = document.getElementsByName('LayerEffectiveStartDayComment');
+var CurrentStartDayComments = document.getElementsByName('LayerEffectiveStartDayComment_Hidden');
+//
+var PrevPriorityVal = document.getElementsByName('DemandCategoryPriorityNumber');
+var CurrentPriorityVal = document.getElementsByName('DemandCategoryPriorityNumber_Hidden');
+var PrevPriorityComments = document.getElementsByName('DemandPriorityNumberComment');
+var CurrentPriorityComments = document.getElementsByName('DemandPriorityNumberComment_Hidden');
+//
+
+		for( k=0; k &lt;a.length;k++)
+		{
+		
+		if(a[k].checked)
+		{
+    <!--	alert(PrevAllocbandsComments[k].value + 'HI');
+				alert(CurrentAllocbandsComments[k].value + 'HI');
+						alert(PrevAllocbandsVal[k].value);
+						alert( CurrentAllocbandsVal[k].value);-->
+    if((PrevAllocbandsVal[k].value != CurrentAllocbandsVal[k].value) &amp;&amp;(trimString(PrevAllocbandsComments[k].value) ==CurrentAllocbandsComments[k].value)){
+	
+core_alert("Please enter new comments for Allocation Band update");
+
+ return;
+
+     }
+     if((PrevDemandTypeVal[k].value != CurrentDemandTypeVal[k].value) &amp;&amp;(trimString(PrevDemandTypeComments[k].value) ==CurrentDemandTypeComments[k].value)){
+     core_alert("Please enter new comments for Demand Type update");
+
+       return;
+     
+     }
+    <!--alert(PrevEndDayVal[k].value);
+				alert(CurrentEndDayVal[k].value);
+				alert(PrevEndDayComments[k].value);
+				alert(CurrentEndDayComments[k].value);-->
+    if((PrevEndDayVal[k].value != CurrentEndDayVal[k].value) &amp;&amp;(trimString(PrevEndDayComments[k].value) ==CurrentEndDayComments[k].value)){
+     core_alert("Please enter new comments for  Effective End Day update");
+
+       return;
+     
+     }
+     if((PrevStartDayVal[k].value != CurrentStartDayVal[k].value) &amp;&amp;(trimString(PrevStartDayComments[k].value) ==CurrentStartDayComments[k].value)){
+     core_alert("Please enter new comments for Effective Start Day update");
+
+       return;
+     
+     }
+    <!-- 	alert(PrevPriorityVal[k].value.replace(",",""));
+				alert(CurrentPriorityVal[k].value);
+				alert(PrevPriorityComments[k].value);
+				alert(CurrentPriorityComments[k].value); -->
+    <!-- Issue: 130095 - Rahul Keshri 01/03/2008 - Added code to replace "," while checking for the previous values of priority -->
+    if((PrevPriorityVal[k].value.replace(",","") != CurrentPriorityVal[k].value) &amp;&amp;(trimString(PrevPriorityComments[k].value) ==CurrentPriorityComments[k].value)){
+     core_alert("Please enter new comments for Demand Priority update");
+    <!-- End Issue: 130095 -->
+    return;
+     
+     }
+    <!--		alert('hi');-->
+    if( (PrevAllocbandsVal[k].value == CurrentAllocbandsVal[k].value &amp;&amp;
+		(PrevAllocbandsComments[k].value !=CurrentAllocbandsComments[k].value) ) ){
+     core_alert("Please edit allocation band before editing the comment");
+  
+       return;
+     
+     }
+		  if(( PrevPriorityVal[k].value == CurrentPriorityVal[k].value &amp;&amp; 
+		(PrevPriorityComments[k].value !=CurrentPriorityComments[k].value)) ){
+     core_alert("Please edit demand priority before editing the comment");
+  
+       return;
+     
+     }
+				  if(( PrevStartDayVal[k].value == CurrentStartDayVal[k].value 
+		 &amp;&amp;(PrevStartDayComments[k].value !=CurrentStartDayComments[k].value)) ){
+     core_alert("Please edit effective start day before editing the comment");
+  
+       return;
+     
+     }
+				  if(( PrevEndDayVal[k].value == CurrentEndDayVal[k].value &amp;&amp; (PrevEndDayComments[k].value !=CurrentEndDayComments[k].value)) ){
+     core_alert("Please edit effective end day before editing the comment");
+  
+       return;
+     
+     }
+				  if((PrevDemandTypeVal[k].value == CurrentDemandTypeVal[k].value &amp;&amp;(PrevDemandTypeComments[k].value !=CurrentDemandTypeComments[k].value))){
+     core_alert("Please edit demand type before editing the comment");
+  
+       return;
+     
+     }
+		  
+		
+		}
+		
+		}
+		document.form.BUTTON_ID.value="Save";
+
+                document.form.submit();
+		}
+		
+			function on_delete(){
+		var canSubmit='false';
+					var response = core_confirm('Are you sure you want to delete the selected record(s)?');
+    <!--if ( response == 'no' ) {
+						canSubmit = 'false';
+					} else {
+						canSubmit = 'true';
+					}-->
+    if (response == 'yes') {
+								document.form.BUTTON_ID.value = 'Delete'; 
+							 document.form.submit();
+					}
+		else{
+						return;
+					}
+
+		}
+		
+		
+			 function checkMassupdate(tableid)
+		{
+
+	var selectedIds = document.getElementsByName('selectedLayer');
+		var maxrows = document.form.pgRowCount.value;
+		var lenSelIds = selectedIds.length;
+		var count =lenSelIds - maxrows ;
+		//alert(maxrows);
+	//	alert(lenSelIds);
+	//	alert(count);
+		if(document.form.LayerDetails_globalrowselector.checked){
+		  var decision=core_confirm("Do you want to update all records satisfying the current search criteria?");
+				if(decision=='yes')
+				{
+					document.form.BUTTON_ID.value = 'MassUpdateAll'; 
+					document.form.action = 'view.x2ps';
+					document.form.submit();  	
+			}else{
+					document.form.BUTTON_ID.value = 'MassUpdate'; 
+					document.form.action = 'view.x2ps';
+					document.form.submit();  	
+			}
+		
+		}else{
+      for(i=0; i &lt; selectedIds.length; i++)
+			{
+        var t = selectedIds[ i ];
+        if ( t.checked )
+        {
+          count += 1;
+	      }
+      }		
+		if(count &lt;= 1){
+		            core_alert('Please select at least two records for mass update!');
+								return;
+		}
+		else{
+		  	document.form.BUTTON_ID.value = 'MassUpdate'; 
+							document.form.action = 'view.x2ps';
+							document.form.submit();  	
+		}
+		}}
+  </ui:script>
+</ui:page-group>
+

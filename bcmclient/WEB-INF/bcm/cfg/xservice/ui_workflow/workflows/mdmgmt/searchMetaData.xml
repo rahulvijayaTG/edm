@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="50" ShowInBreadCrumbs="true" Version="1.0" Name="SearchMetaData" Description="">
+  <variables/>
+  <nodes>
+    <start Name="start" Description="start">
+      <actions>
+      </actions>
+      <next_nodes OutputVar="{pglFormOutput,xml}">
+        <next_node Name="Search Metadata" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Search Metadata" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="SHOW" Template="searchMetaData.pgl" Description="Search Metadata Form" InputVar="{root,xml}">
+      <pre_actions>
+        <action>
+          <PRINTLN Value="$root: {$root}"/>
+          <PRINTLN Value="$thisParam: {$thisParam}"/>
+          <IF_TEST Test="$root/BUTTON_ID/@Value = 'search_button'">
+            <THEN>
+              <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+              <SET Var="maxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '10', $thisParam/MAX_ROWS/@Value)}"/>
+              <SET Var="nameMatchCondition" FromValue="CONTAINS"/>
+              <IF_TEST Test="$root/EXACT_MATCH/@Value != null">
+                <THEN>
+                  <SET Var="nameMatchCondition" FromValue="EQUAL"/>
+                </THEN>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="entityTypeOrFilter">
+                <OR>
+                  <IF_TEST Test="$root/INCLUDE_DATA_ELEM/@Value != null">
+                    <THEN>
+                      <APPEND_TO_XML>
+                        <ENTITY_TYPE Value="DATA_ELMNT" MatchBy="EQUAL"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$root/INCLUDE_DATA_GRP/@Value != null">
+                    <THEN>
+                      <APPEND_TO_XML>
+                        <ENTITY_TYPE Value="DATA_GRP" MatchBy="EQUAL"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$root/INCLUDE_DATA_PKG/@Value != null">
+                    <THEN>
+                      <APPEND_TO_XML>
+                        <ENTITY_TYPE Value="DATA_PKG" MatchBy="EQUAL"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$root/INCLUDE_BUSINESS_RULE/@Value != null">
+                    <THEN>
+                      <APPEND_TO_XML>
+                        <ENTITY_TYPE Value="BUSINESS_RULE" MatchBy="EQUAL"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                  </IF_TEST>
+                </OR>
+              </TO_DOCVAR>
+              <IF_TEST Test="count($entityTypeOrFilter/ENTITY_TYPE) = 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="entityTypeOrFilter">
+                    <OR>
+                      <ENTITY_TYPE Value="NOTHING" MatchBy="EQUAL"/>
+                    </OR>
+                  </TO_DOCVAR>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$root/CASE_SENSITIVE/@Value = null">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="entityNameFilter">
+                    <ENTITY_NAME Value="{upperCase($root/SEARCH_STRING/@Value)}" MatchBy="{$nameMatchCondition}" ScalarFn="upperCase"/>
+                  </TO_DOCVAR>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="entityNameFilter">
+                    <ENTITY_NAME Value="{$root/SEARCH_STRING/@Value}" MatchBy="{$nameMatchCondition}"/>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="sortBy" FromValue="{ifElse($thisParam/SORT_BY/@Value = null or $thisParam/SORT_BY/@Value = 'ID', 'ENTITY_NAME', $thisParam/SORT_BY/@Value)}"/>
+              <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+              <TO_DOCVAR AssignToVar="orderBy">
+                <ORDER_BY>
+                </ORDER_BY>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="orderEntType">
+                <ENTITY_TYPE Sort="Descending"/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="orderProp">
+                <TEMP_PROP Sort="{$sortOrder}"/>
+              </TO_DOCVAR>
+              <SET_NAME Value="{$orderProp}" FromValue="{$sortBy}"/>
+              <ADD_CHILD DocVar="orderBy" ChildDocVar="orderEntType"/>
+              <ADD_CHILD DocVar="orderBy" ChildDocVar="orderProp"/>
+              <REQUEST ServiceName="BPE_META" Name="getMetaDataSearchResult" AssignToVar="response" UserId="{$userId}" ReturnRowCount="yes" MaxRows="{$maxRows}" StartAtRow="{$paginateStart}">
+                <FILTER Name="ENTITY_NAME">
+                  <TO_XML Select="$entityNameFilter"/>
+                </FILTER>
+                <FILTER Name="ENTITY_TYPE">
+                  <TO_XML Select="$entityTypeOrFilter"/>
+                </FILTER>
+                <TO_XML Select="$orderBy"/>
+              </REQUEST>
+              <!-- process entity type -->
+              <SET Var="lastEntityType" FromValue=""/>
+              <FOR_EACH SelectList="$response/MDS/META_DATA_SEARCH" CurrentElement="doc">
+                <SET Property="ENTITY_TYPE_CODE" DocVar="doc" FromValue="{$doc/ENTITY_TYPE/@Value}"/>
+                <IF_TEST Test="$lastEntityType != $doc/ENTITY_TYPE/@Value">
+                  <THEN>
+                    <SET Var="lastEntityType" FromValue="{$doc/ENTITY_TYPE/@Value}"/>
+                    <IF_TEST Test="$lastEntityType = 'DATA_PKG'">
+                      <THEN>
+                        <SET Property="ENTITY_TYPE" DocVar="doc" FromValue="Data Packages"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$lastEntityType = 'DATA_GRP'">
+                      <THEN>
+                        <SET Property="ENTITY_TYPE" DocVar="doc" FromValue="Data Groups"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$lastEntityType = 'DATA_ELMNT'">
+                      <THEN>
+                        <SET Property="ENTITY_TYPE" DocVar="doc" FromValue="Data Elements"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$lastEntityType = 'DATA_STEWARD'">
+                      <THEN>
+                        <SET Property="ENTITY_TYPE" DocVar="doc" FromValue="Data Stewards"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$lastEntityType = 'BUSINESS_RULE'">
+                      <THEN>
+                        <SET Property="ENTITY_TYPE" DocVar="doc" FromValue="Business Rules"/>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                  <ELSE>
+                    <SET Property="ENTITY_TYPE" DocVar="doc" FromValue=""/>
+                  </ELSE>
+                </IF_TEST>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML Select="$response/MDS"/>
+                  <TO_XML Select="$root/INCLUDE_DATA_ELEM"/>
+                  <TO_XML Select="$root/INCLUDE_DATA_GRP"/>
+                  <TO_XML Select="$root/INCLUDE_DATA_PKG"/>
+                  <TO_XML Select="$root/INCLUDE_BUSINESS_RULE"/>
+                  <TO_XML Select="$root/SEARCH_STRING"/>
+                  <TO_XML Select="$root/EXACT_MATCH"/>
+                  <TO_XML Select="$root/CASE_SENSITIVE"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$root/BUTTON_ID/@Value != 'search_button'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <MDS/>
+                  <INCLUDE_DATA_ELEM Value="Yes"/>
+                  <INCLUDE_DATA_GRP Value="Yes"/>
+                  <INCLUDE_DATA_PKG Value="Yes"/>
+                  <INCLUDE_BUSINESS_RULE Value="Yes"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <if_cond Value="$userAction= 'search_button'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Search Metadata" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="">
+          <next_node Name="done" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done" Description="done">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start location="107,117" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start>
+      <mgcnode Name="Search Metadata" location="259,137" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Search Metadata" font="Times New Roman,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done location="402,196" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="139,139" endpoint="259,159" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="227,137,4,4" ctrlRect2="167,157,4,4"/>
+      </start>
+      <mgcnode Name="Search Metadata">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="291,159" endpoint="291,159" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="364,157,4,4" ctrlRect2="356,93,4,4" textRect="345,123,34,8">
+          <textProps text="Search" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="291,159" endpoint="402,218" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="371,157,4,4" ctrlRect2="316,216,4,4" textRect="333,184,25,8">
+          <textProps text="Done" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Times New Roman,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="0">
+      <textProps text="Pipeline" font="Times New Roman,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables/>
+    </mgcdashboard>
+  </mgcview>
+</workflow>

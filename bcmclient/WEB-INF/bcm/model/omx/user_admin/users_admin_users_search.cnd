@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands description="_" 
+             xmlns:FUNCTION="http://www.i2.com/FUNCTION" 
+             xmlns:REMOVE="http://www.i2.com/REMOVE" 
+             xmlns:cfg="http://www.i2.com/configurability" 
+             xmlns:core="http://www.i2.com/core" 
+             xmlns:omx="http://www.i2.com/omx" 
+             xmlns:perm="http://www.i2.com/permissibility" 
+             xmlns:util="http://www.i2.com/util" 
+             xmlns:web="http://www.i2.com/web" 
+             xmlns:x2="http://www.i2.com/x2" 
+             xmlns:xapl="http://www.i2.com/xapl" 
+             xmlns:xcore="http://www.i2.com/xcore" 
+             xmlns:xcore-db="http://www.i2.com/xcore-db" 
+             xmlns:docutil="http://www.i2.com/docutil" 
+             xmlns:xudl="http://www.i2.com/xudl"
+             xmlns:identity="http://www.i2.com/identity">
+ 
+  <!--************************************************************************-->
+  
+  <x2:command public="yes" description="_" name="loadUserAdminUsersSearch">
+   <xapl:return>
+    <x2:execute command="omx.user_admin.pages:getUserAdminLinks">
+      <x2:with-param name="pPage">user_admin_users</x2:with-param>
+      <x2:with-param name="pSubPage">users_search</x2:with-param>
+    </x2:execute>
+    <x2:execute command="omx.user_admin.users_admin_users_search:getUserAdminUsersSearch">
+     <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+    <x2:execute command="omx.user_admin.users_admin_users_search:getSearchFields"/>
+   </xapl:return>
+  </x2:command>
+  
+  <!--************************************************************************-->   
+  
+  <x2:command public="yes" description="_" name="getUserAdminUsersSearch">
+    
+    <xapl:print>THIS in USER SEARCH<xapl:value-of select="{$this}"/></xapl:print>
+    
+    <xapl:variable name="roles">
+			<ROOT>
+				<xcore:get-document name="//UserSecurity/USER_ROLE"/>				
+			</ROOT>
+    </xapl:variable>
+		
+    
+    <xapl:variable name="startCount">
+      <xapl:choose>
+        <xapl:when test="{string-length($this/START_COUNT/@Value) = 0}">0</xapl:when>
+        <xapl:otherwise>
+          <xapl:value-of select="{START_COUNT/@Value}"/>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+    
+    <xapl:variable name="sort" enforceList="true">
+       <DUMMY>
+        <xapl:choose>
+          <xapl:when test="{string-length($this/SORT_BY/@Value) = 0}">
+            <SORT_BY Value="ID"/>
+          </xapl:when>
+          <xapl:otherwise>
+            <xapl:value-of select="{$this/SORT_BY}"/>
+          </xapl:otherwise>
+        </xapl:choose>
+        <xapl:choose>
+          <xapl:when test="{string-length($this/SORT_ORDER/@Value) = 0}">
+            <SORT_ORDER Value="Ascending"/>
+          </xapl:when>
+          <xapl:otherwise>
+            <xapl:value-of select="{$this/SORT_ORDER}"/>
+          </xapl:otherwise>
+        </xapl:choose>
+       </DUMMY>
+     </xapl:variable>
+    
+    
+    
+    <xapl:variable name="results">
+      <xapl:choose>
+        <xapl:when test="{(($this/DO_SEARCH ) and (((((($this/LOGIN_NAME) or  ($this/STATUS)) or ($this/FIRST_NAME)) or  ($this/LAST_NAME)) or ($this/ROLE_ID))  ))}">
+          <xapl:if test="{$this/DO_SEARCH/@Value = 'Yes'}">
+            <xcore:execute-method name="//UserSecurity/getUsers">
+              <USER_ID Value="{identity-user-id()}"/>
+              
+              <xapl:choose>
+                <xapl:when test=" ($this/STATUS/@Value != 'IN_ACTIVE') and (string-length($this/STATUS/@Value) = 0) ">
+                  <FILTER Name="STATUS">
+                    <xcore:search-by property="STATUS" value="ACTIVE"/>
+                  </FILTER>
+                </xapl:when>
+                <xapl:when test=" ($this/STATUS/@Value = 'IN_ACTIVE') and (string-length($this/STATUS/@Value) &gt; 0) ">
+                  <FILTER Name="STATUS">
+                    <OR>
+                      <xcore:search-by property="STATUS" value="INACTIVE"/>
+                      <xcore:search-by property="STATUS" value="ACTIVE"/>
+                    </OR>
+                  </FILTER>
+                </xapl:when>
+              </xapl:choose>
+              
+              <xapl:if test="{string-length($this/FIRST_NAME/@Value) &gt; 0}">
+                <FILTER Name="FIRST_NAME">
+                  <xcore:search-by property="FIRST_NAME" value="{$this/FIRST_NAME/@Value}"/>
+                </FILTER>
+                </xapl:if>
+              
+              <xapl:if test="{string-length($this/LAST_NAME/@Value) &gt; 0}">
+                <FILTER Name="LAST_NAME">
+                  <xcore:search-by property="LAST_NAME" value="{$this/LAST_NAME/@Value}"/>
+                </FILTER>
+              </xapl:if>
+              
+              <xapl:if test="{string-length($this/LOGIN_NAME/@Value) &gt; 0}">
+                <FILTER Name="LOGIN_NAME">
+                  <xcore:search-by property="LOGIN_NAME" value="{$this/LOGIN_NAME/@Value}"/>
+                </FILTER>
+              </xapl:if>
+              
+              <xapl:if test="{string-length($this/ROLE_ID/@Value) &gt; 0}">
+                <FILTER Name="ROLE_ID">
+                  <xcore:search-by property="ROLE_ID" value="{$this/ROLE_ID/@Value}"/>
+                </FILTER>
+              </xapl:if>
+              
+               <ORDER_BY>
+                 <docutil:element name="{$sort/SORT_BY/@Value}" Sort="{$sort/SORT_ORDER/@Value}"/>
+               </ORDER_BY>
+              
+            </xcore:execute-method>
+          </xapl:if>
+          
+        </xapl:when>
+      </xapl:choose>
+      
+    </xapl:variable>
+    
+    <xapl:variable name="identityUserId" select="identity-user-id()"/>
+    
+    <docutil:remove select="$results/USER_PROFILE[ ID/@Value = $identityUserId ]"/>
+    <docutil:remove select="$results/USER_PROFILE[ ROLE_ID/@Value = 'CF' ]"/>
+		
+    <xapl:return>
+    
+      <xapl:value-of select="{$results}"/>
+      
+      <xapl:value-of select="{$roles}"/>
+      
+       <SEARCH>
+          
+        <SIMPLE_SEARCH>
+          <FIELD_TEXT Value="Login Name"/>
+          <FIELD_NAME Value="LOGIN_NAME"/>
+          <FIELD_VALUE Value="{$this/LOGIN_NAME/@Value}"/>
+          <FIELD_TYPE Value="Text"/>
+        </SIMPLE_SEARCH>
+        
+        <SIMPLE_SEARCH>
+          <FIELD_TEXT Value="Show Inactive"/>
+          <FIELD_NAME Value="STATUS"/>
+          <FIELD_CHECKED_VALUE Value="IN_ACTIVE"/>
+          <FIELD_VALUE Value="{$this/STATUS/@Value}"/>
+          <FIELD_TYPE Value="CheckBox"/>
+        </SIMPLE_SEARCH>
+        
+        <ADVANCED_SEARCH>
+          <FIELD_TEXT Value="Role"/>
+          <FIELD_NAME Value="ROLE_ID"/>
+          <FIELD_VALUE Value="{$this/ROLE_ID/@Value}"/>
+          <FIELD_TYPE Value="Select"/>
+          <xapl:for-each varName="role" select="{$roles/USER_ROLE}">
+            <FIELD_OPTION Value="{$role/NAME/@Value}" Id="{$role/ID/@Value}"/>
+          </xapl:for-each>
+        </ADVANCED_SEARCH>
+        
+        <ADVANCED_SEARCH>
+          <FIELD_TEXT Value="First Name"/>
+          <FIELD_NAME Value="FIRST_NAME"/>
+          <FIELD_VALUE Value="{$this/FIRST_NAME/@Value}"/>
+          <FIELD_TYPE Value="Text"/>
+        </ADVANCED_SEARCH>
+        
+        <ADVANCED_SEARCH>
+          <FIELD_TEXT Value="Last Name"/>
+          <FIELD_NAME Value="LAST_NAME"/>
+          <FIELD_VALUE Value="{$this/LAST_NAME/@Value}"/>
+          <FIELD_TYPE Value="Text"/>
+        </ADVANCED_SEARCH>
+        
+          <SIMPLE_SEARCH>
+            <FIELD_TEXT Value="Search Type"/>
+            <FIELD_NAME Value="SEARCH_TYPE"/>
+            <FIELD_VALUE Value="{$this/SEARCH_TYPE/@Value}"/>
+            <FIELD_TYPE Value="Hidden"/>
+          </SIMPLE_SEARCH>
+          <SIMPLE_SEARCH>
+            <FIELD_TEXT Value="Do Search"/>
+            <FIELD_NAME Value="DO_SEARCH"/>
+            <FIELD_VALUE Value="{$this/DO_SEARCH/@Value}"/>
+            <FIELD_TYPE Value="Hidden"/>
+          </SIMPLE_SEARCH>
+          <SIMPLE_SEARCH>
+            <FIELD_TEXT Value="Sort By"/>
+            <FIELD_NAME Value="SORT_BY"/>
+            <FIELD_VALUE Value="{$sort/SORT_BY/@Value}"/>
+            <FIELD_TYPE Value="Hidden"/>
+          </SIMPLE_SEARCH>
+          <SIMPLE_SEARCH>
+            <FIELD_TEXT Value="Sort Order"/>
+            <FIELD_NAME Value="SORT_ORDER"/>
+            <FIELD_VALUE Value="{$sort/SORT_ORDER/@Value}"/>
+            <FIELD_TYPE Value="Hidden"/>
+          </SIMPLE_SEARCH>
+          <SIMPLE_SEARCH>
+            <FIELD_TEXT Value="Start Count/"/>
+            <FIELD_NAME Value="START_COUNT"/>
+            <FIELD_VALUE Value="{$startCount}"/>
+            <FIELD_TYPE Value="Hidden"/>
+          </SIMPLE_SEARCH>
+          <SIMPLE_SEARCH>
+            <FIELD_TEXT Value="Doc Type"/>
+            <FIELD_NAME Value="DOC_TYPE"/>
+            <FIELD_VALUE Value="{$this/DOC_TYPE/@Value}"/>
+            <FIELD_TYPE Value="Hidden"/>
+          </SIMPLE_SEARCH>
+          
+          <SIMPLE_SEARCH>
+            <FIELD_TEXT Value="Name"/>
+            <FIELD_NAME Value="SAVED_SEARCH_NAME"/>
+            <FIELD_VALUE Value="{$this/SAVED_SEARCH_NAME/@Value}"/>
+            <FIELD_TYPE Value="Hidden"/>
+          </SIMPLE_SEARCH>
+
+          <SIMPLE_SEARCH>
+            <FIELD_TEXT Value="Name"/>
+            <FIELD_NAME Value="SAVED_SEARCH_ID"/>
+            <FIELD_VALUE Value="{$this/SAVED_SEARCH_ID/@Value}"/>
+            <FIELD_TYPE Value="Hidden"/>
+          </SIMPLE_SEARCH>
+          
+          <SIMPLE_SEARCH>
+            <FIELD_TEXT Value="Document"/>
+            <FIELD_NAME Value="SAVED_DOC_TYPE"/>
+            <FIELD_VALUE Value="{$this/SAVED_DOC_TYPE/@Value}"/>
+            <FIELD_TYPE Value="Hidden"/>
+          </SIMPLE_SEARCH>
+          
+        </SEARCH>    
+     
+     </xapl:return>
+    
+  </x2:command>
+  
+   <!--************************************************************************-->
+  
+  <x2:command public="yes" description="_" name="getSearchFields">
+    <xapl:return>
+      <SEARCH_FIELDS>
+        <BUTTONS>
+          <BUTTON Name="search" DisplayText="Search" ActionName="search" OnClick="javascript:search()"/>	
+        </BUTTONS>
+      </SEARCH_FIELDS>
+    </xapl:return>
+  </x2:command>
+  
+  <!--************************************************************************-->
+
+</x2:commands>
+
+
+
+
+
+
+
+

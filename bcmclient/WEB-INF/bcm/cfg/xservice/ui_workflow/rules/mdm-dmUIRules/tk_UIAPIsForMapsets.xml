@@ -1,0 +1,283 @@
+<DOCUMENTS>
+			<DEFINE_METHOD Access="private" Name="GetSelectedMapSetDimensions">
+			<RULE>
+			<ACTION>
+							
+							<IF_TEST Test="count($thisParam/DIM_COLLECTION) = 0">
+							<THEN>
+											<FOR_EACH CurrentElement="currElement"  SelectList="$thisParam/LIST_BOX/*">
+														<IF_TEST Test="$currElement/@Value != 'ANY'">
+														<THEN>
+																		<TO_DOCVAR AssignToVar="dimension">
+																						<DIMENSION Value="{$currElement/@Value}" />
+																		</TO_DOCVAR>
+																			<ADD_CHILDREN DocVar="thisReturn" FromDocVar="dimension" />
+															</THEN>
+															</IF_TEST>
+											</FOR_EACH>
+							</THEN>
+							<ELSE>
+												<IF_TEST Test="count($thisParam/DIM_COLLECTION) > 0">
+												<THEN>
+																<SET Var="Collection" FromValue="" />
+																<FOR_EACH CurrentElement="currElement"  SelectList="$thisParam/LIST_BOX/*">
+																				<IF_TEST Test="$currElement/@Value != 'ANY'">
+																				<THEN>
+																									<TO_DOCVAR AssignToVar="dimension">
+																											<DIMENSION Value="{$currElement/@Value}" />
+																									</TO_DOCVAR>
+																										<ADD_CHILDREN DocVar="thisReturn" FromDocVar="dimension" />
+																										<SET Var="Collection" FromValue="{concat($Collection/@Value, $currElement/@Value)}" />
+																										<SET Var="Collection" FromValue="{concat($Collection/@Value, ',')}" />
+																					</THEN>
+																					</IF_TEST>
+																</FOR_EACH>
+																<SET DocVar="thisParam"  Property="DIM_COLLECTION" FromValue="{$Collection/@Value}" />	
+												</THEN>
+												</IF_TEST>
+							</ELSE>
+							</IF_TEST>
+			</ACTION>
+			</RULE>	
+			</DEFINE_METHOD>
+	
+			<!-- Retrieves all the mapsets for the given source dimensions and target dimensions -->
+		<DEFINE_METHOD Access="public" Name="GetNMapSetsForUI">
+		<RULE>
+					<ACTION>
+								<TO_DOCVAR AssignToVar="filter">
+										<FILTER />
+								</TO_DOCVAR>
+				
+								<!-- Get the Source dimensions -->
+								<IF_TEST Test="count($thisParam/SELECTED_SOURCE_DIMENSIONS/DIMENSION) > 1">
+									<THEN>												
+												<TO_DOCVAR AssignToVar="tFilter">
+												<FILTER>
+															<SOURCE>
+																		<!--<OR> -->
+																		<FOR_EACH CurrentElement="currSrcDim" SelectList="$thisParam/SELECTED_SOURCE_DIMENSIONS/DIMENSION">
+																					<TO_DOCVAR AssignToVar="property">
+																								<sourceDimensionName Value="{$currSrcDim/@Value}" MatchBy="EQUAL" />
+																					</TO_DOCVAR>
+																					<TO_XML DocVar="property" />
+																		</FOR_EACH>
+																	<!-- </OR> -->
+									            </SOURCE>
+								        </FILTER> 
+												</TO_DOCVAR>
+												<ADD_CHILDREN DocVar="filter" FromSelectList="$tFilter/*" />
+									</THEN>
+									<ELSE>
+												<IF_TEST Test="count($thisParam/SELECTED_SOURCE_DIMENSIONS/DIMENSION) = 1">
+												<THEN>
+																<TO_DOCVAR AssignToVar="tFilter">
+																<FILTER>
+																			<SOURCE>
+															 							<sourceDimensionName Value="{$thisParam/SELECTED_SOURCE_DIMENSIONS/DIMENSION/@Value}" MatchBy="EQUAL" />
+																			</SOURCE>
+												        </FILTER> 
+																</TO_DOCVAR>
+																<ADD_CHILDREN DocVar="filter" FromSelectList="$tFilter/*" />
+												</THEN>
+							          </IF_TEST>
+									</ELSE>
+								</IF_TEST>
+
+								<!-- Get the target dimensions -->
+								<SET Var="CollectionOfSelectedTgtDims" FromValue="" />
+								<IF_TEST Test="count($thisParam/SELECTED_TARGET_DIMENSIONS/DIMENSION) > 1">
+									<THEN>												
+												<TO_DOCVAR AssignToVar="tFilter">
+												<FILTER>
+															<TARGET>
+																		<!-- <OR> -->
+																		<FOR_EACH CurrentElement="currSrcDim" SelectList="$thisParam/SELECTED_TARGET_DIMENSIONS/DIMENSION">
+																					<TO_DOCVAR AssignToVar="property">
+																								<targetDimensionName Value="{$currSrcDim/@Value}"  MatchBy="EQUAL" />
+																					</TO_DOCVAR>
+																					<TO_XML DocVar="property" />
+																		</FOR_EACH>
+																		<!-- </OR> -->
+									            </TARGET>
+								        </FILTER> 
+												</TO_DOCVAR>
+												<ADD_CHILDREN DocVar="filter" FromSelectList="$tFilter/*" />
+									</THEN>
+									<ELSE>
+												<IF_TEST Test="count($thisParam/SELECTED_TARGET_DIMENSIONS/DIMENSION) = 1">
+												<THEN>
+																<TO_DOCVAR AssignToVar="tFilter">
+																<FILTER>
+																			<TARGET>
+															 							<targetDimensionName Value="{$thisParam/SELECTED_TARGET_DIMENSIONS/DIMENSION/@Value}" MatchBy="EQUAL" />
+																			</TARGET>
+												        </FILTER> 
+																</TO_DOCVAR>
+																<ADD_CHILDREN DocVar="filter" FromSelectList="$tFilter/*" />
+												</THEN>
+							          </IF_TEST>
+									</ELSE>
+								</IF_TEST>
+				
+								  <TO_DOCVAR AssignToVar="condition">
+										<CONDITION />
+									</TO_DOCVAR>
+									<IF_TEST Test="strlen(trim($thisParam/SEARCH_FILTER_VALUE/@Value)) != 0">
+									<THEN>
+														<REQUEST AssignToVar="SearchBasis"  Name="GetSearchBasisFields">
+																		<CALLEE Value="MAPSET" />
+																		<SEARCH Value="{$thisParam/SEARCH_FILTER_VALUE/@Value}" />
+																		<SEARCH_BY Value="{$thisParam/SEARCH_BY/@Value}" />
+																		<SEARCH_CONSTRAINT Value="{$thisParam/SEARCH_CONSTRAINT/@Value}" />
+														</REQUEST>														
+														<ADD_CHILDREN DocVar="condition" FromSelectList="$SearchBasis/*" />
+										</THEN>
+									</IF_TEST>
+				
+									<!-- Collate the parameters needed to be passed -->
+									<TO_DOCVAR AssignToVar="paramter2BePassed">
+												<PARAM>
+															<IF_TEST Test="count($filter/*) > 0">
+															<THEN>
+																			<TO_XML SelectList="$filter/*" />
+															</THEN>
+															</IF_TEST>	
+															<IF_TEST Test="count($condition/*) > 0">
+															<THEN>
+																			<TO_XML DocVar="condition" />
+															</THEN>
+															</IF_TEST>	
+												</PARAM>
+									</TO_DOCVAR>
+				
+								  <REQUEST AssignToVar="thisResponse" ServiceName="{$ServiceName}" Name="GetNMapSets" ReturnRowCount="yes">
+										<TO_XML SelectList="$paramter2BePassed/*"/>
+										<TO_XML SelectList="$thisParam/sort"/>
+										<startcount Value="{$thisParam/startcount/@Value}"/>												
+									</REQUEST>
+
+									<TO_DOCVAR AssignToVar="thisReturn">
+									<MAPSETS TotalRowCount="{$thisResponse/@TotalRowCount}"/>
+									</TO_DOCVAR>
+				
+									<IF_TEST Test="$thisResponse/@Status = 'Success'">
+									<THEN>
+													<FOR_EACH CurrentElement="current" SelectList="$thisResponse/*">
+																<REQUEST AssignToVar="colSrcDim" Name="concatString">																			
+																			<TO_XML SelectList="$current/SOURCE/*" />
+																			<SEPARATOR Value=" " />
+																</REQUEST>
+																<REQUEST AssignToVar="colTgtDim" Name="concatString">
+																			<TO_XML SelectList="$current/TARGET/*" />
+																			<SEPARATOR Value=" " />
+																</REQUEST>
+																<TO_DOCVAR AssignToVar="record">
+																    <LINE>
+																      <MapsetName Value="{$current/NAME/@Value}"/>
+																			<MapsetId  Value="{$current/ID/@Value}" />
+																      <MapsetDescription Value="{$current/DESCRIPTION/@Value}"/>
+																			<SourceDimension Value="{$colSrcDim/CONCATENATED/@Value}" />
+																			<TargetDimension Value="{$colTgtDim/CONCATENATED/@Value}" />
+																    </LINE>
+																</TO_DOCVAR>
+																<ADD_CHILDREN DocVar="thisReturn" FromDocVar="record" />
+													</FOR_EACH>
+									</THEN>
+									</IF_TEST>
+					</ACTION>
+		</RULE>
+ 		</DEFINE_METHOD>
+	
+		<!-- Deletes the Mapset with the given name -->
+		<DEFINE_METHOD Access="private" Name="DeleteMapsetFromUI">
+		<RULE>
+		<ACTION>
+						<TO_DOCVAR AssignToVar="mapSets">
+								<MAPSETS />
+						</TO_DOCVAR>
+
+					 <REQUEST  AssignToVar="delResponse" Name="DeleteMapset" ServiceName="{$ServiceName}">
+									<MAPSET Value="{$thisParam/DELETE_MAPSET/@Value}" />
+						</REQUEST>
+					<!--	<IF_TEST Test="$delResponse/@Status = 'Success'">
+						<THEN>
+										<PRINTLN Value="Idhar hoon" />
+										<FOR_EACH CurrentElement="currMapset" SelectList="$thisParam/ROOT/MAPSETS/*">
+													<IF_TEST Test="$currMapset/MapsetId/@Value = $thisParam/DELETE_MAPSET/@Value">
+													<THEN>
+																		<CONTINUE />
+													 </THEN>
+														<ELSE>
+																		<ADD_CHILDREN DocVar="mapSets" FromSelect="$currMapset" />
+														</ELSE>
+													</IF_TEST>
+										</FOR_EACH>
+										<TO_DOCVAR AssignToVar="thisReturn">
+													<TO_XML SelectList="$thisParam/ROOT" />
+										</TO_DOCVAR>
+										<DELETE_ALL_CHILDREN Select="$thisReturn">
+													<MAPSETS />
+										</DELETE_ALL_CHILDREN> 
+										<SET DocVar="thisReturn" Property="MAPSET_COUNT" FromValue="{count($mapSets/*)}" />
+										<ADD_CHILDREN DocVar="thisReturn" FromDocVar="mapSets" />
+						</THEN>	
+						</IF_TEST> -->
+			</ACTION>	
+		 </RULE>
+	  </DEFINE_METHOD>
+		
+	   <!--
+        @Function : Returns the List of users for the List Box.
+        @                This function is the wrapper that converts the data(model) in the required format for showing the information in the List box
+     -->
+		<DEFINE_METHOD Access="private" Name="GetAllUsersAsList">
+		<RULE>
+					<ACTION>
+									<TO_DOCVAR AssignToVar="listOfUsers">
+												<USERS>
+												<FOR_EACH CurrentElement="currentUser" SelectList="$thisParam/USERLIST/USER">
+																<IF_TEST Test="$currentUser/@Type = 'Group'">
+																<THEN>
+																					<TO_DOCVAR AssignToVar="user">
+																								<OPTION Value="{concat($currentUser/@Value, '[UG]')}" Id="{$currentUser/@Id}" />
+																					</TO_DOCVAR>
+																					<TO_XML DocVar="user" />
+																</THEN>		
+																<ELSE>
+																					<TO_DOCVAR AssignToVar="user">
+																								<OPTION Id="{$currentUser/@Id}" Value="{$currentUser/@Value}" />
+																					</TO_DOCVAR>
+																					<TO_XML DocVar="user" />
+																</ELSE>
+																</IF_TEST>			
+												</FOR_EACH>
+												</USERS>
+									</TO_DOCVAR>
+									<ADD_CHILDREN DocVar="thisReturn" FromDocVar="listOfUsers" />
+					</ACTION>
+		</RULE>
+		</DEFINE_METHOD>
+	
+	  <DEFINE_METHOD Access="public" Name="concatString">
+		<RULE>
+					<ACTION>
+											<SET Var="Separator" FromValue="," />
+											<IF_TEST Test="strlen($thisParam/SEPARATOR/@Value) > 0">
+											<THEN>
+															<SET Var="Separator" FromValue="{$thisParam/SEPARATOR/@Value}" />
+															<DELETE_ALL_CHILDREN Select="$thisParam">
+																		<SEPARATOR />
+															</DELETE_ALL_CHILDREN>
+											</THEN>	
+											</IF_TEST>
+												<SET Var="return" FromValue=" " />
+											<FOR_EACH CurrentElement="param" SelectList="$thisParam/*">
+															<SET Var="return" FromValue="{concat(concat($return,$Separator), $param/@Value)}" />
+											</FOR_EACH>
+											<SET DocVar="thisReturn" Property="CONCATENATED" FromValue="{trim($return)}" />
+					</ACTION>
+		</RULE>
+	  </DEFINE_METHOD>
+		 
+</DOCUMENTS>

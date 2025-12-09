@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="save">
+    <xapl:variable name="orgId"       select="$this/ORG_ID/@Value"/>
+    <xapl:variable name="name"        select="$this/NEW_TYPE_VALUE_ID/@Value"/>
+    <xapl:variable name="description" select="$this/NEW_DESCRIPTION/@Value"/>
+
+    <xapl:variable name="segmentTable">
+      <x2:execute command="omx.add_book.org.edit.account_code.model:getSegmentTable">
+        <x2:with-param name="orgId" select="$orgId"/>
+      </x2:execute>
+    </xapl:variable>
+
+    <xapl:variable name="statusMsg">
+      <SUCCESS_MESSAGE Value="Save Successful."/>
+    </xapl:variable>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!--  insure the name is not an existing account code seg name      -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <xapl:variable name="existing" select="$segmentTable/SEGMENT/TYPE_VALUE_ID[@Value=$name]/@Value"/>
+    <xapl:choose>
+      <xapl:when test="string-length($existing) = 0">
+        <xapl:variable name="addResponse">
+          <xcore:execute-method name="//UserSecurity/addAccountCodeType" entireResponse="true">
+            <ORG_ID         Value="{$orgId}"/>
+            <TYPE_VALUE_ID  Value="{$name}"/>
+            <DESCRIPTION    Value="{$description}"/>
+            <xapl:if test=" count($segmentTable/*) > 0" >
+              <PARENT_TYPE_ID Value="{$segmentTable/SEGMENT[last()]/TYPE_ID/@Value}"/>
+            </xapl:if>
+          </xcore:execute-method>
+        </xapl:variable>
+        
+        <xapl:print select="$addResponse"/>
+      </xapl:when>
+
+      <xapl:otherwise>
+        <xapl:set-variable name="statusMsg">
+          <ERROR Value="Account Code with this name already exists.  Please choose another name."/>
+		  <REFRESH Value="true"/>
+        </xapl:set-variable>
+      </xapl:otherwise>
+
+    </xapl:choose>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- finally, display the page                -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <web:display-page>
+      <web:get-page name="org_account_code_segment">
+        <ORG_ID Value="{$orgId}"/>
+        <xapl:value-of select="$statusMsg"/>
+      </web:get-page>
+    </web:display-page>
+
+  </x2:command>
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="update">
+    <x2:param name="orgId"  select="$this/ORG_ID/@Value"/>
+
+    <xapl:variable name="updates">
+      <docutil:collate name="SEGMENT" rootName="SEGMENT_TABLE">
+        <xapl:value-of select="$this/TYPE_ID"/>
+        <xapl:value-of select="$this/TYPE_VALUE_ID"/>
+        <xapl:value-of select="$this/DESCRIPTION"/>
+      </docutil:collate>
+    </xapl:variable>
+
+    <xapl:variable name="msg">
+      <SUCCESS_MESSAGE Value="Update Successful."/>
+    </xapl:variable>
+
+    <xapl:choose>
+
+      <xapl:when test="count($this/SELECTED) > 0">
+        <xapl:for-each select="$this/SELECTED" varName="selected">
+
+          <xapl:variable name="curr" select="$updates/SEGMENT/TYPE_ID[ @Value = $selected/@Value ]/.."/>
+          <xapl:variable name="modifyResponse">
+            <xcore:execute-method name="//UserSecurity/modifyCodeMasterType" entireResponse="true">
+              <TYPE_ID        Value="{$curr/TYPE_ID/@Value}"/>
+              <TYPE_VALUE_ID  Value="{$curr/TYPE_VALUE_ID/@Value}"/>
+              <DESCRIPTION    Value="{$curr/DESCRIPTION/@Value}"/>
+            </xcore:execute-method>
+          </xapl:variable>
+       
+        </xapl:for-each>
+      </xapl:when>
+
+      <xapl:otherwise>
+        <xapl:set-variable name="msg">
+          <ERROR Value="Please select the row(s) to be updated."/>
+		  <REFRESH Value="true"/>
+        </xapl:set-variable>
+      </xapl:otherwise>
+
+    </xapl:choose>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- finally, display the page                -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <web:display-page>
+      <web:get-page name="org_account_code_segment">
+        <ORG_ID Value="{$orgId}"/>
+        <xapl:value-of select="$msg"/>
+      </web:get-page>
+    </web:display-page>
+
+  </x2:command>
+  
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

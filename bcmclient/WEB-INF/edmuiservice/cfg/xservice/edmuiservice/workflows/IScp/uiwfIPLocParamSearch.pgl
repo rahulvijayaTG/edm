@@ -1,0 +1,53 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="wfIPLocParamSearch.pgl">
+  <ui:container id="container" displayText="IP Location Parameter Search">
+    <ui:step id="step" displayText="IP Location Parameter Search">
+      <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" />
+      <ui:search exportSearch="false" saveSearch="False" collapsable="False" displayCondition="true">
+        <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" displayCondition="1" />
+        <ui:field-group id="fg">
+          <ui:field-group id="field group1" rows="-1">
+            <ui:dropdown id="PartyIdentificationValue" selectAll="true" name="PartyIdentificationValue" displayText="Segment" preferredWidth="3" rowSpan="5" colSpan="3" optionSrc="$root/Segments/*" />
+          </ui:field-group>
+          <ui:field-group id="fieldgroup2">
+            <ui:dropdown id="LOCTYPE" name="LOCTYPE" selectAll="true" displayText="Location Type" preferredWidth="5" optionSrc="$root/LocTypes/*" />
+            <!--<ui:entry-field id="Location_Number" name="Location_Number" displayText="Location" defaultValue="1000"/>-->
+            <ui:entry-field displayText="Location" id="LOC_NUM" name="LOC_NUM">
+              <ui:links>
+                <ui:link displayText="Select Locations" targetType="popup" targetName="orderPopup">
+                  <ui:image src="pop_up_window.gif" />
+                  <ui:url page="view.x2ps">
+                    <FIELD_NAME select="'LOC_NUM'" />
+                    <SELECTABLE select="'All'" />
+                    <BUTTON_ID select="'searchLocation'" />
+                  </ui:url>
+                </ui:link>
+              </ui:links>
+            </ui:entry-field>
+            <ui:entry-field id="LOCDESC" name="LOCDESC" displayText="Location Description" />
+          </ui:field-group>
+        </ui:field-group>
+      </ui:search>
+      <ui:table id="IP_LOC_PARAM" rowId="SegLocComb" selectable="All" rowSrc="$root/RESULTS/ROOOT/Table" maxRows="5" exportable="true" postRowIdAs="selectedSegLocComb" totalRowCount="$root/RESULTS/RWCT/@Value">
+        <ui:field-group id="columns">
+          <ui:entry-field id="SegmentNumber" name="SegmentNumber" displayText="Segment" sortable="true" editable="false" />
+          <ui:entry-field id="SegmentDescription" name="SegmentDescription" displayText="Segment Description" sortable="true" editable="false" />
+          <ui:entry-field id="LocationNumber" name="LocationNumber" displayText="Location" sortable="true" editable="false" />
+          <ui:entry-field id="LocationDescription" name="LocationDescription" displayText="Location Description" sortable="true" editable="false" />
+          <ui:entry-field id="LocationType" name="LocationType" displayText="Location Type" sortable="true" editable="false" />
+          <ui:dropdown id="KeepInventoryFlag" name="KeepInventoryFlag" displayText="Keep Inventory Flag" optionSrc="$root/Inventory/ID" value="{KeepInventoryFlag/@Value}" />
+          <ui:entry-field id="ParameterValueCommentText" name="ParameterValueCommentText" displayText="Comments" sortable="true" required="false" />
+          <ui:hidden-field name="SourceSystemMnemonicValue" id="SourceSystemMnemonicValue" />
+          <ui:hidden-field name="SegLocComb" id="SegLocComb" />
+        </ui:field-group>
+        <ui:buttons id="buttons1" displayCondition="true">
+          <ui:button displayText="MassUpdate" id="MassUpdate" name="MassUpdate" enabledBySelections="true" />
+          <ui:divider />
+          <!-- <ui:button displayText="Show History" id="ShowHistory" name="ShowHistory" enabledBySelections="true"/>
+          <ui:divider/>-->
+          <ui:button displayText="Save" id="Save" name="Save" enabledBySelections="false" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

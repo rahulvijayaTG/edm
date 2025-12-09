@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+	<!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+	
+    <!-- Search Param Overrides - Start:-->    
+    <xapl:variable name="searchParams">
+      <SEARCH_PARAM>
+      </SEARCH_PARAM>
+    </xapl:variable>  
+    <!-- Search Param Overrides.  End-->    
+    
+    <xapl:return>
+
+      <!-- Header -->
+      <x2:execute command="omx.add_book.org.select.contact.view:getHeader"/>
+      
+      <!-- Tabs -->
+      <x2:execute command="omx.add_book.org.select.contact.view:getContainer">
+        <x2:with-param name="pPage" select="'select_org_contact'"/>
+        <x2:with-param name="pHide" select="$this/TABS_HIDE/@Value"/>
+        <x2:with-param name="pReturnLink" select="$this/RET_PAGE/@Value"/>
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+	  
+	    <!-- Set the contact entity info -->
+	    <x2:execute command="omx.add_book.contacts:returnOrgEntityInfo">
+        <x2:with-param name="pOrgId" select="{$addBookCurrOrgId/@Value}"/>
+	    </x2:execute>
+      
+      <docutil:add select="$this">	  
+        <LOCATION_TYPE Value="ORG"/>
+      </docutil:add>
+	  
+      <!-- Search / Form and Report -->  
+      <x2:execute command="core.search.search:getSearch">
+        <x2:with-param name="this" select="{$this}"/>
+        <x2:with-param name="pSearchParam" select="{$searchParam}"/>
+        <x2:with-param name="pSearchFormConfigSource" select="'omx.add_book.contacts:getFormConfig'"/>
+        <x2:with-param name="pSearchReportConfigSource" select="'omx.add_book.contacts:getReportConfig'"/>
+        <x2:with-param name="pReportDataSource" select="'omx.add_book.contacts:getReportData'"/>
+      </x2:execute>
+	  
+	  <x2:execute command="omx.alert:getAlerts">
+	    <x2:with-param name="pRefresh"><xapl:value-of select="$this/REFRESH/@Value"/></x2:with-param>
+	    <x2:with-param name="pERROR"><xapl:value-of select="$this/ERROR/@Value"/></x2:with-param>
+	    <x2:with-param name="pStatusMsg"><xapl:value-of select="$this/STATUS_MSG/@Value"/></x2:with-param>
+      </x2:execute>
+      
+      <xapl:print> returning from load this <xapl:value-of select="{$this}"/> </xapl:print>
+    </xapl:return>
+    
+  </x2:command>  
+	
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+    
+	<xapl:variable name="orgHeader" enforceList="true">
+      <x2:execute command="omx.add_book.org.view:getHeader">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+    </xapl:variable>
+
+    <xapl:variable name="orgPage">
+      <web:get-page name="org_overview">
+	    <ORG_ID Value="{$addBookCurrOrgId/@Value}"/>
+		<CUSTOMER_ORG_ID Value="{$addBookCurrOrgId/@Value}"/>
+		<IN_PRIMARY_DOMAIN Value="{$s_inPrimaryDomain}"/>
+      </web:get-page>
+    </xapl:variable>
+
+    <xapl:return>
+      <HEADER>
+      <HEADING3 Value="Search Contacts"/>
+      <HEADING2_LINK Value="{$orgPage}"/>
+      <xapl:value-of select="$orgHeader/*"/>
+      </HEADER>
+    </xapl:return>
+
+  </x2:command>	
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pPage"/>
+    
+    <xapl:return>
+      
+      <CONTAINER>
+        <xapl:variable name="url">
+          <web:get-page name="select_org_contact_help"/>
+        </xapl:variable>
+		
+    
+        <HELP Url="{$url}"/>
+        
+        <STEP
+             DisplayText="Search Contacts" 
+             OnClick="{$pages:select_org_contact}" 
+             Selected="{$pPage = 'select_org_contact'}">
+        </STEP>
+	  </CONTAINER>
+      
+    </xapl:return>
+    
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

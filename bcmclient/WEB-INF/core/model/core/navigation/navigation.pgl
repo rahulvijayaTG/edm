@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:page-group xmlns:ui="http://www.i2.com/ui" displayText="Navigation" title="Navigation" source="core.navigation.view:load" type="Navigation">
+  <ui:navigation displayText="Examples">
+    <ui:solution name="examples" displayText="PGL" homePage="http://www.i2.com">
+      <ui:pad name="Tasks" displayText="Tasks" scrollable="yes">
+      </ui:pad>
+    </ui:solution>
+  </ui:navigation>
+</ui:page-group>

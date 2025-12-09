@@ -1,0 +1,295 @@
+<DOCUMENTS>
+	<DEFINE_METHOD Name="piLineLocSearch" Comment="This is a rule that calls the spec to retrieve pi Group Line Location records from the data base">
+		
+      <REQUEST Name="searchLineXLoc" AssignToVar="linelocresults" ServiceName="PEDM_MASTER" HandleException="true" ReturnRowCount="yes" MaxRows="{$thisParam/criteria/MaxRows/@Value}" StartAtRow="{$thisParam/criteria/StartAtRow/@Value}">
+        <TO_XML SelectList="$thisParam/criteria/FILTERS/*"/>
+      </REQUEST>
+		  <TO_DOCVAR AssignToVar="templist">
+			  <ROOT/>
+		  </TO_DOCVAR>
+      <FOR_EACH SelectList="$linelocresults/LINELOC_DETAILS/*" CurrentElement="currelem">
+        <TO_DOCVAR AssignToVar="appendlinelocrecords">
+          <linelocparams>
+            <searchresults Value="{concat($currelem/INT_GRP_ID/@Value,',',$currelem/INT_GRP_Line_ID/@Value,',',$currelem/Location/@Value)}"/>
+            <INT_GRP_ID Value="{$currelem/INT_GRP_ID/@Value}"/>
+            <INT_GRP_Desc Value="{$currelem/INT_GRP_Desc/@Value}"/>
+            <INT_GRP_Line_ID Value="{int($currelem/INT_GRP_Line_ID/@Value)}"/>
+            <PRD_PROD Value="{$currelem/PRD_PROD/@Value}"/>
+            <PRD_PROD_DESC Value="{$currelem/PRD_PROD_DESC/@Value}"/>
+            <SUCCSS_PROD Value="{$currelem/SUCCSS_PROD/@Value}"/>
+            <SUCCSS_PROD_DESC Value="{$currelem/SUCCSS_PROD_DESC/@Value}"/>
+            <Status Value="{$currelem/Status/@Value}"/>
+            <Location Value="{$currelem/Location/@Value}"/>
+            <Location_Description Value="{$currelem/Location_Description/@Value}"/>
+            <Strategy Value="{$currelem/Strategy/@Value}"/>
+            <Interchange_Direction Value="{$currelem/Interchange_Direction/@Value}"/>
+            <Inventory_use_up_Date Value="{substringBefore($currelem/Inventory_use_up_Date/@Value,' ')}"/>
+            <Deploy_Start_Date Value="{substringBefore($currelem/Deploy_Start_Date/@Value,' ')}"/>
+            <Deploy_End_Date Value="{substringBefore($currelem/Deploy_End_Date/@Value,' ')}"/>
+            <Production_Start_Date Value="{substringBefore($currelem/Production_Start_Date/@Value,' ')}"/>
+            <Production_End_Date Value="{substringBefore($currelem/Production_End_Date/@Value,' ')}"/>
+            <Ship_Start_Date Value="{substringBefore($currelem/Ship_Start_Date/@Value,' ')}"/>
+            <Ship_End_Date Value="{substringBefore($currelem/Ship_End_Date/@Value,' ')}"/>
+            <Comments Value="{$currelem/Comments/@Value}"/>
+					  <Commentshidden Value="{$currelem/Comments/@Value}"/>
+            <Date_Modified Value="{$currelem/Date_Modified/@Value}"/>
+            <Modified_By Value="{$currelem/Modified_By/@Value}"/>
+          </linelocparams>
+        </TO_DOCVAR>
+			<IF_TEST Test="($thisParam/criteria/searchresultval/@Value !=null)">
+				<THEN>
+					<IF_TEST Test="($appendlinelocrecords/searchresults/@Value = $thisParam/criteria/searchresultval/@Value)">
+					 <THEN>
+					  <APPEND_TO_XML DocVar="templist">
+						   <TO_XML SelectList="$appendlinelocrecords"/>
+					  </APPEND_TO_XML>
+					 </THEN>
+					</IF_TEST>
+				</THEN>
+				<ELSE>
+					<APPEND_TO_XML DocVar="templist">
+						   <TO_XML SelectList="$appendlinelocrecords"/>
+					  </APPEND_TO_XML>
+					 <SET Attribute="TotalRowCount" DocVar="templist" FromValue="{$linelocresults/LINELOC_DETAILS/@TotalRowCount}"/>
+				</ELSE>
+			</IF_TEST>			
+			</FOR_EACH>
+		<SET DocVar="thisReturn" FromDocVar="templist"/>
+	</DEFINE_METHOD>
+	
+	<DEFINE_METHOD Name="piGroupSearch" Comment="This is a rule that calls the spec to retrieve pi Group records from the data base">
+		<REQUEST Name="searchGroupResults" AssignToVar="linelocresults" ServiceName="PEDM_MASTER" HandleException="true" ReturnRowCount="yes" MaxRows="{$thisParam/criteria/MaxRows/@Value}" StartAtRow="{$thisParam/criteria/StartAtRow/@Value}">
+        <TO_XML SelectList="$thisParam/criteria/FILTERS/*"/>
+      </REQUEST>
+		  <TO_DOCVAR AssignToVar="templist">
+			  <ROOT/>
+		  </TO_DOCVAR>
+      <FOR_EACH SelectList="$linelocresults/LINELOC_DETAILS/*" CurrentElement="currelem">
+			  
+        <TO_DOCVAR AssignToVar="appendlinelocrecords">
+          <linelocparams>            
+            <GrpId Value="{$currelem/Grp_Id/@Value}"/>
+            <GrpDesc Value="{$currelem/Grp_Desc/@Value}"/>
+            <GrpStatus Value="{$currelem/Grp_Status/@Value}"/>
+          </linelocparams>
+        </TO_DOCVAR>
+			<IF_TEST Test="($thisParam/criteria/searchresultval/@Value !=null)">
+				<THEN>
+					<IF_TEST Test="($appendlinelocrecords/searchresults/@Value = $thisParam/criteria/searchresultval/@Value)">
+					 <THEN>
+					  <APPEND_TO_XML DocVar="templist">
+						   <TO_XML SelectList="$appendlinelocrecords"/>
+					  </APPEND_TO_XML>
+					 </THEN>
+					</IF_TEST>
+				</THEN>
+				<ELSE>
+					<APPEND_TO_XML DocVar="templist">
+						   <TO_XML SelectList="$appendlinelocrecords"/>
+					  </APPEND_TO_XML>
+					 <SET Attribute="TotalRowCount" DocVar="templist" FromValue="{$linelocresults/LINELOC_DETAILS/@TotalRowCount}"/>
+				</ELSE>
+			</IF_TEST>			
+			</FOR_EACH>
+		<SET DocVar="thisReturn" FromDocVar="templist"/>
+		
+	</DEFINE_METHOD>
+	<DEFINE_METHOD Name="pilinelocformatter" Comment="This is a rule that calls the spec to retrieve records from the data base">
+		<RULE>
+	<ACTION>
+		<GET_DOCUMENT AssignToVar="groupid" Name="P_ItemInterchangeGroup" ServiceName="PEDM_MASTER">
+			<ItemInterchangeGroupMnemonicValue	Value="{$thisParam/PARAMETERS/GrpId_pi/@Value}"/>
+		</GET_DOCUMENT>
+		<GET_DOCUMENT Name="P_ItemIdentificationClass" AssignToVar="ItemIdnClassId" ServiceName="PEDM_MASTER">
+      <ItemIdentificationClassMnemonicValue Value="{$defaultitemIdentificationClassMnemonicValue}"/>
+    </GET_DOCUMENT>		
+		<GET_DOCUMENT AssignToVar="RelatedItemValue" Name="P_ItemInterchangeGroupLine" ServiceName="PEDM_MASTER">
+			<ItemInterchangeGroupIdentifier Value="{int($groupid/P_ItemInterchangeGroup/ItemInterchangeGroupIdentifier/@Value)}"/>
+			<ItemInterchangeGroupLineNumber Value="{$thisParam/CurrentLineNumber/@Value}"/>
+			<QUERY_DOCUMENT_LINK Name="REL_2401">
+				<QUERY_DOCUMENT_LINK Name="REL_636">
+					<QUERY_DOCUMENT_LINK Name="REL_947_P_item_idn">
+						<SELECT>
+							<ItemIdentifier/>
+						 <ItemIdentificationValue/>				
+						</SELECT>									
+						<ItemIdentificationClassIdentifier Value="{$ItemIdnClassId/P_ItemIdentificationClass/ItemIdentificationClassIdentifier/@Value}"/>									
+					</QUERY_DOCUMENT_LINK>								
+				</QUERY_DOCUMENT_LINK>
+			</QUERY_DOCUMENT_LINK>
+		</GET_DOCUMENT>
+		<GET_DOCUMENT AssignToVar="primaryItemValue" Name="P_ItemInterchangeGroupLine" ServiceName="PEDM_MASTER">
+			<ItemInterchangeGroupIdentifier Value="{int($groupid/P_ItemInterchangeGroup/ItemInterchangeGroupIdentifier/@Value)}"/>
+			<ItemInterchangeGroupLineNumber Value="{$thisParam/CurrentLineNumber/@Value}"/>
+			<QUERY_DOCUMENT_LINK Name="REL_2401">
+				<QUERY_DOCUMENT_LINK Name="REL_637">
+					<QUERY_DOCUMENT_LINK Name="REL_947_P_item_idn">
+						<SELECT>
+						 <ItemIdentifier/>
+						 <ItemIdentificationValue/>				
+						</SELECT>									
+						<ItemIdentificationClassIdentifier Value="{$ItemIdnClassId/P_ItemIdentificationClass/ItemIdentificationClassIdentifier/@Value}"/>										
+					</QUERY_DOCUMENT_LINK>								
+				</QUERY_DOCUMENT_LINK>
+		 </QUERY_DOCUMENT_LINK>
+		</GET_DOCUMENT>
+		<GET_DOCUMENT AssignToVar="relatedItemUom" ServiceName="PEDM_MASTER" Name="P_Item">
+			<ItemIdentifier Value="{$RelatedItemValue/P_ItemInterchangeGroupLine/RelatedItemIdentifier/@Value}"/>
+		 	<QUERY_DOCUMENT_LINK Name="Item_UOM_BaseUOM">
+				<SELECT>
+				 <UnitOfMeasureMnemonicValue/>			
+				</SELECT>				
+			</QUERY_DOCUMENT_LINK>		
+		</GET_DOCUMENT>
+		<!--getting the base uom id for primary item id -->
+		<GET_DOCUMENT AssignToVar="primaryItemUom" ServiceName="PEDM_MASTER" Name="P_Item">
+			<ItemIdentifier Value="{$primaryItemValue/P_ItemInterchangeGroupLine/PrimaryItemIdentifier/@Value}"/>
+		 	<QUERY_DOCUMENT_LINK Name="Item_UOM_BaseUOM">
+				<SELECT>
+				 <UnitOfMeasureMnemonicValue/>			
+				</SELECT>				
+			</QUERY_DOCUMENT_LINK>		
+		</GET_DOCUMENT>
+		<GET_DOCUMENT Name="E_ProductInterchangeabilityGroupXLocation" AssignToVar="RecordState" ServiceName="INTERFACE_MASTER" ReturnRowCount="yes">
+					<InterchangeabilityGroupLineValue Value="{$thisParam/CurrentLineNumber/@Value}"/>
+					<InterchangeabilityGroupValue Value="{$thisParam/PARAMETERS/GrpId_pi/@Value}"/>
+					<LocationValue Value="{$thisParam/CurrentLocation/@Value}"/>
+		</GET_DOCUMENT>
+		<IF_TEST Test="($RecordState/E_ProductInterchangeabilityGroupXLocation/ENTITY_STATE/@Value='DELETED') and ($RecordState/@TotalRowCount = 1) ">
+					<THEN>
+						<TO_DOCVAR AssignToVar="formatter">
+							<GrpLinLocVar>
+								<DOCUMENT_CONTEXT>
+									<InterchangeabilityGroupLineValue Value="{$thisParam/CurrentLineNumber/@Value}"/>
+									<InterchangeabilityGroupValue Value="{$thisParam/PARAMETERS/GrpId_pi/@Value}"/>
+									<LocationValue Value="{$thisParam/CurrentLocation/@Value}"/>
+									<PredecessorItemValue Value="{$RelatedItemValue/P_ItemInterchangeGroupLine/ItemIdentificationValue/@Value}"/>
+									<PredecessorItemUnitOfMeasureValue Value="{$relatedItemUom/P_Item/UnitOfMeasureMnemonicValue/@Value}"/>
+									<SuccessorItemValue Value="{$primaryItemValue/P_ItemInterchangeGroupLine/ItemIdentificationValue/@Value}"/>									
+									<SuccessorItemUnitOfMeasureValue Value="{$primaryItemUom/P_Item/UnitOfMeasureMnemonicValue/@Value}"/>
+								</DOCUMENT_CONTEXT>
+								<UPDATE_PROPERTIES>
+									<InterchangeabilityDirectionValue Value="{$thisParam/PARAMETERS/INT_DIR/@Value}"/>
+					        <UseUpStrategyValue Value="{$thisParam/PARAMETERS/Use_Stat/@Value}"/>
+					        <PredecessorInventoryDepletionDate Value="{$thisParam/PARAMETERS/Use_DT/@Value}"/>
+					        <DeploymentStartDate Value="{$thisParam/PARAMETERS/Dep_Strt_Dt/@Value}"/>
+					        <DeploymentEndDate Value="{$thisParam/PARAMETERS/Dep_End_Dt/@Value}"/>
+					        <SuccessorProductProductionStartDate Value="{$thisParam/PARAMETERS/Prdn_Strt_Dt/@Value}"/>
+					        <PredecessorProductProductionEndDate Value="{$thisParam/PARAMETERS/Prdn_Endt_Dt/@Value}"/>
+					        <SuccessorProductCustomerShipStartDate Value="{$thisParam/PARAMETERS/Cust_Ship_Strt_Dt/@Value}"/>
+					        <PredecessorProductCustomerShipEndDate Value="{$thisParam/PARAMETERS/Cust_Ship_End_Dt/@Value}"/>
+									<ProductInterchangeabilityGroupXLocationCommentText Value="{$thisParam/PARAMETERS/Comments/@Value}"/>      
+					        <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal}"/>
+					        <SourceObjectMnemonicValue Value="P_M_ITINGRP_LN_X_LOC"/>
+					        <SourceKeyName Value="ITINGRP_ID|ITINGRP_LN_NUM|LOC_ID"/>
+									<sourceflag Value="UI"/>
+					        <DOCUMENTNAME Value="E_ProductInterchangeabilityGroupXLocation"/>
+					        <ACTIONTOBDONE Value="ACTIVATE"/>
+								  <SOURCE Value="UI"/>
+									<SYS_TYPE Value="ACTIVATE"/>
+								</UPDATE_PROPERTIES>
+								<SOURCE Value="UI"/>
+								 <sourceflag Value="UI"/>
+								 <DOCUMENTNAME Value="E_ProductInterchangeabilityGroupXLocation"/>
+								<ACTIONTOBDONE Value="ACTIVATE"/>
+							</GrpLinLocVar>
+						</TO_DOCVAR>
+					</THEN>
+					<ELSE>
+						<TO_DOCVAR AssignToVar="formatter">
+			<GrpLinLocVar>
+        <InterchangeabilityDirectionValue Value="{$thisParam/PARAMETERS/INT_DIR/@Value}"/>
+        <UseUpStrategyValue Value="{$thisParam/PARAMETERS/Use_Stat/@Value}"/>
+        <PredecessorInventoryDepletionDate Value="{$thisParam/PARAMETERS/Use_DT/@Value}"/>
+        <DeploymentStartDate Value="{$thisParam/PARAMETERS/Dep_Strt_Dt/@Value}"/>
+        <DeploymentEndDate Value="{$thisParam/PARAMETERS/Dep_End_Dt/@Value}"/>
+        <SuccessorProductProductionStartDate Value="{$thisParam/PARAMETERS/Prdn_Strt_Dt/@Value}"/>
+        <PredecessorProductProductionEndDate Value="{$thisParam/PARAMETERS/Prdn_Endt_Dt/@Value}"/>
+        <SuccessorProductCustomerShipStartDate Value="{$thisParam/PARAMETERS/Cust_Ship_Strt_Dt/@Value}"/>
+        <PredecessorProductCustomerShipEndDate Value="{$thisParam/PARAMETERS/Cust_Ship_End_Dt/@Value}"/>
+        <InterchangeabilityGroupValue Value="{$thisParam/PARAMETERS/GrpId_pi/@Value}"/>
+        <InterchangeabilityGroupLineValue Value="{$thisParam/CurrentLineNumber/@Value}"/>
+        <ProductInterchangeabilityGroupXLocationCommentText Value="{$thisParam/PARAMETERS/Comments/@Value}"/>        
+        <SuccessorItemValue Value="{$primaryItemValue/P_ItemInterchangeGroupLine/ItemIdentificationValue/@Value}"/>
+        <LocationValue Value="{$thisParam/CurrentLocation/@Value}"/>
+        <PredecessorItemValue Value="{$RelatedItemValue/P_ItemInterchangeGroupLine/ItemIdentificationValue/@Value}"/>
+				<PredecessorItemUnitOfMeasureValue Value="{$relatedItemUom/P_Item/UnitOfMeasureMnemonicValue/@Value}"/>
+				<SuccessorItemUnitOfMeasureValue Value="{$primaryItemUom/P_Item/UnitOfMeasureMnemonicValue/@Value}"/>
+        <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal}"/>
+        <SourceObjectMnemonicValue Value="P_M_ITINGRP_LN_X_LOC"/>
+        <SourceKeyName Value="ITINGRP_ID|ITINGRP_LN_NUM|LOC_ID"/>
+				<sourceflag Value="UI"/>
+        <DOCUMENTNAME Value="E_ProductInterchangeabilityGroupXLocation"/>
+        <ACTIONTOBDONE Value="INSERT"/>
+			  <SOURCE Value="UI"/>
+				<SYS_TYPE Value="INSERT"/>				
+      </GrpLinLocVar>
+		</TO_DOCVAR>
+				</ELSE>	
+	 </IF_TEST>
+		<TO_DOCVAR AssignToVar="thisReturn">
+			<TO_XML SelectList="$formatter"/>
+		</TO_DOCVAR>
+		</ACTION>
+   </RULE>
+	</DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateGrpLine" Comment="This is a rule that calls the spec to retrieve Pi Line records from the data base">
+    <RULE>
+      <ACTION>
+        <REMOVE_CHILDREN ChildName="SYS_TYPE" DocVar="thisParam"/>
+        <!--<REQUEST Name="updatePiGrpPedmOutbound" ServiceName="BCM_MASTER" AssignToVar="thisReturn" HandleException="true">
+          <ACTIONTOBDONE Value="UPDATE"/>
+          <DOCUMENTNAME Value="E_ProductInterchangeabilityGroupMaster"/>
+          <DOCUMENT_CONTEXT>
+            <InterchangeabilityGroupIdentification Value="{$thisParam/InterchangeabilityGroupIdentification/@Value}"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <InterchangeabilityGroupDescription Value="{$thisParam/InterchangeabilityGroupDescription/@Value}"/>
+            <InterchangeabilityGroupStatus Value="{$thisParam/ItemInterchangeGroupStatusMnemonicValue/@Value}"/>
+            <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal}"/>
+          </UPDATE_PROPERTIES>
+        </REQUEST>-->
+    
+            <REQUEST Name="updatePiGrpLnPedmOutbound" ServiceName="BCM_MASTER" AssignToVar="thisReturn" HandleException="true">
+              <ACTIONTOBDONE Value="UPDATE"/>
+              <DOCUMENTNAME Value="E_ProductInterchangeabilityGroupDetail"/>
+              <DOCUMENT_CONTEXT>
+                <InterchangeabilityGroupLineValue Value="{int($thisParam/InterchangeabilityGroupLineValue/@Value)}"/>
+                <InterchangeabilityGroupValue Value="{$thisParam/InterchangeabilityGroupValue/@Value}"/>
+                <!--<SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal}"/>-->
+              </DOCUMENT_CONTEXT>
+              <UPDATE_PROPERTIES>
+                <ConversionRatioMeasure Value="{$thisParam/ConversionRatioMeasure/@Value}"/>
+                <InterchangeabilityReasonValue Value="{$thisParam/InterchangeabilityReasonValue/@Value}"/>
+                <PredecessorItemValue Value="{$thisParam/PredecessorItemValue/@Value}"/>
+                <SuccessorItemValue Value="{$thisParam/SuccessorItemValue/@Value}"/>
+								<PredecessorItemUnitOfMeasureValue Value="{$thisParam/PredecessorItemUnitOfMeasureValue/@Value}"/>
+                <SuccessorItemUnitOfMeasureValue Value="{$thisParam/SuccessorItemUnitOfMeasureValue/@Value}"/>
+                <SYS_TYPE Value="UPDATE"/>
+                <SOURCE Value="UI"/>
+                <!--QC:20768, Venkat, 06/24/2008, Start-->
+                <!--<SourceKeyName Value="ITINGRP_ID|ITINGRP_LN_NUM"/>-->
+                <!--<SourceKeyValue Value="{$thisParam/InterchangeabilityGroupValue/@Value}"/>-->
+	              <!--<SourceKeyValue Value="{concat(int($thisParam/InterchangeabilityGroupValue/@Value),'|',int($thisParam/InterchangeabilityGroupLineValue/@Value))}"/>-->
+                <!--<SourceObjectMnemonicValue Value="P_M_ITINGRP_LN"/>-->
+                <!--QC:20768, Venkat, 06/24/2008, End-->
+		<SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal}"/>
+   	        <!-- Multi User Enhancement Dt:02/11/2008 Venkat Start -->
+		<DateModified Value="{$thisParam/DateModified/@Value}"/>
+		<ValidateMultiUserEdit Value="{$thisParam/ValidateMultiUserEdit/@Value}"/>
+		<!-- Multi User Enhancement Dt:02/11/2008 Venkat End -->
+              </UPDATE_PROPERTIES>
+            </REQUEST>
+        <IF_TEST Test="count($thisReturn/*/_ERRORS) = 0 and $thisReturn/@Status != 'Error'">
+          <THEN/>
+          <ELSE>
+            <EXCEPTION ForceRollback="true">
+              <TO_XML DocVar="thisReturn"/>
+            </EXCEPTION>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>
+

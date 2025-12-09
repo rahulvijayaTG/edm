@@ -1,0 +1,815 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="uiWfIPSegmentParameter.pgl">
+  <!--<ui:container id="SearchContainer" displayText="">
+
+    <ui:step id="searchStep">
+
+      <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}"/>-->
+  <ui:search id="srchSegParams" exportSearch="false" saveSearch="false" collapsable="true" displayText="Search Parameter">
+    <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" anyFieldIsRequired="false" />
+    <ui:field-group rows="2">
+      <ui:entry-field displayText="Parameter Name" id="ParameterMnemonicValue" name="ParameterMnemonicValue">
+        <ui:links>
+          <ui:link displayText="Select Parameters" targetType="popup" targetName="orderPopup">
+            <ui:image src="pop_up_window.gif" />
+            <ui:url page="view.x2ps">
+              <FIELD_NAME select="'ParameterMnemonicValue'" />
+              <ENTITY_NAME select="'ParameterMnemonicValue'" />
+              <SELECTABLE select="'All'" />
+              <BUTTON_ID select="'selectParameter'" />
+            </ui:url>
+          </ui:link>
+        </ui:links>
+      </ui:entry-field>
+      <ui:dropdown id="ENTITYSTATE" name="ENTITYSTATE" displayText="State" defaultValue="ACTIVE">
+        <ui:option id="ACTIVE" value="ACTIVE" />
+        <ui:option id="INACTIVE" value="INACTIVE" />
+      </ui:dropdown>
+    </ui:field-group>
+  </ui:search>
+  <!--<ui:table id="bottomTable" displayText="RP Segment Parameters" select="$root/line" rowSrc="ROW_DATA" rowId="PARAMETER_NAME" selectable="single" totalRowCount="$root/ROWCNT/@Value" maxRows="5">-->
+  <ui:table id="bottomTable" displayText="Parameter Search Results" select="$root/line" rowSrc="ROW_DATA" rowId="PARAMETER_NAME" selectable="single" startAtRow="$root/startAtRow/@Value" totalRowCount="$root/ROWCNT/@Value" maxRows="5" exportable="true" postRowIdAs="selectedParameterName">
+    <ui:field-group id="tableColumns">
+      <ui:entry-field editable="false" name="PARAMETER_NAME" id="PARAMETER_NAME" displayText="Parameter Name" sortable="true" />
+      <ui:choose-field id="PARAMETER_DESC" name="PARAMETER_DESC" displayText="Parameter Description" displayNoWrap="false">
+        <ui:when test="(contains($root/AccessLevel/@Value,'Add') or contains($root/AccessLevel/@Value,'Update')) and ENTITY_STATE/@Value='ACTIVE'">
+          <ui:entry-field name="PARAMETER_DESC" id="PARAMETER_DESC" displayText="Parameter Description" displayNoWrap="false" />
+        </ui:when>
+        <ui:otherwise>
+          <ui:display-field name="PARAMETER_DESC" id="PARAMETER_DESC" displayText="Parameter Description" displayNoWrap="false" />
+        </ui:otherwise>
+      </ui:choose-field>
+      <ui:choose-field id="PARAMETER_UOM" name="PARAMETER_UOM" displayText="Parameter UOM">
+        <ui:when test="(contains($root/AccessLevel/@Value,'Add') or contains($root/AccessLevel/@Value,'Update')) and ENTITY_STATE/@Value='ACTIVE'">
+          <ui:dropdown id="PARAMETER_UOM" name="PARAMETER_UOM" displayText="Parameter UOM" optionSrc="$root/UOM/*" />
+        </ui:when>
+        <ui:otherwise>
+          <ui:display-field name="PARAMETER_UOM" id="PARAMETER_UOM" displayText="Parameter UOM" />
+        </ui:otherwise>
+      </ui:choose-field>
+      <ui:entry-field editable="false" name="ENTITY_STATE" id="ENTITY_STATE" displayText="State" />
+      <ui:entry-field editable="false" id="ParameterDatatypeName" name="ParameterDatatypeName" displayText="Data Type" />
+      <ui:choose-field id="ParameterValueFreeFormIndicator" name="ParameterValueFreeFormIndicator" displayText="Valid Value List">
+        <ui:when test="ParameterValueFreeFormIndicator/@Value='Y'">
+          <ui:entry-field editable="false" id="ParameterValueFreeFormIndicator" value="N" name="ParameterValueFreeFormIndicator" displayText="Valid Value List" />
+        </ui:when>
+        <ui:otherwise>
+          <ui:entry-field editable="false" id="ParameterValueFreeFormIndicator" value="Y" name="ParameterValueFreeFormIndicator" displayText="Valid Value List" />
+        </ui:otherwise>
+      </ui:choose-field>
+      <!--	 <ui:entry-field editable="false" id="ParameterValueFreeFormIndicator" name="ParameterValueFreeFormIndicator" displayText="Valid Value List"/>-->
+      <ui:hidden-field id="PARAMETER_DESC_Hidden" name="PARAMETER_DESC_Hidden" />
+      <ui:hidden-field id="PARAMETER_UOM_Hidden" name="PARAMETER_UOM_Hidden" />
+      <!--  <ui:display-field name="LAST_MODIFIED_DATE" id="LAST_MODIFIED_DATE" displayText="Modified Date" sortable="false"/>
+
+      <ui:display-field name="ModifiedBy" id="ModifiedBy" displayText="Modified By" sortable="false"/>-->
+      <ui:hidden-field id="LAST_MODIFIED_DATE" name="LAST_MODIFIED_DATE" />
+    </ui:field-group>
+    <ui:buttons id="tblActions">
+      <ui:button id="validValue" name="validValue" displayText="Manage Valid Values" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'View') and ($root/chkStateActive/@Value=1)}" />
+      <ui:button id="Delete" name="Delete" displayText="Delete" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'Remove') and ($root/chkState/@Value=1)}" />
+      <ui:button id="Activate" name="Activate" displayText="Activate" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'Update') and ($root/chkState/@Value=1)}" />
+      <ui:button id="Deactivate" name="Deactivate" displayText="Deactivate" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'Update') and ($root/chkStateActive/@Value=1)}" />
+      <ui:button id="Save" name="Save" displayText="Save" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'Update')and ($root/chkStateActive/@Value=1)}" />
+    </ui:buttons>
+  </ui:table>
+  <!--    </ui:step>
+
+  </ui:container>-->
+  <ui:container id="addNewContainer" collapsable="true" displayText="Add New Parameter" scrollable="true" displayCondition="{contains($root/AccessLevel/@Value,'Add')}">
+    <ui:step id="bottomStep">
+      <!--   <ui:validation successMessage="{$root/SUCCESSMSG/MSG/@Value}" displayCondition="1"/>-->
+      <ui:field-group columns="2">
+        <ui:field-group id="addNew" rows="3">
+          <ui:entry-field name="ADD_PARAM_NAME" id="ADD_PARAM_NAME" displayText="Parameter Name" required="true" />
+          <ui:dropdown displayText="Parameter UOM" id="ADD_PARAM_UOM" name="ADD_PARAM_UOM" defaultValue="NV" required="true" optionSrc="$root/UOM/*" />
+          <ui:textarea name="ADD_COMMENTS" id="ADD_COMMENTS" displayText="Comments" />
+          <ui:entry-field name="ADD_PARAM_DESC" id="ADD_PARAM_DESC" displayText="Parameter Description" required="false" displayNoWrap="false" />
+          <ui:dropdown id="DATATYPE" name="ADD_DATATYPE" displayText="Data Type" required="true" defaultValue="TEXT">
+            <ui:option id="BOOLEAN" value="BOOLEAN" />
+            <ui:option id="NUMBER" value="NUMBER" />
+            <ui:option id="TEXT" value="TEXT" />
+          </ui:dropdown>
+          <ui:checkbox name="ADD_ISVALIDVALUE" displayText="Valid Value List" />
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="Clear" name="Clear" displayText="Clear" enabledBySelections="true" validate="false" />
+        <ui:button id="Add" name="Add" displayText="Add New" enabledBySelections="true" validate="false" displayCondition="{contains($root/AccessLevel/@Value,'Add')}" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>function on_validValue()
+
+		{
+
+
+
+			var table = document.getElementById("bottomTable_data");
+
+		var count=0,j;
+
+		var a=document.getElementsByName('selectedParameterName');
+
+					
+
+		for( k=0; k &lt;a.length;k++)
+
+		{
+
+			if(a[k].checked)
+
+		{
+
+//	alert(k);
+
+
+
+			
+
+	
+
+		if(table.rows[k].cells[6].childNodes[0].value =="N")
+
+		{
+
+core_alert('Selected Parameter is not of valid value type');
+
+		i2uiToggleButtonState('validValue', 'disabled')
+
+		return;
+
+		}
+
+		else{
+
+			document.form.BUTTON_ID.value = 'validValue'; 
+
+							document.form.action = 'view.x2ps';
+
+							document.form.submit(); 
+
+		}
+
+			}
+
+		}
+
+		}
+
+
+
+		function onSearch()
+
+      {
+
+
+
+		 document.form.BUTTON_ID.value="search_button";
+
+                document.form.submit();
+
+		}
+
+function checkComments(tableid)
+
+		{
+
+			var table = document.getElementById(tableid+"_data");
+
+		var count=0,j;
+
+		var a=document.getElementsByName('selectedParameterName');
+
+					
+
+		for( k=0; k &lt;a.length;k++)
+
+		{
+
+	
+
+		if(a[k].checked)
+
+		{
+
+//	alert(k);
+
+
+
+			
+
+	
+
+		if(table.rows[k].cells[6].childNodes[0].value =="N")
+
+		{
+
+		//core_alert('Selected Parameter is of Free Form Type');
+
+		i2uiToggleButtonState('validValue', 'disabled')
+
+		return;
+
+		}
+
+			}
+
+		}
+
+
+
+		}
+
+		
+
+		
+
+				function on_Deactivate(){
+                   // Changes made by 09032016 for QC 20794
+					var response = core_confirm('Deactivating a parameter will also deactivate all the Segment-Parameters associated with it. Do you still want to deactivate?');
+
+					if ( response == 'yes' ) {
+
+						canSubmit = 'true';
+
+					} else {
+
+						canSubmit = 'false';
+
+					}
+
+					if (canSubmit == 'true') {
+
+								document.form.BUTTON_ID.value = 'Deactivate'; 
+
+							document.form.action = 'view.x2ps';
+
+							document.form.submit();  
+
+					}
+
+		else{
+
+						document.form.SUBMIT_AS_XML.value = 'false';
+
+					}
+
+					return;
+
+		}
+
+			function on_Activate(){
+                         // Changes made by 09032016 for QC 20794
+					var response = core_confirm('Activating a parameter will also activate all the Segment-Parameters associated with it. Do you still want to activate?');
+
+					if ( response == 'yes' ) {
+
+						canSubmit = 'true';
+
+					} else {
+
+						canSubmit = 'false';
+
+					}
+
+					if (canSubmit == 'true') {
+
+								document.form.BUTTON_ID.value = 'Activate'; 
+
+							document.form.action = 'view.x2ps';
+
+							document.form.submit();  
+
+					}
+
+		else{
+
+						document.form.SUBMIT_AS_XML.value = 'false';
+
+					}
+
+					return;
+
+		}
+
+			function on_Delete(){
+                           // Changes made by 09032016 for QC 20794
+					var response = core_confirm("Are you sure you want to delete the selected record(s)?");
+
+					if ( response == 'yes' ) {
+
+						canSubmit = 'true';
+
+					} else {
+
+						canSubmit = 'false';
+
+					}
+
+					if (canSubmit == 'true') {
+
+								document.form.BUTTON_ID.value = 'Delete'; 
+
+							document.form.action = 'view.x2ps';
+
+							document.form.submit();  
+
+					}
+
+		else{
+
+						document.form.SUBMIT_AS_XML.value = 'false';
+
+					}
+
+					return;
+
+		}
+
+		//function
+
+	/* support for row selector */
+
+var i2uiActiveRowSelector = null;
+
+var i2uiInvokeCallback = true;
+
+function i2uiToggleRowSelectionState(obj, originalstate, tableid, treecell, multiSelect)
+
+{
+
+  // NS4 browser not supported
+
+  if (document.layers != null)
+
+    return;
+
+
+
+  if (i2uiActiveRowSelector != null)
+
+    obj = i2uiActiveRowSelector;
+
+  else
+
+  {
+
+    // turn off any global selector
+
+    var globalselector = document.getElementById(tableid+"_globalrowselector");
+
+    if (globalselector != null)
+
+      globalselector.checked = false;
+
+  }
+
+  
+
+  //pglalert( 'i2uiToggleRowSelectionState() tableId=' + tableid );
+
+
+
+  // if single select, turn off previous row
+
+  if (multiSelect == false)
+
+  {
+
+    // test for scrollable table
+
+    var table = document.getElementById(tableid+"_data");
+
+    if (table == null)
+
+      table = document.getElementById(tableid);
+
+
+
+    var len = table.rows.length;
+
+    for (var i=0; i&lt;len; i++)
+
+    {
+
+      if (table.rows[i].lastClassName != null)
+
+      {
+
+        table.rows[i].className = table.rows[i].lastClassName;
+
+        if (table.rows[i].cells[0].childNodes &amp;&amp;
+
+            table.rows[i].cells[0].childNodes.length &gt; 0 &amp;&amp;
+
+            table.rows[i].cells[0].childNodes[0].style != null)
+
+          table.rows[i].cells[0].childNodes[0].style.backgroundColor = "";
+
+        table.rows[i].lastClassName = null;
+
+      }
+
+    }
+
+  }
+
+
+
+  // find owning row
+
+  var rowobj = obj;
+
+  while (rowobj != null &amp;&amp; rowobj.tagName != "TR")
+
+  {
+
+    if (rowobj.parentElement)
+
+    {
+
+      rowobj = rowobj.parentElement;
+
+    }
+
+    else
+
+    {
+
+      rowobj = rowobj.parentNode;
+
+    }
+
+  }
+
+  var rowIndex = -1;
+
+  
+
+  if (rowobj != null)
+
+  {
+
+    var rowTable = null;
+
+    
+
+    if (rowobj.parentElement)
+
+    {
+
+      rowTable = rowobj.parentElement;
+
+    }
+
+    else
+
+    {
+
+      rowTable = rowobj.parentNode;
+
+    
+
+    }
+
+    //pglalert( 'rowTable.id = ' + rowTable.id + ', tableid=' + tableid );
+
+    
+
+    if( rowTable.id == tableid )
+
+    {
+
+      //pglalert( 'rowTable.id == tableid' );
+
+    }
+
+    else
+
+    {  
+
+      //pglalert( 'rowTable.id != tableid, searching for table' );
+
+      var rowIndex = -1;
+
+      
+
+      for( var i=0; i &lt; rowTable.rows.length; i++ )
+
+      {
+
+        if( rowTable.rows[i] == rowobj )
+
+        {
+
+          rowIndex = i;
+
+          break;          
+
+        }
+
+      }
+
+      
+
+      //pglalert( 'rowIndex = ' + rowIndex );
+
+      
+
+      if( rowIndex &gt; -1 )
+
+      {
+
+        var otherTable = document.getElementById(tableid+"_data");
+
+        if (otherTable == null)
+
+        {
+
+          otherTable = document.getElementById(tableid);
+
+        }
+
+        
+
+        rowobj = otherTable.rows[rowIndex];
+
+      }
+
+      else      
+
+      {
+
+        //pglalert( 'could not find matching row' );
+
+      }
+
+    }
+
+  
+
+  
+
+    rowobj.className = obj.checked?"rowHighlight":originalstate;
+
+    rowobj.lastClassName = originalstate;
+
+    //rowobj.cells[0].childNodes[0].style.backgroundColor = "";
+
+  }
+
+
+
+  // handle treetable
+
+  if (treecell != null &amp;&amp; treecell != '' &amp;&amp; i2uiActiveRowSelector == null)
+
+  {
+
+    var cellname = rowobj.cells[treecell].id.substring(9);
+
+    var depth1 = Math.floor(cellname);
+
+    var table = document.getElementById(tableid);
+
+    var len = table.rows.length;
+
+    for (var i=0; i&lt;len; i++)
+
+    {
+
+      // locate desired row in table
+
+      if (table.rows[i].cells[treecell].id == "TREECELL_"+cellname)
+
+      {
+
+        // now process rest of table with respect to located
+
+        for (var j=i+1; j&lt;len; j++)
+
+        {
+
+          var newcell = table.rows[j].cells[treecell].id.substr(9);
+
+          var depth2 = Math.floor(newcell);
+
+          if ((depth2 == depth1 + 10 || depth2 == depth1 + 15) ||
+
+              (depth2 &gt; depth1 + 5))
+
+          {
+
+            table.rows[j].cells[0].childNodes[0].checked = obj.checked;
+
+            if (obj.checked)
+
+            {
+
+              table.rows[j].className = "rowHighlight";
+
+              table.rows[j].cells[0].childNodes[0].style.backgroundColor = "";
+
+            }
+
+            else
+
+            {
+
+              var onclickhandler = table.rows[j].cells[0].childNodes[0].onclick+"!!!";
+
+              var from = onclickhandler.indexOf("{");
+
+              onclickhandler = onclickhandler.substring(from+1);
+
+              var to = onclickhandler.lastIndexOf("}");
+
+              onclickhandler = onclickhandler.substring(0,to);
+
+              i2uiActiveRowSelector = table.rows[j].cells[0].childNodes[0];
+
+              eval(onclickhandler);
+
+              i2uiActiveRowSelector = null;
+
+            }
+
+          }
+
+          if (depth2 &lt;= depth1)
+
+          {
+
+            break;
+
+          }
+
+        }
+
+
+
+        var handle = depth1 - 10;
+
+        // now set partial state of all parents of selected node
+
+        for (var j=i-1; j&gt;-1; j--)
+
+        {
+
+          var newcell = table.rows[j].cells[treecell].id.substr(9);
+
+          var depth2 = Math.floor(newcell);
+
+          if (depth2 == handle || depth2 == handle-5)
+
+          {
+
+            var selectedcount = 0;
+
+            var nonselectedcount = 0;
+
+            for (var k=j+1; k&lt;len; k++)
+
+            {
+
+              var newcell2 = table.rows[k].cells[treecell].id.substr(9);
+
+              var depth3 = Math.floor(newcell2);
+
+              if ((depth3 == depth2 + 10 || depth3 == depth2 + 15) ||
+
+                  (depth3 &gt; depth2 + 5))
+
+              {
+
+                if (table.rows[k].cells[0].childNodes[0].checked)
+
+                  selectedcount++;
+
+                else
+
+                  nonselectedcount++;
+
+              }
+
+              if (depth3 &lt;= depth2)
+
+              {
+
+                break;
+
+              }
+
+            }
+
+
+
+            if (selectedcount &gt; 0)
+
+            {
+
+              if (nonselectedcount &gt; 0)
+
+              {
+
+                table.rows[j].cells[0].childNodes[0].checked=false;
+
+                var onclickhandler = table.rows[j].cells[0].childNodes[0].onclick+"!!!";
+
+                var from = onclickhandler.indexOf("{");
+
+                onclickhandler = onclickhandler.substring(from+1);
+
+                var to = onclickhandler.lastIndexOf("}");
+
+                onclickhandler = onclickhandler.substring(0,to);
+
+                i2uiActiveRowSelector = table.rows[j].cells[0].childNodes[0];
+
+                eval(onclickhandler);
+
+                i2uiActiveRowSelector = null;
+
+                table.rows[j].cells[0].childNodes[0].style.backgroundColor = "#fff6a6";
+
+              }
+
+              else
+
+              {
+
+                table.rows[j].cells[0].childNodes[0].checked = true;
+
+                table.rows[j].className = "rowHighlight";
+
+                table.rows[j].cells[0].childNodes[0].style.backgroundColor = "";
+
+              }
+
+            }
+
+            else
+
+            {
+
+              table.rows[j].cells[0].childNodes[0].checked=false;
+
+              table.rows[j].cells[0].childNodes[0].style.backgroundColor = "";
+
+
+
+              if (nonselectedcount &gt; 0)
+
+              {
+
+              var onclickhandler = table.rows[j].cells[0].childNodes[0].onclick+"!!!";
+
+              var from = onclickhandler.indexOf("{");
+
+              onclickhandler = onclickhandler.substring(from+1);
+
+              var to = onclickhandler.lastIndexOf("}");
+
+              onclickhandler = onclickhandler.substring(0,to);
+
+              i2uiActiveRowSelector = table.rows[j].cells[0].childNodes[0];
+
+              eval(onclickhandler);
+
+              i2uiActiveRowSelector = null;
+
+              }
+
+            }
+
+            // look up one more level
+
+            handle -= 10;
+
+            if (handle &lt; 0)
+
+              break;
+
+          }
+
+        }
+
+
+
+        break;
+
+      }
+
+    }
+
+  }
+
+if (i2uiInvokeCallback)
+
+    try{i2uiRowSelectionCallback(tableid)}catch(e){}
+
+checkComments('bottomTable');
+
+}</ui:script>
+</ui:page-group>
+

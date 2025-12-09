@@ -1,0 +1,33 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui">
+  <ui:table id="table" displayText="Select Location" selectable="All" select="LOCATIONS" rowSrc="Location" rowId="locationID" postRowIdAs="S_locationID" scrollable="true" collapsable="true" configurable="false" exportable="false" filter="{$root/SHOW_FILTERS/@Value}" sortBy="$root/DEFAULTS/SORT_BY/@Value" sortOrder="$root/DEFAULTS/SORT_ORDER/@Value" help="{$pages:ItemLocation_SelectLocation}">
+    <ui:validation anyFieldIsRequired="false" successMessage="{$root/ERROR_MESSAGE/@Value}" />
+    <ui:field-group>
+      <ui:link-field displayText="Location ID" name="locationID" dataType="Text" sortable="true" />
+      <ui:display-field displayText="Name" name="name" dataType="Text" sortable="true" />
+      <ui:display-field displayText="Type" name="type" dataType="Text" sortable="true" />
+    </ui:field-group>
+    <ui:buttons>
+      <ui:button id="SYS_BACK" displayText="Back" onClick="javascript:onBack();" />
+      <ui:button displayText="Next" id="next" enabledBySelections="true" />
+    </ui:buttons>
+  </ui:table>
+  <ui:script />
+  <ui:script>function onLoad()
+  {
+    onLoadSuper();
+    scrollHelper();
+    setFocus();
+  }
+
+  function onResize()
+  {
+    onResizeSuper();
+    scrollHelper();
+  }
+
+  function onBack()
+  {
+    document.location='view.x2ps?BUTTON_ID=SYS_BACK&amp;PAGE=' + document.form.PAGE.value;
+  }</ui:script>
+</ui:page-group>
+

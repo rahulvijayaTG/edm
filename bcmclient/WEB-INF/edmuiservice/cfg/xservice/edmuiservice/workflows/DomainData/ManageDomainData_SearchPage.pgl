@@ -1,0 +1,608 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="ManageDoaminData" source="studio.controller:load">
+  <ui:container id="Domiancontainer">
+    <ui:step id="Domaintop_container" displayText="Manage Domain Data ">
+      <ui:table name="DomainSearchTableName" id="DomainSearchTable" rowSrc="P_CrossReferenceObject" select="ROOT" postRowIdAs="selectedTableName" rowId="CrossReferenceObjectBaseDataTableName" displayTextNoRecords="Nothing found" selectable="Single" filter="true" exportable="false" startAtRow="@startAtRow" doPaging="true" maxRows="3" displayText="Domain Table" displayCondition="{(string-length($root/FILTER_ID/@Value) = 0) or ($root/FILTER_ID/@Value = 'DomainSearchTable')}">
+        <ui:field-group id="tableColumns" columns="7">
+          <ui:hidden-field id="ID" name="CrossReferenceObjectBaseDataTableName" />
+          <ui:display-field id="CrossReferenceObjectName" sortable="true" name="CrossReferenceObjectName" displayText="Name" />
+          <ui:display-field id="CrossReferenceObjectDescription" sortable="true" columns="70" displayText="Description" name="CrossReferenceObjectDescription" displayNoWrap="false" size="10" />
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="DisplayData" name="DisplayData" displayText="Display Data" emphasized="true" onClick="javascript:validateCheckedRadioButton('DisplayData','selectedTableName','Domain Table to view record(s).','DomainSearchTable')" />
+          <ui:divider id="div1" />
+          <ui:divider id="div2" />
+          <ui:button id="CLEARDOMIAN" name="CLEARDOMIAN" displayText="Clear" onClick="javascript:clearfilter('DomainSearchTable')" />
+        </ui:buttons>
+      </ui:table>
+      <ui:table name="ManageDataTableName" id="ManageDataTable" rowSrc="DOMAINDATA" select="ROOT/DOMAINDATAS" postRowIdAs="selectedDOMAINIDENTIFIER" rowId="DOMAINIDENTIFIER" displayTextNoRecords="Nothing found" selectable="Single" filter="true" exportable="true" startAtRow="@startAtRow" doPaging="true" maxRows="5" displayText="{$root/ROOT/DISPLAYLL/@Value}" rowSelectorCondition="{ENTITY_STATE/@Value != 'DELETED' }" displayCondition="{(string-length($root/FILTER_ID/@Value) = 0) or ($root/FILTER_ID/@Value = 'ManageDataTable')}">
+        <ui:validation id="MessageValidation1" anyFieldIsRequired="true" anyFieldHasErrors="false" successMessage="{$root/ROOT/SUCESSMESSAGE/@Value}" />
+        <ui:field-group id="tableColumnsData" columns="7">
+          <ui:hidden-field id="ID" name="DOMAINIDENTIFIER" />
+          <ui:entry-field id="DOMAINMNEMONICVALUE" sortable="true" name="DOMAINMNEMONICVALUE" displayText="Mnemonic Code" readOnly="{DOMAINIDENTIFIER/@Value != string($root/ROOT/SELECTEDDOMAINIDENTIFIER/@Value)}" required="true" />
+          <ui:entry-field id="DOMAINNAME" displayText="Name" name="DOMAINNAME" sortable="true" readOnly="{DOMAINIDENTIFIER/@Value != string($root/ROOT/SELECTEDDOMAINIDENTIFIER/@Value)}" />
+          <ui:entry-field id="DOMAINDESCRIPTION" sortable="true" columns="70" displayText="Description" name="DOMAINDESCRIPTION" readOnly="{DOMAINIDENTIFIER/@Value != string($root/ROOT/SELECTEDDOMAINIDENTIFIER/@Value)}">
+            <ui:links>
+              <ui:link displayText="EnterDomainDataDescription" onClick="javascript:onSysPopUp()">
+                <ui:image src="pop_up_window.gif" />
+              </ui:link>
+            </ui:links>
+          </ui:entry-field>
+          <ui:display-field id="SourceSystemMnemonicValue" sortable="true" displayText="Source System" name="SourceSystemMnemonicValue" />
+          <ui:dropdown id="STATUS" name="ENTITY_STATE" editable="true" filter="true" displayText="Status" visibility="true" size="1" disabled="true">
+            <ui:option id="ACTIVE" value="ACTIVE" selected="{$root/ROOT/FILTER_ENTITY_STATE/@Value='ACTIVE'}" />
+            <ui:option id="INACTIVE" value="INACTIVE" selected="{$root/ROOT/FILTER_ENTITY_STATE/@Value='INACTIVE'}" />
+            <ui:option id="DELETED" value="DELETED" selected="{$root/ROOT/FILTER_ENTITY_STATE/@Value='DELETED'}" />
+          </ui:dropdown>
+          <ui:display-field id="LastModifiedDate" sortable="true" displayText="Last Modified Date" name="LAST_MODIFIED_DATE" filter="false" />
+          <ui:display-field id="LastModifiedDate" sortable="true" displayText="Last Modified By" name="LAST_MODIFIED_BY" filter="false" />
+          <ui:hidden-field id="SourceObjectMnemonicValue" name="SourceObjectMnemonicValue" />
+          <ui:hidden-field id="SourceKeyName" name="SourceKeyName" />
+          <ui:hidden-field id="SourceKeyValue" name="SourceKeyValue" />
+          <ui:hidden-field id="SourceSystemMnemonicValue" name="SourceSystemMnemonicValue" />
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="ChangeLog" name="ChangeLog" displayText="Change Log" onClick="javascript:fire('selectedTableName')" />
+          <ui:divider id="div1" />
+          <ui:button id="Copy" name="Copy" displayText="Copy" onClick="javascript:validateCheckedRadioButton('Copy','selectedDOMAINIDENTIFIER','Domain record to copy.','ManageDataTable')" activity="edmDomainDataCopy" />
+          <ui:divider id="div7" />
+          <ui:button id="Delete" name="Delete" displayText="Delete" onClick="javascript:validateCorrectDelete('Delete','selectedDOMAINIDENTIFIER')" activity="edmDomainDataDelete" />
+          <ui:divider id="div2" />
+          <ui:button id="Create" name="Create" displayText="Create" emphasized="true" onClick="javascript:validateCheckedRadioButton('Create','selectedDOMAINIDENTIFIER','Domain record to Create.','ManageDataTable')" activity="edmDomainDataSave" disabled="{string($root/ROOT/SELECTEDDOMAINIDENTIFIER/@Value) != '-999999999' }" />
+          <ui:divider id="div4" />
+          <ui:button id="Update" name="Update" displayText="Update" emphasized="true" onClick="javascript:validateCheckedRadioButton('Update','selectedDOMAINIDENTIFIER','Domain record to Modify.','ManageDataTable')" activity="edmDomainDataSave" disabled="{string($root/ROOT/SELECTEDDOMAINIDENTIFIER/@Value) = '-999999999' or string($root/ROOT/SELECTEDDOMAINIDENTIFIER/@Value) =''}" />
+          <ui:divider id="div3" />
+          <ui:button id="Clear" name="Clear" displayText="Clear" onClick="javascript:clearfilter('ManageDataTable')" />
+          <ui:divider id="div5" />
+        </ui:buttons>
+      </ui:table>
+      <ui:field-group id="HiddenData">
+        <ui:hidden-field id="SelectedDomainTableName" name="SelectedDomainTableName" value="{$root/ROOT/SELECTEDDOMAINTABLENAME/@Value}" />
+        <ui:hidden-field id="SelectedClear" name="SelectedClear" value="" />
+      </ui:field-group>
+      <ui:script>
+        function onSysPopUp() {
+                var x = document.getElementsByName('selectedDOMAINIDENTIFIER');
+      				  var y = document.getElementsByName('DOMAINDESCRIPTION');	
+                var syslength = x.length;
+      				  var sysdesc = y.length;
+      				  var selectedDomainId = null;
+      				  var selectedDomaindesc = null;
+      				
+      			    	for(i=0; i&lt;syslength; i++)
+         		{
+         			   var t = x[ i ];				 
+      				   var p = y[ i ];	   				 
+         			   if ( t.checked )
+          		          {				      
+              		    selectedDomainId = t.value;				    
+      				        selectedDomaindesc=p.value;    
+          		           }
+          		 }
+                
+                 var BUTTON_ID ='EnterDomainDataDescription';
+      				   var FIELD_NAME='DOMAINDESCRIPTION';
+      				   var ROW_ID_NAME='selectedDOMAINIDENTIFIER';   
+      window.open("view.x2ps?SERVICE_NAME=edmuiservice&amp;START_WORKFLOW=uiWfDomainDataManageDataDescription&amp;BUTTON_ID="+BUTTON_ID+"&amp;FIELD_NAME="+FIELD_NAME+"&amp;POPUP=true&amp;FIELD_VALUE="+selectedDomaindesc+"&amp;ROW_ID_NAME="+ROW_ID_NAME+"&amp;ROW_ID_VALUE="+selectedDomainId+"&amp;",null,'height=300,width=480,screenX=200,screenY=480,top=250,left=400,toolbar=no,menubar=no');
+        }
+        
+        
+        
+      
+      
+        function i2uiToggleRowSelectionState(obj, originalstate, tableid, treecell, multiSelect)
+{		 
+		//alert('kumar');
+  // NS4 browser not supported
+  if (document.layers != null)
+    return;
+
+  if (i2uiActiveRowSelector != null)
+    obj = i2uiActiveRowSelector;
+  else
+  {
+    // turn off any global selector
+    var globalselector = document.getElementById(tableid+"_globalrowselector");
+	
+    if (globalselector != null)
+      globalselector.checked = false;
+  }
+        <!--alert( 'i2uiToggleRowSelectionState() tableId=' + tableid );-->
+        // if single select, turn off previous row
+  if (multiSelect == false)
+  {
+			//	alert('Multi Select false');
+    // test for scrollable table
+    var table = document.getElementById(tableid+"_data");
+    if (table == null)
+      table = document.getElementById(tableid);         
+    var len = table.rows.length;
+    for (var i=0; i &lt;len; i++)
+    {
+						//	alert(table.rows[i].lastClassName);
+      if (table.rows[i].lastClassName != null)
+      {
+				//alert('Table Cell:::'+table.rows[i]+'length:::'+len);
+
+        table.rows[i].className = table.rows[i].lastClassName;
+        if (table.rows[i].cells[0].childNodes &amp;&amp;
+ table.rows[i].cells[0].childNodes.length &gt; 0 &amp;&amp; 
+            table.rows[i].cells[0].childNodes[0].style != null)
+          table.rows[i].cells[0].childNodes[0].style.backgroundColor = "";
+        table.rows[i].lastClassName = null;
+				
+				
+					for(var j=0;j&lt; table.rows[i].cells.length;j++)
+				{
+				//alert("length:::"+rowobj.cells.length);
+			//alert( table.rows[i].cells[j].childNodes[0].tagName);
+				if( table.rows[i].cells[j].childNodes[0].tagName =="INPUT")
+				{
+			//	alert('Name:::::'+rowobj.cells[j].childNodes[0].name);	
+				//alert('Name:::::'+rowobj.cells[j].childNodes[0].readOnly);	
+				 table.rows[i].cells[j].childNodes[0].readOnly=true;
+				}
+					if( table.rows[i].cells[j].childNodes[0].tagName =="SELECT")
+				{
+			//	alert('Name:::::'+rowobj.cells[j].childNodes[0].name);	
+				//alert('Name:::::'+rowobj.cells[j].childNodes[0].readOnly);	
+				 table.rows[i].cells[j].childNodes[0].disabled=true;
+				}
+				}
+				
+      }
+    }
+  }
+
+  // find owning row
+  var rowobj = obj;
+				
+  while (rowobj != null &amp;&amp; rowobj.tagName != "TR")
+  {
+			
+    if (rowobj.parentElement)
+    {
+      rowobj = rowobj.parentElement;
+    }
+    else
+    {
+      rowobj = rowobj.parentNode;
+    }
+  }
+					//alert(rowobj.tagName);
+  var rowIndex = -1;
+  
+  if (rowobj != null)
+  {
+    var rowTable = null;
+    
+    if (rowobj.parentElement)
+    {
+      rowTable = rowobj.parentElement;
+    }
+    else
+    {
+      rowTable = rowobj.parentNode;
+    
+    }
+   //alert( 'rowTable.id = ' + rowTable.id + ', tableid=' + tableid );
+    
+    if( rowTable.id == tableid )
+    {
+      alert( 'rowTable.id == tableid' );
+    }
+    else
+    {  
+      //pglalert( 'rowTable.id != tableid, searching for table' );
+      var rowIndex = -1;
+      
+      for( var i=0; i &lt; rowTable.rows.length; i++ )
+      {
+        if( rowTable.rows[i] == rowobj )
+        {
+          rowIndex = i;
+          break;          
+        }
+      }
+      
+      //pglalert( 'rowIndex = ' + rowIndex );
+      
+      if( rowIndex &gt; -1 )
+      {
+        var otherTable = document.getElementById(tableid+"_data");
+        if (otherTable == null)
+        {
+          otherTable = document.getElementById(tableid);
+        }
+        
+        rowobj = otherTable.rows[rowIndex];
+      }
+      else      
+      {
+        //pglalert( 'could not find matching row' );
+      }
+    }
+  
+ // alert( obj.checked?"rowHighlight":originalstate);
+    rowobj.className = obj.checked?"rowHighlight":originalstate;
+    rowobj.lastClassName = originalstate;
+		
+				for(var j=0;j&lt;rowobj.cells.length;j++)
+				{
+				//alert("length:::"+rowobj.cells.length);
+			//alert(rowobj.cells[j].childNodes[0].tagName);
+				if(rowobj.cells[j].childNodes[0].tagName =="INPUT")
+				{
+			//	alert('Name:::::'+rowobj.cells[j].childNodes[0].name);	
+				//alert('Name:::::'+rowobj.cells[j].childNodes[0].readOnly);	
+				rowobj.cells[j].childNodes[0].readOnly=false;
+				}
+				
+				if(rowobj.cells[j].childNodes[0].tagName =="SELECT")
+				{
+			//	alert('Name:::::'+rowobj.cells[j].childNodes[0].name);	
+				//alert('Name:::::'+rowobj.cells[j].childNodes[0].readOnly);	
+			
+					//		alert(obj.value);
+				if(obj.value !='-999999999')
+				{
+				rowobj.cells[j].childNodes[0].disabled=false;
+				rowobj.cells[j].childNodes[0].remove(2);
+				enableButton('Update');
+				disableButton('Create');
+				}
+				else
+				{
+				rowobj.cells[j].childNodes[0].selectedIndex=0;
+				disableButton('Update');
+				enableButton('Create');
+				}
+				}
+					
+				}
+				
+			//	alert( rowobj.className+"::::::::"+rowobj.lastClassName );
+    //rowobj.cells[0].childNodes[0].style.backgroundColor = "";
+  }
+
+  // handle treetable
+  if (treecell != null &amp;&amp; treecell != '' &amp;&amp;
+      i2uiActiveRowSelector == null)
+  {
+    var cellname = rowobj.cells[treecell].id.substring(9);
+    var depth1 = Math.floor(cellname);
+    var table = document.getElementById(tableid);
+    var len = table.rows.length;
+    for (var i=0; i&lt;len; i++)
+    {
+      // locate desired row in table
+      if (table.rows[i].cells[treecell].id == "TREECELL_"+cellname)
+      {
+        // now process rest of table with respect to located
+        for (var j=i+1; j&lt;len; j++)
+        {
+          var newcell = table.rows[j].cells[treecell].id.substr(9);
+          var depth2 = Math.floor(newcell);
+          if ((depth2 == depth1 + 10 || depth2 == depth1 + 15) ||
+              (depth2 &gt; depth1 + 5))
+          {
+            table.rows[j].cells[0].childNodes[0].checked = obj.checked;
+            if (obj.checked)
+            {
+              table.rows[j].className = "rowHighlight";
+              table.rows[j].cells[0].childNodes[0].style.backgroundColor = "";
+            }
+            else
+            {
+              var onclickhandler = table.rows[j].cells[0].childNodes[0].onclick+"!!!";
+              var from = onclickhandler.indexOf("{");
+              onclickhandler = onclickhandler.substring(from+1);
+              var to = onclickhandler.lastIndexOf("}");
+              onclickhandler = onclickhandler.substring(0,to);
+              i2uiActiveRowSelector = table.rows[j].cells[0].childNodes[0];
+              eval(onclickhandler);
+              i2uiActiveRowSelector = null;
+            }
+          }
+          if (depth2 &lt;= depth1)
+          {
+            break;
+          }
+        }
+
+        var handle = depth1 - 10;
+        // now set partial state of all parents of selected node
+        for (var j=i-1; j&gt;-1; j--)
+        {
+          var newcell = table.rows[j].cells[treecell].id.substr(9);
+          var depth2 = Math.floor(newcell);
+          if (depth2 == handle || depth2 == handle-5)
+          {
+            var selectedcount = 0;
+            var nonselectedcount = 0;
+            for (var k=j+1; k&lt;len; k++)
+            {
+              var newcell2 = table.rows[k].cells[treecell].id.substr(9);
+              var depth3 = Math.floor(newcell2);
+              if ((depth3 == depth2 + 10 || depth3 == depth2 + 15) ||
+                  (depth3 &gt; depth2 + 5))
+              {
+                if (table.rows[k].cells[0].childNodes[0].checked)
+                  selectedcount++;
+                else
+                  nonselectedcount++;
+              }
+              if (depth3 &lt;= depth2)
+              {
+                break;
+              }
+            }
+
+            if (selectedcount &gt; 0)
+            {
+              if (nonselectedcount &gt; 0)
+              {
+                table.rows[j].cells[0].childNodes[0].checked=false;
+                var onclickhandler = table.rows[j].cells[0].childNodes[0].onclick+"!!!";
+                var from = onclickhandler.indexOf("{");
+                onclickhandler = onclickhandler.substring(from+1);
+                var to = onclickhandler.lastIndexOf("}");
+                onclickhandler = onclickhandler.substring(0,to);
+                i2uiActiveRowSelector = table.rows[j].cells[0].childNodes[0];
+                eval(onclickhandler);
+                i2uiActiveRowSelector = null;
+								alert('i M here');
+                table.rows[j].cells[0].childNodes[0].style.backgroundColor = "#fff6a6";
+              }
+              else
+              {
+                table.rows[j].cells[0].childNodes[0].checked = true;
+                table.rows[j].className = "rowHighlight";
+                table.rows[j].cells[0].childNodes[0].style.backgroundColor = "";
+              }
+            }
+            else
+            {
+              table.rows[j].cells[0].childNodes[0].checked=false;
+              table.rows[j].cells[0].childNodes[0].style.backgroundColor = "";
+
+              if (nonselectedcount &gt; 0)
+              {
+              var onclickhandler = table.rows[j].cells[0].childNodes[0].onclick+"!!!";
+              var from = onclickhandler.indexOf("{");
+              onclickhandler = onclickhandler.substring(from+1);
+              var to = onclickhandler.lastIndexOf("}");
+              onclickhandler = onclickhandler.substring(0,to);
+              i2uiActiveRowSelector = table.rows[j].cells[0].childNodes[0];
+              eval(onclickhandler);
+              i2uiActiveRowSelector = null;
+              }
+            }
+            // look up one more level
+            handle -= 10;
+            if (handle &lt; 0)
+              break;
+             }
+        }
+
+        break;
+      }
+    }
+  }
+				if (i2uiInvokeCallback)
+			    try{i2uiRowSelectionCallback(tableid)}catch(e){}
+        <!--  alert('tableid is '||tableid);
+		         alert('obj is '||obj);
+           alert ('Finally value is');
+      		alert(tableid);-->
+        if (tableid =='SystemSearchTable') {
+        <!--  alert ('Finally control here');-->
+        form.BUTTON_ID.value='SHOW';
+		       			document.form.submit(); 
+		  }
+    }
+				
+				
+				
+				
+				function fire(radioId)
+				{
+				
+						var count=0,j;
+						var selvalue;
+							var a=document.getElementsByName(radioId);
+							//	alert(a);
+								for( j=0; j &lt;a.length;j++)
+								{
+								if(a[j].checked){
+								//alert(a[j].value);
+								selvalue=a[j].value;
+								count++;
+								}
+								}
+								if(count == 0)
+								{
+								//alert(count);
+								core_alert(" Please select an appropriate domain table to view its change log(s)." );
+								return;
+								}
+								else{
+						//var auditName=selvalue+"Trail";
+							//var action1="start.x2ps?START_WORKFLOW=dataTraceability&amp;SERVICE_NAME=BCM_MASTER&amp;AUDIT_TRAIL_NAME="+auditName;
+						//	form.action=action1;;
+							form.BUTTON_ID.value='ChangeLog';
+							form.submit();
+								}
+		
+				}
+				
+				function clearfilter(tableid)
+				{
+				
+				var table = document.getElementById(tableid+"_data");
+				
+				for(var j=0;j&lt; table.rows[0].cells.length;j++)
+						{
+							//alert( table.rows[0].cells[j].childNodes[0]);
+						if( table.rows[0].cells[j].childNodes[0] !=null &amp;&amp; table.rows[0].cells[j].childNodes[0].tagName =="TABLE" )
+									{
+												var childTable= table.rows[0].cells[j].childNodes[0];
+												//alert("CHILD COUNT:::"+childTable.rows[0].cells.length);
+												for(var k=0;k&lt; childTable.rows[0].cells.length;k++)
+															{
+																	//alert(childTable.rows[0].cells[k].childNodes[0].tagName);
+																	if(childTable.rows[0].cells[k].childNodes[0].tagName == "INPUT")
+																			{
+																					childTable.rows[0].cells[k].childNodes[0].value="";
+																					//apply_filters();
+																					//childTable.rows[0].cells[k].childNodes[0].onChange();
+				 																		
+																			}
+															}
+										}
+						}
+					document.form.SelectedClear.value=tableid;
+						apply_filters();
+				}
+				
+				
+				function validateCheckedRadioButton(button,radioId,message,tableid)
+				{
+				
+							var count=0,j;
+							var a=document.getElementsByName(radioId);
+				var table = document.getElementById(tableid+"_data");
+		//		alert(table);
+								//alert(a);
+				var k;
+								for( j=0; j &lt;a.length;j++)
+								{
+								if(a[j].checked){
+				k=j;
+								count++;
+			k++;
+								}
+								}
+								if(count == 0)
+								{
+								//alert(count);
+								core_alert(" Please Select an appropriate " +message);
+								return;
+								}
+								else{
+									//alert(button);
+				
+	
+									if(tableid=='ManageDataTable'){
+				
+		
+				
+				if( table.rows[k].cells[1].childNodes[0].value.toUpperCase()=='ENTERNEW' || table.rows[k].cells[3].childNodes[0].value.toUpperCase()=='ENTERNEW' || table.rows[k].cells[2].childNodes[0].value.toUpperCase()=='ENTERNEW'){
+									core_alert("Please enter a value other than EnterNew for  name, description and Mnemonic Code " );
+								return;
+									}
+				else{
+form.BUTTON_ID.value=button;
+document.form.submit(); 
+}
+				}
+									else{
+										 	form.BUTTON_ID.value=button;
+		       			document.form.submit(); 
+									}
+						
+								}
+				}
+				
+				
+				function validateCorrectDelete(button,radioId)
+				{
+				var count=0,j;
+				var selvalue;
+							var a=document.getElementsByName(radioId);
+								//alert(a);
+								for( j=0; j &lt;a.length;j++)
+								{
+								if(a[j].checked){
+								//alert(a[j].value);
+								selvalue=a[j].value;
+								count++;
+								}
+								}
+								if(count == 0)
+								{
+								//alert(count);
+								core_alert(" Please select an appropriate Domain record to Delete." );
+								}
+								else{
+								//	alert(button);
+											if(selvalue=='-999999999')
+													{
+															core_alert(" You can not delete static record." );
+														}
+				else{
+				var answer=core_confirm('Do you really want to delete the record');
+				if(answer=='yes'){
+							 	form.BUTTON_ID.value=button;
+		       			document.form.submit(); 
+				}
+				}
+								}
+				}
+				
+				function apply_filters(tableId)
+{
+	var bValidFilters = true;
+
+  for (var i = 0; i&lt;document.form.elements.length; i++) 
+  {
+    var selectedElem = document.form.elements[i];
+    if ((selectedElem.name.indexOf('FILTER_') &gt; -1)) 
+    {
+      if(!isValid_field(selectedElem.name, null))
+      {
+        bValidFilters = false;
+        onResize();
+        break;
+      }
+    }
+  }
+
+  if (bValidFilters)
+  {
+    if ( tableId != null &amp;&amp; tableId != "" )
+    {
+      eval("document.form." + tableId + "_START_COUNT.value = 0;");
+    }
+    else
+    {
+      document.form.START_COUNT.value = 0;
+    } 
+		
+		if(tableId=='')
+		{ 
+		 tableId='DomainSearchTable';
+		}
+		var checkboxes;
+	var table = document.getElementById(tableId+"_data");
+	if(table.document)
+    checkboxes = table.document.getElementsByTagName("INPUT");
+  else
+    checkboxes = document.getElementsByTagName("INPUT");
+
+	  if (checkboxes != null)
+	  {
+	      var len = checkboxes.length;
+	      for(var i=0; i &lt; len; i++)
+	      {
+	        if (checkboxes[i].id == tableId+"_rowselector" &amp;&amp; checkboxes[i].checked == true)
+	       checkboxes[i].checked=false;
+			  }
+		}	
+    ui_submit_param("SYS_RELOAD","innerAction=Filter&amp;FILTER_ON="+tableId);
+  }
+}
+      </ui:script>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

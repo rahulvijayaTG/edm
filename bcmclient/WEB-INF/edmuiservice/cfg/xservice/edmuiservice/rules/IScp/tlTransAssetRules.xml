@@ -1,0 +1,282 @@
+<DOCUMENTS>
+  <DEFINE_METHOD Name="createTransAsset" Comment="Wrapper API for UI to redirect the call to create new asset in interface and PEDM master tables through UI">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="genericCreateTransAsset" ServiceName="BCM_MASTER" AssignToVar="thisReturn" DocumentName="E_TransportationAsset" Action="INSERT" HandleException="true">
+          <TO_XML SelectList="$thisParam/*"/>
+          <CUSTOM_UI Value="true"/>
+          <SYS_TYPE Value="INSERT"/>
+          <SOURCE Value="UI"/>
+          <SourceKeyName Value="TRNSPEQMTITM_ID"/>
+          <SourceObjectMnemonicValue Value="P_M_TRNSPEQMTITM"/>
+          <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal}"/>
+        </REQUEST>
+        <IF_TEST Test="count($thisReturn/*/_ERRORS) = 0 and $thisReturn/@Status != 'Error'">
+          <THEN/>
+          <ELSE>
+            <EXCEPTION ForceRollback="true">
+              <TO_XML DocVar="thisReturn"/>
+            </EXCEPTION>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createLaneAsset" Comment="Wrapper API for UI to redirect the call to create new LaneXAsset in interface and PEDM master tables through UI">
+    <RULE>
+      <ACTION>
+        <SET_PROPS Select="$thisParam">
+					<!--   <SourceLocationValue Value="{substringBefore($thisParam/TransportLaneName/@Value,'_')}"/>
+             <DestinationLocationValue Value="{substringBefore(substringAfter($thisParam/TransportLaneName/@Value,'_'),'_')}"/>-->
+					<SourceLocationValue Value="{$thisParam/SourceLocationIdentification/@Value}"/>
+          <DestinationLocationValue Value="{$thisParam/DestinationLocationIdentification/@Value}"/>
+        </SET_PROPS>				
+        <REQUEST Name="genericCreateTransLaneXTransAsset" DocumentName="E_TransportationLaneXTransportationAsset" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="thisReturn" HandleException="true">
+          <TO_XML SelectList="$thisParam/*"/>
+          <CUSTOM_UI Value="true"/>
+          <SYS_TYPE Value="INSERT"/>
+          <SOURCE Value="UI"/>
+          <SourceKeyName Value="TLNE_ID|TRNSPEQMTITM_ID|VLD_DOW_ID|TRNSP_EQMT_PRIR_CLAS_ID|TLNE_X_TRNSPEQMTITM_STRT_DT"/>
+          <SourceObjectMnemonicValue Value="P_M_TLNE_X_TRNSPEQMTITM"/>
+          <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal}"/>
+        </REQUEST>
+        <IF_TEST Test="count($thisReturn/*/_ERRORS) = 0 and $thisReturn/@Status != 'Error'">
+          <THEN/>
+          <ELSE>
+            <EXCEPTION ForceRollback="true">
+              <TO_XML DocVar="thisReturn"/>
+            </EXCEPTION>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createLaneItem" Comment="Wrapper API for UI to redirect the call to create new LaneXItem in interface and PEDM master tables through UI">
+    <RULE>
+      <ACTION>
+				<SET Var="SourceKeyValue" FromValue="{concat($thisParam/TransportLaneIdentifier/@Value,'|',$thisParam/ItemIdentificationValue/@Value,'|',$thisParam/TransportLaneXItemStartDate/@Value)}"/>
+		     <REQUEST Name="genericCreateTransLaneXItem" DocumentName="E_TransportationLaneXProduct" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="thisReturn" HandleException="true">
+          <TO_XML SelectList="$thisParam/*"/>
+          <CUSTOM_UI Value="true"/>
+          <SYS_TYPE Value="INSERT"/>
+          <SOURCE Value="UI"/>
+          <SourceKeyName Value="TLNE_ID|ITEM_ID|TLNE_X_ITEM_STRT_DT"/>
+				<!--	<SourceKeyValue Value="{$SourceKeyValue/@Value}"/>-->
+				 <SourceKeyValue Value="{concat($thisParam/TransportLaneIdentifier/@Value,$thisParam/ItemIdentificationValue/@Value,$thisParam/TransportLaneXItemStartDate/@Value)}"/>
+					<SourceObjectMnemonicValue Value="P_M_TLNE_X_ITEM"/>
+          <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal}"/>
+        </REQUEST>
+        <IF_TEST Test="count($thisReturn/*/_ERRORS) = 0 and $thisReturn/@Status != 'Error'">
+          <THEN/>
+          <ELSE>
+            <EXCEPTION ForceRollback="true">
+              <TO_XML DocVar="thisReturn"/>
+            </EXCEPTION>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateTransAsset" Comment="Wrapper API for UI to redirect the call to update an existing asset in interface and PEDM master tables through UI">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="genericUpdateTransAsset" Action="UPDATE" DocumentName="E_TransportationAsset" ServiceName="BCM_MASTER" AssignToVar="thisReturn" HandleException="true">
+          <TO_XML SelectList="$thisParam/*"/>
+          <SYS_TYPE Value="UPDATE"/>
+          <SOURCE Value="UI"/>
+          <SYS_SOURCE Value="UI"/>
+          <CUSTOM_UI Value="true"/>
+          <SourceKeyName Value="TRNSPEQMTITM_ID"/>
+          <SourceObjectMnemonicValue Value="P_M_TRNSPEQMTITM"/>
+          <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal}"/>
+        </REQUEST>
+        <IF_TEST Test="count($thisReturn/*/_ERRORS) = 0 and $thisReturn/@Status != 'Error'">
+          <THEN/>
+          <ELSE>
+            <EXCEPTION ForceRollback="true">
+              <TO_XML DocVar="thisReturn"/>
+            </EXCEPTION>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateLaneAsset" Comment="Wrapper API for UI to redirect the call to update an existing LaneXAsset in interface and PEDM master tables through UI">
+    <RULE>
+      <ACTION>
+        <REMOVE_CHILDREN ChildName="SYS_TYPE" DocVar="thisParam"/>
+        <REQUEST Name="genericUpdateTransLaneXTransAsset" Action="UPDATE" DocumentName="E_TransportationLaneXTransportationAsset" ServiceName="BCM_MASTER" AssignToVar="thisReturn" HandleException="true">
+          <TO_XML SelectList="$thisParam/*"/>
+          <SYS_TYPE Value="UPDATE"/>
+          <SOURCE Value="UI"/>
+          <CUSTOM_UI Value="true"/>
+          <SYS_SOURCE Value="UI"/>
+          <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal}"/>
+        </REQUEST>
+        <IF_TEST Test="count($thisReturn/*/_ERRORS) = 0 and $thisReturn/@Status != 'Error'">
+          <THEN/>
+          <ELSE>
+            <EXCEPTION ForceRollback="true">
+              <TO_XML DocVar="thisReturn"/>
+            </EXCEPTION>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateLaneItem" Comment="Wrapper API for UI to redirect the call to update an existing LaneXItem in interface and PEDM master tables through UI">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="genericUpdateTransLaneXItem" DocumentName="E_TransportationLaneXProduct" Action="UPDATE" ServiceName="BCM_MASTER" AssignToVar="thisReturn" HandleException="true">
+          <TO_XML SelectList="$thisParam/*"/>
+          <SYS_TYPE Value="UPDATE"/>
+          <SOURCE Value="UI"/>
+          <SYS_SOURCE Value="UI"/>
+          <CUSTOM_UI Value="true"/>
+          <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal}"/>
+          <!-- CR:115759 12/19/2007 Praneeth Karnam Start -->
+          <!--<SourceKeyName Value="TLNE_ID|TLNE_X_ITEM_SEQ_NUM|ITEM_ID"/>-->
+	  <SourceKeyName Value="TLNE_ID|ITEM_ID|TLNE_X_ITEM_STRT_DT"/>
+	  <!-- CR:115759 12/19/2007 Praneeth Karnam End -->
+          <SourceObjectMnemonicValue Value="P_M_TLNE_X_ITEM"/>
+        </REQUEST>
+        <IF_TEST Test="count($thisReturn/*/_ERRORS) = 0 and $thisReturn/@Status != 'Error'">
+          <THEN/>
+          <ELSE>
+            <EXCEPTION ForceRollback="true">
+              <TO_XML DocVar="thisReturn"/>
+            </EXCEPTION>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="deleteLaneAsset" Comment="Wrapper API for UI to redirect the call to delete a LaneXAsset record from interface and PEDM master tables through UI">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="genericDeleteTransLaneXTransAsset" DocumentName="E_TransportationLaneXTransportationAsset" Action="DELETE" ServiceName="BCM_MASTER" AssignToVar="thisReturn" HandleException="true">
+          <TO_XML SelectList="$thisParam/*"/>
+          <CUSTOM_UI Value="true"/>
+          <SYS_TYPE Value="DELETE"/>
+          <SOURCE Value="UI"/>
+          <SYS_SOURCE Value="UI"/>
+          <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal}"/>
+        </REQUEST>
+        <IF_TEST Test="count($thisReturn/*/_ERRORS) > 0 and $thisReturn/@Status != 'Error'">
+          <THEN>
+            <EXCEPTION ForceRollback="true">
+              <TO_XML DocVar="thisReturn"/>
+            </EXCEPTION>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="deleteLaneItem" Comment="Wrapper API for UI to redirect the call to delete a LaneXItem record from interface and PEDM master tables through UI">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="genericDeleteTransLaneXItem" DocumentName="E_TransportationLaneXProduct" Action="DELETE" ServiceName="BCM_MASTER" AssignToVar="thisReturn" HandleException="true">
+          <TO_XML SelectList="$thisParam/*"/>
+          <CUSTOM_UI Value="true"/>
+          <SYS_TYPE Value="DELETE"/>
+          <SOURCE Value="UI"/>
+          <SYS_SOURCE Value="UI"/>
+          <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal}"/>
+        </REQUEST>
+        <IF_TEST Test="count($thisReturn/*/_ERRORS) > 0 and $thisReturn/@Status != 'Error'">
+          <THEN>
+            <EXCEPTION ForceRollback="true">
+              <TO_XML DocVar="thisReturn"/>
+            </EXCEPTION>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="deleteTransAsset" Comment="Wrapper API for UI to redirect the call to delete an asset record from interface and PEDM master tables through UI">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="genericDeleteTransAsset" DocumentName="E_TransportationAsset" Action="DELETE" ServiceName="BCM_MASTER" AssignToVar="thisReturn" HandleException="true">
+          <TransportationAssetValue Value="{$thisParam/TransportationAssetValue/@Value}"/>
+          <SYS_TYPE Value="DELETE"/>
+          <SYS_SOURCE Value="UI"/>
+          <SourceKeyName Value="TransportEquipmentItemIdentifier"/>
+          <SourceObjectMnemonicValue Value="P_TransportEquipmentItem"/>
+          <SourceSystemMnemonicValue Value="edm"/>
+        </REQUEST>
+        <IF_TEST Test="$thisReturn/@Status != 'Error' and count($thisReturn/*/_ERRORS) = 0">
+          <THEN/>
+          <ELSE>
+            <EXCEPTION ForceRollback="true">
+              <TO_XML DocVar="thisReturn"/>
+            </EXCEPTION>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createTransLane" Comment="Wrapper API to redirect the call to create a new Lane record in PEDM through UI">
+		<RULE>
+			<ACTION>
+      <REQUEST Name="getTransLanes" AssignToVar="isTLExists" ServiceName="PEDM_MASTER">
+        <OriginLocationIdentifier Value="{$thisParam/OriginLocationIdentifier/@Value}"/>
+        <DestinationLocationIdentifier Value="{$thisParam/DestinationLocationIdentifier/@Value}"/>
+        <TransportModeIdentifier Value="{$thisParam/TransportModeIdentifier/@Value}"/>
+      </REQUEST>
+      <IF_TEST Test="$isTLExists/TL_EXISTS/@Value = 'no' or $isTLExists/TL_EXISTS/@Value = 'yes' and $isTLExists/ENTITY_STATE/@Value != 'DELETED'">			
+        <THEN>
+          <REQUEST Name="createTransLanePedm" ServiceName="BCM_MASTER" AssignToVar="thisReturn">
+            <TO_XML SelectList="$thisParam/*"/>
+            <FROM_UI Value="true"/>
+            <ACTIONTOBDONE Value="INSERT"/>
+              <!--<SYS_TYPE Value="INSERT"/>-->
+            <SOURCE Value="UI"/>
+            <SourceKeyName Value="TLNE_ID"/>
+            <SourceObjectMnemonicValue Value="P_M_TLNE"/>
+            <SourceSystemMnemonicValue Value="{$ui_sourceSystemMnemonicVal}"/>
+          </REQUEST>
+        </THEN>
+        <ELSE>
+			<!-- DYanez RIC#237750 Retrieving appropriate CLASS_MN_VAL from TLNE_CLAS table-->
+			  	<EXECUTE_SQL_QUERY AssignToVar="tlclassmnval" Value="select tlne_clas_mn_val from P_M_tlne_clas where tlne_clas_id = '{$thisParam/TransportLaneClassIdentifier/@Value}'"/>
+						<IF_TEST Test="$tlclassmnval/@Status != 'Success'">
+								<THEN>
+	                <APPEND_TO_XML DocVar="thisReturn">
+	                   <_ERRORS Value="SEVERE_ERROR">
+	                     <_ERROR Value="ERROR: Unable to identify TLNE_CLAS_MN_VAL using this value: {$thisParam/TransportLaneClassIdentifier/@Value} "/>
+	                   </_ERRORS>
+                   </APPEND_TO_XML>
+	     				  </THEN>
+						<ELSE>
+					<!-- RIC#237750 End -->
+          <REQUEST Name="updateTransLanePedm" ServiceName="BCM_MASTER" AssignToVar="updResponse">
+            <TransportLaneIdentifier Value="{$isTLExists/TL_ID/@Value}"/>
+            <TransportDurationTimeCount Value="{$thisParam/TransportDurationTimeCount/@Value}"/>
+				<!--	<TransLaneClass Value="{$thisParam/TransLaneClass/@Value}"/>-->
+            <TransLaneClass Value="{$tlclassmnval/SQL_RESULT/TLNE_CLAS_MN_VAL/@Value}"/>
+						<TransportLaneClassIdentifier Value="{$thisParam/TransportLaneClassIdentifier/@Value}"/>
+						<TransportModeIdentifier Value="{$thisParam/TransportModeIdentifier/@Value}"/>
+							<!-- RIC#237750 End -->
+            <TransportLaneStartDate Value=""/>
+            <TransportLaneEndDate Value=""/>
+            <TransportLaneCommentText Value="{$thisParam/TransportLaneCommentText/@Value}"/>
+            <SOURCE Value="UI"/>
+            <FROM_UI Value="true"/>
+            <ACTIONTOBDONE Value="UPDATE"/>
+            <SYS_TYPE Value="ACTIVATE"/>
+          </REQUEST>
+						<TO_DOCVAR AssignToVar="thisReturn">
+							<RESULT>
+								<TL_ID Value="{$isTLExists/TL_ID/@Value}"/>
+							</RESULT>
+						</TO_DOCVAR>
+				 	</ELSE>
+				 </IF_TEST>	
+        </ELSE>
+      </IF_TEST>
+			</ACTION>
+		</RULE>
+	</DEFINE_METHOD>
+</DOCUMENTS>

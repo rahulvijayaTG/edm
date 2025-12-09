@@ -1,0 +1,553 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="studio.templates.ecriwizard" source="studio.controller.load" version="2">
+  <ui:container scrollable="true" collapsable="true">
+    <ui:step id="Outer" displayText="Manage Groups" scrollable="true" editable="false">
+      <ui:field-group name="mesg" select="$root">
+        <ui:choose-field name="BUTTON_ID">
+          <ui:when test="$root/MESSAGES/@Status = 'ERROR'">
+            <ui:display-field displayText="" name="error" value="{$root/MESSAGES/MESSAGE/@Value}" class="requiredIndicatorRed"/>
+          </ui:when>
+          <ui:when test="$root/MESSAGES/@Status= 'SUCCESS'">
+            <ui:display-field displayText="" name="success" value="{$root/MESSAGES/MESSAGE/@Value}" class="requiredIndicatorGreen"/>
+          </ui:when>
+          <ui:otherwise/>
+        </ui:choose-field>
+      </ui:field-group>
+      <ui:field-group>
+        <ui:hidden-field name="buttonID" value="{$root/actionTaken/@Value}"/>
+        <ui:hidden-field id="showMembers" name="showMembers" value="{$root/showMembers/@Value}"/>
+        <ui:hidden-field id="showParams" name="showParams" value="{$root/showParams/@Value}"/>
+        <ui:hidden-field id="showGroupResults" name="showGroupResults" value="{$root/showGroupResults/@Value}"/>
+        <ui:hidden-field id="dimPhysicalTableName" name="dimPhysicalTableName" value="{$root/dimPhysicalTableName/@Value}"/>
+        <ui:hidden-field id="dimPhysicalKeyColumns" name="dimPhysicalKeyColumns" value="{$root/dimPhysicalKeyColumns/@Value}"/>
+        <ui:hidden-field id="actionTaken" name="actionTaken" value="{$root/actionTaken/@Value}"/>
+        <ui:hidden-field id="rowCount" name="rowCount" value="{$root/totalRowCount/@Value}"/>
+      </ui:field-group>
+      <ui:grid id="firstGrid">
+        <ui:row id="first">
+          <ui:cell id="fts">
+            <ui:grid id="GroupDescGrid">
+              <ui:row>
+                <ui:cell width="47%" valign="top">
+                  <ui:container collapsable="true" scrollable="true">
+                    <ui:step id="firstInner" scrollable="true">
+                      <ui:field-group columns="1" id="ww">
+                        <ui:dropdown id="groupDimension" name="groupDimension" displayText="Group Dimension" optionSrc="$root/GROUP_DIMENSIONS/*" onChange="Javascript:onDimensionChange(document.forms[1])"/>
+                        <ui:dropdown id="groupClass" name="groupClass" displayText="Group Class" optionSrc="$root/GROUP_CLASSES/*" onChange="onGroupClassChange(document.forms[1])"/>
+                        <ui:entry-field id="groupName" name="groupName" displayText="Group Name" size="30" value="{$root/groupName/@Value}"/>
+                        <ui:entry-field id="groupDesc" name="groupDesc" displayText="Group Description" size="30" value="{$root/groupDesc/@Value}"/>
+                      </ui:field-group>
+                      <ui:buttons>
+                        <ui:button id="CLEAR" displayText="Clear" name="clear"/>
+                        <ui:button id="SEARCH" displayText="Search" name="search"/>
+                      </ui:buttons>
+                    </ui:step>
+                  </ui:container>
+                </ui:cell>
+                <ui:cell width="5%" valign="top"/>
+                <ui:cell width="47%" valign="top">
+                  <ui:container scrollable="true" collapsable="true" displayCondition="{$root/showGroupResults/@Value = 'TRUE'}">
+                    <ui:step scrollable="true" id="pp" displayText="{$root/DISPLAY_STRINGS/GROUP_INSTANCES/@Value}">
+                      <ui:table id="datatable1" name="datatable1" select="$root/GROUP_INSTANCES" displayTextNoRecords="No Record" rowId="groupID" selectable="Single" postRowIdAs="groupID5" doPaging="true" maxRows="5" scrollable="true" startAtRow="$root/startRow_GroupInstances/@Value" totalRowCount="$root/GROUP_INSTANCES/@TotalRowCount">
+                        <ui:field-group id="tt">
+                          <ui:choose-field name="groupID" displayText="Group ID">
+                            <ui:when test="./@clickOnCreate = 'TRUE'">
+                              <ui:entry-field name="groupID" id="groupID" required="true"/>
+                            </ui:when>
+                            <ui:otherwise>
+                              <ui:display-field name="groupID"/>
+                            </ui:otherwise>
+                          </ui:choose-field>
+                          <ui:choose-field name="name" displayText="Group Name">
+                            <ui:when test="./@clickOnCreate = 'TRUE'">
+                              <ui:entry-field name="name"/>
+                            </ui:when>
+                            <ui:otherwise>
+                              <ui:display-field name="name"/>
+                            </ui:otherwise>
+                          </ui:choose-field>
+                          <ui:choose-field name="description" displayText="Group Description">
+                            <ui:when test="./@clickOnCreate = 'TRUE'">
+                              <ui:entry-field name="description"/>
+                            </ui:when>
+                            <ui:otherwise>
+                              <ui:display-field name="description"/>
+                            </ui:otherwise>
+                          </ui:choose-field>
+                        </ui:field-group>
+                        <ui:pagination/>
+                        <ui:buttons id="qq">
+                          <ui:button id="cancel_grpInstance" name="cancel_grpInstance" displayText="Cancel" displayCondition="{$root/actionTaken/@Value = 'CREATE_GRP_INST'}"/>
+                          <ui:button id="CREATE_GRP_INST" displayText="Create" name="CreateGrpInstance"/>
+                          <ui:button id="SAVE_GRP_INSTANCE" displayText="Save" name="save"/>
+                          <ui:button id="DELETE" displayText="Delete" name="delete" enabledBySelections="true" disabled="true" displayCondition="{$root/actionTaken/@Value!='CREATE_GRP_INST'}"/>
+                        </ui:buttons>
+                      </ui:table>
+                      <ui:buttons id="yy">
+                        <ui:button id="showMember" displayText="Show Members" name="showMember"/>
+                        <ui:button id="showParam" displayText="Show Parameters" name="showParam"/>
+                      </ui:buttons>
+                    </ui:step>
+                  </ui:container>
+                </ui:cell>
+              </ui:row>
+            </ui:grid>
+          </ui:cell>
+        </ui:row>
+        <ui:row>
+          <ui:cell>
+            <ui:field-group>
+              <ui:field-space displayText="" id=""/>
+            </ui:field-group>
+          </ui:cell>
+        </ui:row>
+        <ui:row>
+          <ui:cell colSpan="2" valign="top">
+            <ui:container collapsable="true" scrollable="true" inner="true" displayCondition="{$root/showMembers/@Value='TRUE'}">
+              <ui:step id="ShowMembersStep" displayText="{$root/DISPLAY_STRINGS/MEMBERS/@Value}">
+                <ui:grid id="aa">
+                  <ui:row id="second">
+                    <ui:cell id="second" width="47%" valign="top">
+                      <ui:table id="AvailableMembersTable" name="AvailableMembersTable" displayText="Available Members" select="$root/AVAIL_MEMBERS" displayTextNoRecords="No Record" rowId="AVAILMEMBER" scrollable="true" selectable="All" postRowIdAs="AVAILMEMBER" doPaging="true" maxRows="5" totalRowCount="$root/AVAIL_MEMBERS/@TotalRowCount" startAtRow="$root/startRow_AvailableMembers/@Value">
+                        <ui:field-group>
+                          <ui:display-field id="AVAILMEMBER" name="AVAILMEMBER" displayText="Available Members"/>
+                        </ui:field-group>
+                      </ui:table>
+                    </ui:cell>
+                    <ui:cell width="5%" halign="center">
+                      <ui:grid cellSpacing="20">
+                        <ui:row>
+                          <ui:cell valign="bottom">
+                            <ui:buttons>
+                              <ui:button id="AvailToSel" displayText=">>" name="forward"/>
+                            </ui:buttons>
+                          </ui:cell>
+                        </ui:row>
+                        <ui:row>
+                          <ui:cell valign="top">
+                            <ui:buttons>
+                              <ui:button id="SelToAvail" displayText="&lt;&lt;" name="back"/>
+                            </ui:buttons>
+                          </ui:cell>
+                        </ui:row>
+                      </ui:grid>
+                    </ui:cell>
+                    <ui:cell width="47%" valign="top">
+                      <ui:table id="SelectedMembersTable" name="SelectedMembersTable" displayText="Selected Members" select="$root/SELECTED_MEMBERS" displayTextNoRecords="No Record" rowId="selectedMember" scrollable="true" selectable="All" collapsable="false" postRowIdAs="selectedMember" doPaging="true" maxRows="5" totalRowCount="$root/SELECTED_MEMBERS/@TotalRowCount" startAtRow="$root/startRow_SelectedMembers/@Value">
+                        <ui:field-group>
+                          <ui:display-field id="SelMembers" name="selectedMember" displayText="Selected Members"/>
+                        </ui:field-group>
+                      </ui:table>
+                    </ui:cell>
+                  </ui:row>
+                </ui:grid>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+        </ui:row>
+        <ui:row>
+          <ui:cell colSpan="2">
+            <ui:container collapsable="true" scrollable="true" displayCondition="{$root/showParams/@Value='TRUE'}">
+              <ui:step id="show" scrollable="true" displayText="{$root/DISPLAY_STRINGS/PARAMETERS/@Value}">
+                <ui:grid id="forparam">
+                  <ui:row id="onlyOne">
+                    <ui:cell id="fst" width="50%">
+                      <ui:table id="PARAMS_TABLE" name="Params_Table" displayText="{$root/displayParameterGroupID/@Value}" select="$root/PARAMETERS" displayTextNoRecords="No Record" scrollable="true" doPaging="false" maxRows="-1">
+                        <ui:field-group>
+                          <ui:display-field id="param_name" name="param_name" displayText="Parameter Name" disabled="true" maxlength="100"/>
+                          <ui:hidden-field id="POST_PARAM_NAME_AS" name="POST_PARAM_NAME_AS"/>
+                          <ui:entry-field id="param_value" name="param_value" displayText="Parameter Value"/>
+                          <ui:display-field id="param_attSetID" name="param_attSetID" displayText="Attribute Set ID"/>
+                          <ui:display-field id="param_groupID" name="param_groupID" displayText="Group ID"/>
+                        </ui:field-group>
+                      </ui:table>
+                    </ui:cell>
+                  </ui:row>
+                </ui:grid>
+                <ui:buttons>
+                  <ui:button id="SAVE_PARAMETERS" displayText="Save" name="SAVE_PARAMETERS"/>
+                </ui:buttons>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+        </ui:row>
+      </ui:grid>
+      <!-- <ui:buttons>
+        <ui:button id="cancel" displayText="Cancel" name="cancel"/>
+      </ui:buttons>-->
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function onLoad()
+	{
+    var buttonsList = 'SEARCH#CLEAR#SAVE_GRP_INSTANCE#CREATE_GRP_INST#showMember#showParam' ;
+     var b_stat_arr = disableAllButtons(buttonsList);
+    
+    //alert('rowCount -> '+document.form.rowCount.value);
+    
+    <!-- if groupClass is selected -->
+    if(!document.forms[1].groupClass.options[0].selected) {
+		  var buttonlistVar = 'SEARCH#CLEAR#CREATE_GRP_INST#showMember#showParam' ;
+ 	     enableAllButtons(b_stat_arr,buttonlistVar);
+	  
+		 if(document.form.actionTaken.value == 'DELETE') 
+		{
+			//alert('Before setting START_COUNT..'+document.form.START_COUNT.value);
+			//alert('inside DELETE onLoad.. ');	
+			document.form.START_COUNT.value='0';
+			//		alert('After setting START_COUNT..'+document.form.START_COUNT.value);
+		}
+    
+    <!-- if click on create , disable the create button and enable the save button -->
+    if(document.form.actionTaken.value == 'CREATE_GRP_INST') {
+		//	alert('document.form.clickOnCreate.value '+document.form.clickOnCreate.value)		
+		for(i=0;i&lt;document.form.elements.length;i++)
+		{
+				//alert(document.form.elements[i].name+'   '+document.form.elements[i].value);
+				if(document.form.elements[i].name==&quot;groupID5&quot;)
+				{
+					//alert('groupID found...'+document.form.elements[i].value);
+						if((document.form.elements[i].checked) &amp;&amp;(document.form.elements[i].value!=&quot;&quot;) )
+						{
+								//alert(document.form.elements[i].value);
+								document.form.elements[i].checked=false;
+						}
+						else if(document.form.elements[i].value==&quot;&quot;)
+						{
+							//alert('checked TRUE');
+								document.form.elements[i].checked=true;
+						}
+				}
+		}
+    
+    
+     
+		  var disableCreateButton = 'CREATE_GRP_INST#showMember#showParam' ;
+ 	    var b_stat_arr = disableAllButtons(disableCreateButton);
+	 	 var enableSave = 'SAVE_GRP_INSTANCE';
+ 	    enableAllButtons(b_stat_arr,enableSave);
+ }
+    
+    <!-- if click on save , disable the save button and enable the create button -->
+    if(document.form.buttonID.value == 'SAVE_GRP_INSTANCE') {
+		  var disableSaveButton = 'SAVE_GRP_INSTANCE';
+ 	    var b_stat_arr = disableAllButtons(disableSaveButton);
+	 	 var enableCreate = 'CREATE_GRP_INST#showMember#showParam' ;
+ 	    enableAllButtons(b_stat_arr,enableCreate);
+ } 
+  } 
+	
+       onLoadSuper();
+     scrollHelper();
+     autoCollapseRows();
+ 	}
+   
+function enableAllButtons(buttons_stat_array, buttons){
+	var buttons_array = buttons.split('#');
+
+	for (b_count = 0; b_count&lt;buttons_array.length; b_count++) {
+		if (buttons_stat_array[b_count] == 'enabled')
+			i2uiToggleButtonState( buttons_array[b_count], 'enabled');
+		if (buttons_stat_array[b_count] == 'enabled_bold')
+			i2uiToggleButtonState( buttons_array[b_count], 'enabled','Emphasized');
+	}
+}
+
+ function disableAllButtons(buttons) {
+
+	var buttons_array = buttons.split('#');
+	var b_stat_array = new Array(buttons_array.length);
+	var b_count = 0 ;
+	while (b_count &lt; buttons_array.length) {
+		b_stat_array[b_count] = i2uiShowItemVisibility(buttons_array[b_count]) ;
+		if (b_stat_array[b_count].indexOf('enabled') != -1)
+			i2uiToggleButtonState( buttons_array[b_count], 'disabled');
+			b_count++ ;
+	}
+	return b_stat_array ;
+}
+ 
+function i2uiShowItemVisibility(id) {
+	var item;
+	var status = 'no item' ;
+	var debug = false ;
+	if (document.layers) {
+		item = document.layers[id];
+		if (item != null) {
+			if (item.visibility == 'hide')
+				status = 'disabled' ;
+			else
+				status = 'enabled' ;
+		}
+	}
+
+	item = document.getElementById(id);
+	if (item != null) {
+		if (debug == true) alert('id..item.className..'+id+'..'+item.className) ;
+		
+		if (item.className == 'buttonBorderDisabled')
+			status = 'disabled' ;
+		else {
+			status = 'enabled' ;
+			var cell = item.rows[0].cells[0];
+			if(cell.id.indexOf('Emphasized') != -1)
+				status = 'enabled_bold' ;
+		}
+	}
+	if (debug == true) alert('id..status..'+id+'..'+status) ;
+	return status;
+}
+    
+    
+		
+		function on_showMember()
+	{
+		var isGroupID_selected='FALSE';
+		
+		for(i=0;i&lt;document.form.elements.length;i++)
+			{
+				if(document.form.elements[i].name==&quot;groupID5&quot;)
+				{
+						if(document.form.elements[i].checked)
+						{
+								isGroupID_selected='TRUE';
+								break;
+						}
+						else
+						{
+								continue;
+						}
+				}
+		}
+		
+		if(isGroupID_selected=='TRUE')
+		{
+				form.BUTTON_ID.value = 'SHOW_MEMBERS' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		}
+		else
+		{
+				core_alert('Please select a Group Instance.');
+				return;
+		}
+	}
+	
+	function on_showParam()
+	{
+		var isGroupID_selected='FALSE';
+		
+		
+		for(i=0;i&lt;document.form.elements.length;i++)
+			{
+				if(document.form.elements[i].name==&quot;groupID5&quot;)
+				{
+						if(document.form.elements[i].checked)
+						{
+								isGroupID_selected='TRUE';
+								break;
+						}
+						else
+						{
+								continue;
+						}
+				}
+		}
+		
+		if(isGroupID_selected=='TRUE')
+		{
+					form.BUTTON_ID.value = 'SHOW_PARAMS' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		}
+		else
+		{
+				core_alert('Please select a Group Instance.');
+				return;
+		}
+	}
+	
+		function onDimensionChange(form)
+		{
+				var buttonsList = 'showMember#SEARCH#CLEAR#DELETE#SelToAvail#AvailToSel#SAVE_GRP_INSTANCE#CREATE_GRP_INST#showParam#' ;
+		//alert(buttonsList);
+			var b_stat_arr = disableAllButtons(buttonsList);
+				form.BUTTON_ID.value = 'NEW_DIM_AS_INPUT' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		}
+		
+		function onGroupClassChange(form)
+		{
+			var buttonsList = 'showMember#SEARCH#CLEAR#DELETE#SelToAvail#AvailToSel#SAVE_GRP_INSTANCE#CREATE_GRP_INST#showParam#' ;
+		//	alert(buttonsList);
+			var b_stat_arr = disableAllButtons(buttonsList);
+			form.BUTTON_ID.value = 'NEW_GRPCLASS_AS_INPUT' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		
+		}
+	/*	function on_createInstance()
+		{
+		//form.clickOnCreate.value='TRUE';
+		//alert('Value of clickOnCreate'+form.clickOnCreate.value);
+				form.BUTTON_ID.value = 'CREATE_GRP_INST' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		}
+	*/	
+	
+		function on_AvailToSel()
+		{
+				
+		//		alert('inside on_select ####');
+			var flag='FALSE';
+				var isWrongMemberSelected = 'FALSE';
+			for(i=0;i&lt;document.form.elements.length;i++)
+			{
+			//	alert(document.form.elements[i].name);
+				if(document.form.elements[i].name==&quot;selectedMember&quot;)
+				{
+					
+						if(document.form.elements[i].checked)
+						{
+									//	alert('selectedAttrName found...'+document.form.elements[i].value);
+										isWrongMemberSelected='TRUE';
+						}
+			
+			}
+		
+		
+		
+		
+				if(document.form.elements[i].name==&quot;AVAILMEMBER&quot;)
+				{
+					
+						if(document.form.elements[i].checked)
+						{
+							//	alert('availAttrName found...'+document.form.elements[i].value);
+								flag='TRUE';
+
+
+						}
+						else
+						{
+								continue;
+						}
+				}
+		}
+		
+		if(flag=='TRUE' &amp;&amp;isWrongMemberSelected=='FALSE')
+		{
+				
+				//alert('inside on_select ####');
+				form.BUTTON_ID.value = 'AVAIL_TO_SELECT' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		}
+		if(flag=='FALSE' &amp;&amp; isWrongMemberSelected=='TRUE')
+		{
+				core_alert('Please select atleast one member from Available Members List and Deselect from Selected Members List');
+				return;
+		}
+		if(flag=='FALSE' &amp;&amp; isWrongMemberSelected=='FALSE')
+		{
+				core_alert('Please select atleast one member from Available Members List.');
+				return;
+		}
+		if(flag=='TRUE' &amp;&amp; isWrongMemberSelected=='TRUE')
+		{
+				core_alert('Please Deselect from Selected Members List');
+				return;
+		}
+				
+		}
+		
+		function on_SelToAvail()
+		{
+				var isWrongMemberSelected = 'FALSE';
+			var flag='FALSE';
+			for(i=0;i&lt;document.form.elements.length;i++)
+		{
+				//	alert(document.form.elements[i].name);
+			if(document.form.elements[i].name==&quot;AVAILMEMBER&quot;)
+				{
+					
+						if(document.form.elements[i].checked)
+						{
+								//		alert('availAttrName found...'+document.form.elements[i].value);
+										isWrongMemberSelected='TRUE';
+						}
+			
+				}
+		
+		
+				if(document.form.elements[i].name==&quot;selectedMember&quot;)
+				{
+					
+						if(document.form.elements[i].checked)
+						{
+							//	alert('selectedAttrName found...'+document.form.elements[i].value);
+								flag='TRUE';
+								
+
+						}
+						else
+						{
+								continue;
+						}
+				}
+		}
+		
+			if(flag=='TRUE' &amp;&amp;isWrongMemberSelected=='FALSE')
+		{
+			
+				
+				//alert('inside on_deselect ####');
+			form.BUTTON_ID.value = 'SELECT_TO_AVAIL' ; 
+				form.SUBMIT_AS_XML.value = 'false';
+				form.action = 'view.x2ps';
+				form.submit();
+		
+		
+		}
+		if(flag=='FALSE' &amp;&amp; isWrongMemberSelected=='TRUE')
+		{
+				core_alert('Please select atleast one member from Selected Members List and Deselect from Available Members List');
+				return;
+		}
+		if(flag=='FALSE' &amp;&amp; isWrongMemberSelected=='FALSE')
+		{
+				core_alert('Please select atleast one member from Selected Members List.');
+				return;
+		}
+		if(flag=='TRUE' &amp;&amp; isWrongMemberSelected=='TRUE')
+		{
+				core_alert('Please Deselect from Available Members List');
+				return;
+		}
+		
+		
+	
+		}
+	
+
+	
+	
+   function on_cancel_grpInstance()
+		{
+				form.SUBMIT_AS_XML.value = 'false';
+		//	var buttonsList = 'showMember#SEARCH#CLEAR#DELETE#SelToAvail#AvailToSel#SAVE_GRP_INSTANCE#CREATE_GRP_INST#showParam#' ;
+		//	alert(buttonsList);
+		//	var b_stat_arr = disableAllButtons(buttonsList);
+				form.BUTTON_ID.value = 'NEW_GRPCLASS_AS_INPUT' ; 
+				form.action = 'view.x2ps';
+				form.submit();
+		}
+  </ui:script>
+</ui:page-group>

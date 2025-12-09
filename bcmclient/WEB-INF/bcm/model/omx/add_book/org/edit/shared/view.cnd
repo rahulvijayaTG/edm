@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">    
+    
+	<xapl:variable name="sharedOrgs">
+	   <x2:execute command="omx.add_book.org.edit.shared.view:getSharing">
+	    <x2:with-param name="pOrgId" select="{$this/ORG_ID/@Value}"/>
+	  </x2:execute>
+	</xapl:variable>
+	
+	<xapl:print select="$sharedOrgs"/>
+	
+	<xapl:return>  
+	
+	  <!-- Header -->
+      <x2:execute command="omx.add_book.org.edit.shared.view:getHeader">
+	    <x2:with-param name="this" select="$this"/>
+	  </x2:execute>
+      
+      <!-- Container -->
+      <x2:execute command="omx.add_book.org.edit.shared.view:getContainer">
+        <x2:with-param name="pPage" select="'org_shared'"/>
+        <x2:with-param name="pHide" select="$this/HIDE_TABS/@Value"/>
+        <x2:with-param name="pReturnLink" select="$this/RET_PAGE/@Value"/>
+		<x2:with-param name="pSharedOrgs" select="{$sharedOrgs}"/>
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+      
+      <xapl:value-of select="{$sharedOrgs}"/>
+	          
+    </xapl:return>
+    
+  </x2:command> 
+    
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+    
+	<xapl:variable name="orgHeader" enforceList="true">
+      <x2:execute command="omx.add_book.org.view:getHeader">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+    </xapl:variable>
+
+    <xapl:variable name="orgPage">
+      <web:get-page name="org_overview">
+	    <ORG_ID Value="{$addBookCurrOrgId/@Value}"/>
+		<CUSTOMER_ORG_ID Value="{$addBookCurrOrgId/@Value}"/>
+		<IN_PRIMARY_DOMAIN Value="{$s_inPrimaryDomain}"/>
+      </web:get-page>
+    </xapl:variable>
+
+    <xapl:return>
+      <HEADER>
+      <HEADING3 Value="View Shared Orgs"/>
+      <HEADING2_LINK Value="{$orgPage}"/>
+      <xapl:value-of select="$orgHeader/*"/>
+      </HEADER>
+    </xapl:return>
+
+  </x2:command>	
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pPage"/>
+	<x2:param name="pSharedOrgs"/>
+    
+    <xapl:return>
+      
+      <CONTAINER>
+        <xapl:variable name="url">
+          <web:get-page name="view_shared_org_help"/>
+        </xapl:variable>
+    
+        <HELP Url="{$url}"/>
+        
+        <STEP
+		  DisplayText="View Shared Organizations" 
+		  OnClick="{$pages:org_shared}" 
+		  Selected="{$pPage = 'org_shared'}">
+		  
+		  <BUTTONS>
+		    <xapl:if test="{count($pSharedOrgs/ORGANIZATION/*) > 0}">
+			  <BUTTON 
+			    Name="Remove" 
+				DisplayText="Remove" 
+				OnClick="javascript:onRemove()"/>
+			</xapl:if>
+		  </BUTTONS>	
+        </STEP>
+	  </CONTAINER>
+      
+    </xapl:return>
+    
+  </x2:command>  
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getSharing">
+    <x2:param name="pOrgId"/>
+	
+	<xapl:variable name="sharedOrgIds">
+	  <SHARED_ORGS>
+	    <xcore:execute-method name="//UserSecurity/getOrgsInSharingMap">
+	      <SOURCE_ORG_ID Value="{$pOrgId}"/>
+	    </xcore:execute-method>
+	  </SHARED_ORGS>
+	</xapl:variable>
+	
+	<xapl:variable name="sharedOrgs">
+	  <xapl:if test="$sharedOrgIds/*">
+	    <xcore:execute-method name="//UserSecurity/getOrganizations">
+	      <FILTER Name="ID">
+		    <OR>
+		      <xapl:for-each select="$sharedOrgIds/TARGET_ORG_ID" varName="torg">
+			    <xcore:search-by property="ID" value="{$torg/@Value}" matchby="EQUAL"/>
+			  </xapl:for-each>
+		    </OR>
+		  </FILTER>
+	    </xcore:execute-method>
+	  </xapl:if>
+	</xapl:variable>
+	
+    <xapl:return>
+	  <SHARED>
+	    <EDITABLE Value="'true'"/>
+		<ORG_ID Value="{$pOrgId}"/>
+	    <xapl:value-of select="{$sharedOrgs/*}"/>
+	  </SHARED>
+	</xapl:return>
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

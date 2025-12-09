@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+    <xapl:variable name="entity">
+      <x2:execute command="omx.add_book.org.model:getOrganization">
+        <x2:with-param name="pRefresh" select="$this/REFRESH/@Value"/>
+        <x2:with-param name="orgId" select="{$this/ORG_ID/@Value}"/>
+        <x2:with-param name="parentOrgId" select="{$this/PARENT_ORG_ID/@Value}"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:print select="$entity"/>
+    <xapl:return>
+      <!-- Header -->
+      <x2:execute command="omx.add_book.org.view:getHeader">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+      <!-- Container -->
+      <x2:execute command="omx.add_book.org.edit.view:getContainer">
+        <x2:with-param name="pPage" select="'org_overview'"/>
+        <x2:with-param name="pHide" select="$this/HIDE_TABS/@Value"/>
+        <x2:with-param name="pReturnLink" select="$this/RET_PAGE/@Value"/>
+        <x2:with-param name="pEntity" select="{$entity}"/>
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+      <x2:execute command="omx.add_book.org.edit.overview.view:getOrgView">
+        <x2:with-param name="pOrgId" select="{$this/ORG_ID/@Value}"/>
+        <x2:with-param name="pInPrimaryDomain" select="{$this/IN_PRIMARY_DOMAIN/@Value}"/>
+        <x2:with-param name="pEntity" select="$entity"/>
+      </x2:execute>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getOrgView">
+    <x2:param name="pOrgId" select="$this/ORG_ID/@Value"/>
+    <x2:param name="pInPrimaryDomain"/>
+    <x2:param name="pEntity"/>
+    <xapl:variable name="currentTree"/>
+    <xapl:variable name="editable"/>
+    <xapl:print select="$pEntity"/>
+    <xapl:set-variable name="currentTree">
+      <xapl:value-of select="{$pEntity}"/>
+    </xapl:set-variable>
+    <xapl:print select="$currentTree"/>
+    <xapl:variable name="identityOrg">
+      <identity:get-org/>
+    </xapl:variable>
+    <xapl:print select="$identityOrg"/>
+    <xapl:choose>
+      <!-- If we are looking at our own org -->
+      <xapl:when test="$pOrgId = $identityOrg">
+        <docutil:add select="{$currentTree}">
+          <EDITABLE Value="true"/>
+        </docutil:add>
+      </xapl:when>
+      <!-- if we are a super user -->
+      <xapl:otherwise>
+        <perm:is-allowed document="ORGANIZATION" action="edit_global">
+          <docutil:add select="{$currentTree}">
+            <EDITABLE Value="true"/>
+          </docutil:add>
+        </perm:is-allowed>
+      </xapl:otherwise>
+    </xapl:choose>
+    <!-- Child Org -->
+    <perm:is-allowed document="ORGANIZATION" action="view">
+      <docutil:add select="{$currentTree}">
+        <xapl:set-variable name="editable" select="'false'"/>
+        <perm:is-allowed document="ORGANIZATION" action="edit_global">
+          <xapl:if test="$pInPrimaryDomain='true'">
+            <xapl:set-variable name="editable" select="'true'"/>
+          </xapl:if>
+        </perm:is-allowed>
+        <xapl:variable name="searchUrl" select="concat('../../child_org/select.jsp?PARENT_ORG_ID=', $pOrgId)"/>
+        <xapl:variable name="addUrl" select="concat('../add.jsp?PARENT_ORG_ID=', $pOrgId)"/>
+        <CHILD_ENTITY Editable="{$editable}" searchUrl="{$searchUrl}" addUrl="{$addUrl}" DisplayText="Child Organizations"/>
+      </docutil:add>
+    </perm:is-allowed>
+    <!-- Order Point -->
+    <xapl:if test=" ($currentTree/CUSTOMER_STATUS/@Value != 'NONE') and ($currentTree/CUSTOMER_STATUS/@Value != 'DORMANT') and ($currentTree/CUSTOMER_STATUS/@Value != 'INACTIVE') ">
+      <perm:is-allowed document="ORDER_POINT" action="view">
+        <docutil:add select="{$currentTree}">
+          <xapl:set-variable name="editable" select="'false'"/>
+          <perm:is-allowed document="ORDER_POINT" action="edit_global">
+            <xapl:if test="$pInPrimaryDomain='true'">
+              <xapl:set-variable name="editable" select="'true'"/>
+            </xapl:if>
+          </perm:is-allowed>
+          <xapl:variable name="searchUrl" select="concat('../../order_point/select/order_point.jsp?CUSTOMER_ORG_ID=', $pOrgId)"/>
+          <xapl:variable name="addUrl" select="concat('../../order_point/add.jsp?ORG_ID=', $pOrgId)"/>
+          <CHILD_ENTITY Editable="{$editable}" searchUrl="{$searchUrl}" addUrl="{$addUrl}" DisplayText="Order Points"/>
+        </docutil:add>
+      </perm:is-allowed>
+      <!-- Bill Point Details -->
+      <perm:is-allowed document="BILL_TO" action="view">
+        <docutil:add select="{$currentTree}">
+          <xapl:set-variable name="editable" select="'false'"/>
+          <perm:is-allowed document="BILL_TO" action="edit_global">
+            <xapl:if test="$pInPrimaryDomain='true'">
+              <xapl:set-variable name="editable" select="'true'"/>
+            </xapl:if>
+          </perm:is-allowed>
+          <xapl:variable name="searchUrl" select="concat('../../bill_point/select.jsp?CUSTOMER_ORG_ID=', $pOrgId)"/>
+          <xapl:variable name="addUrl" select="concat('../../bill_point/add.jsp?ORG_ID=', $pOrgId)"/>
+          <CHILD_ENTITY Editable="{$editable}" searchUrl="{$searchUrl}" addUrl="{$addUrl}" DisplayText="Bill Points"/>
+        </docutil:add>
+      </perm:is-allowed>
+    </xapl:if>
+    <xapl:if test=" ($currentTree/SELLER_STATUS/@Value != 'NONE') and ($currentTree/SELLER_STATUS/@Value != 'DORMANT') and ($currentTree/SELLER_STATUS/@Value != 'INACTIVE') ">
+      <!-- Remit Point -->
+      <perm:is-allowed document="REMIT_TO" action="view">
+        <docutil:add select="{$currentTree}">
+          <xapl:set-variable name="editable" select="'false'"/>
+          <perm:is-allowed document="REMIT_TO" action="add">
+            <xapl:if test="$pInPrimaryDomain='true'">
+              <xapl:set-variable name="editable" select="'true'"/>
+            </xapl:if>
+          </perm:is-allowed>
+          <xapl:variable name="searchUrl" select="concat('../../remit_to/select.jsp?SELLING_ORG_ID=', $pOrgId)"/>
+          <xapl:variable name="addUrl" select="concat('../../remit_to/edit.jsp?SELLING_ORG_ID=', $pOrgId)"/>
+          <CHILD_ENTITY Editable="{$editable}" searchUrl="{$searchUrl}" addUrl="{$addUrl}" DisplayText="Remit Points"/>
+        </docutil:add>
+      </perm:is-allowed>
+    </xapl:if>
+    <!-- Ship To / Ship From Locations -->
+    <perm:is-allowed document="LOCATIONS" action="view">
+      <docutil:add select="{$currentTree}">
+        <xapl:set-variable name="editable" select="'false'"/>
+        <perm:is-allowed document="LOCATIONS" action="edit_global">
+          <xapl:if test="$pInPrimaryDomain='true'">
+            <xapl:set-variable name="editable" select="'true'"/>
+          </xapl:if>
+        </perm:is-allowed>
+        <xapl:variable name="searchUrl" select="concat('../../location/select/location.jsp?SELLING_ORG_ID=', $pOrgId)"/>
+        <xapl:variable name="addUrl" select="concat('../../location/add/location.jsp?SELLING_ORG_ID=', $pOrgId, '&amp;IS_NEW=true')"/>
+        <CHILD_ENTITY Editable="{$editable}" searchUrl="{$searchUrl}" addUrl="{$addUrl}" DisplayText="Locations"/>
+      </docutil:add>
+    </perm:is-allowed>
+    <!-- Payment Terms -->
+    <xapl:if test="isAllowed('ORGANIZATION', 'terms')">
+      <xapl:if test="($currentTree/SELLER_STATUS/@Value != 'NONE') and ($currentTree/SELLER_STATUS/@Value != 'DORMANT') and ($currentTree/SELLER_STATUS/@Value != 'INACTIVE') ">
+        <docutil:add select="{$currentTree}">
+          <xapl:set-variable name="editable" select="'false'"/>
+          <perm:is-allowed document="PAYMENT_TERM" action="edit">
+            <xapl:if test="$pInPrimaryDomain='true'">
+              <xapl:set-variable name="editable" select="'true'"/>
+            </xapl:if>
+          </perm:is-allowed>
+          <xapl:variable name="searchUrl" select="concat('../select/payment_term.jsp?SELLING_ORG_ID=', $pOrgId)"/>
+          <xapl:variable name="addUrl" select="concat('payment_term.jsp?SELLING_ORG_ID=', $pOrgId, '&amp;IS_NEW=true')"/>
+          <CHILD_ENTITY Editable="{$editable}" searchUrl="{$searchUrl}" addUrl="{$addUrl}" DisplayText="Payment Terms"/>
+        </docutil:add>
+      </xapl:if>
+    </xapl:if>
+    <!-- Shared Orgs -->
+    <xapl:if test="isAllowed('ORGANIZATION', 'shared_orgs')">
+      <xapl:if test="($currentTree/CUSTOMER_STATUS/@Value != 'NONE') and ($currentTree/CUSTOMER_STATUS/@Value != 'DORMANT') and ($currentTree/CUSTOMER_STATUS/@Value != 'INACTIVE') ">
+        <docutil:add select="{$currentTree}">
+          <xapl:set-variable name="editable" select="'false'"/>
+          <xapl:if test="$pInPrimaryDomain='true'">
+            <xapl:set-variable name="editable" select="'true'"/>
+          </xapl:if>
+          <xapl:variable name="viewUrl" select="concat('shared.jsp?SELLING_ORG_ID=', $pOrgId, '&amp;ORG_ID=', $pOrgId)"/>
+          <xapl:variable name="addUrl" select="concat('../select/shared.jsp?SELLING_ORG_ID=', $pOrgId, '&amp;ORG_ID=', $pOrgId)"/>
+          <CHILD_ENTITY Editable="{$editable}" viewUrl="{$viewUrl}" addUrl="{$addUrl}" DisplayText="Shared Organizations"/>
+        </docutil:add>
+      </xapl:if>
+    </xapl:if>
+    <!-- Customers -->
+    <xapl:if test="isAllowed('ORGANIZATION', 'customers')">
+      <xapl:if test="($currentTree/SELLER_STATUS/@Value != 'NONE') and ($currentTree/SELLER_STATUS/@Value != 'DORMANT') and ($currentTree/SELLER_STATUS/@Value != 'INACTIVE') ">
+        <docutil:add select="{$currentTree}">
+          <xapl:set-variable name="editable" select="'false'"/>
+          <xapl:if test="$pInPrimaryDomain='true'">
+            <xapl:set-variable name="editable" select="'true'"/>
+          </xapl:if>
+          <xapl:variable name="searchUrl" select="concat('../select/customer.jsp?SELLING_ORG_ID=', $pOrgId, '&amp;ORG_ID=', $pOrgId)"/>
+          <CHILD_ENTITY Editable="{$editable}" searchUrl="{$searchUrl}" DisplayText="Customers"/>
+        </docutil:add>
+      </xapl:if>
+    </xapl:if>
+    <!-- Nexus States -->
+    <xapl:if test="isAllowed('ORGANIZATION', 'nexus_states')">
+      <xapl:if test="(string-length($currentTree/TAX_ID/@Value) != 0) and ($currentTree/COUNTRY/@Value='USA') and ($currentTree/SELLER_STATUS/@Value != 'NONE') and ($currentTree/SELLER_STATUS/@Value != 'DORMANT') and ($currentTree/SELLER_STATUS/@Value != 'INACTIVE')">
+        <docutil:add select="{$currentTree}">
+          <xapl:set-variable name="editable" select="'false'"/>
+          <xapl:if test="$pInPrimaryDomain='true'">
+            <xapl:set-variable name="editable" select="'true'"/>
+          </xapl:if>
+		  <xapl:variable name="url" select="concat('nexus.jsp?ORG_ID=', $pOrgId)"/>
+		  <xapl:choose>
+		    <xapl:when test="$pInPrimaryDomain='true'">
+              <CHILD_ENTITY Editable="{$editable}" manageUrl="{$url}" DisplayText="Nexus States"/>
+			</xapl:when>
+			<xapl:otherwise>
+              <CHILD_ENTITY Editable="{$editable}" viewUrl="{$url}" DisplayText="Nexus States"/>
+			</xapl:otherwise>
+		  </xapl:choose>
+        </docutil:add>
+      </xapl:if>
+    </xapl:if>
+    <!-- Account Codes -->
+    <xapl:if test="isAllowed('ORGANIZATION', 'account_codes')">
+      <xapl:if test="($pEntity/CUSTOMER_STATUS/@Value != 'NONE') and ($pEntity/CUSTOMER_STATUS/@Value != 'DORMANT') and ($pEntity/CUSTOMER_STATUS/@Value != 'INACTIVE') ">
+        <docutil:add select="{$currentTree}">
+          <xapl:set-variable name="editable" select="'false'"/>
+          <xapl:if test="$pInPrimaryDomain='true'">
+            <xapl:set-variable name="editable" select="'true'"/>
+          </xapl:if>
+          <xapl:variable name="manageUrl" select="concat('account_code/segment.jsp?ORG_ID=', $pOrgId)"/>
+          <xapl:variable name="viewUrl" select="concat('account_code/segment.jsp?ORG_ID=', $pOrgId)"/>
+          <xapl:choose>
+            <xapl:when test="$pInPrimaryDomain='true'">
+              <CHILD_ENTITY Editable="{$editable}" manageUrl="{$manageUrl}" DisplayText="Account Codes"/>
+            </xapl:when>
+            <xapl:otherwise>
+              <CHILD_ENTITY Editable="{$editable}" viewUrl="{$viewUrl}" DisplayText="Account Codes"/>
+            </xapl:otherwise>
+          </xapl:choose>
+        </docutil:add>
+      </xapl:if>
+    </xapl:if>
+    <!-- Org Contacts -->
+    <perm:is-allowed document="ORGANIZATION" action="contacts">
+      <docutil:add select="{$currentTree}">
+        <xapl:set-variable name="editable" select="'false'"/>
+        <perm:is-allowed document="CONTACTS" action="manage_contacts">
+          <xapl:if test="$pInPrimaryDomain='true'">
+            <xapl:set-variable name="editable" select="'true'"/>
+          </xapl:if>
+        </perm:is-allowed>
+        <xapl:variable name="searchUrl" select="concat('../select/contact.jsp?ORG_ID=', $pOrgId)"/>
+        <xapl:variable name="addUrl" select="concat('contact.jsp?ORG_ID=', $pOrgId, '&amp;IS_NEW=true')"/>
+        <CHILD_ENTITY Editable="{$editable}" searchUrl="{$searchUrl}" addUrl="{$addUrl}" DisplayText="Contacts"/>
+      </docutil:add>
+    </perm:is-allowed>
+
+    <!-- User Group Details -->
+    <docutil:add select="{$currentTree}">
+        <xapl:set-variable name="editable" select="'false'"/>
+        <perm:is-allowed document="USER_GROUP" action="add_edit_user_group">
+          <xapl:if test="$pInPrimaryDomain='true'">
+            <xapl:set-variable name="editable" select="'true'"/>
+          </xapl:if>
+        </perm:is-allowed>
+        <xapl:variable name="addUrl" select="concat( $pages:user_admin_groups_new , '?ORG_ID=' ,$pOrgId)"/>        
+        <xapl:variable name="searchUrl" select="concat( $pages:user_admin_group_search , '&amp;ORG_ID=' , $pOrgId)"/>
+        <CHILD_ENTITY Editable="{$editable}" searchUrl="{$searchUrl}" addUrl="{$addUrl}" DisplayText="User Groups"/>
+    </docutil:add>
+        
+<!--     <xapl:print select="$currentTree"/> -->
+    
+    <xapl:return>
+      <xapl:value-of select="{$currentTree}"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

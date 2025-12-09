@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+    <x2:param name="this"/>
+	 
+    <xapl:variable name="origHeader">
+      <x2:execute command="omx.add_book.org.select.org.view:getHeader">
+      </x2:execute>
+    </xapl:variable>
+
+	<!-- Setting the current org id session variable -->
+    <xapl:if test="string-length($this/ORG_ID/@Value) != 0">
+      <xapl:set-variable name="addBookCurrOrgId" select="$this/ORG_ID"/>
+    </xapl:if>
+
+    <xapl:return>
+      <HEADER>
+      <HEADING2 Value="Organization"/>
+      <HEADING_LINK Value="{$pages:select_org}"/>
+      <xapl:value-of select="$origHeader/*"/>
+      </HEADER>
+    </xapl:return>
+
+  </x2:command>
+  
+  <!-- ********************************************************************** 
+     *********************************************************************** -->
+</x2:commands>

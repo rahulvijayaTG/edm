@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands description="_" 
+             xmlns:FUNCTION="http://www.i2.com/FUNCTION" 
+             xmlns:REMOVE="http://www.i2.com/REMOVE" 
+             xmlns:cfg="http://www.i2.com/configurability" 
+             xmlns:core="http://www.i2.com/core" 
+             xmlns:omx="http://www.i2.com/omx" 
+             xmlns:perm="http://www.i2.com/permissibility" 
+             xmlns:util="http://www.i2.com/util" 
+             xmlns:web="http://www.i2.com/web" 
+             xmlns:x2="http://www.i2.com/x2" 
+             xmlns:xapl="http://www.i2.com/xapl" 
+             xmlns:xcore="http://www.i2.com/xcore" 
+             xmlns:xcore-db="http://www.i2.com/xcore-db" 
+             xmlns:docutil="http://www.i2.com/docutil" 
+             xmlns:xudl="http://www.i2.com/xudl"
+             xmlns:identity="http://www.i2.com/identity">
+						   
+  <!-- **********************************************************************
+  *********************************************************************** -->  
+  <x2:command public="yes" description="_" name="getOrganization">
+    <x2:param name="orgId" select="{$this/ORG_ID/@Value}" />
+    <x2:param name="parentOrgId" select="{$this/PARENT_ORG_ID/@Value}" />  
+    <x2:param name="pRefresh" select="{$this/REFRESH/@Value}" /> 
+		
+    <xapl:print>REFRESH<xapl:value-of select="$pRefresh"/></xapl:print> 
+    
+    <xapl:choose>
+      <xapl:when test=" ($pRefresh = 'true') and (string-length($parentOrgId)= 0)">
+        <xapl:set-variable name="currentCountry">
+          <xapl:value-of select="{$tempForm/COUNTRY/@Value}"/>
+        </xapl:set-variable>
+        
+        <xapl:return>
+          <ORGANIZATION>
+            <xapl:value-of select="{$tempForm/*}"/>
+          </ORGANIZATION>
+        </xapl:return>
+      </xapl:when>
+
+      <xapl:when test=" ($pRefresh = 'true') and (string-length($parentOrgId) &gt; 0)">
+        <xapl:set-variable name="currentCountry">
+          <xapl:value-of select="{$tempForm/COUNTRY/@Value}"/>
+        </xapl:set-variable>
+        
+        <xapl:return>
+          <ORGANIZATION>
+            <xapl:value-of select="{$tempForm/*}"/>
+            <PARENT_ORG_LINK>
+              <xcore:execute-method name="//UserSecurity/getOrganization">
+                <ID Value="{$parentOrgId}"/>
+              </xcore:execute-method>
+            </PARENT_ORG_LINK>
+          </ORGANIZATION>
+        </xapl:return>
+      </xapl:when>
+      <xapl:when test="{string-length($orgId) = 0}">
+        <xapl:set-variable name="currentCountry">USA</xapl:set-variable>
+        <xapl:return>
+          <ORGANIZATION>
+            <IS_NEW Value="true"/>
+            <COUNTRY Value="USA"/>
+            <CURRENCY_CODE Value="USD"/>
+            <CUSTOMER_STATUS Value="NONE"/>
+            <SELLER_STATUS Value="NONE"/>
+            <xapl:if test="{string-length($parentOrgId) != 0}">
+              <PARENT_ORG_ID Value="{$parentOrgId}"/>
+              <PARENT_ORG_LINK>
+                <xcore:execute-method name="//UserSecurity/getOrganization">
+                  <ID Value="{$parentOrgId}"/>
+                </xcore:execute-method>
+              </PARENT_ORG_LINK>
+            </xapl:if>
+          </ORGANIZATION>
+        </xapl:return>
+      </xapl:when>
+      <xapl:otherwise>
+        <xapl:variable name="org">
+          <xcore:execute-method name="//UserSecurity/getOrganization">
+            <ID Value="{$orgId}"/>            
+          </xcore:execute-method>
+        </xapl:variable>
+        <xapl:if test="{count($org/PARENT_ORG_ID) != 0}">
+          <docutil:add select="{$org}">
+            <PARENT_ORG_LINK>
+              <xcore:execute-method name="//UserSecurity/getOrganization">
+                <ID Value="{$org/PARENT_ORG_ID/@Value}"/>
+              </xcore:execute-method>
+            </PARENT_ORG_LINK>
+          </docutil:add>
+        </xapl:if>
+        <perm:is-allowed document="ORGANIZATION" action="edit_global">            
+		  <docutil:add select="{$org}">
+            <EDITABLE Value="true"/>
+          </docutil:add>
+        </perm:is-allowed>
+		
+		<xapl:if test="$org/STATUS/@Value != 'ACTIVE'">
+          <docutil:add select="{$org}">
+	        <ACTIVATABLE Value="true"/>
+	      </docutil:add>
+	    </xapl:if>  
+	
+	    <xapl:if test="$org/STATUS/@Value = 'ACTIVE'">
+	      <docutil:add select="{$org}">
+	        <DEACTIVATABLE Value="true"/>
+	      </docutil:add>
+	    </xapl:if>
+        
+        <xapl:set-variable name="currentCountry">
+          <xapl:value-of select="{$org/COUNTRY/@Value}"/>
+        </xapl:set-variable>
+				
+        <xapl:print>getOrganization!!!<xapl:value-of select="$org"/></xapl:print>
+        
+        <xapl:return>
+          <xapl:value-of select="{$org}"/>
+        </xapl:return>
+        
+        </xapl:otherwise>
+      </xapl:choose>
+
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getUserSellingOrg">
+    
+    <perm:is-allowed document="USER_DOMAIN" action="seller">
+      <xapl:return>
+        <identity:get-org />
+      </xapl:return>
+    </perm:is-allowed>
+    
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getUserCustomerOrg">
+    
+    <perm:is-allowed document="USER_DOMAIN" action="customer">
+      <xapl:return>
+        <identity:get-org />
+      </xapl:return>
+    </perm:is-allowed>
+    
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getLocalCustomer">
+    <x2:param name="orgId" />
+    <x2:param name="pRefresh" />
+	<x2:param name="pEditable"/>
+    
+    <xapl:variable name="sellingOrg">
+      <x2:execute command="omx.add_book.org.model:getUserSellingOrg"/>
+    </xapl:variable>
+	
+	<xapl:if test="{string-length($sellingOrg) != 0}">
+	  <xapl:variable name="localCustomers">
+	    <xcore:execute-method name="//UserSecurity/getEnabledOrganizations">
+	      <SELLING_ORG_ID Value="{$sellingOrg}"/>
+		  <FILTER Name="CUSTOMER_ORG_ID">
+		    <xcore:search-by property="CUSTOMER_ORG_ID" value="{$orgId}" matchby="EQUAL"/>
+		  </FILTER>
+		  <FILTER Name="STATUS">
+            <OR>
+              <xcore:search-by property="STATUS" value="ACTIVE" matchby="EQUAL"/>
+			  <xcore:search-by property="STATUS" value="DORMANT" matchby="EQUAL"/>
+            </OR>
+          </FILTER>
+	    </xcore:execute-method>
+	  </xapl:variable>
+	
+	  <xapl:print select="$localCustomers"/>
+    
+      <xapl:variable name="localCustomer" />
+      <xapl:if test="{string-length($sellingOrg) != 0 and count($localCustomers/*) != 0}">
+        <xapl:set-variable name="localCustomer">
+		  <xcore:execute-method name="//UserSecurity/getEnabledOrganization">
+		    <SELLING_ORG_ID Value="{$sellingOrg}"/>
+            <CUSTOMER_ORG_ID Value="{$orgId}"/>
+		  </xcore:execute-method>
+        </xapl:set-variable>
+      </xapl:if>
+	
+	  <xapl:print select="$localCustomer"/>
+	
+      <xapl:return>
+        <xapl:choose>
+		  <xapl:when test="{count($localCustomer) = 0}">
+            <LOCAL_CUSTOMER>
+              <IS_LOCAL_NEW Value="true"/>
+              <CUSTOMER_ORG_ID Value="{$orgId}"/>						
+              <perm:is-allowed document="ORGANIZATION" action="edit_local">
+                <EDITABLE Value="true"/>
+              </perm:is-allowed>
+            </LOCAL_CUSTOMER>
+          </xapl:when>
+          <xapl:otherwise>
+		    <xapl:choose>
+			  <xapl:when test="$pEditable='false'">
+			    <perm:is-allowed document="ORGANIZATION" action="edit_local">
+			      <docutil:add select="{$localCustomer}">
+			        <EDITABLE Value="false"/>
+				  </docutil:add>
+				</perm:is-allowed>
+			  </xapl:when>
+			  <xapl:otherwise>
+		        <perm:is-allowed document="ORGANIZATION" action="edit_local">
+                  <docutil:add select="{$localCustomer}">
+                    <EDITABLE Value="true"/>
+                  </docutil:add>
+                </perm:is-allowed>
+			  </xapl:otherwise>
+			</xapl:choose>
+            <xapl:value-of select="{$localCustomer}"/>
+          </xapl:otherwise>
+        </xapl:choose>
+      </xapl:return>
+	</xapl:if>
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getLocalSeller">
+  <x2:param name="orgId" />
+  <x2:param name="pRefresh" />
+    
+    <xapl:variable name="custOrg">
+      <x2:execute command="omx.add_book.org.model:getUserCustomerOrg"/>
+    </xapl:variable>
+    
+    <xapl:print>
+      custOrg: <xapl:value-of select="$custOrg" />
+    </xapl:print>
+    
+    <xapl:variable name="localSeller" />
+    <xapl:if test="{string-length($custOrg) != 0}">
+
+      <xapl:set-variable name="localSeller">
+        <xcore:execute-method name="//UserSecurity/getEnabledSellerOrganization">
+          <CUSTOMER_ORG_ID Value="{$custOrg}"/>
+          <SELLING_ORG_ID Value="{$orgId}"/>
+        </xcore:execute-method>
+      </xapl:set-variable>
+ 
+      <xapl:return>
+        <xapl:choose>
+          <xapl:when test="{count($localSeller) = 0}">
+            <LOCAL_SELLER>
+              <IS_LOCAL_SELLER_NEW Value="true"/>
+              <SELLING_ORG_ID Value="{$orgId}"/>			
+              <perm:is-allowed document="ORGANIZATION" action="edit_local_seller">
+                <EDITABLE Value="true"/>
+              </perm:is-allowed>
+            </LOCAL_SELLER>
+          </xapl:when>
+          <xapl:otherwise>
+            <perm:is-allowed document="ORGANIZATION" action="edit_local_seller">
+              <docutil:add select="{$localSeller}">
+                <EDITABLE Value="true"/>
+              </docutil:add>
+            </perm:is-allowed>
+            <xapl:value-of select="{$localSeller}"/>
+          </xapl:otherwise>
+        </xapl:choose>
+      </xapl:return>
+    </xapl:if>
+    
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="activateSeller">
+    <x2:param name="this"/>
+    
+    <xcore:execute-method name="//UserSecurity/setOrganizationStatus">
+      <ID Value="{$this/ORG_ID/@Value}"/>
+      <SELLER_STATUS Value="ACTIVE"/>
+    </xcore:execute-method>
+    <web:display-page>
+      <web:get-page name="{$this/PAGE/@Value}">
+        <xapl:value-of select="{$this/ORG_ID}"/>
+        <xapl:value-of select="{$this/PARENT_ORG_ID}"/>
+      </web:get-page>
+    </web:display-page>
+    
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="removeSeller">
+    <x2:param name="this"/>
+    
+    <xcore:execute-method name="//UserSecurity/setOrganizationStatus">
+      <ID Value="{$this/ORG_ID/@Value}"/>
+      <SELLER_STATUS Value="DORMANT"/>
+    </xcore:execute-method>
+    <web:display-page>
+      <web:get-page name="{$this/PAGE/@Value}">
+        <xapl:value-of select="{$this/ORG_ID}"/>
+        <xapl:value-of select="{$this/PARENT_ORG_ID}"/>
+      </web:get-page>
+    </web:display-page>
+    
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="activateCustomer">
+    <x2:param name="this"/>
+    
+    <xapl:print>This in actiCUST<xapl:value-of select="$this"/></xapl:print>
+    
+    <xcore:execute-method name="//UserSecurity/setOrganizationStatus">
+      <ID Value="{$this/ORG_ID/@Value}"/>
+      <CUSTOMER_STATUS Value="ACTIVE"/>
+    </xcore:execute-method>
+    <web:display-page>
+      <web:get-page name="{$this/PAGE/@Value}">
+        <xapl:value-of select="{$this/ORG_ID}"/>
+        <xapl:value-of select="{$this/PARENT_ORG_ID}"/>
+      </web:get-page>
+    </web:display-page>
+
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="removeCustomer">
+    <x2:param name="this"/>
+    
+    <xcore:execute-method name="//UserSecurity/setOrganizationStatus">
+      <ID Value="{$this/ORG_ID/@Value}"/>
+      <CUSTOMER_STATUS Value="DORMANT"/>
+    </xcore:execute-method>
+    
+    <web:display-page>
+      <web:get-page name="{$this/PAGE/@Value}">
+        <xapl:value-of select="{$this/ORG_ID}"/>
+        <xapl:value-of select="{$this/PARENT_ORG_ID}"/>
+      </web:get-page>
+    </web:display-page>
+    
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="refreshOrg">
+    <x2:param name="this"/>
+	
+    <xapl:print>this in refresh<xapl:value-of select="$this"/></xapl:print>
+    
+    <xapl:set-variable name="tempForm">
+      <TEMP_FORM>
+        <xapl:value-of select="$this/*"/>
+      </TEMP_FORM>
+    </xapl:set-variable>
+    
+    <web:display-page>
+      <web:get-page name="{$this/PAGE/@Value}">
+        <REFRESH Value="true"/>
+        <xapl:if test="string-length($this/ID/@Value) &gt; 0">
+          <ORG_ID Value="{$this/ID/@Value}"/>
+        </xapl:if>
+        <xapl:if test="string-length($this/PARENT_ORG_ID/@Value) &gt;  0">
+          <xapl:value-of select="{$this/PARENT_ORG_ID}"/>
+        </xapl:if>
+      </web:get-page>
+    </web:display-page>
+    
+  </x2:command>
+    
+  <!-- **********************************************************************
+  *********************************************************************** -->
+
+</x2:commands>

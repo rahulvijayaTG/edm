@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+    <xapl:print>
+      Value of this in Manage Query
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+      <docutil:set select="$this">
+        <SERVICE Value="BCMMasterService"/>
+        <FORM_NAME Value="QUERY_EXEC_HISTORY_FORM"/>
+        <DO_SEARCH Value="Yes"/>
+        <SORT_BY Value="QueryParam.runDateTime"/>
+        <SORT_ORDER Value="Descending"/>
+        <F_QueryExecutionLog_queryID Value="{$queryDetail/QueryMaster/queryID/@Value}"/>
+      </docutil:set>
+    <x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+      <x2:with-param name="display" select="'Query History'"/>
+      <x2:with-param name="page" select="'manageQuery'"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+    <xapl:variable name="historyForm">
+      <x2:execute command="bcm.framework.queryform.Form:getFormContainer">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="pSearchParam" select="$searchParam"/>
+        <x2:with-param name="pFormName" select="'QUERY_EXEC_HISTORY_FORM'"/>
+        <x2:with-param name="pServiceName" select="'BCMMasterService'"/>
+        <x2:with-param name="pSearchFormConfigSource" select="'bcm.manage_query.manageQueryExecHistory:getFormConfig'"/>
+        <x2:with-param name="pSearchReportConfigSource" select="'bcm.manage_query.manageQueryExecHistory:getReportConfig'"/>
+        <x2:with-param name="pReportDataSource" select="'bcm.manage_query.manageQueryExecHistory:getReportData'"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:print>
+    **********  Value of this in Manage Query getFormConfig**********
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+    <xapl:return>
+      <x2:execute command="bcm.manage_query.manageQueryExecHistory:getContainer">
+        <x2:with-param name="this" select="{$this}"/>
+        <x2:with-param name="pPage" select="'manageQueryExecHistory'"/>
+      </x2:execute>
+      <!-- Container-->
+      <x2:execute command="bcm.manage_query.manageQueryExecHistory:getHeader"/>
+      <QUERY_DETAILS>
+        <xapl:value-of select="$queryDetail/QueryMaster/*"/>
+        <xapl:value-of select="$sesshistoryData/TOTAL_RECORD_COUNT"/>
+      </QUERY_DETAILS>
+      <EXECUTION_HISTORY>
+        <xapl:value-of select="$historyForm"/>
+      </EXECUTION_HISTORY>
+      <xapl:value-of select="$this/*"/>
+      <!-- return buttons depending on context-->
+    </xapl:return>
+  </x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+    <xapl:return>
+      <x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pPage"/>
+    <xapl:return>
+      <CONTAINER Scrollable="no">
+        <HELP Url="../help/query_history_help.htm"/>
+        <STEP Name="ViewForm" DisplayText="Query History" OnClick="{$pages:manageQueryExecHistory}" Selected="{$pPage = 'manageQueryExecHistory'}"/>
+      </CONTAINER>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+   *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormConfig">
+    <x2:param name="this" select="$this"/>
+    <xapl:print>
+      Value of this in manageQueryHistory getFormConfig
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+    <xapl:return>
+      <Q_FORM Name="search_form" Action="manageQueryExecHistory.jsp" method="GET" Target="appFrame">
+        <!--get all search form fields -->
+        <x2:execute command="bcm.framework.queryform.Form:getFormSearchFields">
+          <x2:with-param name="this" select="$this"/>
+        </x2:execute>
+      </Q_FORM>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportConfig">
+    <x2:param name="this" select="$this"/>
+    <xapl:variable name="id"/>
+    <xapl:set-variable name="id">QueryExecutionLog.queryID</xapl:set-variable>
+
+    <xapl:return>
+      <REPORT Action="{$pages:manageQueryExecHistory}" Title="Query History" Method="POST" Selectable="none" Scrollable="yes" ScrollableContainer="no" Id="{$id}" SelectedId="QUERY_ID" PagingTitle="yes" NoRecordsTitle="No History found">
+        <FIELDS>
+          <!--get form's report fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+          <!-- get Hidden Fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportHiddenFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+          <!-- additional hidden fields -->
+        </FIELDS>
+        <BUTTONS>
+          <BUTTON Id="cancel" Name="Cancel" DisplayText="Cancel" OnClick="javascript:onCancel()"/>
+        </BUTTONS>
+        <PAGINATION/>
+      </REPORT>
+    </xapl:return>
+
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportData">
+    <x2:param name="this"/>
+    <xapl:set-variable name="sesshistoryData">  
+      <x2:execute command="bcm.framework.queryform.Form:getFormReportData">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="fromProperty" select="'RESULT_PROPERTY'"/>
+        <x2:with-param name="delimeter" select="'_' "/>
+      </x2:execute>
+    </xapl:set-variable>
+    <xapl:return>
+      <xapl:value-of select="$sesshistoryData"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

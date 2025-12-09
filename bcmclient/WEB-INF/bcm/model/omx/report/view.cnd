@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:FUNCTION="http://www.i2.com/FUNCTION" xmlns:REMOVE="http://www.i2.com/REMOVE" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" description="_">
+  <!-- **********************************************************************
+       * init                                                               *
+       ********************************************************************** -->
+  <x2:command public="yes" description="_" name="init">
+    <xapl:variable name="reportCache" resolver="session" global="true"/>
+  </x2:command>
+  <!-- **********************************************************************
+       * getReportLinksHeader                                               *
+       ********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportLinksHeader">
+    <xapl:choose>
+      <xapl:when test="$this/CALLBACK/@Value = 'createDocument'">
+        <xapl:return>
+          <HEADER>
+            <APP_NAME Value="Reports"/>
+            <TOGGLE_NAV Value="../../"/>
+            <HEADING Value="Initializing report creation, please wait..."/>
+            <HOME Value="omx/home.jsp"/>
+          </HEADER>
+        </xapl:return>
+      </xapl:when>
+      <xapl:otherwise>
+        <xapl:return>
+          <HEADER>
+            <APP_NAME Value="Reports"/>
+            <TOGGLE_NAV Value="../../"/>
+            <HEADING Value="Loading report list, please wait..."/>
+            <HOME Value="omx/home.jsp"/>
+          </HEADER>
+        </xapl:return>
+      </xapl:otherwise>
+    </xapl:choose>
+  </x2:command>
+  <!-- **********************************************************************
+       * getReportLinksPage                                                 *
+       ********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportLinksPage">
+    <x2:param name="key" select="$this/key/@Value"/>
+    <xapl:if test="count($reportCache) = 0">
+      <xapl:set-variable name="reportCache">
+        <CACHED_REPORT_LIST/>
+      </xapl:set-variable>
+    </xapl:if>
+    <xapl:variable name="subCache">
+      <x2:execute command="omx.report.view:getSubCache">
+        <x2:with-param name="key" select="$key"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:choose>
+      <xapl:when test="count($subCache) = 0"/>
+      <xapl:otherwise>
+        <xapl:variable name="passThruUrl">
+          <web:get-page name="cas_report_content">
+            <FROM_CACHE Value="true"/>
+            <xapl:value-of select="$this/*"/>
+          </web:get-page>
+        </xapl:variable>
+        <docutil:add select="$this">
+          <PASS_THRU Value="true"/>
+          <PASS_THRU_URL Value="{$passThruUrl}"/>
+        </docutil:add>
+      </xapl:otherwise>
+    </xapl:choose>
+    <x2:execute command="omx.report.view:getReportLinksPageImpl">
+      <x2:with-param name="this" select="$this"/>
+    </x2:execute>
+  </x2:command>
+  <!-- **********************************************************************
+       * getReportLinksPageImpl                                             *
+       ********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportLinksPageImpl">
+    <xapl:variable name="serviceUrl">
+      <x2:execute command="omx.deployment-values:getCasServiceName"/>
+    </xapl:variable>
+    <xapl:variable name="casLoginId">
+      <x2:execute command="omx.deployment-values:getCasServiceLogin"/>
+    </xapl:variable>
+    <xapl:variable name="casPwd">
+      <x2:execute command="omx.deployment-values:getCasServicePassword"/>
+    </xapl:variable>
+    <web:display-page>
+      <web:get-page name="cas_report_links">
+        <xapl:value-of select="$this/*"/>
+        <SERVICE_URL Value="{$serviceUrl}"/>
+        <LOGIN_ID Value="{$casLoginId}"/>
+        <PASSWORD Value="{$casPwd}"/>
+      </web:get-page>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+       * getReportLinksPageData                                             *
+       ********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportLinksPageData">
+    <xapl:choose>
+      <xapl:when test="$this/FROM_CACHE/@Value = 'true'">
+        <xapl:return>
+          <x2:execute command="omx.report.view:getSubCache">
+            <x2:with-param name="key" select="$this/key/@Value"/>
+          </x2:execute>
+        </xapl:return>
+      </xapl:when>
+      <xapl:otherwise>
+        <xapl:return>
+          <x2:execute command="omx.report.view:getReportLinksPageDataImpl">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+        </xapl:return>
+      </xapl:otherwise>
+    </xapl:choose>
+  </x2:command>
+  <!-- **********************************************************************
+       * getReportLinksPageDataImpl                                         *
+       ********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportLinksPageDataImpl">
+    <x2:param name="key" select="$this/key/@Value"/>
+    <xapl:variable name="reports">
+      <docutil:collate name="REPORT" rootName="REPORTS">
+        <xapl:value-of select="$this/REPORT_URL"/>
+        <xapl:value-of select="$this/REPORT_NAME"/>
+      </docutil:collate>
+    </xapl:variable>
+    <xapl:if test="count($reports/*) = 0">
+      <xapl:set-variable name="reports">
+        <REPORTS/>
+      </xapl:set-variable>
+    </xapl:if>
+    <docutil:add select="$reports">
+      <REPORT_TYPE Value="{$this/REPORT_TYPE/@Value}"/>
+    </docutil:add>
+    <docutil:set select="$reportCache">
+      <docutil:element name="{$key}">
+        <xapl:value-of select="$reports"/>
+      </docutil:element>
+    </docutil:set>
+    <xapl:return>
+      <xapl:value-of select="$reports"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+       * getSubCache                                                        *
+       ********************************************************************** -->
+  <x2:command public="yes" description="_" name="getSubCache">
+    <x2:param name="key"/>
+    <!-- HACK -->
+    <xapl:return>
+      <xapl:choose>
+        <xapl:when test="$key = 'A'">
+          <xapl:value-of select="$reportCache/A/*"/>
+        </xapl:when>
+        <xapl:when test="$key = 'B'">
+          <xapl:value-of select="$reportCache/B/*"/>
+        </xapl:when>
+        <xapl:when test="$key = 'C'">
+          <xapl:value-of select="$reportCache/C/*"/>
+        </xapl:when>
+        <xapl:when test="$key = 'D'">
+          <xapl:value-of select="$reportCache/D/*"/>
+        </xapl:when>
+        <xapl:otherwise>
+          <xapl:value-of select="$reportCache/A/*"/>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:return>
+  </x2:command>
+</x2:commands>

@@ -1,0 +1,39 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="IPLocationParamHistory.pgl">
+  <ui:container id="SearchContainer" displayText="RP Top Level Parameter History">
+    <ui:step id="searchStep">
+      <ui:search id="srchLocParams" exportSearch="false" saveSearch="false" collapsable="true" displayText="Search">
+        <ui:field-group columns="2" id="fieldGroups">
+          <ui:field-group id="leftFields">
+            <ui:dropdown displayText="Segment" selectAll="true">
+              <ui:option id="1" value="Quaker Oats" />
+              <ui:option id="2" value="Tropicana" />
+            </ui:dropdown>
+            <!--            <ui:display-field id="modDateRange" name="modDateRange" displayText="Modified Date Range (Inclusive)"/>-->
+          </ui:field-group>
+          <ui:field-group id="rightFields">
+            <ui:entry-field id="SRCH_MOD_BY" name="SRCH_MOD_BY" displayText="Modified By" rowSpan="2" value="{$root/USER_ID/@Value}" />
+          </ui:field-group>
+        </ui:field-group>
+        <ui:field-group id="dateRange">
+          <ui:date-range displayText="Modified Date" name="SRCH_MOD_DATE" fromDate="01/01/2006" toDate="03/31/2006" />
+        </ui:field-group>
+      </ui:search>
+      <ui:table id="bottomTable" displayText="RP Top Level Parameters History" select="$root/line" rowSrc="ROW_DATA" rowId="segNO" exportable="true" postRowIdAs="segNO">
+        <ui:field-group id="tableColumns">
+          <ui:display-field id="segNO" name="segNO" displayText="Segment" />
+          <ui:display-field id="segNm" name="segNm" displayText="Segment Description" />
+          <ui:display-field id="engnID" name="engnID" displayText="Engine ID" />
+          <ui:display-field id="enterprise" name="enterprise" displayText="Enterprise" />
+          <ui:display-field id="instanceID" name="instanceID" displayText="Instance ID" />
+          <ui:display-field id="comment" name="comment" displayText="Comment" />
+          <ui:display-field id="dtMdfd" name="dtMdfd" displayText="Date Modified" />
+          <ui:display-field id="mdfdBy" name="mdfdBy" displayText="Modified By" />
+        </ui:field-group>
+        <ui:buttons id="tableButtons">
+          <ui:button displayText="Return" id="return" name="return" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

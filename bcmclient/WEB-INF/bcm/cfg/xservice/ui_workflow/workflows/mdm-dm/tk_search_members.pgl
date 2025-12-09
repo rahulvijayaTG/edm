@@ -1,0 +1,194 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="studio.templates.simple_entry" source="studio.controller:load">
+  
+  
+  <ui:container id="container">
+    
+    
+    <ui:step id="top_container" displayText="View Seller Catalog" select="$root">
+      
+      
+      <!-- ************** -->
+      
+      
+      <!-- needed by studio -->
+      
+      
+      <ui:field-group select="$root">
+        
+        
+        <ui:hidden-field name="EV_NAME" />
+        
+        
+        <ui:hidden-field name="EV_KEY" />
+        
+        
+        <ui:hidden-field name="CURRENT_USER_ID" value="{identity-user-id()}" />
+        
+      
+      </ui:field-group>
+      
+      
+      <!-- needed by studio -->
+      
+      
+      <!-- ************** -->
+      
+      
+      <ui:container id="innerContainer">
+        
+        
+        <ui:step displayText="Search Members" id="searchContainer">
+          
+          
+          <ui:field-group columns="2" id="fieldGroups">
+            
+            
+            <ui:field-group id="leftFields">
+              
+              
+              <ui:dropdown displayText="Dimension Name" selectOne="true" value="1">
+                
+                
+                <ui:option id="1" value="Geo" />
+                
+                
+                <ui:option id="2" value="Prod" />
+                
+                
+                <ui:option id="3" value="Customer" />
+                
+                
+                <ui:option id="4" value="Component" />
+                
+              
+              </ui:dropdown>
+              
+              
+              <ui:dropdown displayText="Level Name" selectOne="true" value="1">
+                
+                
+                <ui:option id="1" value="L6" />
+                
+                
+                <ui:option id="2" value="L5" />
+                
+                
+                <ui:option id="3" value="L4" />
+                
+              
+              </ui:dropdown>
+              
+              
+              <ui:dropdown displayText="Operation" selectOne="true">
+                
+                
+                <ui:option id="1" value="DE-ACTIVATE" />
+                
+                
+                <ui:option id="2" value="PURGE" />
+                
+                
+                <ui:option id="3" value="DELETE" />
+                
+                
+                <ui:option id="3" value="ACTIVATE" />
+                
+              
+              </ui:dropdown>
+              
+            
+            </ui:field-group>
+            
+            
+            <ui:field-group id="RightFields">
+              
+              
+              <ui:dropdown displayText="Using" selectOne="true" value="1">
+                
+                
+                <ui:option id="1" value="NAME" />
+                
+                
+                <ui:option id="2" value="DESCRIPTION" />
+                
+              
+              </ui:dropdown>
+              
+              
+              <ui:dropdown displayText="Condition" selectOne="true" value="1">
+                
+                
+                <ui:option id="1" value="CONTAINS" />
+                
+              
+              </ui:dropdown>
+              
+              
+              <ui:entry-field displayText="Search String" doremove="true" />
+              
+            
+            </ui:field-group>
+            
+          
+          </ui:field-group>
+          
+          
+          <ui:buttons id="searchButtons">
+            
+            
+            <ui:button displayText="Show Members" id="SEARCH" name="SEARCH" />
+            
+          
+          </ui:buttons>
+          
+        
+        </ui:step>
+        
+      
+      </ui:container>
+      
+      
+      <ui:table id="bottomTable" displayText="Member List" select="Book" collapsable="true" selectable="All" scrollable="true" displayTextNoRecords="">
+        
+        
+        <ui:help id="bottomTableHelp" />
+        
+        
+        <ui:field-group id="tableColumns">
+                    
+					
+          <ui:link-field name="Name" displayText="Name" />
+                
+          
+          <ui:display-field name="Description" displayText="Description" />
+          
+          
+          <ui:display-field name="member_status" displayText="Member Status" />
+          
+        
+        </ui:field-group>
+        
+        
+        <ui:buttons id="tableButtons">
+          
+          
+          <ui:button displayText="Cancel" id="CANCEL" name="CANCEL" />
+          
+          
+          <ui:button displayText="Operation" id="oper" name="OPERATION" />
+          
+        
+        </ui:buttons>
+        
+      
+      </ui:table>
+      
+    
+    </ui:step>
+    
+  
+  </ui:container>
+  
+
+</ui:page-group>
+

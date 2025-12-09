@@ -1,0 +1,709 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" name="Create_ObjectType_Form" source="studio.controller:load">
+  <ui:container id="containerSystemroot">
+    <ui:step id="root_containerSystem" displayText="System Management">
+      <ui:validation anyFieldIsRequired="false" successMessage="{$root/_SUCCESS/@Value}" displayText="{$root/_SUCCESS/@Value}" anyFieldHasErrors="false" displayCondition="{$root/User_Action/@Value != 'CREATE' and $root/User_Action/@Value != 'UPDATE'}" />
+      <!--<ui:container id="containerSystem" collapsable="false" >
+    <ui:step id="top_containerSystem" displayText="System">-->
+      <ui:table rowSrc="$root/SYSTEM" id="SystemSearchTable" postRowIdAs="selectedSystemMnemonicValue" rowId="SystemMnemonicValue" displayTextNoRecords="Nothing found" selectable="Single" filter="true" exportable="true" doPaging="true" maxRows="5" select="ROOT" startAtRow="$root/StartAtRow/@Value" collapsable="true" displayText="System" displayCondition="{(string-length($root/FILTER_ID/@Value) = 0) or ($root/FILTER_ID/@Value = 'SystemSearchTable')}">
+        <ui:field-group>
+          <ui:display-field id="SystemMnemonicValue" displayText="System Name" sortable="true" name="SystemMnemonicValue" filter="true" size="10" />
+          <ui:display-field id="SystemDescription" displayText="System Description" name="SystemDescription" sortable="true" size="10" filter="true" />
+          <ui:display-field name="SystemLastModifiedDate" displayText="Last Modified Date" sortable="true" filter="true" sortType="descending" id="SystemLastModifiedDate" />
+          <ui:display-field displayText="Last Modified By" name="SystemLastModifiedBy" filter="true" id="SystemLastModifiedBy" />
+        </ui:field-group>
+      </ui:table>
+      <!-- </ui:step>
+  </ui:container>
+  <ui:container id="containerSystem" collapsable="false" >
+    <ui:step id="top_containerSystem" displayText="System" >-->
+      <ui:table rowSrc="$root/Object" postRowIdAs="selectedObjectMnemonicValue" id="ObjectTypeSearchTable" rowId="ObjectMnemonicValue" select="ROOT1" selectable="Single" maxRows="10" doPaging="true" filter="true" exportable="true" scrollable="true" startAtRow="@StartAtRow1" displayText="System Object" collapsable="true" displayCondition="{(string-length($root/FILTER_ID/@Value) = 0) or ($root/FILTER_ID/@Value = 'ObjectTypeSearchTable')}">
+        <ui:header id="head1">
+          <ui:link id="link1" displayText="Import from Excel" displayCondition="{contains($root/AccessLevel/@Value,'Remove') or contains($root/AccessLevel/@Value,'Add') or contains($root/AccessLevel/@Value,'Update')}">
+            <ui:image id="img1" src="/upld_avail.gif" />
+            <ui:url id="UploadFile" displayText="Upload File" page="{concat($pages:upload_local_transaction_details,'?TEMPLATE_NAME=EntityE_ObjectTemplate&amp;DISPLAY_NAME=E_Object&amp;DATA_TYPE=xls')}" />
+          </ui:link>
+        </ui:header>
+        <ui:field-group id="tableColumns">
+          <ui:display-field id="ObjectMnemonicValue" displayText="Object Name" name="ObjectMnemonicValue" sortable="true" filter="true" />
+          <ui:display-field id="ObjectClassMnemonicValue" sortable="true" displayText="Object Class Name" name="ObjectClassMnemonicValue" />
+          <ui:display-field id="ObjectDescription" sortable="true" displayText="Object Description" name="ObjectDescription" />
+          <ui:display-field id="LastModifiedDate" sortable="true" displayText="Last Modified Date" name="LastModifiedDate" filter="true" sortType="descending" />
+          <ui:display-field id="LastModifiedBy" displayText="Last Modified By" name="LastModifiedBy" filter="true" />
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="ShowDetail" name="ShowDetail" displayText="Show Details" disabled="true" enabledBySelections="true" />
+          <ui:divider id="divider3" />
+          <ui:button id="DELETE" name="DELETE" displayText="Delete" disabled="true" enabledBySelections="true" displayCondition="{contains($root/AccessLevel/@Value,'Remove')}" />
+        </ui:buttons>
+      </ui:table>
+      <!--    </ui:step>
+  </ui:container>
+-->
+      <ui:container id="ManageObjectAttrContainer" collapsable="true">
+        <ui:step id="Manage_objectAttr" displayText="Object Detail" select="$root">
+          <ui:validation anyFieldIsRequired="true" successMessage="{$root/ITEMS/_SUCCESS/@Value}" displayCondition="{$root/User_Action/@Value != 'DELETE'}" />
+          <ui:header id="head1">
+            <ui:link id="link1" displayText="Import from Excel" displayCondition="{contains($root/AccessLevel/@Value,'Remove') or contains($root/AccessLevel/@Value,'Add') or contains($root/AccessLevel/@Value,'Update')}">
+              <ui:image id="img1" src="/upld_avail.gif" />
+              <ui:url id="UploadFile" displayText="Upload File" page="{concat($pages:upload_local_transaction_details,'?TEMPLATE_NAME=EntityE_ObjectAttributeTemplate&amp;DISPLAY_NAME=E_ObjectAttribute&amp;DATA_TYPE=xls')}" />
+            </ui:link>
+          </ui:header>
+          <ui:field-group id="ManageObjectGrp" columns="3" select="$root/ITEMS/CrossReferenceObject">
+            <ui:hidden-field name="mode" value="" />
+            <ui:entry-field id="ObjectMnemonicValue" displayText="Object Name" name="ObjectMnemonicValue" required="true" onKeyUp="javascript:onObjClassChange(this)" />
+            <ui:entry-field id="ObjectDescription" displayText="Object Description" name="ObjectDescription" onKeyUp="javascript:onObjClassChange(this)" />
+            <ui:entry-field id="ObjectClassMnemonicValue" displayText="Object Class" name="ObjectClassMnemonicValue" required="true" onClick="javascript:onObjClassChange(this)">
+              <ui:links>
+                <ui:link displayText="Select Object Class" targetType="popup" targetName="orderPopup">
+                  <ui:image src="pop_up_window.gif" />
+                  <ui:url page="view.x2ps">
+                    <BUTTON_ID select="'SelectObjectClass'" />
+                    <FIELD_NAME select="'ObjectClass'" />
+                    <ENTITY_NAME select="'ObjectClass'" />
+                    <SELECTABLE select="'Single'" />
+                    <FIELD_VALUE select="ObjectClass/@Value" />
+                  </ui:url>
+                </ui:link>
+              </ui:links>
+            </ui:entry-field>
+          </ui:field-group>
+          <ui:field-group id="ProdCatStep">
+            <!--   <ui:display-field id="CtrlMsg" name="CtrlMsg" value="Hold Ctrl key for multiple selections" align="left"/>-->
+            <ui:button id="ChangeProdCat" name="ChangeProdCat" displayCondition="false" />
+          </ui:field-group>
+          <ui:grid>
+            <ui:row>
+              <ui:cell width="25%" />
+              <ui:cell width="50%" valign="center">
+                <ui:grid id="first">
+                  <ui:row>
+                    <ui:cell id="one" width="40%" valign="center">
+                      <ui:container>
+                        <ui:step id="AvailSubCatStep" displayText="Available Attributes">
+                          <ui:field-group>
+                            <ui:dropdown id="AvailSubCat" name="AvailSubCat" size="4" preferredWidth="20" optionSrc="$root/ITEMS/AvailSubCat/*" />
+                          </ui:field-group>
+                        </ui:step>
+                      </ui:container>
+                    </ui:cell>
+                    <ui:cell id="two" width="10%" valign="center">
+                      <ui:grid id="second" cellSpacing="2">
+                        <ui:row>
+                          <ui:cell valign="center">
+                            <ui:buttons>
+                              <ui:button id="AvailToSel" name="AvailToSel" onClick="javascript:onAvailToSelALL();javascript:onObjClassChange(this)">
+                                <ui:image src="/arrow_double_right.gif" displayText="Move" height="12" width="12" />
+                              </ui:button>
+                            </ui:buttons>
+                          </ui:cell>
+                        </ui:row>
+                        <ui:row>
+                          <ui:cell valign="center">
+                            <ui:buttons>
+                              <ui:button id="SelToAvail" name="AvailToSelSingle" onClick="javascript:onAvailToSel();javascript:onObjClassChange(this)">
+                                <ui:image src="/arrow_right.gif" displayText="Move" height="12" width="12" />
+                              </ui:button>
+                            </ui:buttons>
+                          </ui:cell>
+                        </ui:row>
+                        <ui:row>
+                          <ui:cell valign="center">
+                            <ui:buttons>
+                              <ui:button id="SelToAvail" name="SelToAvailSingle" onClick="javascript:onSelToAvail();javascript:onObjClassChange(this)">
+                                <ui:image src="/arrow_left.gif" displayText="Move" height="12" width="12" />
+                              </ui:button>
+                            </ui:buttons>
+                          </ui:cell>
+                        </ui:row>
+                        <ui:row>
+                          <ui:cell valign="center">
+                            <ui:buttons>
+                              <ui:button id="SelToAvail" name="SelToAvail" onClick="javascript:onSelToAvailALL();javascript:onObjClassChange(this)">
+                                <ui:image src="/arrow_double_left.gif" displayText="Move" height="12" width="12" />
+                              </ui:button>
+                            </ui:buttons>
+                          </ui:cell>
+                        </ui:row>
+                      </ui:grid>
+                    </ui:cell>
+                    <ui:cell id="three" width="40%" valign="center">
+                      <ui:container>
+                        <ui:step id="SelSubCatStep" displayText="Selected Attributes" select="$root">
+                          <ui:field-group>
+                            <ui:dropdown id="SelSubCat" name="SelSubCat" size="4" optionSrc="$root/ITEMS/SelSubCat/*" />
+                          </ui:field-group>
+                        </ui:step>
+                      </ui:container>
+                    </ui:cell>
+                    <ui:cell id="four" width="5%">
+                      <ui:grid id="third" cellSpacing="2">
+                        <ui:row>
+                          <ui:cell valign="center">
+                            <ui:buttons>
+                              <ui:button id="AvailToSel" name="AvailToSel" onClick="javascript:onSelToMoveUP();javascript:onObjClassChange(this)">
+                                <ui:image src="/arrow_move_up.gif" displayText="Move" height="11" width="11" />
+                              </ui:button>
+                            </ui:buttons>
+                          </ui:cell>
+                        </ui:row>
+                        <ui:row>
+                          <ui:cell valign="center">
+                            <ui:buttons>
+                              <ui:button id="SelToAvail" name="AvailToSelSingle" onClick="javascript:onSelToMoveDown();javascript:onObjClassChange(this)">
+                                <ui:image src="/arrow_move_down.gif" displayText="Move" height="11" width="11" />
+                              </ui:button>
+                            </ui:buttons>
+                          </ui:cell>
+                        </ui:row>
+                      </ui:grid>
+                    </ui:cell>
+                  </ui:row>
+                </ui:grid>
+              </ui:cell>
+              <ui:cell width="25%" />
+              <!--<ui:cell width="25%"/>-->
+            </ui:row>
+          </ui:grid>
+          <ui:buttons id="buttons">
+            <ui:button id="CLEAR" name="CLEAR" displayText="Clear" emphasized="false" disabled="false" />
+            <ui:divider id="div1" name="div1" />
+            <ui:button id="CREATE" name="CREATE" displayText="Create" emphasized="false" disabled="true" displayCondition="{contains($root/AccessLevel/@Value,'Add')}" enabledBySelections="true" />
+            <ui:divider id="div" name="div" />
+            <ui:button id="UPDATE" name="UPDATE" displayText="Update" emphasized="true" disabled="true" displayCondition="{contains($root/AccessLevel/@Value,'Update')}" enabledBySelections="true" />
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function onObjClassChange(thisObj) {
+    <!-- alert(thisObj.id);-->
+    disableButtons(); 
+		
+      	enableButton('CLEAR');
+    		enableButton('AvailToSel');
+    		enableButton('SelToAvail');
+    		enableButton('AvailToSelSingle');
+    		enableButton('SelToAvailSingle');
+   		  enableButton('ShowDetail');
+   		  enableButton('DELETE');
+
+			if (thisObj.id == 'ObjectMnemonicValue')
+		{
+			 form.mode.value='create';
+    <!-- alert(form.mode.value);-->
+    enableButton('CREATE');
+		}
+		else
+		{
+				if (form.mode.value != 'create')
+		{
+     	  enableButton('CLEAR');
+		    enableButton('UPDATE');
+		}
+		else
+		{
+     	 enableButton('CREATE');
+		
+		}
+		}
+		}
+		
+		function on_CLEAR () {
+		 document.form.BUTTON_ID.value = 'CLEAR' ; 
+     		document.form.submit();    
+		}
+		
+
+function on_DELETE(){				
+					
+    var response = core_confirm('Are you sure you want to delete this records?');
+
+    if ( response == 'no' ) {
+       canSubmit = 'false';
+    } 
+    if( response == 'yes' ) {
+     canSubmit = 'true';
+   }
+				
+    if (canSubmit == 'true') {
+     document.form.BUTTON_ID.value = 'DELETE'; 
+     document.form.action = 'view.x2ps';
+        document.form.submit();  						
+    }
+
+  else{
+     document.form.SUBMIT_AS_XML.value = 'false';		
+   }
+       return;
+ } 
+ 
+	
+    function on_CREATE () {
+		      document.form.BUTTON_ID.value = 'CREATE' ; 
+	         	document.form.action = 'view.x2ps';  
+ 				          var ix=0;		
+    
+  
+    var ValList = document.form.SelSubCat.options.length;
+    if (ValList == 0) {
+		             core_alert(" Cannot Create Becasue Objects Attributes are Empty."); 
+		    	         return;
+		          }
+		
+      else {
+		            document.form.BUTTON_ID.value = 'CREATE' ; 
+                    document.form.action = 'view.x2ps';  
+																 var ix=0;
+  		   for ( ix = 0; ix &lt; document.form.SelSubCat.options.length; ++ix ) {
+                  sopt = document.form.SelSubCat.options[ix];
+                  	       sopt.selected = 'true';                       
+		           }
+									    document.form.submit();    
+		  }
+		
+		
+		}
+		
+		
+		  function on_UPDATE () {
+		      document.form.BUTTON_ID.value = 'UPDATE' ; 
+	         	document.form.action = 'view.x2ps';  
+		
+  		  var ValList = document.form.SelSubCat.options.length;
+	    		if (ValList == 0) {
+		           core_alert (" Cannot Update Becasue Objects Attributes are Empty."); 
+		    	         return;
+		          }
+		
+        else {
+		            document.form.BUTTON_ID.value = 'UPDATE' ; 
+                    document.form.action = 'view.x2ps';  
+														  var ix=0;    
+						 	for ( ix = 0; ix &lt; document.form.SelSubCat.options.length; ++ix ) {
+         			      sopt = document.form.SelSubCat.options[ix];
+      	  				     sopt.selected = 'true';
+		     			 }
+                         document.form.submit();    
+		     }
+	}
+    <!--alert (document.form.SelSubCat.options.length);		-->
+    <!--alert ('ValList is ' +ValList);-->
+    function onAvailToSel()
+		{
+	
+for(i=document.form.AvailSubCat.options.length-1;i&gt;=0;i--)
+		 {
+		
+				if(document.form.AvailSubCat.options[i].selected)
+		{
+	
+				document.form.SelSubCat.options[document.form.SelSubCat.options.length]=new Option(document.form.AvailSubCat.options[i].text,document.form.AvailSubCat.options[i].value);
+	    		document.form.AvailSubCat.options[i]=null;
+		}
+		}
+		}
+		
+		
+		function onAvailToSelALL()
+		{
+	
+for(i=document.form.AvailSubCat.options.length-1;i&gt;=0;i--)
+		 {
+		
+				document.form.SelSubCat.options[document.form.SelSubCat.options.length]=new Option(document.form.AvailSubCat.options[i].text,document.form.AvailSubCat.options[i].value);
+	    		document.form.AvailSubCat.options[i]=null;
+		}
+		}
+		
+		
+		function onSelToAvail()
+		{
+	for(i=document.form.SelSubCat.options.length-1;i&gt;=0;i--)
+		 {
+			if(document.form.SelSubCat.options[i].selected)
+		{
+				document.form.AvailSubCat.options[document.form.AvailSubCat.options.length]=new Option(document.form.SelSubCat.options[i].text,document.form.SelSubCat.options[i].value);
+    		document.form.SelSubCat.options[i]=null;
+		}
+		}
+		}
+		
+		
+		
+		function onSelToAvailALL()
+		{
+	for(i=document.form.SelSubCat.options.length-1;i&gt;=0;i--)
+		 {
+				document.form.AvailSubCat.options[document.form.AvailSubCat.options.length]=new Option(document.form.SelSubCat.options[i].text,document.form.SelSubCat.options[i].value);
+    		document.form.SelSubCat.options[i]=null;
+		}
+		}
+		
+			function onSelToMoveUP()
+		{
+		var myArray=new Array();
+		count=0;
+	for(i=document.form.SelSubCat.options.length-1;i&gt;=1;i--)
+		 {
+			if(document.form.SelSubCat.options[i].selected)
+		{
+			myArray[count]=i;
+		count++;
+				
+		}
+		}
+		
+		moveUp(myArray);
+		
+		
+		}
+		
+		
+		function moveUp(obj)
+		{
+			for(j=obj.length-1;j&gt;=0;j--)
+		{
+				i=obj[j];
+		//alert("selected I:::"+i);
+				temp1=new Option(document.form.SelSubCat.options[i].text,document.form.SelSubCat.options[i].value);
+				temp2=new Option(document.form.SelSubCat.options[i-1].text,document.form.SelSubCat.options[i-1].value);
+    		document.form.SelSubCat.options[i]=temp2;
+				document.form.SelSubCat.options[i-1]=temp1;
+		}
+		}
+		
+		
+		
+			function onSelToMoveDown()
+		{
+		var myArray=new Array();
+		count=0;
+	for(i=document.form.SelSubCat.options.length-2;i&gt;=0;i--)
+		 {
+			if(document.form.SelSubCat.options[i].selected)
+		
+		{
+			myArray[count]=i;
+		count++;
+				
+		}
+		}
+		
+		moveDown(myArray);
+		
+		
+		}
+		
+		
+		function moveDown(obj)
+		{
+			for(j=0;j &lt; obj.length;j++)
+		{
+				i=obj[j];
+			//alert("selected I:::"+i);
+				temp1=new Option(document.form.SelSubCat.options[i].text,document.form.SelSubCat.options[i].value);
+				temp2=new Option(document.form.SelSubCat.options[i+1].text,document.form.SelSubCat.options[i+1].value);
+    		document.form.SelSubCat.options[i]=temp2;
+				document.form.SelSubCat.options[i+1]=temp1;
+		}
+		}
+		
+		 // i2uiToggleRowSelectionState starts
+
+function i2uiToggleRowSelectionState(obj, originalstate, tableid, treecell, multiSelect)
+{		 
+  // NS4 browser not supported
+  if (document.layers != null)
+    return;
+
+  if (i2uiActiveRowSelector != null)
+    obj = i2uiActiveRowSelector;
+  else
+  {
+    // turn off any global selector
+    var globalselector = document.getElementById(tableid+"_globalrowselector");
+	
+    if (globalselector != null)
+      globalselector.checked = false;
+  }
+    <!--alert( 'i2uiToggleRowSelectionState() tableId=' + tableid );-->
+    // if single select, turn off previous row
+  if (multiSelect == false)
+  {
+    // test for scrollable table
+    var table = document.getElementById(tableid+"_data");
+    if (table == null)
+      table = document.getElementById(tableid);         
+    var len = table.rows.length;
+    for (var i=0; i &lt;len; i++)
+    {
+      if (table.rows[i].lastClassName != null)
+      {
+        table.rows[i].className = table.rows[i].lastClassName;
+        if (table.rows[i].cells[0].childNodes &amp;&amp;
+ table.rows[i].cells[0].childNodes.length &gt; 0 &amp;&amp; 
+            table.rows[i].cells[0].childNodes[0].style != null)
+          table.rows[i].cells[0].childNodes[0].style.backgroundColor = "";
+        table.rows[i].lastClassName = null;
+      }
+    }
+  }
+
+  // find owning row
+  var rowobj = obj;
+  while (rowobj != null &amp;&amp; rowobj.tagName != "TR")
+  {
+    if (rowobj.parentElement)
+    {
+      rowobj = rowobj.parentElement;
+    }
+    else
+    {
+      rowobj = rowobj.parentNode;
+    }
+  }
+  var rowIndex = -1;
+  
+  if (rowobj != null)
+  {
+    var rowTable = null;
+    
+    if (rowobj.parentElement)
+    {
+      rowTable = rowobj.parentElement;
+    }
+    else
+    {
+      rowTable = rowobj.parentNode;
+    
+    }
+    //pglalert( 'rowTable.id = ' + rowTable.id + ', tableid=' + tableid );
+    
+    if( rowTable.id == tableid )
+    {
+      //pglalert( 'rowTable.id == tableid' );
+    }
+    else
+    {  
+      //pglalert( 'rowTable.id != tableid, searching for table' );
+      var rowIndex = -1;
+      
+      for( var i=0; i &lt; rowTable.rows.length; i++ )
+      {
+        if( rowTable.rows[i] == rowobj )
+        {
+          rowIndex = i;
+          break;          
+        }
+      }
+      
+      //pglalert( 'rowIndex = ' + rowIndex );
+      
+      if( rowIndex &gt; -1 )
+      {
+        var otherTable = document.getElementById(tableid+"_data");
+        if (otherTable == null)
+        {
+          otherTable = document.getElementById(tableid);
+        }
+        
+        rowobj = otherTable.rows[rowIndex];
+      }
+      else      
+      {
+        //pglalert( 'could not find matching row' );
+      }
+    }
+  
+  
+    rowobj.className = obj.checked?"rowHighlight":originalstate;
+    rowobj.lastClassName = originalstate;
+    //rowobj.cells[0].childNodes[0].style.backgroundColor = "";
+  }
+
+  // handle treetable
+  if (treecell != null &amp;&amp; treecell != '' &amp;&amp;
+      i2uiActiveRowSelector == null)
+  {
+    var cellname = rowobj.cells[treecell].id.substring(9);
+    var depth1 = Math.floor(cellname);
+    var table = document.getElementById(tableid);
+    var len = table.rows.length;
+    for (var i=0; i&lt;len; i++)
+    {
+      // locate desired row in table
+      if (table.rows[i].cells[treecell].id == "TREECELL_"+cellname)
+      {
+        // now process rest of table with respect to located
+        for (var j=i+1; j&lt;len; j++)
+        {
+          var newcell = table.rows[j].cells[treecell].id.substr(9);
+          var depth2 = Math.floor(newcell);
+          if ((depth2 == depth1 + 10 || depth2 == depth1 + 15) ||
+              (depth2 &gt; depth1 + 5))
+          {
+            table.rows[j].cells[0].childNodes[0].checked = obj.checked;
+            if (obj.checked)
+            {
+              table.rows[j].className = "rowHighlight";
+              table.rows[j].cells[0].childNodes[0].style.backgroundColor = "";
+            }
+            else
+            {
+              var onclickhandler = table.rows[j].cells[0].childNodes[0].onclick+"!!!";
+              var from = onclickhandler.indexOf("{");
+              onclickhandler = onclickhandler.substring(from+1);
+              var to = onclickhandler.lastIndexOf("}");
+              onclickhandler = onclickhandler.substring(0,to);
+              i2uiActiveRowSelector = table.rows[j].cells[0].childNodes[0];
+              eval(onclickhandler);
+              i2uiActiveRowSelector = null;
+            }
+          }
+          if (depth2 &lt;= depth1)
+          {
+            break;
+          }
+        }
+
+        var handle = depth1 - 10;
+        // now set partial state of all parents of selected node
+        for (var j=i-1; j&gt;-1; j--)
+        {
+          var newcell = table.rows[j].cells[treecell].id.substr(9);
+          var depth2 = Math.floor(newcell);
+          if (depth2 == handle || depth2 == handle-5)
+          {
+            var selectedcount = 0;
+            var nonselectedcount = 0;
+            for (var k=j+1; k&lt;len; k++)
+            {
+              var newcell2 = table.rows[k].cells[treecell].id.substr(9);
+              var depth3 = Math.floor(newcell2);
+              if ((depth3 == depth2 + 10 || depth3 == depth2 + 15) ||
+                  (depth3 &gt; depth2 + 5))
+              {
+                if (table.rows[k].cells[0].childNodes[0].checked)
+                  selectedcount++;
+                else
+                  nonselectedcount++;
+              }
+              if (depth3 &lt;= depth2)
+              {
+                break;
+              }
+            }
+
+            if (selectedcount &gt; 0)
+            {
+              if (nonselectedcount &gt; 0)
+              {
+                table.rows[j].cells[0].childNodes[0].checked=false;
+                var onclickhandler = table.rows[j].cells[0].childNodes[0].onclick+"!!!";
+                var from = onclickhandler.indexOf("{");
+                onclickhandler = onclickhandler.substring(from+1);
+                var to = onclickhandler.lastIndexOf("}");
+                onclickhandler = onclickhandler.substring(0,to);
+                i2uiActiveRowSelector = table.rows[j].cells[0].childNodes[0];
+                eval(onclickhandler);
+                i2uiActiveRowSelector = null;
+                table.rows[j].cells[0].childNodes[0].style.backgroundColor = "#fff6a6";
+              }
+              else
+              {
+                table.rows[j].cells[0].childNodes[0].checked = true;
+                table.rows[j].className = "rowHighlight";
+                table.rows[j].cells[0].childNodes[0].style.backgroundColor = "";
+              }
+            }
+            else
+            {
+              table.rows[j].cells[0].childNodes[0].checked=false;
+              table.rows[j].cells[0].childNodes[0].style.backgroundColor = "";
+
+              if (nonselectedcount &gt; 0)
+              {
+              var onclickhandler = table.rows[j].cells[0].childNodes[0].onclick+"!!!";
+              var from = onclickhandler.indexOf("{");
+              onclickhandler = onclickhandler.substring(from+1);
+              var to = onclickhandler.lastIndexOf("}");
+              onclickhandler = onclickhandler.substring(0,to);
+              i2uiActiveRowSelector = table.rows[j].cells[0].childNodes[0];
+              eval(onclickhandler);
+              i2uiActiveRowSelector = null;
+              }
+            }
+            // look up one more level
+            handle -= 10;
+            if (handle &lt; 0)
+              break;
+             }
+        }
+
+        break;
+      }
+    }
+  }
+				if (i2uiInvokeCallback)
+			    try{i2uiRowSelectionCallback(tableid)}catch(e){}
+    if (tableid =='SystemSearchTable') {
+    form.BUTTON_ID.value='SHOW';
+		       			document.form.submit(); 
+		  }
+    }
+		
+function apply_filters(tableId)
+{ 
+	var bValidFilters = true;
+
+  for (var i = 0; i&lt;document.form.elements.length; i++) 
+  {
+    var selectedElem = document.form.elements[i];
+    if ((selectedElem.name.indexOf('FILTER_') &gt; -1)) 
+    {
+      if(!isValid_field(selectedElem.name, null))
+      {
+        bValidFilters = false;
+        onResize();
+        break;
+      }
+    }
+  }
+
+  if (bValidFilters)
+  {
+    if ( tableId != null &amp;&amp; tableId != "" )
+    {
+      eval("document.form." + tableId + "_START_COUNT.value = 0;");
+    }
+    else
+    {
+      document.form.START_COUNT.value = 0;
+    } 
+		
+		if(tableId=='')
+		{ 
+		 tableId='SystemSearchTable';
+		}
+		var checkboxes;
+	var table = document.getElementById(tableId+"_data");
+	if(table.document)
+    checkboxes = table.document.getElementsByTagName("INPUT");
+  else
+    checkboxes = document.getElementsByTagName("INPUT");
+ 
+	  if (checkboxes != null)
+	  {
+	      var len = checkboxes.length;
+	      for(var i=0; i &lt; len; i++)
+	      {
+	        if (checkboxes[i].id == tableId+"_rowselector" &amp;&amp; checkboxes[i].checked == true)
+	       checkboxes[i].checked=false;
+			  }
+		}	
+    ui_submit_param("SYS_RELOAD","innerAction=Filter&amp;FILTER_ON="+tableId);
+  }
+}
+  </ui:script>
+</ui:page-group>

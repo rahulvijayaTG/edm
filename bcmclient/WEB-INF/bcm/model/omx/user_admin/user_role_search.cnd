@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands 
+    xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" 
+    xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" 
+    xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" 
+    xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" 
+    xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" 
+    xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" 
+    xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+    
+ <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="init">
+    <xapl:variable name="adminProcess" resolver="session" global="true"/>
+  </x2:command>     
+    
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+    <xapl:print select="$this"/>
+    <x2:param name="this" select="$this"/>
+    <xapl:if test="$this/MODE/@Value = 'START'">        
+      <docutil:remove select="$this/MODE"/>
+      <x2:execute command="bcm.context.controller:cleanContext"/>
+      <!-- Nullify the ongoing workflow such as CREATE_NEW_ROLE -->
+      <xapl:set-variable name="adminProcess"/> 
+    </xapl:if>
+    
+    <!-- BREADCRUMBS AT TOP OR AFTER CLEAN-CONTEXT-->
+    <x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+      <x2:with-param name="display" select="'Manage Roles'"/>
+      <x2:with-param name="page" select="'user_role_search'"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+    
+    <docutil:set select="$this">
+      <DO_SEARCH Value="Yes"/>
+      <SERVICE Value="UserSecurity"/>
+      <FORM_NAME Value="USR_SEC_ROLE_SEARCH_FORM"/>
+    </docutil:set>
+    
+    <xapl:variable name="roleSearchForm">
+        <x2:execute command="bcm.framework.queryform.Form:getFormContainer">
+          <x2:with-param name="this" select="$this"/>
+          <x2:with-param name="pSearchParam" select="$searchParam"/>
+          <x2:with-param name="pFormName" select="'USR_SEC_ROLE_SEARCH_FORM'"/>
+          <x2:with-param name="pServiceName" select="'UserSecurity'"/>
+          <x2:with-param name="pSearchFormConfigSource" select="'omx.user_admin.user_role_search:getFormConfig'"/>
+          <x2:with-param name="pSearchReportConfigSource" select="'omx.user_admin.user_role_search:getReportConfig'"/>
+          <x2:with-param name="pReportDataSource" select="'omx.user_admin.user_role_search:getReportData'"/>
+        </x2:execute>
+    </xapl:variable>
+    
+    <xapl:print select="$context"/>
+    
+    <xapl:return>
+      <!-- Page Header as breadcrumbs-->
+      <x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>            
+      <!-- Container-->
+      <x2:execute command="omx.user_admin.user_role_search:getContainer">
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+      <xapl:value-of select="$roleSearchForm"/>
+      <!-- return parameters-->
+      <xapl:value-of select="$this/*[string-length(@Value) &gt; 0]"/>
+      <xapl:value-of select="$context"/>
+    </xapl:return>
+  </x2:command>
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pPage"/>
+    <xapl:return>
+      <CONTAINER Scrollable="yes">
+        <HELP Url="../../bcm/help/user_admin_help.htm"/>
+        <STEP Name="ViewForm" DisplayText="User Role Search" OnClick="{$pages:user_role_search}" Selected="true"/>
+      </CONTAINER>
+    </xapl:return>
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormConfig">
+    <x2:param name="this" select="$this"/>
+    <xapl:print select="$this"/>   
+    <xapl:variable name="request"/>
+    <xapl:set-variable name="request" select="{concat('//', 'UserSecurity', '/getFormData')}"/>
+    <xapl:return>
+      <FORM Name="search_form" Action="UserRoleSearch.jsp" method="POST" Target="appFrame">
+        <!--get all search form fields -->
+        <x2:execute command="bcm.framework.queryform.Form:getFormSearchFields">
+          <x2:with-param name="this" select="$this"/>
+        </x2:execute>
+        <!-- Hidden Fields : general fields-->
+        <x2:execute command="bcm.framework.queryform.Form:getFormSearchHiddenFields">
+          <x2:with-param name="this" select="$this"/>
+        </x2:execute>
+        <BUTTONS>
+          <BUTTON Name="clear" DisplayText="Clear" OnClick="javascript:dispatchClear()"/>
+          <BUTTON Name="search" DisplayText="Search" OnClick="javascript:onSearch()" Emphasized="yes"/>
+        </BUTTONS>
+      </FORM>
+    </xapl:return>
+  </x2:command>
+  
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportConfig">
+    <x2:param name="this" select="$this"/>
+    <xapl:return>
+      <REPORT Action="UserRoleSearch.jsp" Scrollable="no" ScrollableContainer="no" ShowFilter="no" Id="#" SelectedId="SELECTED_ID" PagingTitle="yes">
+        <FIELDS>
+          <FIELD Name="UPDATE_ALL" DisplayType="Hidden" Value="NO"/>
+          <!--get form's report fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+          <!-- get Hidden Fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportHiddenFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+        </FIELDS>
+        <BUTTONS>
+          <BUTTON Id="Add" Name="Add" DisplayText="Create" OnClick="javascript:onCreate()" DisableOnClick="true"/>          
+          <!--
+          <BUTTON Id="Copy" Name="Copy" DisplayText="Copy" OnClick="javascript:onCopy()" DisableOnClick="true" Disabled="report"/>
+          -->
+        </BUTTONS>
+        <PAGINATION/>
+      </REPORT>
+    </xapl:return>
+  </x2:command>
+
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportData">
+    <x2:param name="this"/>
+    <xapl:variable name="returnVar">
+      <x2:execute command="bcm.framework.queryform.Form:getFormReportData">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="fromProperty" select="'SEARCH_PROPERTY'"/>
+        <x2:with-param name="delimeter" select="'_'"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:return>
+      <xapl:value-of select="$returnVar"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+     *********************************************************************** -->
+</x2:commands>

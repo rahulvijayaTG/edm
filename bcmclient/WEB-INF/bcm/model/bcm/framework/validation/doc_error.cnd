@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="load">
+    <xapl:variable name="searchParams">
+      <SEARCH_PARAM/>
+    </xapl:variable>
+    <docutil:set select="$this">
+      <DO_SEARCH Value="Yes"/>
+      <MAX_ROWS Value="15"/>
+      <FORM_NAME Value="UPLD_ERRORS_DETAILS_FORM"/>
+      <SERVICE Value="BCMMasterService"/>
+    </docutil:set>
+    <xapl:variable name="loadDoc">
+      <!-- Page Header-->
+      <x2:execute command="bcm.framework.validation.doc_error:getHeader">
+        <x2:with-param name="this" select="{$this}"/>
+        <x2:with-param name="displayName" select="{$errorLog/DOCUMENT_VALIDATION_PROPS/DISPLAY_NAME/@Value}"/>
+      </x2:execute>
+      <!-- Container-->
+      <x2:execute command="bcm.framework.validation.doc_error:getContainer">
+        <x2:with-param name="this" select="{$this}"/>
+        <x2:with-param name="pPage" select="'document_error_log'"/>
+        <x2:with-param name="displayName" select="{$errorLog/DOCUMENT_VALIDATION_PROPS/DISPLAY_NAME/@Value}"/>
+      </x2:execute>
+      <DOC_NAME Value="{$this/F_UPLOAD_ERROR_REPORT.DOC_NAME/@Value}"/>
+      <!-- Search / Form and Report -->
+      <x2:execute command="bcm.framework.queryform.Form:getFormContainer">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="pSearchParam" select="$searchParam"/>
+        <x2:with-param name="pFormName" select="'UPLD_ERRORS_DETAILS_FORM'"/>
+        <x2:with-param name="pServiceName" select="'BCMMasterService'"/>
+        <x2:with-param name="pSearchReportConfigSource" select="'bcm.framework.validation.doc_error:getReportConfig'"/>
+        <x2:with-param name="pReportDataSource" select="'bcm.framework.validation.doc_error:getReportData'"/>
+      </x2:execute>
+      <!-- Links -->
+      <x2:execute command="bcm.framework.validation.doc_error:getLinks">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+    </xapl:variable>
+    <xapl:return>
+      <xapl:value-of select="$loadDoc"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+    <x2:param name="displayName"/>
+    <!-- change the header home -->
+    <xapl:return>
+      <HEADER>
+        <APP_NAME Value="MDM"/>
+        <TOGGLE_NAV Value="../../"/>
+        <HEADING Value="Documents"/>
+        <HEADING_LINK Value="{$pages:all_documents}"/>
+        <HEADING2 Value="Error Report"/>
+        <HOME Value="bcm/framework/home.jsp"/>
+      </HEADER>
+    </xapl:return>
+  </x2:command>
+  <!-- ********************************************************************** 
+       *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="displayName"/>
+    <xapl:return>
+      <CONTAINER Scrollable="no">
+        <HELP Url="../../help/errorDocs_help.htm"/>
+        <STEP Name="ErrorDocuments" DisplayText="Error Report" Selected="true"/>
+      </CONTAINER>
+    </xapl:return>
+  </x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getFormConfig">
+    <xapl:return/>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportConfig">
+    <xapl:return>
+      <REPORT Selectable="All" SelectedId="SELECTED_ID" Action="error_log.jsp" ShowFilter="yes" Scrollable="yes" Freezable="no" PagingTitle="yes">
+        <FIELDS>
+          <FIELD Name="PRIMARY_KEY" Document="Doc1" Property="Prop1"  DisplayType="Text" DisplayText="Primary Key" Sortable="no"/>
+          <FIELD Name="ERROR_MESG"  Document="Doc1" Property="Prop1"  DisplayType="Text" DisplayText="Validation Rule" Sortable="no"/>
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+          <!-- Hidden Fields -->
+          <FIELD DisplayType="Hidden" Name="DOC_NAME" Value="{$this/DOC_NAME/@Value}"/>
+          <!-- get Hidden Fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportHiddenFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+        </FIELDS>
+        <BUTTONS>
+          <BUTTON Name="Cancel" DisplayText="Cancel" OnClick="javascript:onCancel()" Disabled="no" Emphasized="no"/>
+          <BUTTON Name="SaveReport" DisplayText="Export to Excel" OnClick="javascript:onExportToExcelGlobal('data_errors','xls')" Disabled="no" Emphasized="no"/>
+        </BUTTONS>
+        <PAGINATION/>
+      </REPORT>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportData">
+    <x2:param name="pForm"/>
+    <docutil:set select="$this">
+        <F_UPLOAD_ERROR_REPORT.DOC_NAME Value="{$this/DOC_NAME/@Value}"/>
+    </docutil:set>
+    <xapl:print>
+      <xapl:value-of select="$this"/>
+    </xapl:print>
+    <xapl:variable name="errorLog">
+      <x2:execute command="bcm.framework.queryform.Form:getFormReportData">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+    </xapl:variable>
+
+    <xapl:for-each select="$errorLog/JOIN_RESULT" varName="child">
+      <xapl:variable name="mesg">
+        <docutil:to-xml select="$child/UPLOAD_ERROR_LOG_DATA.MESG/@Value"/>
+      </xapl:variable>
+      <docutil:add select="$child">
+        <PRIMARY_KEY Value="{$mesg/@PrimaryKey}"/>
+        <ERROR_MESG Value="{$mesg/@Value}"/>
+      </docutil:add>
+    </xapl:for-each>
+
+   <xapl:print>
+     RESPONSE::
+     <xapl:value-of select="$errorLog"/>
+   </xapl:print>
+
+    <xapl:return>
+      <xapl:value-of select="$errorLog"/>
+    </xapl:return>
+  </x2:command>
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getLinks">
+    <xapl:return>
+      <LINKS>
+        <x2:execute command="bcm.framework.common:getLinks">
+          <x2:with-param name="pPage" select="'document_error_log'"/>
+          <x2:with-param name="this" select="$this"/>
+          <x2:with-param name="pReturnLink" select="$this/RET_PAGE/@Value"/>
+        </x2:execute>
+      </LINKS>
+    </xapl:return>
+  </x2:command>
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="saveReport">
+    <docutil:set select="$this">
+      <MAX_ROWS Value="100000"/>
+    </docutil:set>
+    <docutil:remove select="$this/DIRECTORY[@Value='']"/>
+    <docutil:remove select="$this/FILE[@Value='']"/>
+    <x2:param name="directory" select="$this/DIRECTORY[1]/@Value"/>
+    <x2:param name="file" select="$this/FILE[1]/@Value"/>
+    <x2:param name="pFormat" select="'csv'"/>
+    <xapl:variable name="getSearchReportConfig">
+      <xapl:value-of select="concat($directory,'.', $file,':getReportConfig')"/>
+    </xapl:variable>
+    <xapl:variable name="getReportData">
+      <xapl:value-of select="concat($directory,'.', $file,':getReportData')"/>
+    </xapl:variable>
+    <xapl:variable name="fileName" select="concat($file, '.', $pFormat)"/>
+    <!-- Get Report Config -->
+    <xapl:variable name="reportFormat">
+      <x2:execute command="{$getSearchReportConfig}">
+        <x2:with-param name="this" select="{$this}"/>
+      </x2:execute>
+    </xapl:variable>
+    <!-- Get Report Data -->
+    <docutil:set select="$this/DO_SEARCH/@Value">Yes</docutil:set>
+    <xapl:variable name="reportData">
+      <x2:execute command="{$getReportData}">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+    </xapl:variable>
+    <!-- get Actual Report-->
+    <xapl:variable name="report">
+      <xapl:choose>
+        <xapl:when test="$pFormat = 'csv'">
+          <x2:execute command="core.report.controller:generate_csv">
+            <x2:with-param name="pReportData" select="$reportData"/>
+            <x2:with-param name="pReportFormat" select="$reportFormat"/>
+          </x2:execute>
+        </xapl:when>
+        <xapl:when test="$pFormat = 'xml'">
+          <xapl:value-of select="$reportData"/>
+        </xapl:when>
+      </xapl:choose>
+    </xapl:variable>
+    <!-- downloadFile-->
+    <x2:execute command="bcm.framework.common:downloadFile">
+      <x2:with-param name="pFileContents" select="$report"/>
+      <x2:with-param name="pFileName" select="$fileName"/>
+      <x2:with-param name="pFileType" select="'text'"/>
+    </x2:execute>
+  </x2:command>
+  <!-- ********************************************************************** 
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="onCancel">
+    <web:display-page>
+      <web:get-page name="all_documents"/>
+    </web:display-page>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getExtraErrors">
+    <xapl:return>
+      <UPLOAD_ERROR_LOG_DATA ExistingDocument="yes">
+        <ERROR_CODE Value="SYS_C00555750"/>
+        <ERROR_FLD Value="PH_4TG"/>
+        <ID Value="ERR-1"/>
+        <MESG Value="&lt;ERROR Value='&quot;PH_4TG&quot; IS NOT NULL' Description=&quot;&quot; Severity=&quot;SEVERE_ERROR&quot; PrimaryKey=&quot;ITEM_ID =BRASS_FITTINGS&quot;/&gt;"/>
+        <SEVERITY Value="SEVERE_ERROR"/>
+        <PRIMARY_KEY Value="ITEM_ID =BRASS_FITTINGS"/>
+        <ERROR_MESG Value="&quot;PH_4TG&quot; IS NOT NULL"/>
+      </UPLOAD_ERROR_LOG_DATA>
+      <UPLOAD_ERROR_LOG_DATA ExistingDocument="yes">
+        <ERROR_CODE Value="SYS_C00555750"/>
+        <ERROR_FLD Value="PH_4TG"/>
+        <ID Value="ERR-1"/>
+        <MESG Value="&lt;ERROR Value='&quot;PH_4TG&quot; IS NOT NULL' Description=&quot;&quot; Severity=&quot;SEVERE_ERROR&quot; PrimaryKey=&quot;ITEM_ID =BRASS_FITTINGS&quot;/&gt;"/>
+        <SEVERITY Value="SEVERE_ERROR"/>
+        <PRIMARY_KEY Value="ITEM_ID =BRASS_FITTINGS"/>
+        <ERROR_MESG Value="&quot;PH_4TG&quot; IS NOT NULL"/>
+      </UPLOAD_ERROR_LOG_DATA>
+      <UPLOAD_ERROR_LOG_DATA ExistingDocument="yes">
+        <ERROR_CODE Value="SYS_C00555750"/>
+        <ERROR_FLD Value="PH_4TG"/>
+        <ID Value="ERR-1"/>
+        <MESG Value="&lt;ERROR Value='&quot;PH_4TG&quot; IS NOT NULL' Description=&quot;&quot; Severity=&quot;SEVERE_ERROR&quot; PrimaryKey=&quot;ITEM_ID =BRASS_FITTINGS&quot;/&gt;"/>
+        <SEVERITY Value="SEVERE_ERROR"/>
+        <PRIMARY_KEY Value="ITEM_ID =BRASS_FITTINGS"/>
+        <ERROR_MESG Value="&quot;PH_4TG&quot; IS NOT NULL"/>
+      </UPLOAD_ERROR_LOG_DATA>
+      <UPLOAD_ERROR_LOG_DATA ExistingDocument="yes">
+        <ERROR_CODE Value="SYS_C00555750"/>
+        <ERROR_FLD Value="PH_4TG"/>
+        <ID Value="ERR-1"/>
+        <MESG Value="&lt;ERROR Value='&quot;PH_4TG&quot; IS NOT NULL' Description=&quot;&quot; Severity=&quot;SEVERE_ERROR&quot; PrimaryKey=&quot;ITEM_ID =BRASS_FITTINGS&quot;/&gt;"/>
+        <SEVERITY Value="SEVERE_ERROR"/>
+        <PRIMARY_KEY Value="ITEM_ID =BRASS_FITTINGS"/>
+        <ERROR_MESG Value="&quot;PH_4TG&quot; IS NOT NULL"/>
+      </UPLOAD_ERROR_LOG_DATA>
+      <UPLOAD_ERROR_LOG_DATA ExistingDocument="yes">
+        <ERROR_CODE Value="SYS_C00555750"/>
+        <ERROR_FLD Value="PH_4TG"/>
+        <ID Value="ERR-1"/>
+        <MESG Value="&lt;ERROR Value='&quot;PH_4TG&quot; IS NOT NULL' Description=&quot;&quot; Severity=&quot;SEVERE_ERROR&quot; PrimaryKey=&quot;ITEM_ID =BRASS_FITTINGS&quot;/&gt;"/>
+        <SEVERITY Value="SEVERE_ERROR"/>
+        <PRIMARY_KEY Value="ITEM_ID =BRASS_FITTINGS"/>
+        <ERROR_MESG Value="&quot;PH_4TG&quot; IS NOT NULL"/>
+      </UPLOAD_ERROR_LOG_DATA>
+      <UPLOAD_ERROR_LOG_DATA ExistingDocument="yes">
+        <ERROR_CODE Value="SYS_C00555750"/>
+        <ERROR_FLD Value="PH_4TG"/>
+        <ID Value="ERR-1"/>
+        <MESG Value="&lt;ERROR Value='&quot;PH_4TG&quot; IS NOT NULL' Description=&quot;&quot; Severity=&quot;SEVERE_ERROR&quot; PrimaryKey=&quot;ITEM_ID =BRASS_FITTINGS&quot;/&gt;"/>
+        <SEVERITY Value="SEVERE_ERROR"/>
+        <PRIMARY_KEY Value="ITEM_ID =BRASS_FITTINGS"/>
+        <ERROR_MESG Value="&quot;PH_4TG&quot; IS NOT NULL"/>
+      </UPLOAD_ERROR_LOG_DATA>
+      <UPLOAD_ERROR_LOG_DATA ExistingDocument="yes">
+        <ERROR_CODE Value="SYS_C00555750"/>
+        <ERROR_FLD Value="PH_4TG"/>
+        <ID Value="ERR-1"/>
+        <MESG Value="&lt;ERROR Value='&quot;PH_4TG&quot; IS NOT NULL' Description=&quot;&quot; Severity=&quot;SEVERE_ERROR&quot; PrimaryKey=&quot;ITEM_ID =BRASS_FITTINGS&quot;/&gt;"/>
+        <SEVERITY Value="SEVERE_ERROR"/>
+        <PRIMARY_KEY Value="ITEM_ID =BRASS_FITTINGS"/>
+        <ERROR_MESG Value="&quot;PH_4TG&quot; IS NOT NULL"/>
+      </UPLOAD_ERROR_LOG_DATA>
+      <UPLOAD_ERROR_LOG_DATA ExistingDocument="yes">
+        <ERROR_CODE Value="SYS_C00555750"/>
+        <ERROR_FLD Value="PH_4TG"/>
+        <ID Value="ERR-1"/>
+        <MESG Value="&lt;ERROR Value='&quot;PH_4TG&quot; IS NOT NULL' Description=&quot;&quot; Severity=&quot;SEVERE_ERROR&quot; PrimaryKey=&quot;ITEM_ID =BRASS_FITTINGS&quot;/&gt;"/>
+        <SEVERITY Value="SEVERE_ERROR"/>
+        <PRIMARY_KEY Value="ITEM_ID =BRASS_FITTINGS"/>
+        <ERROR_MESG Value="&quot;PH_4TG&quot; IS NOT NULL"/>
+      </UPLOAD_ERROR_LOG_DATA>
+      <UPLOAD_ERROR_LOG_DATA ExistingDocument="yes">
+        <ERROR_CODE Value="SYS_C00555750"/>
+        <ERROR_FLD Value="PH_4TG"/>
+        <ID Value="ERR-1"/>
+        <MESG Value="&lt;ERROR Value='&quot;PH_4TG&quot; IS NOT NULL' Description=&quot;&quot; Severity=&quot;SEVERE_ERROR&quot; PrimaryKey=&quot;ITEM_ID =BRASS_FITTINGS&quot;/&gt;"/>
+        <SEVERITY Value="SEVERE_ERROR"/>
+        <PRIMARY_KEY Value="ITEM_ID =BRASS_FITTINGS"/>
+        <ERROR_MESG Value="&quot;PH_4TG&quot; IS NOT NULL"/>
+      </UPLOAD_ERROR_LOG_DATA>
+      <UPLOAD_ERROR_LOG_DATA ExistingDocument="yes">
+        <ERROR_CODE Value="SYS_C00555750"/>
+        <ERROR_FLD Value="PH_4TG"/>
+        <ID Value="ERR-1"/>
+        <MESG Value="&lt;ERROR Value='&quot;PH_4TG&quot; IS NOT NULL' Description=&quot;&quot; Severity=&quot;SEVERE_ERROR&quot; PrimaryKey=&quot;ITEM_ID =BRASS_FITTINGS&quot;/&gt;"/>
+        <SEVERITY Value="SEVERE_ERROR"/>
+        <PRIMARY_KEY Value="ITEM_ID =BRASS_FITTINGS"/>
+        <ERROR_MESG Value="&quot;PH_4TG&quot; IS NOT NULL"/>
+      </UPLOAD_ERROR_LOG_DATA>
+      <UPLOAD_ERROR_LOG_DATA ExistingDocument="yes">
+        <ERROR_CODE Value="SYS_C00555750"/>
+        <ERROR_FLD Value="PH_4TG"/>
+        <ID Value="ERR-1"/>
+        <MESG Value="&lt;ERROR Value='&quot;PH_4TG&quot; IS NOT NULL' Description=&quot;&quot; Severity=&quot;SEVERE_ERROR&quot; PrimaryKey=&quot;ITEM_ID =BRASS_FITTINGS&quot;/&gt;"/>
+        <SEVERITY Value="SEVERE_ERROR"/>
+        <PRIMARY_KEY Value="ITEM_ID =BRASS_FITTINGS"/>
+        <ERROR_MESG Value="&quot;PH_4TG&quot; IS NOT NULL"/>
+      </UPLOAD_ERROR_LOG_DATA>
+    </xapl:return>
+  </x2:command>
+  <!-- ********************************************************************** 
+     *********************************************************************** -->
+</x2:commands>

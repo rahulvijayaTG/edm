@@ -1,0 +1,1288 @@
+<DOCUMENTS>
+  <DEFINE_METHOD Name="generateHierarchyGraph">
+    <RULE>
+      <ACTION>
+        <!-- check if hierarchy is created -->
+        <REQUEST Name="isHierarchyPresent" AssignToVar="isHierarchy">
+          <TO_XML SelectList="$thisParam"/>
+        </REQUEST>
+       
+				
+			<IF_TEST Test="$isHierarchy/IsHierarchyPresent/@Value != 'true'">
+			  <THEN>
+			    <!--   create Hierarchy  		-->
+			    <REQUEST Name="getGraph" AssignToVar="Graph">
+			      <TO_XML SelectList="$thisParam"/>
+			    </REQUEST>
+						
+						 </THEN>
+			</IF_TEST>
+						
+			    <SET Var="a" FromValue="{$thisParam/Start_Count/@Value}"/>
+			    <SET Var="b" FromValue="{$thisParam/Context_Member/@Value}"/>
+
+			    <!--  get valid members for a to-be-assigned level -->
+			    <REQUEST Name="getValidParentLevel" AssignToVar="validParentLevel">
+			      <TO_XML SelectList="$Graph"/>
+			      <TO_XML SelectList="$thisParam"/>
+					<isHierarchyPresent Value="{$isHierarchy/IsHierarchyPresent/@Value}"/>
+			    </REQUEST>
+			 
+									
+        <SET Var="thisReturn" FromSelect="$validParentLevel"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+	
+  <DEFINE_METHOD Name="getValidParentLevel">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="getMembersStatus" AssignToVar="memberstatus">
+          <TO_XML SelectList="$thisParam/REQUEST/Current_member_id"/>
+        </REQUEST>
+				
+		 
+				<SET Var="a" FromValue="{$thisParam/REQUEST/Start_Count/@Value}"/>
+					<SET Var="b" FromValue="{$thisParam/REQUEST/Context_Member/@Value}"/>
+
+		<!--Identifying Batch operation-->
+				<SET Var="STATUS" FromValue="{$memberstatus/Member/memberStat/@Value}"/>
+				
+				<IF_TEST Test="$thisParam/REQUEST/Batch/@Value = 'TRUE'">
+          <THEN>
+           		<SET Var="STATUS" FromValue="{$thisParam/REQUEST/mem_Stat/@Value}"/>
+          </THEN>
+        </IF_TEST>
+
+
+				
+				
+				 <REQUEST Name="Level_Hierarchy_Formation" AssignToVar="LVL_HRCHY"/>
+          
+
+				
+				
+				
+				
+		   <TO_DOCVAR AssignToVar="request">
+          <INPUT>
+						<TO_XML SelectList="$LVL_HRCHY"/>
+					<MEMBER ID="{trim($thisParam/REQUEST/Current_member_id/@Value)}" status="{$STATUS/@Value}">
+              <CODE Value="{trim($thisParam/REQUEST/Current_member_name/@Value)}"/>
+              <DIMENSION Value="{trim($thisParam/REQUEST/DIM_NAME/@Value)}"  Id="{trim($thisParam/REQUEST/DIM_ID/@Value)}"/>
+              <LEVEL Value="{trim($thisParam/REQUEST/Current_level_name/@Value)}"/>
+							<TO_XML SelectList="$thisParam/REQUEST/MOVE"/>
+              <TO_XML SelectList="$thisParam/REQUEST/SELECTED_PARENT"/>
+              <TO_XML SelectList="$thisParam/REQUEST/ASSIGNED_PARENT"/>
+            </MEMBER>
+						
+						<StartCount Value="{$thisParam/REQUEST/Start_Count/@Value}"/>
+						  <ContextMember Value="{$thisParam/REQUEST/Context_Member/@Value}"/>
+						  <OPERATION Value="MOVE"/>
+          </INPUT>
+        </TO_DOCVAR>
+						
+				
+				
+				
+				
+      
+				
+		  <NATIVE_FUNCTION AssignToVar="return7" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Valid_Members" MethodName="Finding_all_Valid_Parent_Members">
+          <PARAM Var="thisContext"/>
+          <PARAM Var="request"/>
+        </NATIVE_FUNCTION>
+			 
+				
+				
+				
+				
+				
+				
+				
+        <SET Var="thisReturn" FromSelect="$return7"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+	
+	 <DEFINE_METHOD Name="Level_Hierarchy_Formation">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="LVL_Hierarchy">
+          <Temp/>
+					
+
+
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="HR_information">
+          <Temp/>
+        </TO_DOCVAR>
+        <!--Trappping all the dimensions from Dimension table	-->
+        <GET_DOCUMENT Name="Dimension" AssignToVar="Dim_Info" ServiceName="BCM_MASTER" ReturnRowCount="Yes">
+          <SELECT>
+            <Id/>
+            <Name/>
+          </SELECT>
+					 <ORDER_BY>
+              <Id Sort="Ascending"/>
+            </ORDER_BY>
+        </GET_DOCUMENT>
+        <!--  Hierarchy Formation initially based on all the dimensions
+    i.e.  This "HR_information" gives all the HRCHYs present in a particular dimension
+   SO corresponding all the dimension we have all the HRCHYs in this "HR_information" -->
+				
+						<TO_DOCVAR AssignToVar="HRCount_Info">
+						<HR_Count_info/>
+					</TO_DOCVAR>
+				
+				
+        <FOR_EACH CurrentElement="Temp1" SelectList="$Dim_Info/Dimension">
+          <GET_DOCUMENT Name="Hierarchy" AssignToVar="HR_info" ReturnRowCount="Yes" ServiceName="BCM_MASTER">
+            <DimensionId Value="{$Temp1/Id/@Value}" MatchBy="EQUAL"/>
+            <SELECT>
+              <Id/>
+              <DimensionId/>
+              <Name/>
+            </SELECT>
+            <ORDER_BY>
+              <Id Sort="Ascending"/>
+            </ORDER_BY>
+          </GET_DOCUMENT>
+					
+					
+			
+					
+					<TO_DOCVAR AssignToVar="TempCount">
+						<Info   Dim_ID="{$Temp1/Id/@Value}" HR_Count="{$HR_info/@TotalRowCount}"/> 
+					</TO_DOCVAR>
+					
+					 <ADD_CHILDREN DocVar="HRCount_Info" FromDocVar="{$TempCount}"/>
+					 
+          <ADD_CHILDREN DocVar="HR_information" FromDocVar="{$HR_info}"/>
+        </FOR_EACH>
+        <!-- ****************************************-->
+        <!-- Level Hierarchy Formation Starts-->
+        <!-- ***************************************-->
+        <SET Var="DIM_AFTER" FromValue=""/>
+				<SET Var="Count" FromValue="1"/>
+        <FOR_EACH SelectList="$HR_information/RESPONSE/Hierarchy" CurrentElement="Temp">
+					<SET Var="Count" FromValue="{$Count+1}"/>
+					 
+          <SET Var="DIM_ID" FromValue="{$Temp/DimensionId/@Value}"/>
+					
+          <IF_TEST Test="$DIM_ID/@Value!=$DIM_AFTER/@Value">
+            <THEN>
+							
+				 	<TO_DOCVAR AssignToVar="temp3">
+						<HIER_DETAILS/>
+					</TO_DOCVAR>
+							 
+				<!--This will tell the total no. of Hierarchies present in a particular dimension i.e dimension value= {$Temp/DimensionId/@Value}	-->
+							
+							 <FOR_EACH SelectList="$HRCount_Info/Info" CurrentElement="HRCount_temp">
+						<IF_TEST Test="$HRCount_temp/@Dim_ID=$DIM_ID/@Value">
+							<THEN>
+								<SET Var="HR_Count" FromValue="{$HRCount_temp/@HR_Count}"/>
+							</THEN>
+						</IF_TEST>
+					</FOR_EACH>
+							
+					
+				 
+					<SET Var="Count" FromValue="1"/> 
+            </THEN>
+          </IF_TEST>
+					
+					
+					
+					
+          <TO_DOCVAR AssignToVar="temp1">
+            <HIER_INFO>
+              <HIERARCHY_ID Value="{$Temp/Id/@Value}" Name="{$Temp/Name/@Value}"/>
+            </HIER_INFO>
+          </TO_DOCVAR>
+          <GET_DOCUMENT AssignToVar="LVL_HR_Info" Name="LevelHierarchy" ReturnRowCount="Yes" ServiceName="BCM_MASTER">
+            <HierarchyId Value="{$Temp/Id/@Value}" MatchBy="EQUAL"/>
+            <SELECT>
+              <LevelId/>
+              <parentLevelId/>
+            </SELECT>
+          </GET_DOCUMENT>
+          <TO_DOCVAR AssignToVar="LVL_Order">
+            <Level_ID/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="PAR_LVL_Order">
+            <ParentLevel_ID/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$LVL_HR_Info/LevelHierarchy" CurrentElement="temp_Lvl_order">
+            <TO_DOCVAR AssignToVar="LVL">
+              <LEVEL Value="{$temp_Lvl_order/LevelId/@Value}"/>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="LVL_Order" FromDocVar="LVL"/>
+            <TO_DOCVAR AssignToVar="PAR_LVL">
+              <PAR_LVL Value="{$temp_Lvl_order/parentLevelId/@Value}"/>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="PAR_LVL_Order" FromDocVar="PAR_LVL"/>
+          </FOR_EACH>
+          <!--	Finding the Top and Bottom levels in the particular HR-->
+          <FOR_EACH SelectList="$LVL_HR_Info/LevelHierarchy" CurrentElement="temp_lvl">
+            <FOR_EACH SelectList="$PAR_LVL_Order/PAR_LVL" CurrentElement="temp_ParLvl">
+              <SET Var="Count_B" FromValue="0"/>
+              <IF_TEST Test="$temp_lvl/LevelId/@Value=$temp_ParLvl/@Value">
+                <THEN>
+                  <PLUS1 Var="Count_B"/>
+                  <BREAK/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+            <IF_TEST Test="$Count_B/@Value=0">
+              <THEN>
+                <SET Var="Bottom_Level" FromValue="{$temp_lvl/LevelId/@Value}"/>
+              </THEN>
+            </IF_TEST>
+            <FOR_EACH SelectList="$LVL_Order/LEVEL" CurrentElement="temp_LEVEL">
+              <SET Var="Count_T" FromValue="0"/>
+              <IF_TEST Test="$temp_lvl/parentLevelId/@Value=$temp_LEVEL/@Value">
+                <THEN>
+                  <PLUS1 Var="Count_T"/>
+                  <BREAK/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+            <IF_TEST Test="$Count_T/@Value=0">
+              <THEN>
+                <SET Var="Top_Level" FromValue="{$temp_lvl/parentLevelId/@Value}"/>
+                <GET_DOCUMENT Name="Level" AssignToVar="Top_Level_INFO" ReturnRowCount="Yes" ServiceName="BCM_MASTER">
+                  <DimensionId Value="{$Temp/DimensionId/@Value}" MatchBy="EQUAL"/>
+                  <Id Value="{$Top_Level/@Value}" MatchBy="EQUAL"/>
+                  <SELECT>
+                    <Name/>
+                  </SELECT>
+                </GET_DOCUMENT>
+                <TO_DOCVAR AssignToVar="temp">
+                  <LEVEL_ID Value="{$Top_Level/@Value}" Name="{$Top_Level_INFO/Level/Name/@Value}"/>
+                </TO_DOCVAR>
+        
+								
+								
+								
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="temp2">
+            <LEVELS/>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="temp2" FromDocVar="{$temp}"/>
+          <TO_DOCVAR AssignToVar="TEMP">
+            <LEVEL_INFO/>
+          </TO_DOCVAR>
+          <SET Var="dummy_top" FromValue="{$Top_Level/@Value}"/>
+          <WHILE Condition="$dummy_top/@Value!=$Bottom_Level/@Value">
+            <IF_TEST Test="($dummy_top/@Value!=$Bottom_Level/@Value)">
+              <THEN>
+                <GET_DOCUMENT Name="LevelHierarchy" AssignToVar="Level_INFO" ReturnRowCount="Yes" ServiceName="BCM_MASTER">
+                  <HierarchyId Value="{$Temp/Id/@Value}" MatchBy="EQUAL"/>
+                  <parentLevelId Value="{$dummy_top/@Value}" MatchBy="EQUAL"/>
+                  <FETCH_DOCUMENT_LINK Name="FK_LEVEL_LEVEL_HIERARCHY">
+                    <SELECT>
+                      <Id/>
+                      <Name/>
+                    </SELECT>
+                  </FETCH_DOCUMENT_LINK>
+                </GET_DOCUMENT>
+                <SET Var="new" FromValue="{$Level_INFO/LevelHierarchy/LevelId/@Value}"/>
+                <TO_DOCVAR AssignToVar="TEMP_LVL">
+                  <LEVEL_ID Value="{$new/@Value}" Name="{$Level_INFO/LevelHierarchy/FK_LEVEL_LEVEL_HIERARCHY/Level/Name/@Value}"/>
+                </TO_DOCVAR>
+                <ADD_CHILDREN DocVar="temp2" FromDocVar="{$TEMP_LVL}"/>
+                <SET Var="dummy_top" FromValue="{$new/@Value}"/>
+              </THEN>
+            </IF_TEST>
+          </WHILE>
+          <ADD_CHILDREN DocVar="temp1" FromDocVar="{$temp2}"/>
+          <ADD_CHILDREN DocVar="temp3" FromDocVar="{$temp1}"/>
+					
+				
+					
+					
+          <IF_TEST Test="$HR_Count/@Value=$Count/@Value">
+            <THEN>
+							
+					
+              <GET_DOCUMENT Name="Dimension" AssignToVar="Dim_name" ReturnRowCount="Yes" ServiceName="BCM_MASTER">
+                <Id Value="{$Temp/DimensionId/@Value}" MatchBy="EQUAL"/>
+                <SELECT>
+                  <Name/>
+                </SELECT>
+              </GET_DOCUMENT>
+              <TO_DOCVAR AssignToVar="Dim_Temp">
+                <INFO>
+                  <DIM_ID Value="{$Temp/DimensionId/@Value}" Name="{$Dim_name/Dimension/Name/@Value}"/>
+                </INFO>
+              </TO_DOCVAR> 
+							
+							<ADD_CHILDREN DocVar="Dim_Temp" FromDocVar="temp3"/>
+              <ADD_CHILDREN DocVar="LVL_Hierarchy" FromDocVar="Dim_Temp"/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="DIM_AFTER" FromValue="{$Temp/DimensionId/@Value}"/>
+        </FOR_EACH>
+        <!-- ****************************************-->
+        <!-- Level Hierarchy Formation Ends-->
+        <!-- ***************************************-->
+        <SET Var="thisReturn" FromSelect="$LVL_Hierarchy"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+	
+	
+  <DEFINE_METHOD Name="getGraph">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="request">
+          <INPUT/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$thisParam/REQUEST/DIMENSION" CurrentElement="dim_info">
+          <IF_TEST Test="$dim_info/DIMENSION_ID/@Value = $thisParam/REQUEST/DIM_ID/@Value">
+            <THEN>
+              <TO_DOCVAR AssignToVar="TEMP_DIM">
+                <DIMENSION Name="{$dim_info/DIMENSION_CODE/@Value}" Value="{$dim_info/DIMENSION_ID/@Value}"/>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="request" FromValue="{$TEMP_DIM}"/>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <FOR_EACH SelectList="$thisParam/REQUEST/DIMENSION" CurrentElement="dimension_info">
+          <IF_TEST Test="$dimension_info/DIMENSION_ID/@Value = $thisParam/REQUEST/DIM_ID/@Value">
+            <THEN>
+              <FOR_EACH SelectList="$dimension_info/LEVELS/LEVEL_INFO" CurrentElement="level_info">
+                <TO_DOCVAR AssignToVar="TempLevels">
+                  <LEVEL Name="{$level_info/LEVEL_CODE/@Value}">
+                    <LEVEL_ID Value="{$level_info/LEVEL_ID/@Value}"/>
+                  </LEVEL>
+                </TO_DOCVAR>
+                <ADD_CHILDREN DocVar="TEMP_DIM" FromValue="{$TempLevels}"/>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>			
+        <GET_DOCUMENT AssignToVar="show" Name="LevelHierarchy" ServiceName="BCM_MASTER">
+          <SELECT>
+            <LevelId/>
+            <parentLevelId/>
+          </SELECT>
+          <QUERY_DOCUMENT_LINK Name="FK_LEVEL_LEVEL_HIERARCHY">
+            <DimensionId Value="{$thisParam/REQUEST/DIM_ID/@Value}"/>
+          </QUERY_DOCUMENT_LINK>
+        </GET_DOCUMENT>
+        <TO_DOCVAR AssignToVar="levelRelations">
+          <LEVEL_RELATIONSHIP/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$show/LevelHierarchy" CurrentElement="lvlRelationship">
+					<IF_TEST Test="strlen($lvlRelationship/parentLevelId/@Value) != 0">
+						<THEN>
+	          <TO_DOCVAR AssignToVar="relation">
+	            <RELATION Parent="{$lvlRelationship/parentLevelId/@Value}" Child="{$lvlRelationship/LevelId/@Value}"/>
+	          </TO_DOCVAR>
+	          <ADD_CHILDREN DocVar="levelRelations" FromValue="{$relation}"/>
+						</THEN>
+					</IF_TEST>	
+        </FOR_EACH>
+        <ADD_CHILDREN DocVar="TEMP_DIM" FromValue="{$levelRelations}"/>
+        <NATIVE_FUNCTION AssignToVar="return" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_NativeHierarchy" MethodName="createHierarchy">
+          <PARAM Var="thisContext"/>
+          <PARAM Var="request"/>
+        </NATIVE_FUNCTION>
+        <ADD_CHILDREN DocVar="return" FromSelect="$request"/>
+        <SET Var="thisReturn" FromSelect="$return"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="isHierarchyPresent">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="dimension">
+          <INPUT>
+            <DIMENSION Name="{$thisParam/REQUEST/DIM_ID/@Value }"/>
+          </INPUT>
+        </TO_DOCVAR>
+        <NATIVE_FUNCTION AssignToVar="returnVal" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_NativeHierarchy" MethodName="checkHierarchy">
+          <PARAM Var="thisContext"/>
+          <PARAM Var="dimension"/>
+        </NATIVE_FUNCTION>
+        <SET Var="thisReturn" FromSelect="$returnVal"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+   
+  <DEFINE_METHOD Name="getAllValidMembersFromLevel">
+    <RULE>
+      <ACTION>
+					<IF_TEST Test="($thisParam/ContextMember/@Value !='')">
+					<THEN>
+				<SET Var="Context_member" FromValue="{$thisParam/ContextMember/@Value}"/>
+				</THEN>
+					<ELSE>
+						<SET Var="Context_member" FromValue="x"/>
+					</ELSE>
+					</IF_TEST>
+				
+				<IF_TEST Test="($thisParam/StartCount/@Value ='-1')">
+					<THEN>
+						 <GET_DOCUMENT AssignToVar="validMembers" Name="Member" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+		          <LevelId Value="{$thisParam/SELECTED_PARENT/LEVEL/@Value}" MatchBy="EQUAL"/>
+							<Id Value = "{$Context_member/@Value}" MatchBy="NOT_EQUAL"/>
+							<memberStat Value = "0"/>
+							<SELECT>
+		            <Id/>
+		            <LevelId/>
+		          </SELECT>
+		        </GET_DOCUMENT>
+					</THEN>
+					<ELSE>
+					 <GET_DOCUMENT AssignToVar="validMembers" Name="Member" ServiceName="BCM_MASTER" MaxRows="{$Max_Rows/@Value}" StartAtRow="{$thisParam/StartCount/@Value}" ReturnRowCount="yes">
+	          <LevelId Value="{$thisParam/SELECTED_PARENT/LEVEL/@Value}" MatchBy="EQUAL"/>
+							<Id Value = "{$Context_member/@Value}" MatchBy="NOT_EQUAL"/>
+							<memberStat Value = "0"/>
+	          <SELECT>
+	            <Id/>
+	            <LevelId/>
+	          </SELECT>
+	        </GET_DOCUMENT>
+					
+						</ELSE>
+					</IF_TEST>
+				
+        <!--<GET_DOCUMENT AssignToVar="validMembers" Name="Member" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+          <LevelId Value="{$thisParam/SELECTED_PARENT/LEVEL/@Value}" MatchBy="EQUAL"/>
+					<Id Value = "{$Context_member/@Value}" MatchBy="NOT_EQUAL"/>
+					<memberStat Value = "0"/>
+          <SELECT>
+            <Id/>
+            <LevelId/>
+          </SELECT>
+        </GET_DOCUMENT>-->
+				<TO_DOCVAR AssignToVar="tempResult1">
+					<RESULT/>	
+				</TO_DOCVAR>
+				<FOR_EACH SelectList="$validMembers/Member" CurrentElement="currentElement">
+				<TO_DOCVAR AssignToVar="tempMem">				
+					<SQL_RESULT>
+            <MEMBER_ID Value="{$currentElement/Id/@Value}"/>
+            <LEVEL_ID Value="{$currentElement/LevelId/@Value}"/>
+          </SQL_RESULT>
+				</TO_DOCVAR>
+					<ADD_CHILDREN DocVar="tempResult1" FromValue="{$tempMem}"/>				
+				</FOR_EACH>	
+
+				<APPEND_TO_XML DocVar="tempResult1">
+					<TOTAL_ROW_COUNT Value="{$validMembers/@TotalRowCount}"/>
+				</APPEND_TO_XML>
+
+
+
+        <SET Var="thisReturn" FromSelect="$tempResult1"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+	
+<!--**************************************************************************	-->
+<!--**************************************************************************	-->	
+	
+<!--Method Added to Execute a SQL Query Formed in NativeHierarchy Class 	-->
+	
+	<DEFINE_METHOD Name="Execute_Query">
+    <RULE>
+      <ACTION>
+				
+       <EXECUTE_SQL_QUERY Value="{$thisParam/PARAM/@Value}" ReturnRowCount="yes" MaxRows="{$Max_Rows/@Value}" StartAtRow="{$thisParam/StartCount/@Value}" AssignToVar="queryResult">
+        </EXECUTE_SQL_QUERY>
+				
+        <SET Var="thisReturn" FromSelect="$queryResult"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  
+  
+  	<DEFINE_METHOD Name="Top_Level_Query">
+      <RULE>
+        <ACTION>
+  				
+         <EXECUTE_SQL_QUERY Value="{$thisParam/PARAM/@Value}" ReturnRowCount="yes" MaxRows="{$Max_Rows/@Value}"  AssignToVar="queryResult">
+          </EXECUTE_SQL_QUERY>
+  				
+          <SET Var="thisReturn" FromSelect="$queryResult"/>
+        </ACTION>
+      </RULE>
+    </DEFINE_METHOD>
+	
+  
+	
+	
+	<!--**************************************************************************	-->
+	<!--**************************************************************************	-->
+	<!--**************************************************************************	-->
+	
+	
+	
+	
+	
+  <DEFINE_METHOD Name="getMembersStatus">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT AssignToVar="memberStatus" Name="Member" ServiceName="BCM_MASTER">
+          <Id Value="{$thisParam/Current_member_id/@Value}" MatchBy="EQUAL"/>
+          <SELECT>
+            <memberStat/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <SET Var="thisReturn" FromSelect="$memberStatus"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getValidMoveMembers">
+    <RULE>
+      <ACTION>
+				
+				<SET Var="SingleQT" FromValue="'"/>
+				<IF_TEST Test="($thisParam/ContextMember/@Value !='')">
+					<THEN>
+				<SET Var="Context_member" FromValue="{$thisParam/ContextMember/@Value}"/>
+				</THEN>
+					<ELSE>
+						<SET Var="Context_member" FromValue="x"/>
+					</ELSE>
+					</IF_TEST>
+				<SET Var="FilterQuery" FromValue="Select ID, LEVEL_ID From mst_member Where ID IN ( "/>
+				<SET Var="QueryCriteria" FromValue="{concat(' ) AND ID !=',$SingleQT,$Context_member,$SingleQT,' AND MEMBER_STAT = 0 ')}"/>
+				<SET Var="FinalQuery" FromValue="{concat($FilterQuery,$thisParam/PARAM/@Value,$QueryCriteria)}"/>
+		
+				
+				
+				<IF_TEST Test="($thisParam/StartCount/@Value ='-1')">
+					<THEN>
+				 			 <EXECUTE_SQL_QUERY Value="{$thisParam/PARAM/@Value}" AssignToVar="validMoveMembers" ReturnRowCount="yes">
+       				 </EXECUTE_SQL_QUERY>
+					</THEN>
+					<ELSE>
+							<EXECUTE_SQL_QUERY Value="{$thisParam/PARAM/@Value}" AssignToVar="validMoveMembers" ReturnRowCount="yes" MaxRows="{$Max_Rows/@Value}" StartAtRow="{$thisParam/StartCount/@Value}">
+        			</EXECUTE_SQL_QUERY>
+						
+					</ELSE>
+					</IF_TEST>
+				<!--
+        <EXECUTE_SQL_QUERY Value="{$thisParam/PARAM/@Value}" AssignToVar="validMoveMembers" ReturnRowCount="yes">
+        </EXECUTE_SQL_QUERY>
+				-->
+					<APPEND_TO_XML DocVar="validMoveMembers">
+					<TOTAL_ROW_COUNT Value="{$validMoveMembers/@TotalRowCount}"/>
+				</APPEND_TO_XML>
+
+        <SET Var="thisReturn" FromSelect="$validMoveMembers"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getValidMergeMembers">
+    <RULE>
+			      <ACTION>
+				
+				 
+				 <!-- <SET Var="thisParam" Property="SEARCH_STRING" FromValue="A"/>-->
+				<!--  <SET Var="thisParam" Property="Search_Criteria" FromValue="true"/>-->
+				<IF_TEST Test="$thisParam/USING/@Value = '1'">
+					<THEN>
+						<SET Var="using" FromValue="NAME"/>
+					</THEN>
+					</IF_TEST>
+				<IF_TEST Test="$thisParam/USING/@Value = '2'">
+					<THEN>
+						<SET Var="using" FromValue="DESCRIPTION"/>
+					</THEN>
+					</IF_TEST>
+				
+				<SET Var="searchString1"  FromValue="{$thisParam/SEARCH_STRING/@Value}"/>
+				<SET Var="singleQT" FromValue="'"/>
+				
+			  <IF_TEST Test="$thisParam/Search_Criteria/@Value = 'false'">
+			    <THEN>
+							<IF_TEST Test="$thisParam/StartCount/@Value = '-1'">
+			  		  <THEN>
+			    		  <EXECUTE_SQL_QUERY Value="{$thisParam/PARAM/@Value}" AssignToVar="validMergeMembers" ReturnRowCount="yes">
+			      		</EXECUTE_SQL_QUERY>
+			    		</THEN>
+			 				<ELSE>
+			      		<EXECUTE_SQL_QUERY Value="{$thisParam/PARAM/@Value}" AssignToVar="validMergeMembers" ReturnRowCount="yes" StartAtRow="{$thisParam/StartCount/@Value}" MaxRows="{$Max_Rows/@Value}">
+			     		 </EXECUTE_SQL_QUERY>
+							</ELSE>	
+							</IF_TEST>
+						</THEN>
+			 	  </IF_TEST>
+						
+			  <IF_TEST Test="$thisParam/Search_Criteria/@Value = 'true'">  
+			    <THEN>
+			      <SET Var="searchQueryString" FromValue="Select Id from mst_member where Id IN ( "/>
+			      <SET Var="validMergeMembers" FromValue="{$thisParam/PARAM/@Value}"/>
+						<SET Var="searchString" FromValue="{concat('AND ',$using,' LIKE ', $singleQT,'%',$searchString1,'%',$singleQT)} "/>
+			      <SET Var="finalQuery" FromValue="{concat($searchQueryString,$validMergeMembers,' ) ',$searchString)}"/>
+			      <EXECUTE_SQL_QUERY Value="{$finalQuery/@Value}" AssignToVar="validMergeMembers" ReturnRowCount="yes" StartAtRow="{$thisParam/StartCount/@Value}" MaxRows="{$Max_Rows/@Value}">
+			      </EXECUTE_SQL_QUERY>
+			    </THEN>
+			  </IF_TEST>
+				
+				<!-- For Batch W/F-->
+				
+				<!--<IF_TEST Test="$thisParam/StartCount/@Value = 'NA'">
+			    <THEN>
+			      <EXECUTE_SQL_QUERY Value="{$thisParam/PARAM/@Value}" AssignToVar="validMergeMembers" ReturnRowCount="yes">
+			      </EXECUTE_SQL_QUERY>
+			    </THEN>
+			  </IF_TEST>-->
+							
+			  <SET Var="thisReturn" FromSelect="$validMergeMembers"/>
+			</ACTION>
+			    </RULE>
+  </DEFINE_METHOD>
+	<DEFINE_METHOD Name="getTable1data">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY Value="{$thisParam/PARAM/@Value}" AssignToVar="table1data" ReturnRowCount="yes">
+        </EXECUTE_SQL_QUERY>
+        <SET Var="thisReturn" FromSelect="$table1data"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="isMovepossible">
+    <RULE>
+      <ACTION>				
+       <!--  <GET_DOCUMENT Name="LevelHierarchy" AssignToVar="movePossible"> 
+					<LevelId Value="{$thisParam/PARAM/Level_id/@Value}" MatchBy="EQUAL"/>        
+          <SELECT>						 
+            <SQL_FN Name="COUNT" Alias="COUNT">
+              <PROP Name="HierarchyId"/>
+            </SQL_FN>
+          </SELECT>
+        </GET_DOCUMENT> -->
+				<EXECUTE_SQL_QUERY Value="{$thisParam/PARAM/@Value}" AssignToVar="movePossible">
+        </EXECUTE_SQL_QUERY>
+        <SET Var="thisReturn" FromSelect="$movePossible"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+	 <DEFINE_METHOD Name="doMergeOperation">
+    <RULE>
+      <ACTION>
+				   <!-- check if hierarchy is created -->
+				<TO_DOCVAR AssignToVar="dimension">
+          <INPUT>
+            <DIMENSION Name="{$thisParam/MEMBER/DIMENSION/@Value }"/>
+          </INPUT>
+        </TO_DOCVAR>
+        <NATIVE_FUNCTION AssignToVar="returnVal" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_NativeHierarchy" MethodName="checkHierarchy">
+          <PARAM Var="thisContext"/>
+          <PARAM Var="dimension"/>
+        </NATIVE_FUNCTION>							
+       
+       <!-- <IF_TEST Test="$returnVal/IsHierarchyPresent/@Value != 'true'">
+          <THEN>-->
+            <!-- create Hierarchy -->
+            <REQUEST Name="getMergeGraph" AssignToVar="Graph">
+              <TO_XML SelectList="$thisParam/*"/>
+            </REQUEST>
+       <!--   </THEN>
+        </IF_TEST>-->
+				
+        <!--  get valid members for a to-be-merged members -->
+				
+			<!--	<NATIVE_FUNCTION AssignToVar="returnVal" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_NativeHierarchy" MethodName="mergeOperation">
+          <PARAM Var="thisContext"/>
+          <PARAM Var="thisParam"/>
+        </NATIVE_FUNCTION>  -->    
+				
+					<NATIVE_FUNCTION AssignToVar="returnVal" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_Valid_Members" MethodName="Valid_Merge_Members">
+          <PARAM Var="thisContext"/>
+          <PARAM Var="thisParam"/>
+        </NATIVE_FUNCTION>  
+				  
+        <SET Var="thisReturn" FromSelect="$returnVal"/>
+			</ACTION>
+    </RULE>
+  </DEFINE_METHOD>				
+  <DEFINE_METHOD Name="findChildrenAtLevel">
+    <RULE>
+      <ACTION>
+			
+				<SET Var="SingleQT" FromValue="'"/>
+				<IF_TEST Test="($thisParam/ContextMember/@Value !='')">
+					<THEN>
+				<SET Var="Context_member" FromValue="{$thisParam/ContextMember/@Value}"/>
+				</THEN>
+					<ELSE>
+						<SET Var="Context_member" FromValue="x"/>
+					</ELSE>
+					</IF_TEST>
+				<SET Var="FilterQuery" FromValue="Select ID MEMBER_ID, LEVEL_ID From mst_member Where ID IN ( "/>
+				<SET Var="QueryCriteria" FromValue="{concat(' ) AND ID !=',$SingleQT,$Context_member,$SingleQT,' AND MEMBER_STAT = 0 ')}"/>
+				<SET Var="FinalQuery" FromValue="{concat($FilterQuery,$thisParam/PARAM/@Value,$QueryCriteria)}"/>
+				
+        <!--<EXECUTE_SQL_QUERY Value="{$thisParam/PARAM/@Value}" AssignToVar="mnb" ReturnRowCount="yes" MaxRows="{$Max_Rows/@Value}" StartAtRow="{$thisParam/StartCount/@Value}"/>-->
+     			<IF_TEST Test="($thisParam/StartCount/@Value ='-1')">
+					<THEN>
+				  <EXECUTE_SQL_QUERY Value="{$FinalQuery/@Value}" AssignToVar="mnb" ReturnRowCount="yes"/>
+					</THEN>
+					<ELSE>
+						<EXECUTE_SQL_QUERY Value="{$FinalQuery/@Value}" AssignToVar="mnb" ReturnRowCount="yes" MaxRows="{$Max_Rows/@Value}" StartAtRow="{$thisParam/StartCount/@Value}"/>
+						</ELSE>
+					</IF_TEST>
+			<APPEND_TO_XML DocVar="mnb">
+					<TOTAL_ROW_COUNT Value="{$mnb/@TotalRowCount}"/>
+				</APPEND_TO_XML>
+
+				 <SET Var="thisReturn" FromSelect="$mnb"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="showmem1">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="showtable1" AssignToVar="show1">
+          <TO_XML SelectList="$thisParam"/>
+        </REQUEST>
+        <TO_DOCVAR AssignToVar="temp2">
+          <PARENTS>
+            <ASSIGNED_PARENT/>
+          </PARENTS>
+        </TO_DOCVAR>
+        <SET Var="temp" FromSelect="$temp2/ASSIGNED_PARENT"/>
+        <FOR_EACH SelectList="$show1/SQL_RESULT" CurrentElement="queryResult">
+          <IF_TEST Test="strlen($queryResult/PARENTMEMNAME/@Value) != 0">
+            <THEN>
+              <TO_DOCVAR AssignToVar="temp3">
+								
+								<HIERARCHY Name="{trim($queryResult/HIERARCHYNAME/@Value)}" Value="{trim($queryResult/HIERARCHYID/@Value)}">
+                	 <LEVEL Name="{trim($queryResult/PARENTLEVELNAME/@Value)}" Value="{trim($queryResult/PARENTLEVELID/@Value)}"/>	
+									  <MEMBER Name="{trim($queryResult/PARENTMEMNAME/@Value)}" Value="{trim($queryResult/PARENTMEMID/@Value)}"/>		
+                </HIERARCHY>
+					
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="temp" FromSelect="$temp3"/>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>     
+        <SET Var="thisReturn" FromSelect="$temp2"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="showtable1">
+    <RULE>
+      <ACTION>        
+        <TO_DOCVAR AssignToVar="parameters">
+          <INPUT>
+              <Current_dimension_id Value="{$thisParam/REQUEST/Current_dimension_id/@Value}"/>					   
+					    <Current_level_id Value="{$thisParam/REQUEST/Current_level_id/@Value}"/>					    
+					    <Current_member_id Value="{$thisParam/REQUEST/Current_member_id/@Value}"/>
+          </INPUT>
+        </TO_DOCVAR>				
+        <NATIVE_FUNCTION AssignToVar="returnVal" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_NativeHierarchy" MethodName="getTable1data">
+          <PARAM Var="thisContext"/>
+          <PARAM Var="parameters"/>
+        </NATIVE_FUNCTION>      
+        <SET Var="thisReturn" FromSelect="$returnVal"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+	
+	<DEFINE_METHOD Name="getData">
+	  <RULE>
+	    <ACTION>	   
+	      <REQUEST Name="getcomboData" AssignToVar="comboData">
+	        <TO_XML SelectList="$thisParam"/>
+	      </REQUEST>
+	      <IF_TEST Test="$thisParam/userAction/@Value != 'New'  and  $thisParam/operation/@Value != 'New' and $thisParam/userAction/@Value != 'LOOP_DIMENSION' and $thisParam/userAction/@Value != 'LOOP_LEVEL'">
+	        <THEN>
+	          <GET_DOCUMENT Name="Member" AssignToVar="dimdesc" ServiceName="BCM_MASTER">
+	            <dimensionID Value="{$thisParam/Current_dimension_id/@Value}" MatchBy="EQUAL"/>
+							<Id Value="{$thisParam/Current_member_id/@Value}" MatchBy="EQUAL"/>
+	            <SELECT>
+	              <Description/>
+								<memberStat/>
+	            </SELECT>
+	          </GET_DOCUMENT>
+							<IF_TEST Test="($dimdesc/Member/memberStat/@Value='0')">
+                  <THEN>
+                    <SET DocVar="dimdesc" Property="memberStat" FromValue="ASSIGNED"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="($dimdesc/Member/memberStat/@Value='1')">
+                  <THEN>
+                    <SET DocVar="dimdesc" Property="memberStat" FromValue="PARTIALLY ASSIGNED"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="($dimdesc/Member/memberStat/@Value='2')">
+                  <THEN>
+                    <SET DocVar="dimdesc" Property="memberStat" FromValue="UNASSIGNED"/>
+                  </THEN>
+            </IF_TEST>
+					
+	          <REQUEST Name="showtable1" AssignToVar="returnVal">
+	            <TO_XML SelectList="$thisParam"/>
+	          </REQUEST>
+	          <TO_DOCVAR AssignToVar="memdetail">
+	            <OUTPUT>
+	              <MEMBERSDETAIL/>
+	            </OUTPUT>
+	          </TO_DOCVAR>
+	          <SET Var="det" FromSelect="$memdetail/MEMBERSDETAIL"/>
+	          <FOR_EACH SelectList="$returnVal/SQL_RESULT" CurrentElement="queryResult">
+	            <TO_DOCVAR AssignToVar="rowData">
+	              <LINE>
+	                <Hiename Value="{$queryResult/HIERARCHYNAME/@Value}"/>
+	                <hierarchy_id Value="{$queryResult/HIERARCHYNAME/@Value}"/>
+	                <Parlevname Value="{$queryResult/PARENTLEVELNAME/@Value}"/>
+	                <parent_level_id Value="{$queryResult/PARENTLEVELID/@Value}"/>
+	                <parmemname Value="{$queryResult/PARENTMEMNAME/@Value}"/>
+	                <parent_member_id Value="{$queryResult/PARENTMEMID/@Value}"/>
+	                <Parmemdesc Value="{$queryResult/PARENTMEMDESC/@Value}"/>
+	              </LINE>
+	            </TO_DOCVAR>
+							
+							 <SET DocVar="test1"  FromValue="UNASSIGNED"/>
+							
+	            <ADD_CHILDREN DocVar="det" FromSelect="$rowData"/>
+	          </FOR_EACH>
+	          <TO_DOCVAR AssignToVar="inXml">
+	            <SAMPLE_XML>
+	              <TO_XML SelectList="$comboData/DIMENSION"/>
+	              <TO_XML SelectList="$comboData/LEVEL"/>
+	              <member_name Value="{$thisParam/Current_member_name/@Value}"/>
+	              <member_description Value="{$dimdesc/Member/Description/@Value}"/>	             
+	              <TO_XML SelectList="$det"/>
+	              <operation Value=""/>
+	              <TO_XML SelectList="$thisParam/MEMBERPARENTDETAIL"/>
+	              <TO_XML SelectList="$thisParam/Error"/>
+								<member_status Value="{$dimdesc/memberStat/@Value}"/>
+	            </SAMPLE_XML>
+	          </TO_DOCVAR>
+	        </THEN>
+	        <ELSE>
+	          <TO_DOCVAR AssignToVar="inXml">
+	            <SAMPLE_XML>
+	              <TO_XML SelectList="$comboData/DIMENSION"/>
+	              <TO_XML SelectList="$comboData/LEVEL"/>
+	              <operation Value=""/>
+	            </SAMPLE_XML>
+	          </TO_DOCVAR>
+	        </ELSE>
+	      </IF_TEST>
+
+		  		<SET Var="check" FromValue="{count($thisParam/MEMBERPARENTDETAIL/*)}"/>
+				<IF_TEST Test="$check='0'">
+					<THEN>
+						<TO_DOCVAR AssignToVar="Bottomtable_Null">
+							<MEMBERPARENTDETAIL/>
+						</TO_DOCVAR>
+						
+				<ADD_CHILDREN FromDocVar="Bottomtable_Null" DocVar="inXml"/>		
+					</THEN>
+				</IF_TEST>
+
+
+
+
+	      <SET Var="thisReturn" FromSelect="$inXml"/>
+	    </ACTION>
+	  </RULE>
+	</DEFINE_METHOD>
+	<DEFINE_METHOD Name="getcomboData">
+		<RULE>
+			<ACTION>
+				<IF_TEST Test="strlen($thisParam/REQUEST/@Name) != 0">		
+					<THEN>
+						  <SET Var="thisParam" FromSelect="$thisParam/REQUEST"/>
+					</THEN>
+					</IF_TEST>
+				 <TO_DOCVAR AssignToVar="comboData">
+					 <COMBODATA/>
+				</TO_DOCVAR>
+				
+				 <TO_DOCVAR AssignToVar="TEMP_DIM">
+          <DIMENSION/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$thisParam/DIMENSIONAL_DATA/DIMENSION" CurrentElement="dim_info">
+          <TO_DOCVAR AssignToVar="Temp">
+            <OPTION Id="{$dim_info/DIMENSION_ID/@Value}" Value="{$dim_info/DIMENSION_CODE/@Value}"/>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="TEMP_DIM" FromValue="{$Temp}"/>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="TEMP_LVL">
+          <LEVEL/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$thisParam/DIMENSIONAL_DATA/DIMENSION" CurrentElement="dimension_info">
+					<SET Var="abc" FromSelect="$dimension_info/DIMENSION_CODE/@Value"/>
+					<SET Var="efg" FromSelect="$thisParam/Current_Dimension/@Value"/>
+          <IF_TEST Test="$dimension_info/DIMENSION_ID/@Value = $thisParam/Current_dimension_id/@Value">
+            <THEN>
+              <FOR_EACH SelectList="$dimension_info/LEVELS/LEVEL_INFO" CurrentElement="level_info">
+                <TO_DOCVAR AssignToVar="TempLevels">
+                  <OPTION Id="{$level_info/LEVEL_ID/@Value}" Value="{$level_info/LEVEL_CODE/@Value}"/>
+                </TO_DOCVAR>
+                <ADD_CHILDREN DocVar="TEMP_LVL" FromValue="{$TempLevels}"/>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+				<ADD_CHILDREN DocVar="comboData" FromValue="{$TEMP_DIM}"/>
+				<ADD_CHILDREN DocVar="comboData" FromValue="{$TEMP_LVL}"/>
+				<SET Var="thisReturn" FromSelect="$comboData"/> 
+			</ACTION>
+		</RULE>
+	</DEFINE_METHOD>
+	  <DEFINE_METHOD Name="getMergeGraph">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="request">
+          <INPUT/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$thisParam/DIMENSION" CurrentElement="dim_info">
+          <IF_TEST Test="$dim_info/DIMENSION_ID/@Value = $thisParam/MEMBER/DIMENSION/@Id">
+            <THEN>
+              <TO_DOCVAR AssignToVar="TEMP_DIM">
+                <DIMENSION Name="{$dim_info/DIMENSION_CODE/@Value}" Value="{$dim_info/DIMENSION_ID/@Value}"/>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="request" FromValue="{$TEMP_DIM}"/>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <FOR_EACH SelectList="$thisParam/DIMENSION" CurrentElement="dimension_info">
+          <IF_TEST Test="$dimension_info/DIMENSION_ID/@Value = $thisParam/MEMBER/DIMENSION/@Id">
+            <THEN>
+              <FOR_EACH SelectList="$dimension_info/LEVELS/LEVEL_INFO" CurrentElement="level_info">
+                <TO_DOCVAR AssignToVar="TempLevels">
+                  <LEVEL Name="{$level_info/LEVEL_CODE/@Value}">
+                    <LEVEL_ID Value="{$level_info/LEVEL_ID/@Value}"/>
+                  </LEVEL>
+                </TO_DOCVAR>
+                <ADD_CHILDREN DocVar="TEMP_DIM" FromValue="{$TempLevels}"/>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>	
+				<SET Var="a" FromSelect="$thisParam/MEMBER/DIMENSION/@Id"/>		
+        <GET_DOCUMENT AssignToVar="show" Name="LevelHierarchy" ServiceName="BCM_MASTER">
+          <SELECT>
+            <LevelId/>
+            <parentLevelId/>
+          </SELECT>
+          <QUERY_DOCUMENT_LINK Name="FK_LEVEL_LEVEL_HIERARCHY">
+            <DimensionId Value="{$thisParam/MEMBER/DIMENSION/@Id}"/>
+          </QUERY_DOCUMENT_LINK>
+        </GET_DOCUMENT>
+        <TO_DOCVAR AssignToVar="levelRelations">
+          <LEVEL_RELATIONSHIP/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$show/LevelHierarchy" CurrentElement="lvlRelationship">
+					<IF_TEST Test="strlen($lvlRelationship/parentLevelId/@Value) != 0">
+						<THEN>
+	          <TO_DOCVAR AssignToVar="relation">
+	            <RELATION Parent="{$lvlRelationship/parentLevelId/@Value}" Child="{$lvlRelationship/LevelId/@Value}"/>
+	          </TO_DOCVAR>
+	          <ADD_CHILDREN DocVar="levelRelations" FromValue="{$relation}"/>
+						</THEN>
+					</IF_TEST>	
+        </FOR_EACH>
+        <ADD_CHILDREN DocVar="TEMP_DIM" FromValue="{$levelRelations}"/>
+        <NATIVE_FUNCTION AssignToVar="return" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_NativeHierarchy" MethodName="createHierarchy">
+          <PARAM Var="thisContext"/>
+          <PARAM Var="request"/>
+        </NATIVE_FUNCTION>
+        <ADD_CHILDREN DocVar="return" FromSelect="$request"/>
+        <SET Var="thisReturn" FromSelect="$return"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+	<DEFINE_METHOD Name="showtable2">
+    <RULE>
+      <ACTION>        
+        <TO_DOCVAR AssignToVar="parameters">
+          <INPUT>
+              <Current_dimension_id Value="{$thisParam/Current_dimension_id/@Value}"/>					   
+					    <Current_level_id Value="{$thisParam/Current_level_id/@Value}"/>					    
+					    <Current_member_id Value="{$thisParam/Current_member_id/@Value}"/>
+          </INPUT>
+        </TO_DOCVAR>				
+        <NATIVE_FUNCTION AssignToVar="returnVal" ClassName="com.i2.bcm.xservice.bcmmaster.task.tk_NativeHierarchy" MethodName="getTable1data">
+          <PARAM Var="thisContext"/>
+          <PARAM Var="parameters"/>
+        </NATIVE_FUNCTION>      
+        <SET Var="thisReturn" FromSelect="$returnVal"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+		<DEFINE_METHOD Name="saveOperation">
+    <RULE>
+      <ACTION>
+				 <!-- check operation    -->					
+				<IF>
+				 <COND>
+              <OR>
+                <IS_TRUE Value="{$thisParam/userAction/@Value = 'New'}"/>
+                <IS_TRUE Value="{$thisParam/operation/@Value = 'New'}"/>                
+              </OR>
+            </COND>				
+				  <THEN>
+				    <!-- new member added -->
+						<REQUEST Name="checkMemberCodeUniquenessInLevel" AssignToVar="res1">
+							<Current_dimension_id Value="{$thisParam/Current_dimension_id/@Value}"/>
+							<Current_level_id Value="{$thisParam/Current_level_id/@Value}"/>
+							<memberCode Value="{$thisParam/memberCode/@Value}"/>
+						</REQUEST>						
+						<IF_TEST Test="$res1/result/@Value = 'true'">
+							<THEN>
+								<REQUEST Name="getUniqueId" AssignToVar="mem_id" ServiceName="BCM_MASTER">
+            					<DOCUMENT_NAME Value="Member"/>
+          			</REQUEST>
+								
+								
+<!--		ISSUE 560187		In case of add member at the top level, its status should be assigned  i.e. memStat=0				-->
+								  <GET_DOCUMENT AssignToVar="toplevel_Verification" Name="LevelHierarchy" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+						      	<LevelId Value="{$thisParam/Current_level_id/@Value}" MatchBy="EQUAL"/>
+									  <QUERY_DOCUMENT_LINK Name="FK_LEVEL_LEVEL_HIERARCHY">
+						          <DimensionId Value="{$thisParam/Current_dimension_id/@Value}"/>
+						        </QUERY_DOCUMENT_LINK>
+						      </GET_DOCUMENT>
+								
+									<IF_TEST Test="$toplevel_Verification/@TotalRowCount =0">
+												<THEN>
+													 <SET Var="memberStat"  FromValue="0"/>
+												</THEN>
+											<ELSE>
+													<SET Var="memberStat"  FromValue="2"/>
+											</ELSE>
+										</IF_TEST>
+								
+								
+						    <ADD_DOCUMENT Name="Member" AssignToVar="res" ServiceName="BCM_MASTER">
+								     <Id Value="{$mem_id/UNIQUE_ID/@Value}"/> 								
+										<!--	<Id Value="1975"/> -->
+											<dimensionID Value="{$thisParam/Current_dimension_id/@Value}"/>
+								      <LevelId Value="{$thisParam/Current_level_id/@Value}"/>
+								      <Name Value="{$thisParam/memberCode/@Value}"/>
+						<!--      <memberCode Value="{$thisParam/memberCode/@Value}"/> -->   <!-- name and memberCode of the newly added member should not be the same ISSUE  555352-->
+							     <memberStat Value="{$memberStat/@Value}"/>
+							      <ENTITY_STATE Value="ACTIVE"/>
+							      <Description Value="{$thisParam/memberDesc/@Value}"/>
+										<CREATION_DATE Value="{date()}"/>
+										<CREATED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+										<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+										<LAST_MODIFIED_DATE Value="{date()}"/>
+										<SOURCE Value="UI"/>
+						    </ADD_DOCUMENT>
+								<IF_TEST Test="$res/@Status = 'Success'">
+									<THEN>
+										<TO_DOCVAR AssignToVar="reply">
+											<output>
+												<Current_member_name Value="{$thisParam/memberCode/@Value}"/>
+												<Current_member_id Value="{$res/Id/@Value}"/>
+												 <Append_Status Value="SUCCESS"/>
+											</output>
+										</TO_DOCVAR>
+										<SET Var="thisReturn"  FromSelect="$reply"/>
+									</THEN>
+								</IF_TEST>						  
+						</THEN>
+					</IF_TEST> <!-- unique -->
+					</THEN>							
+				</IF>
+				<IF>
+				 <COND>
+              <OR>
+                <IS_TRUE Value="{$thisParam/userAction/@Value = 'Duplicate'}"/>
+                <IS_TRUE Value="{$thisParam/operation/@Value = 'Duplicate'}"/>                
+              </OR>
+            </COND>				
+				  <THEN>					
+					    <!-- new member added -->
+						  <REQUEST Name="checkMemberCodeUniquenessInLevel" AssignToVar="res1">
+							<Current_dimension_id Value="{$thisParam/Current_dimension_id/@Value}"/>
+							<Current_level_id Value="{$thisParam/Current_level_id/@Value}"/>
+							<memberCode Value="{$thisParam/memberCode/@Value}"/>
+							</REQUEST>
+							<IF_TEST Test="$res1/result/@Value = 'true'">
+							<THEN>
+								  <REQUEST Name="getUniqueId" AssignToVar="mem_id" ServiceName="BCM_MASTER">
+            					<DOCUMENT_NAME Value="Member"/>
+          			  </REQUEST>
+										 <GET_DOCUMENT AssignToVar="memberStatus" Name="Member" ServiceName="BCM_MASTER">
+									  <Id Value="{$thisParam/Current_member_id/@Value}" MatchBy="EQUAL"/>
+									  <SELECT>
+									    <memberStat/>
+									  </SELECT>
+									</GET_DOCUMENT>
+								
+							    <ADD_DOCUMENT Name="Member" AssignToVar="res" ServiceName="BCM_MASTER">
+							     <Id Value="{$mem_id/UNIQUE_ID/@Value}"/>
+									 <!--<Id Value="1976"/>-->
+									  <dimensionID Value="{$thisParam/Current_dimension_id/@Value}"/>
+							      <LevelId Value="{$thisParam/Current_level_id/@Value}"/>
+							      <Name Value="{$thisParam/memberCode/@Value}"/>
+							  <!--    <memberCode Value="{$thisParam/memberCode/@Value}"/>-->  <!-- name and memberCode of the newly duplicated member should not be the same ISSUE  555352-->
+							      <memberStat Value="2"/>
+							      <ENTITY_STATE Value="ACTIVE"/>
+							      <Description Value="{$thisParam/memberDesc/@Value}"/>
+										<CREATION_DATE Value="{date()}"/>
+					<CREATED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_DATE Value="{date()}"/>
+					<SOURCE Value="UI"/>
+							    </ADD_DOCUMENT>
+								  <IF_TEST Test="$res/@Status = 'Success'">
+									<THEN>
+										<TO_DOCVAR AssignToVar="reply">
+											<output>
+												<Current_member_name Value="{$thisParam/memberCode/@Value}"/>
+												<Current_member_id Value="{$res/Id/@Value}"/>
+												<Append_Status Value="SUCCESS"/>
+											</output>
+										</TO_DOCVAR>
+										<SET Var="thisReturn" FromSelect="$reply"/>
+									</THEN>
+								</IF_TEST>
+							</THEN>
+						</IF_TEST>	
+					  </THEN>
+					</IF>
+				 	<IF>
+				 <COND>
+              <OR>
+                <IS_TRUE Value="{$thisParam/userAction/@Value = null}"/>
+                <IS_TRUE Value="{$thisParam/operation/@Value = ''}"/>                
+              </OR>
+            </COND>				
+				  <THEN>				
+							 <!-- check if member present -->
+						<GET_DOCUMENT AssignToVar="temp" ReturnRowCount="yes" Name="Member" ServiceName="BCM_MASTER">
+							<Id Value="{$thisParam/Current_member_id/@Value}" MatchBy="EQUAL"/>
+							<LevelId Value="{$thisParam/Current_level_id/@Value}" MatchBy="EQUAL"/>
+							<dimensionID Value="{$thisParam/Current_dimension_id/@Value}" MatchBy="EQUAL"/>	
+						</GET_DOCUMENT>
+						<GET_DOCUMENT AssignToVar="temp1" ReturnRowCount="yes" Name="Member" ServiceName="BCM_MASTER">
+							<!--<memberCode Value="{$thisParam/memberCode/@Value}" MatchBy="EQUAL"/>--> <!-- check should be on name not on the member Code ISSUE  555352-->
+							<Name Value="{$thisParam/memberCode/@Value}" MatchBy="EQUAL"/>
+							<LevelId Value="{$thisParam/Current_level_id/@Value}" MatchBy="EQUAL"/>
+							<dimensionID Value="{$thisParam/Current_dimension_id/@Value}" MatchBy="EQUAL"/>	
+						</GET_DOCUMENT>
+							<IF>
+				 			<COND>
+              	<AND>
+                <IS_TRUE Value="{$temp/@TotalRowCount != '0'}"/>
+				(
+								<OR>
+								(
+								<AND>
+								<IS_TRUE Value="{$temp1/@TotalRowCount = '0'}"/>	
+								<IS_TRUE Value="{$thisParam/hasCodeChanged/@Value = 'true'}"/>                
+								</AND>			
+								)
+								(	
+								<AND>
+								<IS_TRUE Value="{$temp1/@TotalRowCount != '0'}"/>	
+								<IS_TRUE Value="{$thisParam/hasDescChanged/@Value = 'true'}"/>                
+								</AND>				
+								)	
+								</OR>			
+				)		               
+              </AND>
+             </COND>				
+				    <THEN>					
+							<!-- member already present . Update -->
+									 <GET_DOCUMENT AssignToVar="memberStatus" Name="Member" ServiceName="BCM_MASTER">
+									  <Id Value="{$thisParam/Current_member_id/@Value}" MatchBy="EQUAL"/>
+									  <SELECT>
+									    <memberStat/>
+									  </SELECT>
+									</GET_DOCUMENT>
+							<MODIFY_DOCUMENT Name="Member" ServiceName="BCM_MASTER">
+		            <DOCUMENT_CONTEXT>
+		              <Id Value="{$thisParam/Current_member_id/@Value}" MatchBy="EQUAL"/>
+									<LevelId Value="{$thisParam/Current_level_id/@Value}" MatchBy="EQUAL"/>
+									<dimensionID Value="{$thisParam/Current_dimension_id/@Value}" MatchBy="EQUAL"/>	
+		            </DOCUMENT_CONTEXT>
+		            <UPDATE_PROPERTIES>
+		              <!--<memberCode Value="{$thisParam/memberCode/@Value}"/>-->
+									<!--Both name and member code need not to be the same ISSUE 	555352-->
+									<Name Value="{$thisParam/memberCode/@Value}"/>	
+									 <memberStat Value="{$memberStatus/Member/memberStat/@Value}"/>	      
+					        <Description Value="{$thisParam/memberDesc/@Value}"/>
+										<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+									<LAST_MODIFIED_DATE Value="{date()}"/>
+		            </UPDATE_PROPERTIES>
+          		</MODIFY_DOCUMENT>
+								
+								 <TO_DOCVAR AssignToVar="reply">
+                                            <output>
+                                                <Current_member_name Value="{$thisParam/memberCode/@Value}"/>
+                                                <Current_member_id Value="{$res/Id/@Value}"/>
+                                                <Append_Status Value="SUCCESS"/>
+                                            </output>
+                                        </TO_DOCVAR>
+                                        <SET Var="thisReturn" FromSelect="$reply"/>
+								
+								
+				<IF_TEST Test="($thisParam/hasCodeChanged/@Value = 'true')">
+				<THEN>
+						<REQUEST Name="getUniqueId" AssignToVar="htl_id" ServiceName="BCM_MASTER">
+         				 <DOCUMENT_NAME Value="HierarchyTransactionLog"/>
+      	 			 </REQUEST>					
+          <ADD_DOCUMENT Name="HierarchyTransactionLog" AssignToVar="res1" ServiceName="BCM_MASTER">  
+           <Id Value="{$htl_id/UNIQUE_ID/@Value}"/>				
+            <fromMemberName Value="{$thisParam/Current_member_name/@Value}"/>
+            <levelName Value="{$thisParam/Current_level_name/@Value}"/>
+            <operation Value="RC"/>									
+						<toMemberName Value="{$thisParam/memberCode/@Value}"/>			
+            <dimensionName Value="{$thisParam/Current_dimension_name/@Value}"/>
+						<CREATION_DATE Value="{date()}"/>
+					<CREATED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_BY Value="{$thisParam/CREATED_BY/@Value}"/>	
+					<LAST_MODIFIED_DATE Value="{date()}"/>
+					<ENTITY_STATE Value="ACTIVE"/>
+					<SOURCE Value="UI"/>
+          </ADD_DOCUMENT>
+		  </THEN>					
+		</IF_TEST>
+						</THEN>					
+	       </IF>				
+				</THEN>
+			 </IF>
+								
+			</ACTION>
+    </RULE>
+  </DEFINE_METHOD>	
+	
+	<DEFINE_METHOD Name="checkMemberCodeUniquenessInLevel">
+    <RULE>
+      <ACTION>
+				<GET_DOCUMENT AssignToVar="check1" ReturnRowCount="yes" Name="Member" ServiceName="BCM_MASTER">
+					<LevelId Value="{$thisParam/Current_level_id/@Value}" MatchBy="EQUAL"/>
+					<dimensionID Value="{$thisParam/Current_dimension_id/@Value}" MatchBy="EQUAL"/>
+					<Name Value="{$thisParam/memberCode/@Value}"/>	
+				</GET_DOCUMENT>
+				<IF_TEST Test="$check1/@TotalRowCount != '0'">
+					<THEN>
+						 <TO_DOCVAR AssignToVar="replyback">
+							<output>
+								 <result Value="false"/>
+							</output>
+						</TO_DOCVAR>					
+					</THEN>
+					<ELSE>
+						<TO_DOCVAR AssignToVar="replyback">
+							<output>
+								 <result Value="true"/>
+							</output>
+						</TO_DOCVAR>
+					</ELSE>									  
+				</IF_TEST>
+				<SET Var="thisReturn" FromSelect="$replyback"/>		
+			</ACTION>
+    </RULE>
+  </DEFINE_METHOD>	    
+</DOCUMENTS>

@@ -1,0 +1,308 @@
+<ui:page-group xmlns:ui="http://www.i2.com/ui" Id="iscpFscCopy.pgl">
+  <ui:container id="cntrC" scrollable="true" collapsable="true">
+    <ui:step id="stpC" displayText="Facility Storage Capacity Copy">
+      <ui:grid>
+        <ui:row>
+          <ui:cell>
+            <ui:container id="cntrPH" editable="false" height="115" width="400">
+              <ui:step displayText="Planning Horizon" id="stpPH" editable="true">
+                <ui:grid>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group id="leftFields11">
+                        <ui:display-field displayText="Starting Week" id="SWTXT" name="SWTXT" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields12">
+                        <ui:dropdown id="SWYEAR" name="SWYEAR" optionSrc="$root/YEARLIST/OPTIONS/OPTION" value="{$root/SWYEAR/@Value}" disabled="true" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields13">
+                        <ui:dropdown id="SWPERIOD" name="SWPERIOD" optionSrc="$root/PERIODLIST/OPTIONS/OPTION" value="{$root/SWPERIOD/@Value}" disabled="true" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields14">
+                        <ui:dropdown id="SWWEEK" required="true" name="SWWEEK" optionSrc="$root/WEEKLIST/OPTIONS/OPTION" value="{$root/SWWEEK/@Value}" disabled="true" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields15">
+                        <ui:entry-field editable="fasle" id="SWDATE" style="font-weight:Bold" value="{$root/STARTDATE/@Value}" defaultValue="MM/DD/YYYY" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group id="leftFields21">
+                        <ui:display-field displayText="Ending Week" id="SWTXT" name="SWTXT" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields22">
+                        <ui:dropdown id="EWYEAR" name="EWYEAR" optionSrc="$root/YEARLIST/OPTIONS/OPTION" value="{$root/EWYEAR/@Value}" disabled="true" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields23">
+                        <ui:dropdown id="EWPERIOD" name="EWPERIOD" optionSrc="$root/PERIODLIST/OPTIONS/OPTION" value="{$root/EWPERIOD/@Value}" disabled="true" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields24">
+                        <ui:dropdown id="EWWEEK" required="true" name="EWWEEK" optionSrc="$root/WEEKLIST/OPTIONS/OPTION" value="{$root/EWWEEK/@Value}" disabled="true" />
+                      </ui:field-group>
+                    </ui:cell>
+                    <ui:cell>
+                      <ui:field-group id="leftFields25">
+                        <ui:entry-field editable="fasle" id="EWDATE" style="font-weight:Bold;" value="{$root/ENDDATE/@Value}" defaultValue="MM/DD/YYYY" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                </ui:grid>
+                <!--<ui:buttons id="buttons">
+                  <ui:button id="APPLY" name="APPLY" displayText="Apply"  disabled="{$root/APPENABLE/@Value}"/>
+                </ui:buttons>-->
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+          <ui:cell>
+            <ui:container id="cntrL" editable="false" height="100">
+              <ui:step displayText="Legends - for individual time buckets (Not across time buckets)" id="stpL" editable="true">
+                <ui:grid>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group showDivider="true">
+                        <ui:entry-field id="LGD11" name="LGD11" editable="false" displayText="Note" displayNoWrap="true" defaultValue="Please validate after making any change(s) to value(s)." style="font-weight:Bold" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group showDivider="false">
+                        <ui:entry-field id="LGD11" name="LGD11" editable="false" displayText="" displayNoWrap="true" defaultValue="" style="font-weight:Bold" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group showDivider="false">
+                        <ui:entry-field id="LGD11" name="LGD11" editable="false" displayText="" displayNoWrap="true" defaultValue="" style="font-weight:Bold" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                  <ui:row>
+                    <ui:cell>
+                      <ui:field-group showDivider="true">
+                        <ui:entry-field id="LGD11" name="LGD11" editable="false" displayText="XX, XXX" displayNoWrap="true" defaultValue="(Location cell) Sum of effective segment(s) units &gt; location's effective units" style="font-weight:Bold;background:#BEC5E7" />
+                        <ui:entry-field id="LGD12" name="LGD12" editable="fasle" displayText="XX, XXX" displayNoWrap="true" defaultValue="(Segment cell) Sum of effective segment(s) units &gt; location's effective units" style="font-weight:Bold;color:red;background:yellow" />
+                        <ui:entry-field id="LGD13" name="LGD13" editable="fasle" displayText="XX, XXX" displayNoWrap="true" defaultValue="Segment's soft constraint effective units &gt; segment's hard constraint effective units" style="font-weight:Bold;color:red;background:#BEC5E7" />
+                      </ui:field-group>
+                    </ui:cell>
+                  </ui:row>
+                </ui:grid>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+        </ui:row>
+      </ui:grid>
+    </ui:step>
+  </ui:container>
+  <ui:container id="cntrCPR" collapsable="true" scrollable="true">
+    <ui:step id="stpCPR" displayText="Facility Storage Capacity Copy Record" scrollable="true">
+      <ui:validation anyFieldIsRequired="false" successMessage="{$root/SUCCESS_MESSAGE/@Value}" instructionMessage="Please validate after making any change(s) to value(s)." />
+      <ui:field-group id="leftFields" displayCondition="{$root/CPYLOC/@Value = 'true'}">
+        <ui:entry-field id="LOC_ID" name="LOC_ID" displayText="Select Location">
+          <ui:links>
+            <ui:link displayText="Select Location" targetType="popup" targetName="planPopUp">
+              <ui:image src="pop_up_window.gif" />
+              <ui:url page="start.x2ps">
+                <FIELD_NAME select="'LOC_ID'" />
+                <SELECTABLE select="'Single'" />
+                <BUTTON_ID select="'selectLocation'" />
+              </ui:url>
+            </ui:link>
+          </ui:links>
+        </ui:entry-field>
+      </ui:field-group>
+      <ui:field-group id="leftFields" displayCondition="{$root/CPYLOC/@Value = 'false'}">
+        <ui:field-group id="leftFields">
+          <ui:entry-field id="PRTY_ID" name="PRTY_ID" displayText="Select Segment">
+            <ui:links>
+              <ui:link displayText="Select Segment" targetType="popup" targetName="planPopUp">
+                <ui:image src="pop_up_window.gif" />
+                <ui:url page="start.x2ps">
+                  <FIELD_NAME select="'PRTY_ID'" />
+                  <SELECTABLE select="'Single'" />
+                  <BUTTON_ID select="'selectSegment'" />
+                </ui:url>
+              </ui:link>
+            </ui:links>
+          </ui:entry-field>
+        </ui:field-group>
+        <ui:field-group id="rightFields">
+          <ui:dropdown displayText="Constraint Type" name="CNSTRNTID" optionSrc="$root/CONSTRAINT_TYPES/*" selectAll="false" />
+        </ui:field-group>
+        <ui:field-group id="rightFields1" displayCondition="false">
+          <ui:dropdown id="CNSTRNTID1" name="CNSTRNTI1D" editable="true" displayText="Contrain1t">
+            <ui:option id="Hard1" />
+            <ui:option id="Soft1" />
+          </ui:dropdown>
+        </ui:field-group>
+      </ui:field-group>
+      <ui:pivot id="pivot" displayText="" select="$root/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS" subRowSrc="BUCKETS/ROWDATA" rowId="UNIQUEROW" scrollable="true" maxRows="2">
+        <ui:table-row select="BUFFER_SLA">
+          <ui:table-row select="SEGMENT_SLAS/BUFFER_SLA" />
+        </ui:table-row>
+        <ui:pivot-field axis="row" id="UNIQUEROW" name="UNIQUEROW" displayText="Segment" displayCondition="false" />
+        <ui:pivot-field axis="row" id="LocationIdentifier" name="LocationIdentifier" displayText="Location" dataType="String" treeCell="true" collapsed="true" />
+        <!--ui:pivot-field axis="row" id="LOCNAME" name="LOCNAME" displayText="Location Name"/-->
+        <ui:pivot-field axis="row" id="LocationCapacityType" name="LocationCapacityType" displayText="Location Type" />
+        <ui:pivot-field axis="row" id="OrganizationPartyIdentifier" name="OrganizationPartyIdentifier" displayText="Segment" dataType="String" />
+        <ui:pivot-field axis="row" id="SGMNAME" name="SGMNAME" displayText="Segment Name" />
+        <ui:pivot-field axis="row" id="OrganizationXLocationCapacityLimitClassIdentifier" name="OrganizationXLocationCapacityLimitClassIdentifier" displayText="Constraint" />
+        <ui:pivot-field axis="row" id="CapacityUnitOfMeasureIdentifier" name="CapacityUnitOfMeasureIdentifier" displayText="Unit of Measure" />
+        <ui:pivot-field axis="column" name="FROM_DATE" displayText="" />
+        <!--ui:entry-field name="OrganizationXAllocatedLocationCapacityMeasure" displayText="Units (Rated Capacity)" size="6" dataType="Number" align="left" editable="{FIELDEDITABLE/@Value = 'false'}"/>
+        <ui:entry-field name="OrganizationXLocationCapacityTargetUtilizationPercent" displayText="Utilization %" dataType="Number" size="6" align="left" editable="{FIELDEDITABLE/@Value = 'false'}"/>
+        <ui:display-field name="EFFSTRGUNIT" displayText="Effective Units" size="6" dataType="Number" align="left" style="{STYLE/@Value}"/>
+        <ui:entry-field name="CMMNT" displayText="Comments" size="6" align="left" editable="{FIELDEDITABLE/@Value = 'false'}"/-->
+        <ui:compound-field displayText="Units (Rated Capacity)">
+          <ui:entry-field id="OrganizationXAllocatedLocationCapacityMeasure" name="OrganizationXAllocatedLocationCapacityMeasure" size="6" dataType="Number" align="left" editable="{FIELDEDITABLE/@Value = 'false'}" style="padding:0" onBlur="javascript:disableSave()" />
+          <ui:hidden-field id="origACM" name="origACM" value="{OrganizationXAllocatedLocationCapacityMeasure/@Value}" />
+          <ui:hidden-field id="cntWklyBkt" name="cntWklyBkt" value="{$root/CNTWKLYBKT/@Value}" />
+        </ui:compound-field>
+        <ui:compound-field displayText="Utilization %">
+          <ui:entry-field id="OrganizationXLocationCapacityTargetUtilizationPercent" name="OrganizationXLocationCapacityTargetUtilizationPercent" size="6" align="left" dataType="Number" decimals="2" editable="{FIELDEDITABLE/@Value = 'false'}" style="padding:0" onBlur="javascript:disableSave()" />
+          <ui:hidden-field id="origTUP" name="origTUP" value="{OrganizationXLocationCapacityTargetUtilizationPercent/@Value}" />
+        </ui:compound-field>
+        <!--ui:compound-field displayText="Effective Units" align="left"-->
+        <ui:display-field displayText="Effective Units" name="EFFSTRGUNIT" size="6" dataType="Number" align="left" style="{STYLE/@Value}" />
+        <!--/ui:compound-field-->
+        <!--  <ui:compound-field displayText="Comments">
+          <ui:textarea name="CMMNT" id="CMMNT" align="left" editable="{FIELDEDITABLE/@Value = 'false'}" style="padding:0" />
+          <ui:hidden-field id="origCT" name="origCT" value="{CMMNT/@Value}" />
+        </ui:compound-field>-->
+        <!-- <ui:textarea name="CMMNT" id="CMMNT" editable="{FIELDEDITABLE/@Value = 'false'}" style="padding:0" displayText="Comments"/>-->
+        <ui:entry-field name="CMMNT" displayText="Comments" size="6" align="left" editable="{FIELDEDITABLE/@Value = 'false'}" />
+        <ui:hidden-field id="origCT" name="origCT" value="{CMMNT/@Value}" />
+      </ui:pivot>
+      <ui:buttons displayCondition="{$root/CPYLOC/@Value = 'true'}">
+        <ui:button displayText="Create Location" id="CREATE_LOC" name="CREATE_LOC" disabled="{$root/CLB/@Value}" />
+        <!--ui:divider/>
+        <ui:button displayText="Validate" id="VALIDATE_LOC" name="VALIDATE_LOC" disabled="{$root/VLB/@Value}"/-->
+        <ui:divider />
+        <ui:button displayText="Save " id="SAVE_LOC" name="SAVE_LOC" disabled="{$root/SLB/@Value}" />
+        <ui:divider />
+        <!-- RIC: 240988 Praneeth - Cancel button wording changes request - Start -->
+        <ui:button id="CANCEL" name="CANCEL" displayText="Back to Search" />
+        <!-- RIC: 240988 Praneeth - Cancel button wording changes request - End -->
+      </ui:buttons>
+      <ui:buttons displayCondition="{$root/CPYLOC/@Value = 'false'}">
+        <ui:button displayText="Create Segment" id="CREATE_SGMNT" name="CREATE_SGMNT" disabled="{$root/CSB/@Value}" />
+        <ui:divider />
+        <ui:button displayText="Validate" id="VALIDATE_SGMNT" name="VALIDATE_SGMNT" disabled="{$root/VSB/@Value}" />
+        <ui:divider />
+        <!--ui:button displayText="Save " id="SAVE_SGMNT" name="SAVE_SGMNT"/-->
+        <ui:button displayText="Save " id="SAVE_SGMNT" name="SAVE_SGMNT" disabled="{$root/SSB/@Value}" />
+        <ui:divider />
+        <!-- RIC: 240988 Praneeth - Cancel button wording changes request - Start -->
+        <ui:button id="CANCEL" name="CANCEL" displayText="Back to Search" />
+        <!-- RIC: 240988 Praneeth - Cancel button wording changes request - End -->
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function disableSave(){
+		//core_alert("i'll disable save");
+		i2uiToggleButtonState('SAVE_SGMNT', 'disabled');
+		}
+
+		function replaceAll(str, searchTerm, replaceWith){
+		   var regex = "/"+searchTerm+"/g";
+		   regex += "i";
+		   return str.replace(eval(regex), replaceWith);
+		}		
+
+		function isInteger(s){
+			return s.length &gt; 0 &amp;&amp; !(/[^0-9]/).test(s);
+		}
+						
+function on_VALIDATE_SGMNT(){//on_VALIDATE_SGMNT starts
+	var searchStr = ",";
+	var replaceStr = "";
+			
+	var origAllocVal = document.getElementsByName('origACM');
+	var origTUtilVal = document.getElementsByName('origTUP');
+	var origComments = document.getElementsByName('origCT');
+		
+	var currAllocVal = document.getElementsByName('OrganizationXAllocatedLocationCapacityMeasure');
+	var currTUtilVal = document.getElementsByName('OrganizationXLocationCapacityTargetUtilizationPercent');
+	var currComments = document.getElementsByName('CMMNT');
+
+	var bktNumer =  document.getElementsByName('cntWklyBkt');
+	var bktCnt = bktNumer[0].value;
+	var length = 	currComments.length;//alert(length +" length "+currComments.length);
+		
+	for(i=1; i &lt;= bktCnt; i++){	//outer for Start 		
+		if( parseInt( replaceAll(trimString(currAllocVal[bktCnt-i].value), searchStr, replaceStr) ) &lt; 0 || strlen( replaceAll(trimString(currAllocVal[bktCnt-i].value), searchStr, replaceStr) ) == 0 || isNaN( replaceAll(trimString(currAllocVal[bktCnt-i].value), searchStr, replaceStr) ) ){//inner if starts
+			core_alert("Please enter a positive value for Allocated Capacity!");
+			isValid = false;
+			return;
+		}else if( !isInteger( replaceAll(trimString(currAllocVal[bktCnt-i].value), searchStr, replaceStr) ) ){//inner if starts
+			core_alert("Please provide integer values for Units!");
+			isValid = false;
+			return;
+		}else if( strlen( replaceAll(trimString(currAllocVal[bktCnt-i].value), searchStr, replaceStr) ) &gt; 18){//inner if starts
+			core_alert("Allocated capacity units can not be more than 18 digits!");
+			isValid = false;
+			return;
+		}else{//inner if ends inner else start
+			isValid = true;
+		}
+    <!-- MYANG RIC 230571 - FSC Utilization Validation Change   Start -->
+    if(parseFloat(currTUtilVal[bktCnt-i].value) &gt; 999 || parseFloat(currTUtilVal[bktCnt-i].value) &lt; 0 || strlen(trimString(currTUtilVal[bktCnt-i].value)) == 0 || isNaN( trimString(currTUtilVal[bktCnt-i].value) )  ){//inner if starts
+			core_alert("Please enter utilization percentage between 0 and 999!");
+			isValid = false;
+			return;
+		}
+    <!-- MYANG RIC 230571 - FSC Utilization Validation Change   End -->
+    else{//inner if ends inner else start
+			isValid = true;
+		}
+		
+		if(strlen(trimString(currComments[length-i].value)) &gt; 2000){//inner if starts
+			core_alert("Comments should be less than 2000 characters!!");
+			isValid = false;
+			return;
+		}else{//inner if ends inner else start
+			isValid = true;
+		}
+	}
+		
+	if(isValid){//if starts	
+		var bIsValid = true;
+		document.form.SUBMIT_AS_XML.value = 'false';
+
+		bIsValid = (isValid_stpCPR());
+
+		if( bIsValid == false ){
+			validation_alert('stpCPR');
+		}
+		if ( bIsValid == true){
+			disableButtons(); 
+			trapExcelPivotChanges(); 
+			document.form.BUTTON_ID.value = 'VALIDATE_SGMNT'; 
+			document.form.action = 'view.x2ps';
+			document.form.submit();  
+		}
+
+		onResize();  
+		return;
+	}//if ends		 
+}//on_VALIDATE_SGMNT ends
+  </ui:script>
+</ui:page-group>
+

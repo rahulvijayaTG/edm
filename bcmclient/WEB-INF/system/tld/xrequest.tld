@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE taglib
+    PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.1//EN"
+    "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd">
+
+<taglib> 
+  <tlibversion>1.0</tlibversion> 
+  <jspversion>1.1</jspversion>
+  <shortname>x2</shortname>
+  <info>x2 Tag Libarary</info>
+  
+  <!--  
+  <tag> 
+    <name>tagname</name>
+    <tagclass>com.i2.xservice.proposal.taglib.TagClass</tagclass>
+    <bodycontent>JSP</bodycontent>
+    <info>Information</info> 
+    <attribute>
+    	<name>attributeName</name>
+    	<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>  
+	-->
+
+  <tag> 
+    <name>execute</name>
+    <tagclass>com.i2.x2.taglib.x2.ExecuteCommand</tagclass>
+    <bodycontent>JSP</bodycontent>
+    <info>executes an x2 command</info> 
+    <attribute>
+      <name>command</name>
+      <required>true</required>
+      <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+      <name>output</name>
+      <required>false</required>
+      <rtexprvalue>false</rtexprvalue>
+    </attribute>
+  </tag>
+  
+  <tag>
+  	<name>xslt</name>
+  	<tagclass>com.i2.x2.taglib.xsl.ClientsideXsltTag</tagclass>
+  	<bodycontent>JSP</bodycontent>
+  	<attribute>
+  		<name>xslfile</name>
+  		<required>true</required>
+  		<rtexprvalue>true</rtexprvalue>
+  	</attribute>
+  </tag> 
+
+</taglib>

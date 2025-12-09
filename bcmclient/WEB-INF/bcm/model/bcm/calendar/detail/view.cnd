@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:commands xmlns:x2="http://www.i2.com/x2" xmlns:core="http://www.i2.com/core" xmlns:xcore="http://www.i2.com/xcore" xmlns:xcore-db="http://www.i2.com/xcore-db" xmlns:xapl="http://www.i2.com/xapl" xmlns:web="http://www.i2.com/web" xmlns:docutil="http://www.i2.com/docutil" xmlns:util="http://www.i2.com/util" xmlns:xudl="http://www.i2.com/xudl" xmlns:cfg="http://www.i2.com/configurability" xmlns:perm="http://www.i2.com/permissibility" xmlns:omx="http://www.i2.com/omx" xmlns:i18n="http://www.i2.com/i18n" xmlns:identity="http://www.i2.com/identity" description="_">
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  
+  <x2:command public="yes" description="_" name="load">
+    <!-- BREADCRUMBS AT TOP OR AFTER CLEAN-CONTEXT-->
+    <x2:execute command="bcm.framework.breadcrumb.controller:addBreadCrumbs">
+      <x2:with-param name="display" select="'Calendar Setup'"/>
+      <x2:with-param name="page" select="'calendarDetail'"/>
+      <x2:with-param name="this" select="{$this}"/>
+    </x2:execute>
+    <xapl:print>
+    PRINTING THIS
+      <xapl:value-of select="$this"/>
+      PRINTING CONTEXT
+      <xapl:value-of select="$context"/>
+    </xapl:print>
+    <docutil:set select="$this">
+      <FORM_NAME Value="CALENDAR_DETAIL_FORM"/>
+      <SERVICE Value="BCMMasterService"/>
+    </docutil:set>
+    <xapl:choose>
+      <xapl:when test="$context/RESOURCE">
+        <docutil:set select="$this">
+          <F_CalendarMaster.calendarTypeID Value="RESOURCE"/>
+        </docutil:set>
+        <docutil:set select="$context/RESOURCE">
+          <name Value="{$resDetails/name/@Value}"/>
+          <description Value="{$resDetails/description/@Value}"/>
+        </docutil:set>
+      </xapl:when>
+      <xapl:when test="$context/DL">
+        <docutil:set select="$this">
+          <F_CalendarMaster.calendarTypeID Value="DL"/>
+        </docutil:set>
+        <docutil:set select="$context/DL">
+          <name Value="{$distributionLaneDetails/name/@Value}"/>
+          <description Value="{$distributionLaneDetails/description/@Value}"/>
+        </docutil:set>
+      </xapl:when>
+      <xapl:when test="$context/LOCATION">
+        <docutil:set select="$this">
+          <F_CalendarMaster.calendarTypeID Value="LOCATION"/>
+        </docutil:set>
+      </xapl:when>
+      <xapl:otherwise/>
+    </xapl:choose>
+    <xapl:variable name="form">
+      <x2:execute command="bcm.framework.queryform.Form:getFormContainer">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="pSearchParam" select="$searchParam"/>
+        <x2:with-param name="pFormName" select=" $this/FORM_NAME/@Value "/>
+        <x2:with-param name="pServiceName" select="$this/SERVICE/@Value"/>
+        <x2:with-param name="pSearchReportConfigSource" select="'bcm.calendar.detail.view:getReportConfig'"/>
+        <x2:with-param name="pReportDataSource" select="'bcm.calendar.detail.view:getReportData'"/>
+      </x2:execute>
+    </xapl:variable>
+    
+    <x2:execute command="bcm.cm:getWeeklyHorizonData"/>
+    <x2:execute command="bcm.cm:getMonthlyHorizonData"/>
+
+    <xapl:print>'PRINTING HorizonData'</xapl:print>
+    <xapl:print select="$appMonthlyHorizonData"/>
+    <xapl:print select="$appWeeklyHorizonData"/>
+
+    <xapl:return>
+      <!-- Page Header-->
+      <x2:execute command="bcm.calendar.detail.view:getHeader">
+        <x2:with-param name="this" select="$this"/>
+      </x2:execute>
+      <!-- Container-->
+      <x2:execute command="bcm.calendar.detail.view:getContainer">
+        <x2:with-param name="this" select="$this"/>
+        <x2:with-param name="pPage" select="'calendarDetail'"/>
+      </x2:execute>
+      <!-- Cal Header -->
+      <CALENDAR_HEADER>
+        <!--return context-->
+        <xapl:value-of select="$context/CALENDAR/*"/>
+        <x2:execute command="bcm.cm:getQtyUOMs"/>
+        <x2:execute command="bcm.cm:getCalendarTypesValidValues"/>
+      <WeeklyHorizonData>
+        <xapl:value-of select="$appWeeklyHorizonData/*"/>
+      </WeeklyHorizonData>
+      <MonthlyHorizonData>
+        <xapl:value-of select="$appMonthlyHorizonData/*"/>
+      </MonthlyHorizonData>
+      </CALENDAR_HEADER>
+      <!-- Search / Form and Report -->
+      <xapl:value-of select="$form"/>
+      <!-- return parameters-->
+      
+
+      
+      <xapl:value-of select="$this/*"/>
+      <xapl:value-of select="$context"/>
+    </xapl:return>
+  </x2:command>
+  <!--  **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getHeader">
+    <!-- change the header home -->
+    <xapl:return>
+      <x2:execute command="bcm.framework.breadcrumb.controller:getBreadCrumbs"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getContainer">
+    <x2:param name="pPage"/>
+    <x2:param name="this"/>
+    <xapl:print>'PRINTING THIS IN GET CONTAINER'</xapl:print>
+    <xapl:print select="$this"/>
+    <xapl:return>
+      <CONTAINER Scrollable="yes">
+        <xapl:choose>
+          <xapl:when test="$context/CALENDAR/MODE/@Value='NEW'">
+            <HELP Url="../help/Create_calendar.htm"/>
+          </xapl:when>
+          <xapl:otherwise>
+            <HELP Url="../help/calendar_detail_help.htm"/>
+          </xapl:otherwise>
+        </xapl:choose>
+        <STEP Name="ViewForm" DisplayText="Create Calendar Details" OnClick="{$pages:calendarDetail}" Selected="{$pPage = 'calendarDetail'}"/>
+        <BUTTONS>
+        
+              
+          <!--BUTTON Id="copy" Name="Copy" DisplayText="Copy" OnClick="javascript:onCopy()"  Disabled="report" DisableOnClick="true"/-->
+          <!--   <xapl:if test="$context/CALENDAR/MODE/@Value='EDIT' or $context/RESOURCE or $context/LOCATION or $context/DL">
+     
+            <BUTTON Id="newEntry" Name="newEntry" DisplayText="New Entry" OnClick="javascript:onNewEntry()" DisableOnClick="true" Disabled="report"/>
+            <DIVIDER/>
+                     <BUTTON Id="delete" Name="delete" DisplayText="Delete" OnClick="javascript:onDelete()" Disabled="report" DisableOnClick="true"/>
+            <DIVIDER/>
+          </xapl:if>
+          -->
+        
+          <xapl:choose>
+            <xapl:when test="$context/RESOURCE or $context/LOCATION or $context/DL">
+                <BUTTON Id="cancel" Name="cancel" DisplayText="Cancel" OnClick="javascript:onReturnToContext()" DisableOnClick="true"/>
+            </xapl:when>
+            <xapl:when test="$context/CALENDAR/MODE/@Value='EDIT' and $context/CALENDAR/class/@Value !='Generic'">
+                <BUTTON Id="cancel" Name="cancel" DisplayText="Cancel" OnClick="javascript:onFixedCalCancel()" DisableOnClick="true"/>
+            </xapl:when>
+            <xapl:otherwise>
+            <BUTTON Id="cancel" Name="cancel" DisplayText="Cancel" OnClick="javascript:onCancel()" DisableOnClick="true"/>
+            </xapl:otherwise>
+          </xapl:choose>
+        
+
+
+        <xapl:variable name="userPermissionAddForbcmManageCalendar">
+            <x2:execute command="bcm.framework.common:checkAccessPermissions">
+             <x2:with-param name="activityName" select="'bcmManageCalendar'"/>
+             <x2:with-param name="accessLevel" select="'Add'"/>
+            </x2:execute>
+        </xapl:variable>          
+        <xapl:variable name="userPermissionUpdateForbcmManageCalendar">
+            <x2:execute command="bcm.framework.common:checkAccessPermissions">
+             <x2:with-param name="activityName" select="'bcmManageCalendar'"/>
+             <x2:with-param name="accessLevel" select="'Update'"/>
+            </x2:execute>
+        </xapl:variable>   
+
+        <xapl:if test="$userPermissionAddForbcmManageCalendar='True' or $userPermissionUpdateForbcmManageCalendar='True'">                      
+
+         <DIVIDER/>
+         <!--569477 & 572277-->
+          <xapl:choose> 
+            <xapl:when test="$context/LOCATION/assignMode/@Value ='EDIT' or $context/RESOURCE/assignMode/@Value ='EDIT'">
+                <xapl:print>inside the context/Loc/Res buttons</xapl:print>
+                <BUTTON Id="save" Name="save" DisplayText="Save" OnClick="javascript:onSave()" DisableOnClick="true"/>
+                <BUTTON Id="SaveAndReturn" Name="SaveAndReturn" DisplayText="Save And Return" OnClick="javascript:onSaveAndReturn()" DisableOnClick="true" Emphasized="true"/>
+            </xapl:when>
+            <xapl:otherwise>
+               <xapl:choose>
+                <xapl:when test="$context/CALENDAR/MODE/@Value='NEW'">
+                  <xapl:print>inside the calendar specified buttons-NEXT</xapl:print>
+                  <BUTTON Id="next" Name="next" DisplayText="Next" OnClick="javascript:onNext()" DisableOnClick="true" Emphasized="true"/>      
+                </xapl:when>
+                <xapl:otherwise>
+                    <xapl:print>inside the calendar specified buttons-SAVERETURN</xapl:print>
+                    <xapl:if test="$context/CALENDAR/MODE/@Value='EDIT' and ($context/CALENDAR/class/@Value ='Generic' or string-length($context/CALENDAR/class/@Value) =0)">
+                      <BUTTON Id="save" Name="save" DisplayText="Save" OnClick="javascript:onSave()" DisableOnClick="true"/>
+                    </xapl:if>
+                    <BUTTON Id="SaveAndReturn" Name="SaveAndReturn" DisplayText="Save And Return" OnClick="javascript:onSaveAndReturn()" DisableOnClick="true" Emphasized="true"/>
+                </xapl:otherwise>
+              </xapl:choose>
+           </xapl:otherwise>
+          </xapl:choose>
+       </xapl:if>
+       </BUTTONS>
+     </CONTAINER>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportConfig">
+    <x2:param name="this"/>
+    <xapl:variable name="deleteFlag" value="false"/>
+    <!-- get the dynamic columns from server -->
+    <x2:execute command="bcm.cm:getCalBasedAttributesForCalTypes"/>
+    <xapl:return>
+      <REPORT Title="Calendar Detail" Method="POST" Selectable="All" Scrollable="no" ScrollableContainer="yes" Id="calendarEntryID" ShowFilter="no" SelectedId="CAL_ENTRY_ID">
+        <FIELDS>
+          <!--get form's report fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportFieldsByProperty">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+          <!-- ADD DYNAMIC FIELDS HERE DEPENDING ON CALENDAR TYPE -->
+          <xapl:for-each varName="child" select="$appCalendarDetailColumns/calendarTypeID[@Value = $context/CALENDAR/calendarTypeID/@Value]/*">
+            <FIELD Sequence="10" Name="{$child/@Value}" DisplayText="{$child/@Value}" DisplayType="Text" DisplayNoWrap="yes"/>
+          </xapl:for-each>
+          <!-- get Hidden Fields -->
+          <x2:execute command="bcm.framework.queryform.Form:getFormReportHiddenFields">
+            <x2:with-param name="this" select="$this"/>
+          </x2:execute>
+          <!-- additional feidls -->
+          <FIELD Name="CalendarMaster.calendarID" DisplayType="Hidden" Value="{$context/CALENDAR/calendarID/@Value}"/>
+          <FIELD Name="name" DisplayType="Hidden" Value="{$context/CALENDAR/name/@Value}"/>
+
+        </FIELDS>
+        <BUTTONS>
+        <xapl:variable name="userPermissionRemoveForbcmManageCalendar">
+            <x2:execute command="bcm.framework.common:checkAccessPermissions">
+             <x2:with-param name="activityName" select="'bcmManageCalendar'"/>
+             <x2:with-param name="accessLevel" select="'Remove'"/>
+            </x2:execute>
+        </xapl:variable>              
+        <xapl:variable name="userPermissionAddForbcmManageCalendar">
+            <x2:execute command="bcm.framework.common:checkAccessPermissions">
+             <x2:with-param name="activityName" select="'bcmManageCalendar'"/>
+             <x2:with-param name="accessLevel" select="'Add'"/>
+            </x2:execute>
+        </xapl:variable>         
+          <!--BUTTON Id="copy" Name="Copy" DisplayText="Copy" OnClick="javascript:onCopy()"  Disabled="report" DisableOnClick="true"/-->
+          <xapl:if test="$context/CALENDAR/MODE/@Value='EDIT' or $context/RESOURCE or $context/LOCATION or $context/DL">
+            <xapl:if test="$userPermissionAddForbcmManageCalendar='True'">  
+            <BUTTON Id="newEntry" Name="newEntry" DisplayText="New Entry" OnClick="javascript:onNewEntry()" DisableOnClick="true"/>
+            <xapl:set-variable name="deleteFlag"><xapl:value-of select="'True'"/></xapl:set-variable>
+        </xapl:if>
+            <!--
+               <BUTTON Id="edit" Name="Edit" DisplayText="Edit" OnClick="javascript:onEdit()" Disabled="report" DisableOnClick="true"/>
+            <DIVIDER/>
+            -->
+        <xapl:if test="$userPermissionRemoveForbcmManageCalendar='True'">  
+            <xapl:if test="$deleteFlag='True'">
+               <DIVIDER/>       
+            </xapl:if>
+            <BUTTON Id="delete" Name="delete" DisplayText="Delete" OnClick="javascript:onDelete()" Disabled="report" DisableOnClick="true"/>
+        </xapl:if>
+          </xapl:if>
+        </BUTTONS>
+        <PAGINATION/>
+      </REPORT>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <x2:command public="yes" description="_" name="getReportData">
+    <x2:param name="this"/>
+    
+    <xapl:variable name="maxRows"><xapl:value-of select="$this/MAX_ROWS/@Value"/></xapl:variable>
+    <xapl:variable name="startAtRow"><xapl:value-of select="$this/START_COUNT/@Value"/></xapl:variable>
+        
+    <xapl:variable name="serverResponse">
+      <xapl:if test="string-length($context/CALENDAR/calendarID/@Value) >0">
+        <xcore:execute-method name="//BCMMasterService/getCalDetails" entireResponse="true" MaxRows="{$maxRows}" ReturnRowCount="yes" StartAtRow="{$startAtRow}">
+          <calendarID Value="{$context/CALENDAR/calendarID/@Value}"/>
+        </xcore:execute-method>
+      </xapl:if>
+    </xapl:variable>
+    
+            <!-- TODO Do this dynamically only if timingStats are on. -->
+        <docutil:remove select="$serverResponse/TIMING_STATS"/>
+        <docutil:remove select="$serverResponse/RESPONSE/TIMING_STATS"/>
+
+    <docutil:set select="$context/CALENDAR">
+      <CALENDAR_DETAILS>
+        <xapl:value-of select="$serverResponse/RESPONSE/*"/>
+      </CALENDAR_DETAILS>
+    </docutil:set>
+    <docutil:add select="$serverResponse/RESPONSE">
+      <xapl:choose>
+        <xapl:when test="not($serverResponse/RESPONSE/CalendarDetail) ">
+          <TOTAL_RECORD_COUNT Value="0"/>
+        </xapl:when>
+        <xapl:otherwise>
+          <TOTAL_RECORD_COUNT Value="{count($serverResponse/RESPONSE/CalendarDetail)}"/>
+        </xapl:otherwise>
+      </xapl:choose>
+      <START_AT_ROW Value="{$this/START_COUNT/@Value}"/>
+    </docutil:add>
+     
+    <xapl:return>
+      <xapl:value-of select="$serverResponse/RESPONSE"/>
+    </xapl:return>
+  </x2:command>
+  <!-- **********************************************************************
+  *********************************************************************** -->
+  <!-- **********************************************************************
+  *********************************************************************** -->
+</x2:commands>

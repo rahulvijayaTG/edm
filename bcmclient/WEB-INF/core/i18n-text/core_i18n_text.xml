@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<i18ntext xmlns:i18n="http://www.i2.com/i18n">
+  <!--Core Constants List-->
+  <i18n:text name="denotes required field">denotes required field</i18n:text>
+  <i18n:text name="*denotes required field">*denotes required field</i18n:text>
+  <i18n:text name="No records found.">No records found.</i18n:text>
+  <i18n:text name="Not found">Not found</i18n:text>
+  <i18n:text name="Browse...">Browse...</i18n:text>
+  <i18n:text name="Jump">Jump</i18n:text>
+  <i18n:text name="INVALID DATE">Invalid date</i18n:text>
+
+  <i18n:text name="INVALID_positive-double">Invalid entry.  Enter a positive number</i18n:text>
+  <i18n:text name="INVALID_positive-int">Invalid entry.  Enter a positive integer</i18n:text>
+  <i18n:text name="INVALID_positive-float">Invalid entry.  Enter a positive number</i18n:text>
+
+  <i18n:text name="INVALID_non-negative-double">Invalid entry.  Enter a positive number or zero</i18n:text>
+  <i18n:text name="INVALID_non-negative-float">Invalid entry.  Enter a positive number or zero</i18n:text>
+  <i18n:text name="INVALID_non-negative-int">Invalid entry.  Enter a positive integer or zero</i18n:text>
+
+  <i18n:text name="INVALID_non-positive-double">Invalid entry.  Enter a negative number or zero</i18n:text>
+  <i18n:text name="INVALID_non-positive-float">Invalid entry.  Enter a negative number or zero</i18n:text>
+  <i18n:text name="INVALID_non-positive-int">Invalid entry.  Enter a negative integer or zero</i18n:text>
+
+  <i18n:text name="INVALID_negative-double">Invalid entry.  Enter a negative number</i18n:text>
+  <i18n:text name="INVALID_negative-float">Invalid entry.  Enter a negative number</i18n:text>
+  <i18n:text name="INVALID_negative-int">Invalid entry.  Enter a negative integer</i18n:text>
+
+  <i18n:text name="INVALID_double">Invalid entry. Enter a number</i18n:text>
+  <i18n:text name="INVALID_float">Invalid entry. Enter a number</i18n:text>
+  <i18n:text name="INVALID_int">Invalid entry. Enter an integer</i18n:text>
+  <i18n:text name="INVALID_string">Invalid string</i18n:text>
+  <i18n:text name="INVALID_date">Invalid date</i18n:text>
+  <i18n:text name="INVALID_datetime">Invalid date-time</i18n:text>
+  <i18n:text name="INVALID_boolean">Invalid boolean</i18n:text>
+  <i18n:text name="INVALID_char">Invalid char</i18n:text>
+  <i18n:text name="INVALID_xml">Invalid xml</i18n:text>
+  <i18n:text name="INVALID_BinaryData">Invalid Binary Data</i18n:text>
+  <i18n:text name="INVALID_time">Invalid time</i18n:text>
+  <i18n:text name="INVALID_timestamp">Invalid time-stamp</i18n:text>
+  
+  <i18n:text name="the request was rejected because it's size exceeds allowed range">The request was rejected because it's size exceeds allowed range.</i18n:text>
+
+  <i18n:text name="(Item {0} of {1})">(Item {0} of {1})</i18n:text>
+  <i18n:text name="(Items {0}-{1} of {2})">(Items {0}-{1} of {2})</i18n:text>
+
+</i18ntext>

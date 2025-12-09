@@ -1,0 +1,10 @@
+/* PULLDOWN*/
+.pulldownIE{
+	background:#ffffff;
+	font-family:verdana,arial,helvetica,sans-serif;
+	font-size:11px;
+	color:#505050;
+	padding-left:3px;
+	border:1px solid #999999;
+	width : 200px;
+}

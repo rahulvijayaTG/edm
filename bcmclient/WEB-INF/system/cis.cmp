@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x2:components xmlns:x2="http://www.i2.com/x2" xmlns:xapl="http://www.i2.com/xapl" xmlns:cis="http://www.i2.com/cis" description="">
+
+  <x2:component name="sso-login" description="Logins a user using CIS-SSO.">
+    <x2:class value="com.i2.x2.components.cis.SsoLogin"/>
+	
+	  <x2:input name="processLogin" description="attribute to determine if user is logging in or coming to the login page the first time." required="true"/>
+	  <x2:input name="ssoEnabled" description="Default is true." required="false"/>
+	  <x2:body>
+	    <x2:include-component type="ANY" minOccur="0"/>
+	  </x2:body>
+    
+    <x2:example type="description">
+      Below is a code snippet showing how to login using sso-login for a particular user. The processLogin will have an empty value
+	  if the user is coming to the login page the first time and "true" value if he is trying to login using the login button.
+    </x2:example>
+    <x2:example type="code">
+      <xapl:variable name="loginResult"> 
+        <cis:sso-login processLogin="true"/>
+      </xapl:variable>
+      <xapl:choose>
+        <xapl:when test="$loginResult = 'true'">
+	      <xapl:print>Login Successful</xapl:print>
+	    </xapl:when>
+		<xapl:otherwise>
+	      <xapl:print>Login Failed</xapl:print>
+	    </xapl:otherwise>
+	  </xapl:choose>
+    </x2:example>
+  </x2:component>
+
+  <x2:component name="sso-logout" description="Logouts a user from CIS-SSO.">
+    <x2:class value="com.i2.x2.components.cis.SsoLogout"/>
+	
+    <x2:example type="description">
+      Below is a code snippet showing how to logout using sso-logout.
+    </x2:example>
+    <x2:example type="code">
+      <cis:sso-logout/>
+    </x2:example>
+  </x2:component>
+
+  <x2:component name="get-user-name" description="Gets the user name from the CIS Principal.">
+    <x2:class value="com.i2.x2.components.cis.GetUserName"/>
+	
+    <x2:example type="description">
+      Below is a code snippet showing how to get the user name using get-user-name.
+    </x2:example>
+    <x2:example type="code">
+      <xapl:variable name="userid">
+        <cis:get-user-name/>
+      </xapl:variable>
+    </x2:example>
+  </x2:component>
+  
+  <x2:component name="get-user" description="Gets the user from the CIS Principal.">
+    <x2:class value="com.i2.x2.components.cis.GetUser"/>
+
+    <x2:example type="description">
+      Below is a code snippet showing how to get the user using get-user.
+    </x2:example>
+    <x2:example type="code">
+      <xapl:variable name="user">
+        <cis:get-user/>
+      </xapl:variable>
+    </x2:example>
+  </x2:component>
+
+</x2:components>

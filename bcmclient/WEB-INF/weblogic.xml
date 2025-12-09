@@ -1,0 +1,39 @@
+<!DOCTYPE weblogic-web-app PUBLIC "-//BEA Systems, Inc.//DTD Web Application 8.1//EN" "http://www.bea.com/servers/wls810/dtd/weblogic810-web-jar.dtd">
+
+<weblogic-web-app>
+  
+  <session-descriptor>
+    <session-param>
+      <param-name>CookieMaxAgeSecs</param-name>
+      <param-value>-1</param-value>
+    </session-param>
+    <session-param>
+      <param-name>InvalidationIntervalSecs</param-name>
+      <param-value>60</param-value>
+    </session-param>
+    <session-param>
+      <param-name>TimeoutSecs</param-name>
+      <param-value>3600</param-value>
+    </session-param>
+  </session-descriptor>
+
+  <container-descriptor>
+    <servlet-reload-check-secs>-1</servlet-reload-check-secs>
+  </container-descriptor>
+
+  <charset-params>
+    
+    <input-charset>
+      <resource-path>*</resource-path>
+      <java-charset-name>UTF8</java-charset-name>
+    </input-charset>
+
+    <charset-mapping>
+        <iana-charset-name>UTF-8</iana-charset-name>
+        <java-charset-name>UTF8</java-charset-name>
+    </charset-mapping>
+
+  </charset-params>
+
+</weblogic-web-app>
+

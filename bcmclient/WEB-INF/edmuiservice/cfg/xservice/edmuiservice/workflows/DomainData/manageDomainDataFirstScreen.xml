@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="174" ShowInBreadCrumbs="true" Version="1.0" Name="manageDomainDataFirstScreen" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="selectedCollatedDomainDetails" Type="xml" Comment=""/>
+    <variable Name="selectedXML" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Domain" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done3">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Manage Domain" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="ManageDomainData_SearchPage.pgl">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/FILTER_ON/@Value='DomainSearchTable'">
+            <THEN>
+              <SET Var="donotshowtable" FromValue="1"/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="exportTableId" FromValue="{ifElse($thisParam/FILTER_ID/@Value = null, '', $thisParam/FILTER_ID/@Value)}"/>
+          <IF_TEST Test="$thisParam/SYS_BACK/@Value ='0^manageDomainDataFirstScreen.3'">
+            <THEN>
+              <ADD_CHILDREN DocVar="thisParam" FromSelectList="$selectedXML/*"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='SYS_RELOAD' and $thisParam/SelectedClear/@Value='DomainSearchTable' ">
+            <THEN>
+              <REMOVE_CHILDREN ChildName="selectedTableName" DocVar="thisParam"/>
+            </THEN>
+          </IF_TEST>
+          <REQUEST AssignToVar="check" Name="getDomainTable">
+            <TO_XML SelectList="$thisParam/*"/>
+          </REQUEST>
+          <IF_TEST Test="$userAction ='Create' or $userAction ='Update' or $userAction ='Delete' or $userAction ='Copy'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="myDoc">
+                <MYDOCUMENT>
+                  <INPUT>
+                    <TO_XML SelectList="$thisParam/*"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="DOMAINDATA">
+                    <DOMAINIDENTIFIER/>
+                    <DOMAINNAME/>
+                    <DOMAINMNEMONICVALUE/>
+                    <DOMAINDESCRIPTION/>
+                    <SourceSystemMnemonicValue/>
+                    <SourceObjectMnemonicValue/>
+                    <SourceKeyName/>
+                    <SourceKeyValue/>
+                  </COLLATE_LIST>
+                </MYDOCUMENT>
+              </TO_DOCVAR>
+              <COLLATE_XML DocVar="myDoc" AssignToVar="collateDoc"/>
+              <PRINTLN Value="COLLATED doc "/>
+              <PRINTLN Value="{$collateDoc }"/>
+              <TO_DOCVAR AssignToVar="selectedCollatedDomainDetails">
+                <DomainDataDetails>
+                  <ENTITY_STATE Value="{$thisParam/ENTITY_STATE/@Value}"/>
+                </DomainDataDetails>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$collateDoc/DOMAINDATA" CurrentElement="currdomaindetails">
+                <IF_TEST Test="$currdomaindetails/DOMAINIDENTIFIER/@Value=$thisParam/selectedDOMAINIDENTIFIER/@Value">
+                  <THEN>
+                    <ADD_CHILDREN DocVar="selectedCollatedDomainDetails" FromSelectList="$currdomaindetails/*"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <PRINTLN Value="Appended  doc "/>
+              <PRINTLN Value="{$selectedCollatedDomainDetails }"/>
+              <IF_TEST Test="$userAction ='Create' or $userAction ='Update' or $userAction ='Delete'">
+                <THEN>
+                  <REQUEST AssignToVar="addedRecord" Name="saveDomainData">
+                    <TO_XML SelectList="$thisParam/*"/>
+                    <TO_XML SelectList="$selectedCollatedDomainDetails"/>
+                  </REQUEST>
+                  <PRINTLN Value="RESULT AFTER SAVE::::::{$addedRecord}"/>
+                  <IF_TEST Test="$addedRecord/_RESULT/_ERROR/@Value !=null">
+                    <THEN>
+                      <SET Var="sucessMessage" FromValue=""/>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$selectedCollatedDomainDetails/DOMAINIDENTIFIER/@Value !=null and $selectedCollatedDomainDetails/DOMAINIDENTIFIER/@Value !='-999999999' and $userAction ='Copy'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="intmdDominNew">
+                <DOMAINDATA>
+                  <DOMAINIDENTIFIER Value="-999999999"/>
+                  <ENTITY_STATE Value="ACTIVE"/>
+                  <SourceSystemMnemonicValue Value="EDM"/>
+                </DOMAINDATA>
+              </TO_DOCVAR>
+              <MAKE_INSTANCE_DOCUMENT Name="DOMAINNAME" AssignToVar="domainName"/>
+              <SET DocVar="domainName" Attribute="Value" FromValue="{$selectedCollatedDomainDetails/DOMAINNAME/@Value}"/>
+              <MAKE_INSTANCE_DOCUMENT Name="DOMAINMNEMONICVALUE" AssignToVar="domainNmval"/>
+              <SET DocVar="domainNmval" Attribute="Value" FromValue="{$selectedCollatedDomainDetails/DOMAINMNEMONICVALUE/@Value}"/>
+              <MAKE_INSTANCE_DOCUMENT Name="DOMAINDESCRIPTION" AssignToVar="domaindesc"/>
+              <SET DocVar="domaindesc" Attribute="Value" FromValue="{$selectedCollatedDomainDetails/DOMAINDESCRIPTION/@Value}"/>
+              <ADD_CHILDREN DocVar="intmdDominNew" FromDocVar="domainName"/>
+              <ADD_CHILDREN DocVar="intmdDominNew" FromDocVar="domainNmval"/>
+              <ADD_CHILDREN DocVar="intmdDominNew" FromDocVar="domaindesc"/>
+              <TO_DOCVAR AssignToVar="newRecordDetails">
+                <ROOT>
+                  <TO_XML DocVar="intmdDominNew"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="newRecordDetails">
+                <ROOT>
+                  <DOMAINDATA>
+                    <!--<CSSCLASS Value="gaurav"/>-->
+                    <DOMAINIDENTIFIER Value="-999999999"/>
+                    <DOMAINNAME Value="EnterNew"/>
+                    <DOMAINDESCRIPTION Value="EnterNew"/>
+                    <DOMAINMNEMONICVALUE Value="EnterNew"/>
+                    <ENTITY_STATE Value="ACTIVE"/>
+                    <SourceSystemMnemonicValue Value="EDM"/>
+                  </DOMAINDATA>
+                </ROOT>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/selectedTableName/@Value !=null">
+            <THEN>
+              <SET Var="SelectedTableName" FromValue="{$thisParam/selectedTableName/@Value}"/>
+              <REQUEST AssignToVar="domainDataDetails" Name="getDomainTableData">
+                <TO_XML SelectList="$thisParam/*"/>
+                <exportTableId Value="{$exportTableId}"/>
+              </REQUEST>
+              <IF_TEST Test="$addedRecord/_RESULT/_ERROR/@Value !=null">
+                <THEN>
+                  <PRINTLN Value="DOMAIN DETAILS :::::{$selectedCollatedDomainDetails/DOMAINIDENTIFIER/@Value}"/>
+                  <SET Var="selectedDomainIdentifier" FromValue="{$selectedCollatedDomainDetails/DOMAINIDENTIFIER/@Value}"/>
+                  <SET_PROPS Select="$domainDataDetails/DOMAINDATAS/*[DOMAINIDENTIFIER[@Value=$selectedDomainIdentifier]]">
+                    <DOMAINNAME Value="{$selectedCollatedDomainDetails/DOMAINNAME/@Value}"/>
+                    <DOMAINDESCRIPTION Value="{$selectedCollatedDomainDetails/DOMAINDESCRIPTION/@Value}"/>
+                    <DOMAINMNEMONICVALUE Value="{$selectedCollatedDomainDetails/DOMAINMNEMONICVALUE/@Value}"/>
+                    <ENTITY_STATE Value="{$selectedCollatedDomainDetails/ENTITY_STATE/@Value}"/>
+                    <SourceSystemMnemonicValue Value="EDM"/>
+                  </SET_PROPS>
+                  <PRINTLN Value="DOMAIN DETAILS NEW:::::{$domainDataDetails}"/>
+                  <IF_TEST Test="$selectedDomainIdentifier='-999999999'">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="newRecordDetails">
+                        <ROOT>
+                          <DOMAINDATA>
+                            <DOMAINIDENTIFIER Value="-999999999"/>
+                            <DOMAINNAME Value="{$selectedCollatedDomainDetails/DOMAINNAME/@Value}"/>
+                            <DOMAINDESCRIPTION Value="{$selectedCollatedDomainDetails/DOMAINDESCRIPTION/@Value}"/>
+                            <DOMAINMNEMONICVALUE Value="{$selectedCollatedDomainDetails/DOMAINMNEMONICVALUE/@Value}"/>
+                            <ENTITY_STATE Value="ACTIVE"/>
+                            <SourceSystemMnemonicValue Value="EDM"/>
+                          </DOMAINDATA>
+                        </ROOT>
+                      </TO_DOCVAR>
+                    </THEN>
+                  </IF_TEST>
+                  <TO_DOCVAR AssignToVar="domainDetailswithNew">
+                    <DOMAINDATAS TotalRowCount="{$domainDataDetails/DOMAINDATAS/@TotalRowCount}">
+                      <TO_XML SelectList="$addedRecord/REQUEST/_ERRORS"/>
+                      <TO_XML SelectList="$newRecordDetails/*"/>
+                      <TO_XML SelectList="$domainDataDetails/DOMAINDATAS/DOMAINDATA"/>
+                    </DOMAINDATAS>
+                  </TO_DOCVAR>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="domainDetailswithNew">
+                    <DOMAINDATAS TotalRowCount="{$domainDataDetails/DOMAINDATAS/@TotalRowCount}">
+                      <TO_XML SelectList="$addedRecord/REQUEST/_ERRORS"/>
+                      <TO_XML SelectList="$newRecordDetails/*"/>
+                      <TO_XML SelectList="$domainDataDetails/DOMAINDATAS/DOMAINDATA"/>
+                    </DOMAINDATAS>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+              <PRINTLN Value="DOMAIN DATA DETAILS::::{$domainDetailswithNew}"/>
+            </THEN>
+          </IF_TEST>
+          <PRINTLN Value="USER ACTION::::::{$userAction}"/>
+          <IF_TEST Test="($userAction ='Create' or $userAction ='Update') and $addedRecord/_RESULT/_ERROR/@Value =null">
+            <THEN>
+              <IF_TEST Test="$thisParam/selectedDOMAINIDENTIFIER/@Value ='-999999999'">
+                <THEN>
+                  <SET Var="sucessMessage" FromValue="Record successfully Created"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="sucessMessage" FromValue="Record successfully Modified"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$userAction ='Delete' and $addedRecord/_RESULT/_ERROR/@Value =null">
+                <THEN>
+                  <SET Var="sucessMessage" FromValue="Record successfully deleted"/>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='SYS_RELOAD' or $userAction ='Clear' or  $userAction ='DisplayData' or $userAction ='Create' or $userAction ='Update'">
+            <THEN>
+              <IF_TEST Test="$addedRecord/_RESULT/_ERROR/@Value =null">
+                <THEN>
+                  <REMOVE_CHILDREN ChildName="selectedDOMAINIDENTIFIER" DocVar="thisParam"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction ='Copy'">
+            <THEN>
+              <REMOVE_CHILDREN ChildName="selectedDOMAINIDENTIFIER" DocVar="thisParam"/>
+              <TO_DOCVAR AssignToVar="thisAppend">
+                <INPUT>
+                  <selectedDOMAINIDENTIFIER Value="-999999999"/>
+                </INPUT>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="thisParam" FromSelectList="$thisAppend/*"/>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <RESPONE>
+              <ROOT TotalRowCount="{$check/@TotalRowCount}">
+                <SUCESSMESSAGE Value="{$sucessMessage}"/>
+                <FILTER_ENTITY_STATE Value="{$thisParam/FILTER_ENTITY_STATE/@Value}"/>
+                <TO_XML SelectList="$check/*"/>
+                <IF_TEST Test="$donotshowtable!=1">
+                  <THEN>
+                    <TO_XML SelectList="$domainDetailswithNew"/>
+                  </THEN>
+                </IF_TEST>
+                <DISPLAYLL Value="{concat($SelectedTableName,'  Domain Data')}"/>
+                <SELECTEDDOMAINTABLENAME Value="{$SelectedTableName}"/>
+                <SELECTEDDOMAINIDENTIFIER Value="{$thisParam/selectedDOMAINIDENTIFIER/@Value}"/>
+                <STATUSOPTION>
+                  <OPTION Value="ACTIVE"/>
+                  <OPTION Value="INACTIVE"/>
+                  <OPTION Value="DELETED"/>
+                </STATUSOPTION>
+              </ROOT>
+            </RESPONE>
+          </TO_DOCVAR>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <FILTER_ID Value="{$exportTableId}"/>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='ChangeLog'">
+            <THEN>
+              <SET DocVar="selectedXML" FromDocVar="thisParam"/>
+              <TO_DOCVAR AssignToVar="outputXml">
+                <ROOT>
+                  <AUDIT_TRAIL_NAME Value="{concat($thisParam/selectedTableName/@Value,'Trail')}"/>
+                  <SERVICE_NAME Value="PEDM_MASTER"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DisplayData'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Domain" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ChangeLog'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Data Traceability" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Delete'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Domain" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Create'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Domain" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Clear'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Copy'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Domain" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CLEARDOMIAN'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Update'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Domain" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='EnterDomainDataDescription'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="domainDescription" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done3" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <sub_workflow Name="Data Traceability" InputVar="{nodeInXml,xml}" Workflow="//UI_WORKFLOW/dataTraceability">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes>
+        <next_node Name="done3" Description=""/>
+      </next_nodes>
+      <input>
+        <action>
+          <TO_XML SelectList="$nodeInXml/*"/>
+        </action>
+      </input>
+    </sub_workflow>
+    <sub_workflow Name="domainDescription" InputVar="{nodeInput,xml}" Workflow="uiWfDomainDataManageDataDescription">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutput,xml}">
+        <next_node Name="Manage Domain" Description=""/>
+      </next_nodes>
+      <input>
+        <TO_XML DocVar="thisParam"/>
+      </input>
+      <output AssignToVar="descOutDomain"/>
+    </sub_workflow>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="6,83" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <done3 location="544,300" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done3" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done3>
+      <mgcnode Name="Manage Domain" location="225,149" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Manage Domain" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Data Traceability" location="275,265" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Data Traceability" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+      <domainDescription location="566,131" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="domainDescription" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </domainDescription>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="38,105" endpoint="225,172" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="175,103,4,4" ctrlRect2="82,170,4,4"/>
+      </start2>
+      <mgcnode Name="Manage Domain">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="257,172" endpoint="257,172" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="330,170,4,4" ctrlRect2="599,-84,4,4" textRect="393,41,147,9">
+          <textProps text="[$userAction ='DisplayData']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="241,195" endpoint="291,265" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="239,245,4,4" ctrlRect2="289,210,4,4" textRect="196,225,141,9">
+          <textProps text="[$userAction ='ChangeLog']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="225,172" endpoint="225,172" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="148,170,4,4" ctrlRect2="-44,-19,4,4" textRect="128,134,118,9"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="225,172" endpoint="225,172" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="148,170,4,4" ctrlRect2="-133,433,4,4" textRect="-50,299,119,9">
+          <textProps text="[$userAction ='Create']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="257,172" endpoint="257,172" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="330,170,4,4" ctrlRect2="564,-20,4,4" textRect="394,73,111,9">
+          <textProps text="[$userAction ='Copy']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="241,149" endpoint="241,149" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="239,72,4,4" ctrlRect2="239,72,4,4" textRect="181,70,121,9">
+          <textProps text="[$userAction ='Update']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="257,172" endpoint="582,177" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="498,170,4,4" ctrlRect2="559,221,4,4" textRect="414,193,232,9">
+          <textProps text="[$userAction ='EnterDomainDataDescription']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="257,172" endpoint="544,322" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="469,170,4,4" ctrlRect2="326,320,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Data Traceability">
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="307,288" endpoint="544,322" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="482,286,4,4" ctrlRect2="364,320,4,4"/>
+      </mgcnode>
+      <domainDescription>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="566,154" endpoint="257,172" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="333,152,4,4" ctrlRect2="487,170,4,4"/>
+      </domainDescription>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="2" textAttrsKey0="selectedCollatedDomainDetails : xml" textAttrsKey1="selectedXML : xml">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="selectedCollatedDomainDetails" Type="xml" Comment=""/>
+        <variable Name="selectedXML" Type="xml" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

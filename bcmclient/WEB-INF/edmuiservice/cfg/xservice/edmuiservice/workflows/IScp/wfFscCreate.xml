@@ -1,0 +1,1058 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="312" ShowInBreadCrumbs="true" Version="1.0" Name="wfFscCreate" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="booCrtLoc0" Type="boolean" Comment=""/>
+    <variable Name="booCrtLoc1" Type="boolean" Comment=""/>
+    <variable Name="booCrtSgm" Type="boolean" Comment=""/>
+    <variable Name="booCrtSgm0" Type="boolean" Comment=""/>
+    <variable Name="booSavLoc" Type="boolean" Comment=""/>
+    <variable Name="booSavSgm" Type="boolean" Comment=""/>
+    <variable Name="booValLoc" Type="boolean" Comment=""/>
+    <variable Name="booValSgm" Type="boolean" Comment=""/>
+    <variable Name="selectListPeriod" Type="xml" Comment=""/>
+    <variable Name="selectListWeek" Type="xml" Comment=""/>
+    <variable Name="selectListYear" Type="xml" Comment=""/>
+    <variable Name="strEWPERIOD" Type="string" Comment=""/>
+    <variable Name="strEWWEEK" Type="string" Comment=""/>
+    <variable Name="strEWYEAR" Type="string" Comment=""/>
+    <variable Name="strEndDate" Type="string" Comment=""/>
+    <variable Name="strSWPERIOD" Type="string" Comment=""/>
+    <variable Name="strSWWEEK" Type="string" Comment=""/>
+    <variable Name="strSWYEAR" Type="string" Comment=""/>
+    <variable Name="strStartDate" Type="string" Comment=""/>
+    <variable Name="xmlErrorMsg" Type="xml" Comment=""/>
+    <variable Name="xmlLocationBucketForCreate" Type="xml" Comment=""/>
+    <variable Name="xmlSuccessMsg" Type="xml" Comment=""/>
+    <variable Name="xmlWklyBktInfo" Type="xml" Comment=""/>
+    <variable Name="cntWklyBkt" Type="int" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start">
+      <actions>
+        <action>
+          <REQUEST Name="getDropDownForUI" AssignToVar="xmlSelectLists" HandleException="true" ServiceName="PEDM_MASTER"/>
+          <PRINTLN Value="select list is {$xmlSelectLists}"/>
+          <TO_DOCVAR AssignToVar="selectListPeriod">
+            <ROOT>
+              <OPTIONS/>
+            </ROOT>
+          </TO_DOCVAR>
+          <SET Var="optionsPeriodVar" FromSelect="$selectListPeriod/OPTIONS"/>
+          <TO_DOCVAR AssignToVar="selectListYear">
+            <ROOT>
+              <OPTIONS/>
+            </ROOT>
+          </TO_DOCVAR>
+          <SET Var="optionsYearVar" FromSelect="$selectListYear/OPTIONS"/>
+          <TO_DOCVAR AssignToVar="selectListWeek">
+            <ROOT>
+              <OPTIONS/>
+            </ROOT>
+          </TO_DOCVAR>
+          <SET Var="optionsWeekVar" FromSelect="$selectListWeek/OPTIONS"/>
+          <FOR_EACH CurrentElement="currOption" SelectList="$xmlSelectLists/P_CalendarPeriod">
+            <TO_DOCVAR AssignToVar="currOptionVar">
+              <ROOT>
+                <OPTION Value="{$currOption/CalendarPeriodName/@Value}"/>
+              </ROOT>
+            </TO_DOCVAR>
+            <APPEND_CHILDREN DocVar="optionsPeriodVar" FromDocVar="currOptionVar"/>
+          </FOR_EACH>
+          <FOR_EACH CurrentElement="currOption" SelectList="$xmlSelectLists/P_CalendarWeek">
+            <TO_DOCVAR AssignToVar="currOptionVar">
+              <ROOT>
+                <OPTION Value="{$currOption/CalendarWeekName/@Value}"/>
+              </ROOT>
+            </TO_DOCVAR>
+            <APPEND_CHILDREN DocVar="optionsWeekVar" FromDocVar="currOptionVar"/>
+          </FOR_EACH>
+          <FOR_EACH CurrentElement="currOption" SelectList="$xmlSelectLists/P_CalendarYear">
+            <TO_DOCVAR AssignToVar="currOptionVar">
+              <ROOT>
+                <OPTION Value="{$currOption/CalendarYearMnemonicValue/@Value}"/>
+              </ROOT>
+            </TO_DOCVAR>
+            <APPEND_CHILDREN DocVar="optionsYearVar" FromDocVar="currOptionVar"/>
+          </FOR_EACH>
+          <SET Var="strSWYEAR" FromValue="{$xmlSelectLists/P_CalendarXCalendarDate/CalendarYearMnemonicValue/@Value}"/>
+          <SET Var="strSWPERIOD" FromValue="{$xmlSelectLists/P_CalendarXCalendarDate/CalendarPeriodName/@Value}"/>
+          <SET Var="strSWWEEK" FromValue="{$xmlSelectLists/P_CalendarXCalendarDate/CalendarWeekName/@Value}"/>
+          <SET Var="strEWYEAR" FromValue="{$xmlSelectLists/P_CalendarXCalendarDate/CalendarYearMnemonicValue/@Value}"/>
+          <SET Var="strEWPERIOD" FromValue="{$xmlSelectLists/P_CalendarXCalendarDate/CalendarPeriodName/@Value}"/>
+          <SET Var="strEWWEEK" FromValue="{$xmlSelectLists/P_CalendarXCalendarDate/CalendarWeekName/@Value}"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Create" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Create" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="iscpFscCreate.pgl">
+      <pre_actions>
+        <action>
+          <REQUEST AssignToVar="dropDownValues" Name="getContraintTypes" ServiceName="PEDM_MASTER"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <SAMPLE_XML>
+              <YEARLIST/>
+              <WEEKLIST/>
+              <PERIODLIST/>
+              <CONSTRAINT_TYPES>
+                <DROP_DOWN_OPTIONS SelectList="$dropDownValues/CONSTRAINT_TYPES/P_LimitClass" Id="LimitClassMnemonicValue" Value="LimitClassMnemonicValue"/>
+              </CONSTRAINT_TYPES>
+            </SAMPLE_XML>
+          </TO_DOCVAR>
+          <APPEND_TO_XML Select="$pglFormInput/WEEKLIST">
+            <TO_XML SelectList="$selectListWeek/*"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML Select="$pglFormInput/YEARLIST">
+            <TO_XML SelectList="$selectListYear/*"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML Select="$pglFormInput/PERIODLIST">
+            <TO_XML SelectList="$selectListPeriod/*"/>
+          </APPEND_TO_XML>
+          <IF_TEST Test="$userAction = 'APPLY'">
+            <THEN>
+              <!-- Getting all the date between provided search criteria Start -->
+              <DELETE_ALL_CHILDREN Select="$xmlLocationBucketForCreate">
+                <REAL_DATA/>
+                <_ERRORS/>
+              </DELETE_ALL_CHILDREN>
+              <REMOVE_CHILDREN ChildName="SUCCESS_MESSAGE" DocVar="xmlSuccessMsg"/>
+              <REMOVE_CHILDREN ChildName="_ERROR" DocVar="xmlErrorMsg"/>
+              <SET Var="strStartDate" FromValue="{substringBefore($xmlMainDateData/STRTDATE/@Value, ' ')}"/>
+              <SET Var="strEndDate" FromValue="{substringBefore($xmlMainDateData/ENDDATE/@Value, ' ')}"/>
+              <REQUEST Name="getMainDateData" AssignToVar="xmlMainDateData" HandleException="true" ServiceName="PEDM_MASTER">
+                <SWYEAR Value="{$thisParam/SWYEAR/@Value}"/>
+                <SWPERIOD Value="{$thisParam/SWPERIOD/@Value}"/>
+                <SWWEEK Value="{$thisParam/SWWEEK/@Value}"/>
+                <EWYEAR Value="{$thisParam/EWYEAR/@Value}"/>
+                <EWPERIOD Value="{$thisParam/EWPERIOD/@Value}"/>
+                <EWWEEK Value="{$thisParam/EWWEEK/@Value}"/>
+              </REQUEST>
+              <SET Var="cntWklyBkt" FromValue="{$xmlMainDateData/TOTALBKT/@Value}"/>
+              <SET Var="strSWYEAR" FromValue="{$thisParam/SWYEAR/@Value}"/>
+              <SET Var="strSWPERIOD" FromValue="{$thisParam/SWPERIOD/@Value}"/>
+              <SET Var="strSWWEEK" FromValue="{$thisParam/SWWEEK/@Value}"/>
+              <SET Var="strEWYEAR" FromValue="{$thisParam/EWYEAR/@Value}"/>
+              <SET Var="strEWPERIOD" FromValue="{$thisParam/EWPERIOD/@Value}"/>
+              <SET Var="strEWWEEK" FromValue="{$thisParam/EWWEEK/@Value}"/>
+              <IF_TEST Test="count($xmlMainDateData/_ERRORS) > 0">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <TO_XML SelectList="$xmlMainDateData/*"/>
+                  </APPEND_TO_XML>
+                  <SET Var="booCrtLoc0" FromValue="false"/>
+                  <SET Var="booCrtLoc1" FromValue="true"/>
+                  <SET Var="booValLoc" FromValue="true"/>
+                  <SET Var="booSavLoc" FromValue="true"/>
+                  <SET Var="booCrtSgm0" FromValue="false"/>
+                  <SET Var="booCrtSgm" FromValue="true"/>
+                  <SET Var="booSavSgm" FromValue="true"/>
+                  <SET Var="booValSgm" FromValue="true"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="strStartDate" FromValue="{substringBefore($xmlMainDateData/STRTDATE/@Value, ' ')}"/>
+                  <SET Var="strEndDate" FromValue="{substringBefore($xmlMainDateData/ENDDATE/@Value, ' ')}"/>
+                  <SET Var="xmlWklyBktInfo" FromVar="{$xmlMainDateData}"/>
+                  <REMOVE_CHILDREN DocVar="xmlWklyBktInfo" ChildName="STRTDATE"/>
+                  <REMOVE_CHILDREN DocVar="xmlWklyBktInfo" ChildName="ENDDATE"/>
+                  <SET Var="booCrtLoc0" FromValue="true"/>
+                  <SET Var="booCrtLoc1" FromValue="false"/>
+                  <SET Var="booValLoc" FromValue="true"/>
+                  <SET Var="booSavLoc" FromValue="true"/>
+                  <SET Var="booCrtSgm0" FromValue="false"/>
+                  <SET Var="booCrtSgm" FromValue="true"/>
+                  <SET Var="booSavSgm" FromValue="true"/>
+                  <SET Var="booValSgm" FromValue="true"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='CREATE_LOC'">
+            <THEN>
+              <REQUEST Name="getCreateLocXml" AssignToVar="xmlLocationBucketForCreate" HandleException="true" ServiceName="PEDM_MASTER">
+                <TO_XML SelectList="$thisParam/*"/>
+                <TO_XML SelectList="$xmlWklyBktInfo/*"/>
+              </REQUEST>
+              <IF_TEST Test="count($xmlLocationBucketForCreate/_ERRORS) > 0">
+                <THEN>
+                  <SET Var="booCrtLoc0" FromValue="true"/>
+                  <SET Var="booCrtLoc1" FromValue="false"/>
+                  <SET Var="booValLoc" FromValue="true"/>
+                  <SET Var="booSavLoc" FromValue="true"/>
+                  <SET Var="booCrtSgm0" FromValue="false"/>
+                  <SET Var="booCrtSgm" FromValue="true"/>
+                  <SET Var="booSavSgm" FromValue="true"/>
+                  <SET Var="booValSgm" FromValue="true"/>
+                </THEN>
+                <ELSE>
+                  <!--FOR_EACH CurrentElement="currElem" SelectList="$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA"-->
+                  <FOR_EACH CurrentElement="currElem" SelectList="$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA/BUCKETS/ROWDATA">
+                    <!--SET_PROPS Select="$currElem/BUCKETS/ROWDATA">
+              <FIELDEDITABLE Value="false"/>
+            </SET_PROPS-->
+                    <SET Property="FIELDEDITABLE" DocVar="currElem" FromValue="false"/>
+                  </FOR_EACH>
+                  <SET Var="booCrtLoc0" FromValue="true"/>
+                  <SET Var="booCrtLoc1" FromValue="true"/>
+                  <SET Var="booValLoc" FromValue="false"/>
+                  <SET Var="booSavLoc" FromValue="true"/>
+                  <SET Var="booCrtSgm0" FromValue="false"/>
+                  <SET Var="booCrtSgm" FromValue="true"/>
+                  <SET Var="booSavSgm" FromValue="true"/>
+                  <SET Var="booValSgm" FromValue="true"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='CREATE_SGMNT'">
+            <THEN>
+              <!--DELETE_ALL_CHILDREN Select="$xmlLocationBucketForCreate">
+        <SEGMENT_SLAS/>
+      </DELETE_ALL_CHILDREN>
+      <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="sgmntListFilt">
+        <PRTY_ID MultiValued="true"/>
+      </FORM_SEARCH_FILTER>
+      <TO_DOCVAR AssignToVar="sgmntList">
+        <ROOT>
+          <OR/>
+        </ROOT>
+      </TO_DOCVAR>
+      <IF_TEST Test="count($sgmntListFilt/FILTER/OR) > 0">
+        <THEN>
+          <APPEND_TO_XML Select="$sgmntList/OR">
+            <TO_XML SelectList="$sgmntListFilt/FILTER/OR/*"/>
+          </APPEND_TO_XML>
+        </THEN>
+        <ELSE>
+          <APPEND_TO_XML Select="$sgmntList/OR">
+            <TO_XML SelectList="$sgmntListFilt/FILTER/*"/>
+          </APPEND_TO_XML>
+        </ELSE>
+      </IF_TEST-->
+              <REMOVE_CHILDREN ChildName="SUCCESS_MESSAGE" DocVar="xmlSuccessMsg"/>
+              <REQUEST Name="getCreateSegXml" AssignToVar="createSegXml" HandleException="true" ServiceName="PEDM_MASTER">
+                <TO_XML SelectList="$thisParam/*"/>
+                <TO_XML SelectList="$xmlWklyBktInfo/*"/>
+                <TO_XML SelectList="$xmlLocationBucketForCreate/*"/>
+              </REQUEST>
+              <!--IF_TEST Test="$thisReturn/_RESULT/@Value = 'SUCCESS'" put this validation for actual-->
+              <!--IF_TEST Test="$thisReturn/_RESULT/@Value != 'SUCCESS'">
+                <THEN-->
+              <IF_TEST Test="count($createSegXml/_ERRORS) > 0">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <TO_XML SelectList="$createSegXml/*"/>
+                  </APPEND_TO_XML>
+                  <SET Var="booCrtLoc0" FromValue="false"/>
+                  <SET Var="booCrtLoc1" FromValue="true"/>
+                  <SET Var="booValLoc" FromValue="true"/>
+                  <SET Var="booSavLoc" FromValue="false"/>
+                  <SET Var="booCrtSgm0" FromValue="true"/>
+                  <SET Var="booCrtSgm" FromValue="false"/>
+                  <SET Var="booSavSgm" FromValue="true"/>
+                  <SET Var="booValSgm" FromValue="true"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="xmlLocationBucketForCreate" FromVar="createSegXml"/>
+                  <!--FOR_EACH CurrentElement="currElem" SelectList="$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA/SEGMENT_SLAS/BUFFER_SLA">
+            <IF_TEST Test="$currElem/BUCKETS/ROWDATA/FIELDEDITABLE/@Value != 'true'">
+              <THEN>
+                <SET_PROPS Select="$currElem/BUCKETS/ROWDATA">
+                  <FIELDEDITABLE Value="false"/>
+                </SET_PROPS>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH-->
+                  <FOR_EACH CurrentElement="currElem" SelectList="$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA/SEGMENT_SLAS/BUFFER_SLA/BUCKETS/ROWDATA">
+                    <IF_TEST Test="$currElem/FIELDEDITABLE/@Value != 'true'">
+                      <THEN>
+                        <SET Property="FIELDEDITABLE" DocVar="currElem" FromValue="false"/>
+                      </THEN>
+                    </IF_TEST>
+                  </FOR_EACH>
+                  <SET Var="booCrtLoc0" FromValue="false"/>
+                  <SET Var="booCrtLoc1" FromValue="true"/>
+                  <SET Var="booValLoc" FromValue="true"/>
+                  <SET Var="booSavLoc" FromValue="false"/>
+                  <SET Var="booCrtSgm0" FromValue="true"/>
+                  <SET Var="booCrtSgm" FromValue="true"/>
+                  <SET Var="booValSgm" FromValue="false"/>
+                  <SET Var="booSavSgm" FromValue="true"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <SET Property="STARTDATE" DocVar="pglFormInput" FromValue="{$strStartDate}"/>
+          <SET Property="ENDDATE" DocVar="pglFormInput" FromValue="{$strEndDate}"/>
+          <SET Property="SWYEAR" DocVar="pglFormInput" FromValue="{$strSWYEAR}"/>
+          <SET Property="SWPERIOD" DocVar="pglFormInput" FromValue="{$strSWPERIOD}"/>
+          <SET Property="SWWEEK" DocVar="pglFormInput" FromValue="{$strSWWEEK}"/>
+          <SET Property="EWYEAR" DocVar="pglFormInput" FromValue="{$strEWYEAR}"/>
+          <SET Property="EWPERIOD" DocVar="pglFormInput" FromValue="{$strEWPERIOD}"/>
+          <SET Property="EWWEEK" DocVar="pglFormInput" FromValue="{$strEWWEEK}"/>
+          <SET Property="CRTLOC" DocVar="pglFormInput" FromValue="{ifElse($booCrtLoc0=null,'false',$booCrtLoc0)}"/>
+          <SET Property="CRTSEG" DocVar="pglFormInput" FromValue="{ifElse($booCrtSgm0=null,'false',$booCrtSgm0)}"/>
+          <SET Property="CLB" DocVar="pglFormInput" FromValue="{ifElse($booCrtLoc1=null,'true',$booCrtLoc1)}"/>
+          <SET Property="VLB" DocVar="pglFormInput" FromValue="{ifElse($booValLoc=null,'true',$booValLoc)}"/>
+          <SET Property="SLB" DocVar="pglFormInput" FromValue="{ifElse($booSavLoc=null,'true',$booSavLoc)}"/>
+          <SET Property="CSB" DocVar="pglFormInput" FromValue="{ifElse($booCrtSgm=null,'true',$booCrtSgm)}"/>
+          <SET Property="VSB" DocVar="pglFormInput" FromValue="{ifElse($booValSgm=null,'true',$booValSgm)}"/>
+          <SET Property="SSB" DocVar="pglFormInput" FromValue="{ifElse($booSavSgm=null,'true',$booSavSgm)}"/>
+          <SET Property="CNTWKLYBKT" DocVar="pglFormInput" FromValue="{ifElse($cntWklyBkt=null,'0',$cntWklyBkt)}"/>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$xmlLocationBucketForCreate/*"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$xmlSuccessMsg/*"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML DocVar="xmlErrorMsg"/>
+          </APPEND_TO_XML>
+          <PRINTLN Value="pglforminput is {$pglFormInput}"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction = 'VALIDATE_LOC'">
+            <THEN>
+              <SET Var="errorCount" FromValue="0"/>
+              <SET Var="index" FromValue="0"/>
+              <SET Var="divBy" FromValue="100"/>
+              <FOR_EACH CurrentElement="currBucket" SelectList="$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA/BUCKETS/ROWDATA">
+                <SET Var="index" FromValue="{$index + 1}"/>
+                <!--   <SET Var="newCMMNT" FromValue="{$pglFormOutput/CMMNT[$index]/@Value}"/>-->
+                <SET Var="newCMMNT" FromValue="{trim($pglFormOutput/CMMNT[$index]/@Value)}"/>
+                <SET Var="newSTRGCPCTY" FromValue="{ifElse($pglFormOutput/OrganizationXAllocatedLocationCapacityMeasure[$index]/@Value='','0',$pglFormOutput/OrganizationXAllocatedLocationCapacityMeasure[$index]/@Value)}"/>
+                <SET Var="newUTLPRCTG" FromValue="{ifElse($pglFormOutput/OrganizationXLocationCapacityTargetUtilizationPercent[$index]/@Value='','0',$pglFormOutput/OrganizationXLocationCapacityTargetUtilizationPercent[$index]/@Value)}"/>
+                <SET Property="CMMNT" DocVar="currBucket" FromValue="{ifElse($newCMMNT=null,'',$newCMMNT)}"/>
+                <SET Property="OrganizationXAllocatedLocationCapacityMeasure" DocVar="currBucket" FromValue="{int($newSTRGCPCTY)}"/>
+                <SET Property="OrganizationXLocationCapacityTargetUtilizationPercent" DocVar="currBucket" FromValue="{$newUTLPRCTG}"/>
+                <SET Property="EFFSTRGUNIT" DocVar="currBucket" FromValue="{int($newSTRGCPCTY mul $newUTLPRCTG div $divBy)}"/>
+              </FOR_EACH>
+              <!--FOR EACH FOR WEEKLY BUCKET, GET THE INBOUND AND THEN CREATE FORMATTER AND VALIDATE-->
+              <FOR_EACH CurrentElement="currBucket" SelectList="$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA/BUCKETS/ROWDATA">
+                <REQUEST AssignToVar="xmlUIFormatter" Name="MapLCAndOXLCEdmUI" HandleException="true">
+                  <TO_XML SelectList="$currBucket/*"/>
+                </REQUEST>
+                <REQUEST AssignToVar="formatXml" Name="MapInboundcreateLCAndOXLCPeldm" ServiceName="PEDM_MASTER" HandleException="true">
+                  <TO_XML SelectList="$xmlUIFormatter/*"/>
+                </REQUEST>
+                <REQUEST AssignToVar="thisReturn" Name="validateLocCapacity" ServiceName="PEDM_MASTER" HandleException="true">
+                  <TO_XML SelectList="$formatXml/*"/>
+                </REQUEST>
+                <REQUEST AssignToVar="thisReturn" Name="validateOrgXLocCapacity" ServiceName="PEDM_MASTER" HandleException="true">
+                  <TO_XML SelectList="$formatXml/*"/>
+                </REQUEST>
+                <!-- HANDLING ERROR  START-->
+                <IF_TEST Test="count($thisReturn/*/_ERRORS) != 0">
+                  <THEN>
+                    <IF_TEST Test="substringBefore($thisReturn/_RESULT/_ERROR/@Value, ':') = 'ERR-FSC-CRT-0003'">
+                      <THEN>
+                        <SET Var="newAllocUnit" FromValue="{$currBucket/OrganizationXAllocatedLocationCapacityMeasure/@Value}"/>
+                        <REMOVE_CHILDREN DocVar="currBucket" ChildName="OrganizationXAllocatedLocationCapacityMeasure"/>
+                        <ADD_CHILDREN DocVar="currBucket" FromValue="{$thisReturn/REQUEST/OrganizationXAllocatedLocationCapacityMeasure}"/>
+                        <SET Property="OrganizationXAllocatedLocationCapacityMeasure" DocVar="currBucket" FromValue="{$newAllocUnit}"/>
+                        <SET Var="errorCount" FromValue="{$errorCount+1}"/>
+                      </THEN>
+                      <ELSE>
+                        <SET Var="newAllocUnit" FromValue="{$currBucket/OrganizationXAllocatedLocationCapacityMeasure/@Value}"/>
+                        <REMOVE_CHILDREN DocVar="currBucket" ChildName="OrganizationXAllocatedLocationCapacityMeasure"/>
+                        <SET Property="OrganizationXAllocatedLocationCapacityMeasure" DocVar="currBucket" FromValue="{$newAllocUnit}"/>
+                      </ELSE>
+                    </IF_TEST>
+                    <IF_TEST Test="substringBefore($thisReturn/_RESULT/_ERROR/@Value, ':') = 'ERR-FSC-CRT-0004'">
+                      <THEN>
+                        <SET Var="newUtlPtcg" FromValue="{$currBucket/OrganizationXLocationCapacityTargetUtilizationPercent/@Value}"/>
+                        <REMOVE_CHILDREN DocVar="currBucket" ChildName="OrganizationXLocationCapacityTargetUtilizationPercent"/>
+                        <ADD_CHILDREN DocVar="currBucket" FromValue="{$thisReturn/REQUEST/OrganizationXLocationCapacityTargetUtilizationPercent}"/>
+                        <SET Property="OrganizationXLocationCapacityTargetUtilizationPercent" DocVar="currBucket" FromValue="{$newUtlPtcg}"/>
+                        <SET Var="errorCount" FromValue="{$errorCount+1}"/>
+                      </THEN>
+                      <ELSE/>
+                    </IF_TEST>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="newAllocUnit" FromValue="{$currBucket/OrganizationXAllocatedLocationCapacityMeasure/@Value}"/>
+                    <SET Var="newUtlPtcg" FromValue="{$currBucket/OrganizationXLocationCapacityTargetUtilizationPercent/@Value}"/>
+                    <REMOVE_CHILDREN DocVar="currBucket" ChildName="OrganizationXAllocatedLocationCapacityMeasure"/>
+                    <REMOVE_CHILDREN DocVar="currBucket" ChildName="OrganizationXLocationCapacityTargetUtilizationPercent"/>
+                    <SET Property="OrganizationXAllocatedLocationCapacityMeasure" DocVar="currBucket" FromValue="{$newAllocUnit}"/>
+                    <SET Property="OrganizationXLocationCapacityTargetUtilizationPercent" DocVar="currBucket" FromValue="{$newUtlPtcg}"/>
+                  </ELSE>
+                </IF_TEST>
+                <!-- HANDLING ERROR  ENDS -->
+              </FOR_EACH>
+              <!-- old button values-->
+              <!--SET Var="booCrtLoc0" FromValue="true"/>
+      <SET Var="booCrtLoc1" FromValue="true"/>
+      <SET Var="booValLoc" FromValue="true"/>
+      <SET Var="booSavLoc" FromValue="false"/>
+      <SET Var="booCrtSgm0" FromValue="false"/>
+      <SET Var="booCrtSgm" FromValue="true"/>
+      <SET Var="booSavSgm" FromValue="true"/>
+      <SET Var="booValSgm" FromValue="true"/-->
+              <IF_TEST Test="$errorCount > 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="xmlErrorMsg">
+                    <_ERRORS>
+                      <_ERROR Value="Validation has failed. Please correct the record and proceed!"/>
+                    </_ERRORS>
+                  </TO_DOCVAR>
+                  <SET Var="booCrtLoc0" FromValue="true"/>
+                  <SET Var="booCrtLoc1" FromValue="true"/>
+                  <SET Var="booValLoc" FromValue="false"/>
+                  <SET Var="booSavLoc" FromValue="true"/>
+                  <SET Var="booCrtSgm0" FromValue="false"/>
+                  <SET Var="booCrtSgm" FromValue="true"/>
+                  <SET Var="booSavSgm" FromValue="true"/>
+                  <SET Var="booValSgm" FromValue="true"/>
+                </THEN>
+                <ELSE>
+                  <REMOVE_CHILDREN ChildName="_ERROR" DocVar="xmlErrorMsg"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$errorCount &lt;= 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="xmlSuccessMsg">
+                    <ROOT>
+                      <SUCCESS_MESSAGE Value="Validation successful!"/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <SET Var="booCrtLoc0" FromValue="true"/>
+                  <SET Var="booCrtLoc1" FromValue="true"/>
+                  <SET Var="booValLoc" FromValue="false"/>
+                  <SET Var="booSavLoc" FromValue="false"/>
+                  <SET Var="booCrtSgm0" FromValue="false"/>
+                  <SET Var="booCrtSgm" FromValue="true"/>
+                  <SET Var="booSavSgm" FromValue="true"/>
+                  <SET Var="booValSgm" FromValue="true"/>
+                </THEN>
+                <ELSE>
+                  <REMOVE_CHILDREN ChildName="SUCCESS_MESSAGE" DocVar="xmlSuccessMsg"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'SAVE_LOC'">
+            <THEN>
+              <SET Var="errorCount" FromValue="0"/>
+              <!--FOR_EACH CurrentElement="currElem" SelectList="$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA">
+        <SET_PROPS Select="$currElem/BUCKETS/ROWDATA">
+          <FIELDEDITABLE Value="true"/>
+        </SET_PROPS>
+      </FOR_EACH-->
+              <FOR_EACH CurrentElement="currElem" SelectList="$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA/BUCKETS/ROWDATA">
+                <!--SET_PROPS Select="$currElem/BUCKETS/ROWDATA">
+              <FIELDEDITABLE Value="false"/>
+            </SET_PROPS-->
+                <SET Property="FIELDEDITABLE" DocVar="currElem" FromValue="true"/>
+              </FOR_EACH>
+              <!--FOR EACH FOR WEEKLY BUCKET SAVE THE LOCATION RECORD-->
+              <FOR_EACH CurrentElement="currBucket" SelectList="$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA/BUCKETS/ROWDATA">
+                <REQUEST AssignToVar="xmlUIFormatter" Name="MapLCAndOXLCEdmUI" HandleException="true">
+                  <TO_XML SelectList="$currBucket/*"/>
+                </REQUEST>
+                <!-- validation to see if records exist, if so then activate, else create -->
+                <REQUEST AssignToVar="thisReturn" Name="locExistUI" HandleException="true" ServiceName="INTERFACE_MASTER">
+                  <TO_XML SelectList="$xmlUIFormatter/*"/>
+                  <ENTITY_STATE Value="DELETED"/>
+                </REQUEST>
+                <IF_TEST Test="$thisReturn/_RESULT/@Value ='ERROR'">
+                  <THEN>
+                    <REQUEST AssignToVar="createResponse" Name="updateLCandOXLC" HandleException="true">
+                      <DOCUMENTNAME Value="{$xmlUIFormatter/DOCUMENTNAME/@Value}"/>
+                      <ACTIONTOBDONE Value="ACTIVATE"/>
+                      <DOCUMENT_CONTEXT>
+                        <LocationStorageStartDate Value="{$xmlUIFormatter/LocationStorageStartDate/@Value}"/>
+                        <LocationValue Value="{$xmlUIFormatter/LocationValue/@Value}"/>
+                      </DOCUMENT_CONTEXT>
+                      <UPDATE_PROPERTIES>
+                        <TargetUtilizationPercent Value="{$xmlUIFormatter/TargetUtilizationPercent/@Value}"/>
+                        <StorageUnitOfMeasure Value="{$xmlUIFormatter/CapacityUnitOfMeasureValue/@Value}"/>
+                        <LocationStorageUnitCapacityMeasure Value="{$xmlUIFormatter/LocationStorageUnitCapacityMeasure/@Value}"/>
+                        <LocationStorageEndDate Value="{$xmlUIFormatter/LocationStorageEndDate/@Value}"/>
+                        <LocationStorageCommentText Value="{$xmlUIFormatter/LocationStorageCommentText/@Value}"/>
+                        <ENTITY_STATE Value="ACTIVE"/>
+                      </UPDATE_PROPERTIES>
+                    </REQUEST>
+                  </THEN>
+                  <ELSE>
+                    <REQUEST AssignToVar="createResponse" Name="createLCAndOXLC" HandleException="true">
+                      <TO_XML SelectList="$xmlUIFormatter/*"/>
+                    </REQUEST>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="count($createResponse/*/_ERRORS) != 0 or $createResponse/@Status = 'Error'">
+                  <THEN>
+                    <SET Var="errorCount" FromValue="{$errorCount+1}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <IF_TEST Test="$errorCount > 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="xmlErrorMsg">
+                    <_ERRORS>
+                      <_ERROR Value="{$createResponse/RESPONSE/@Description}"/>
+                    </_ERRORS>
+                  </TO_DOCVAR>
+                  <SET Var="booCrtLoc0" FromValue="true"/>
+                  <SET Var="booCrtLoc1" FromValue="true"/>
+                  <SET Var="booValLoc" FromValue="true"/>
+                  <SET Var="booSavLoc" FromValue="false"/>
+                  <SET Var="booCrtSgm0" FromValue="false"/>
+                </THEN>
+                <ELSE>
+                  <REMOVE_CHILDREN ChildName="_ERROR" DocVar="xmlErrorMsg"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$errorCount &lt;= 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="xmlSuccessMsg">
+                    <ROOT>
+                      <SUCCESS_MESSAGE Value="Location {$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA/LOCNAME/@Value} has been successfully created!"/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <SET Var="booCrtLoc0" FromValue="false"/>
+                  <SET Var="booCrtSgm0" FromValue="true"/>
+                  <SET Var="booCrtSgm" FromValue="false"/>
+                  <SET Var="booSavSgm" FromValue="true"/>
+                  <SET Var="booValSgm" FromValue="true"/>
+                </THEN>
+                <ELSE>
+                  <REMOVE_CHILDREN ChildName="SUCCESS_MESSAGE" DocVar="xmlSuccessMsg"/>
+                </ELSE>
+              </IF_TEST>
+              <!--SET Var="booCrtLoc0" FromValue="false"/>
+
+              <SET Var="booCrtLoc1" FromValue="true"/>
+              <SET Var="booValLoc" FromValue="true"/>
+              <SET Var="booSavLoc" FromValue="false"/>
+              <SET Var="booCrtSgm0" FromValue="true"/>
+              <SET Var="booCrtSgm" FromValue="false"/>
+              <SET Var="booSavSgm" FromValue="true"/>
+              <SET Var="booValSgm" FromValue="true"/-->
+              <!--TO_DOCVAR AssignToVar="xmlSuccessMsg">
+        <ROOT>
+          <SUCCESS_MESSAGE Value="Location {$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA/LOCNAME/@Value} has been successfully created!"/>
+        </ROOT>
+      </TO_DOCVAR-->
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'VALIDATE_SGMNT'">
+            <THEN>
+              <SET Var="errorCount" FromValue="0"/>
+              <SET Var="index" FromValue="0"/>
+              <SET Var="divBy" FromValue="100"/>
+              <FOR_EACH CurrentElement="currLocBuffer" SelectList="$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA">
+                <!-- Updating all buckets within the location buffer -->
+                <FOR_EACH CurrentElement="currLocBucket" SelectList="$currLocBuffer/BUCKETS/ROWDATA">
+                  <SET Var="index" FromValue="{$index + 1}"/>
+                  <SET Var="newCMMNT" FromValue="{trim($pglFormOutput/CMMNT[$index]/@Value)}"/>
+                  <!--  <SET Var="newCMMNT" FromValue="{$pglFormOutput/CMMNT[$index]/@Value}"/>-->
+                  <SET Var="newSTRGCPCTY" FromValue="{ifElse($pglFormOutput/OrganizationXAllocatedLocationCapacityMeasure[$index]/@Value='','0',$pglFormOutput/OrganizationXAllocatedLocationCapacityMeasure[$index]/@Value)}"/>
+                  <SET Var="newUTLPRCTG" FromValue="{ifElse($pglFormOutput/OrganizationXLocationCapacityTargetUtilizationPercent[$index]/@Value='','0',$pglFormOutput/OrganizationXLocationCapacityTargetUtilizationPercent[$index]/@Value)}"/>
+                  <SET Property="OrganizationXAllocatedLocationCapacityMeasure" DocVar="currLocBucket" FromValue="{int($newSTRGCPCTY)}"/>
+                  <SET Property="OrganizationXLocationCapacityTargetUtilizationPercent" DocVar="currLocBucket" FromValue="{$newUTLPRCTG}"/>
+                  <SET Property="CMMNT" DocVar="currLocBucket" FromValue="{ifElse($newCMMNT=null,'',$newCMMNT)}"/>
+                  <SET Property="EFFSTRGUNIT" DocVar="currLocBucket" FromValue="{int($newSTRGCPCTY mul $newUTLPRCTG div $divBy)}"/>
+                </FOR_EACH>
+                <!-- Looping through segments within the current location -->
+                <FOR_EACH CurrentElement="currSegBuffer" SelectList="$currLocBuffer/SEGMENT_SLAS/BUFFER_SLA">
+                  <!-- Updating all buckets within the segment buffer -->
+                  <FOR_EACH CurrentElement="currSegBucket" SelectList="$currSegBuffer/BUCKETS/ROWDATA">
+                    <SET Var="index" FromValue="{$index + 1}"/>
+                    <SET Var="newSTRGCPCTY" FromValue="{ifElse($pglFormOutput/OrganizationXAllocatedLocationCapacityMeasure[$index]/@Value='','0',$pglFormOutput/OrganizationXAllocatedLocationCapacityMeasure[$index]/@Value)}"/>
+                    <SET Var="newUTLPRCTG" FromValue="{ifElse($pglFormOutput/OrganizationXLocationCapacityTargetUtilizationPercent[$index]/@Value='','0',$pglFormOutput/OrganizationXLocationCapacityTargetUtilizationPercent[$index]/@Value)}"/>
+                    <SET Var="newCMMNT" FromValue="{trim($pglFormOutput/CMMNT[$index]/@Value)}"/>
+                    <!--  <SET Var="newCMMNT" FromValue="{$pglFormOutput/CMMNT[$index]/@Value}"/>-->
+                    <SET Property="OrganizationXAllocatedLocationCapacityMeasure" DocVar="currSegBucket" FromValue="{int($newSTRGCPCTY)}"/>
+                    <SET Property="OrganizationXLocationCapacityTargetUtilizationPercent" DocVar="currSegBucket" FromValue="{$newUTLPRCTG}"/>
+                    <SET Property="CMMNT" DocVar="currSegBucket" FromValue="{ifElse($newCMMNT=null,'',$newCMMNT)}"/>
+                    <SET Property="EFFSTRGUNIT" DocVar="currSegBucket" FromValue="{int($newSTRGCPCTY mul $newUTLPRCTG div $divBy)}"/>
+                  </FOR_EACH>
+                </FOR_EACH>
+              </FOR_EACH>
+              <!--FOR EACH FOR WEEKLY BUCKET, GET THE INBOUND AND THEN CREATE FORMATTER AND VALIDATE-->
+              <FOR_EACH CurrentElement="currElem" SelectList="$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA/SEGMENT_SLAS/BUFFER_SLA/BUCKETS/ROWDATA">
+                <IF_TEST Test="$currElem/FIELDEDITABLE/@Value = 'false'">
+                  <THEN>
+                    <REQUEST AssignToVar="xmlUIFormatter" Name="MapOXLCEdmUI" HandleException="true">
+                      <TO_XML SelectList="$currElem/*"/>
+                    </REQUEST>
+                    <REQUEST AssignToVar="formatXml" Name="MapInboundcreateOXLCPeldm" ServiceName="PEDM_MASTER" HandleException="true">
+                      <TO_XML SelectList="$xmlUIFormatter/*"/>
+                    </REQUEST>
+                    <REQUEST Name="getLocCapcity" AssignToVar="existingLocCapcity" ServiceName="PEDM_MASTER">
+                      <LocationIdentifier Value="{$formatXml/LocationIdentifier/@Value}"/>
+                    </REQUEST>
+                    <SET DocVar="formatXml" Property="LocationCapacityIdentifier" FromValue="{$existingLocCapcity/LC_ID/@Value}"/>
+                    <REQUEST AssignToVar="thisReturn" Name="validateOrgXLocCapacity" ServiceName="PEDM_MASTER" HandleException="true">
+                      <TO_XML SelectList="$formatXml/*"/>
+                    </REQUEST>
+                    <!-- ERROR HANDLING PART STARTS -->
+                    <SET Var="isError" FromValue="false"/>
+                    <IF_TEST Test="count($thisReturn/*/_ERRORS) != 0">
+                      <THEN>
+                        <SET Var="errorCount" FromValue="{$errorCount+1}"/>
+                        <IF_TEST Test="substringBefore($thisReturn/_RESULT/_ERROR/@Value, ':') = 'ERR-FSC-CRT-0003'">
+                          <THEN>
+                            <SET Var="newAllocUnit" FromValue="{$currElem/OrganizationXAllocatedLocationCapacityMeasure/@Value}"/>
+                            <REMOVE_CHILDREN DocVar="currElem" ChildName="OrganizationXAllocatedLocationCapacityMeasure"/>
+                            <ADD_CHILDREN DocVar="currElem" FromValue="{$thisReturn/REQUEST/OrganizationXAllocatedLocationCapacityMeasure}"/>
+                            <SET Property="OrganizationXAllocatedLocationCapacityMeasure" DocVar="currElem" FromValue="{$newAllocUnit}"/>
+                          </THEN>
+                          <ELSE>
+                            <SET Var="newAllocUnit" FromValue="{$currElem/OrganizationXAllocatedLocationCapacityMeasure/@Value}"/>
+                            <REMOVE_CHILDREN DocVar="currElem" ChildName="OrganizationXAllocatedLocationCapacityMeasure"/>
+                            <SET Property="OrganizationXAllocatedLocationCapacityMeasure" DocVar="currElem" FromValue="{$newAllocUnit}"/>
+                          </ELSE>
+                        </IF_TEST>
+                        <IF_TEST Test="substringBefore($thisReturn/_RESULT/_ERROR/@Value, ':') = 'ERR-FSC-CRT-0004'">
+                          <THEN>
+                            <SET Var="newUtlPtcg" FromValue="{$currElem/OrganizationXLocationCapacityTargetUtilizationPercent/@Value}"/>
+                            <REMOVE_CHILDREN DocVar="currElem" ChildName="OrganizationXLocationCapacityTargetUtilizationPercent"/>
+                            <ADD_CHILDREN DocVar="currElem" FromValue="{$thisReturn/REQUEST/OrganizationXLocationCapacityTargetUtilizationPercent}"/>
+                            <SET Property="OrganizationXLocationCapacityTargetUtilizationPercent" DocVar="currElem" FromValue="{$newUtlPtcg}"/>
+                          </THEN>
+                          <ELSE>
+                            <SET Var="newUtlPtcg" FromValue="{$currElem/OrganizationXLocationCapacityTargetUtilizationPercent/@Value}"/>
+                            <REMOVE_CHILDREN DocVar="currElem" ChildName="OrganizationXLocationCapacityTargetUtilizationPercent"/>
+                            <SET Property="OrganizationXLocationCapacityTargetUtilizationPercent" DocVar="currElem" FromValue="{$newUtlPtcg}"/>
+                          </ELSE>
+                        </IF_TEST>
+                        <IF_TEST Test="substringBefore($thisReturn/_RESULT/_ERROR/@Value, ':') = 'ERR-FSC-CRT-0009'">
+                          <THEN>
+                            <SET Property="STYLE" DocVar="currElem" FromValue="font-weight:Bold;color:red;background:yellow"/>
+                            <SET Var="isError" FromValue="true"/>
+                          </THEN>
+                          <ELSE>
+                            <IF_TEST Test="substringBefore($thisReturn/_RESULT/_ERROR/@Value, ':') = 'ERR-FSC-CRT-0011'">
+                              <THEN>
+                                <SET Property="STYLE" DocVar="currElem" FromValue="font-weight:Bold;color:red;background:#BEC5E7"/>
+                                <SET Var="isError" FromValue="true"/>
+                              </THEN>
+                              <ELSE/>
+                            </IF_TEST>
+                          </ELSE>
+                        </IF_TEST>
+                      </THEN>
+                      <ELSE>
+                        <!--REMOVE_CHILDREN ChildName="STYLE" DocVar="currElem"/-->
+                        <SET Var="newAllocUnit" FromValue="{$currElem/OrganizationXAllocatedLocationCapacityMeasure/@Value}"/>
+                        <SET Var="newUtlPtcg" FromValue="{$currElem/OrganizationXLocationCapacityTargetUtilizationPercent/@Value}"/>
+                        <REMOVE_CHILDREN DocVar="currElem" ChildName="OrganizationXAllocatedLocationCapacityMeasure"/>
+                        <REMOVE_CHILDREN DocVar="currElem" ChildName="OrganizationXLocationCapacityTargetUtilizationPercent"/>
+                        <SET Property="OrganizationXAllocatedLocationCapacityMeasure" DocVar="currElem" FromValue="{$newAllocUnit}"/>
+                        <SET Property="OrganizationXLocationCapacityTargetUtilizationPercent" DocVar="currElem" FromValue="{$newUtlPtcg}"/>
+                      </ELSE>
+                    </IF_TEST>
+                    <!--IF NO ERROR THEN CHECK FOR HARD LESS THAN SOFT VALIDATION START -->
+                    <REQUEST AssignToVar="thisReturn" Name="valLmtClsCapacityForUI" ServiceName="PEDM_MASTER" HandleException="true">
+                      <TO_XML SelectList="$formatXml/*"/>
+                    </REQUEST>
+                    <IF_TEST Test="$thisReturn/_RESULT/@Value = 'ERROR'">
+                      <THEN>
+                        <PRINTLN Value="GOT THE ERROR"/>
+                        <SET Var="isError" FromValue="true"/>
+                        <SET Var="errorCount" FromValue="{$errorCount+1}"/>
+                        <SET Property="STYLE" DocVar="currElem" FromValue="font-weight:Bold;color:red;background:#BEC5E7;padding:0"/>
+                      </THEN>
+                      <ELSE/>
+                    </IF_TEST>
+                    <IF_TEST Test="$isError != 'true'">
+                      <THEN>
+                        <REMOVE_CHILDREN ChildName="STYLE" DocVar="currElem"/>
+                      </THEN>
+                      <ELSE/>
+                    </IF_TEST>
+                    <!--IF NO ERROR THEN CHECK FOR HARD LESS THAN SOFT VALIDATION ENDS  -->
+                    <!--IF_TEST Test="count($thisReturn/*/_ERRORS) != 0">
+              <THEN>
+                <SET Var="errorCount" FromValue="{$errorCount+1}"/>
+                <IF_TEST Test="substringBefore($thisReturn/_RESULT/_ERROR/@Value, ':') = 'ERR-FSC-CRT-0009'">
+                  <THEN>
+                    <SET Property="STYLE" DocVar="currElem" FromValue="font-weight:Bold;color:red;background:yellow"/>
+                    <SET Var="newUtlPtcg" FromValue="{$currElem/OrganizationXLocationCapacityTargetUtilizationPercent/@Value}"/>
+                    <REMOVE_CHILDREN DocVar="currElem" ChildName="OrganizationXLocationCapacityTargetUtilizationPercent"/>
+                    <SET Property="OrganizationXLocationCapacityTargetUtilizationPercent" DocVar="currElem" FromValue="{$newUtlPtcg}"/>
+                  </THEN>
+                  <ELSE>
+                    <IF_TEST Test="substringBefore($thisReturn/_RESULT/_ERROR/@Value, ':') = 'ERR-FSC-CRT-0011'">
+                      <THEN>
+                        <SET Property="STYLE" DocVar="currElem" FromValue="font-weight:Bold;color:red;background:#BEC5E7"/>
+                        <SET Var="newUtlPtcg" FromValue="{$currElem/OrganizationXLocationCapacityTargetUtilizationPercent/@Value}"/>
+                        <REMOVE_CHILDREN DocVar="currElem" ChildName="OrganizationXLocationCapacityTargetUtilizationPercent"/>
+                        <SET Property="OrganizationXLocationCapacityTargetUtilizationPercent" DocVar="currElem" FromValue="{$newUtlPtcg}"/>
+                      </THEN>
+                      <ELSE>
+                        <IF_TEST Test="substringBefore($thisReturn/_RESULT/_ERROR/@Value, ':') = 'ERR-FSC-CRT-0004'">
+                          <THEN>
+                            <SET Var="newUtlPtcg" FromValue="{$currElem/OrganizationXLocationCapacityTargetUtilizationPercent/@Value}"/>
+                            <REMOVE_CHILDREN DocVar="currElem" ChildName="OrganizationXLocationCapacityTargetUtilizationPercent"/>
+                            <ADD_CHILDREN DocVar="currElem" FromValue="{$thisReturn/REQUEST/OrganizationXLocationCapacityTargetUtilizationPercent}"/>
+                            <SET Property="OrganizationXLocationCapacityTargetUtilizationPercent" DocVar="currElem" FromValue="{$newUtlPtcg}"/>
+                          </THEN>
+                          <ELSE/>
+                        </IF_TEST>
+                      </ELSE>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+              <ELSE>
+                <REMOVE_CHILDREN ChildName="STYLE" DocVar="currElem"/>
+                <SET Var="newUtlPtcg" FromValue="{$currElem/OrganizationXLocationCapacityTargetUtilizationPercent/@Value}"/>
+                <REMOVE_CHILDREN DocVar="currElem" ChildName="OrganizationXLocationCapacityTargetUtilizationPercent"/>
+                <SET Property="OrganizationXLocationCapacityTargetUtilizationPercent" DocVar="currElem" FromValue="{$newUtlPtcg}"/>
+              </ELSE>
+            </IF_TEST-->
+                    <!-- ERROR HANDLING PART ENDS    -->
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <!--Old setting of button-->
+              <!--SET Var="booCrtLoc0" FromValue="false"/>
+      <SET Var="booCrtLoc1" FromValue="true"/>
+      <SET Var="booValLoc" FromValue="true"/>
+      <SET Var="booSavLoc" FromValue="false"/>
+      <SET Var="booCrtSgm0" FromValue="true"/>
+      <SET Var="booCrtSgm" FromValue="true"/>
+      <SET Var="booValSgm" FromValue="true"/>
+      <SET Var="booSavSgm" FromValue="false"/-->
+              <IF_TEST Test="$errorCount > 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="xmlErrorMsg">
+                    <_ERRORS>
+                      <_ERROR Value="Validation has failed. Please correct the record and proceed!"/>
+                    </_ERRORS>
+                  </TO_DOCVAR>
+                  <SET Var="booCrtLoc0" FromValue="false"/>
+                  <SET Var="booCrtLoc1" FromValue="true"/>
+                  <SET Var="booValLoc" FromValue="true"/>
+                  <SET Var="booSavLoc" FromValue="false"/>
+                  <SET Var="booCrtSgm0" FromValue="true"/>
+                  <SET Var="booCrtSgm" FromValue="true"/>
+                  <SET Var="booValSgm" FromValue="false"/>
+                  <SET Var="booSavSgm" FromValue="true"/>
+                </THEN>
+                <ELSE>
+                  <REMOVE_CHILDREN ChildName="_ERROR" DocVar="xmlErrorMsg"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$errorCount &lt;= 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="xmlSuccessMsg">
+                    <ROOT>
+                      <SUCCESS_MESSAGE Value="Validation successful!"/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <SET Var="booCrtLoc0" FromValue="false"/>
+                  <SET Var="booCrtLoc1" FromValue="true"/>
+                  <SET Var="booValLoc" FromValue="true"/>
+                  <SET Var="booSavLoc" FromValue="false"/>
+                  <SET Var="booCrtSgm0" FromValue="true"/>
+                  <SET Var="booCrtSgm" FromValue="true"/>
+                  <SET Var="booValSgm" FromValue="false"/>
+                  <SET Var="booSavSgm" FromValue="false"/>
+                </THEN>
+                <ELSE>
+                  <REMOVE_CHILDREN ChildName="SUCCESS_MESSAGE" DocVar="xmlSuccessMsg"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'SAVE_SGMNT'">
+            <THEN>
+              <SET Var="errorCount" FromValue="0"/>
+              <!--FOR EACH FOR WEEKLY BUCKET SAVE NEWLY ADDED SEGMENT RECORD AND SET IT DISABLED-->
+              <FOR_EACH CurrentElement="currElem" SelectList="$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA/SEGMENT_SLAS/BUFFER_SLA/BUCKETS/ROWDATA">
+                <IF_TEST Test="$currElem/FIELDEDITABLE/@Value = 'false'">
+                  <THEN>
+                    <REQUEST AssignToVar="xmlUIFormatter" Name="MapOXLCEdmUI" HandleException="true">
+                      <TO_XML SelectList="$currElem/*"/>
+                    </REQUEST>
+                    <!-- validation to see if records exist, if so then activate, else create -->
+                    <REQUEST AssignToVar="thisReturn" Name="segExistUI" HandleException="true" ServiceName="INTERFACE_MASTER">
+                      <TO_XML SelectList="$xmlUIFormatter/*"/>
+                      <ENTITY_STATE Value="DELETED"/>
+                    </REQUEST>
+                    <IF_TEST Test="$thisReturn/_RESULT/@Value ='ERROR'">
+                      <THEN>
+                        <!-- RIC: 230284 Praneeth FSC Segment Activate Params not sent to server properly Start-->
+                        <REQUEST AssignToVar="createResponse" Name="updateOXLC" HandleException="true">
+                          <DOCUMENTNAME Value="{$xmlUIFormatter/DOCUMENTNAME/@Value}"/>
+                          <ACTIONTOBDONE Value="ACTIVATE"/>
+                          <DOCUMENT_CONTEXT>
+                            <LocationStorageStartDate Value="{$xmlUIFormatter/LocationStorageStartDate/@Value}"/>
+                            <LocationValue Value="{$xmlUIFormatter/LocationValue/@Value}"/>
+                            <BusinessOrganizationValue Value="{$xmlUIFormatter/BusinessOrganizationValue/@Value}"/>
+                            <ConstraintTypeValue Value="{$xmlUIFormatter/ConstraintTypeValue/@Value}"/>
+                          </DOCUMENT_CONTEXT>
+                          <UPDATE_PROPERTIES>
+                            <TargetUtilizationPercentage Value="{$xmlUIFormatter/TargetUtilizationPercentage/@Value}"/>
+                            <SegmentLocationStorageUnitCapacityMeasure Value="{$xmlUIFormatter/SegmentLocationStorageUnitCapacityMeasure/@Value}"/>
+                            <SegmentXLocationStorageEndDate Value="{$xmlUIFormatter/SegmentXLocationStorageEndDate/@Value}"/>
+                            <SegmentXLocationStorageCommentText Value="{$xmlUIFormatter/SegmentXLocationStorageCommentText/@Value}"/>
+                            <ENTITY_STATE Value="ACTIVE"/>
+                          </UPDATE_PROPERTIES>
+                        </REQUEST>
+                        <!-- RIC: 230284 Praneeth FSC Segment Activate Params not sent to server properly End-->
+                      </THEN>
+                      <ELSE>
+                        <REQUEST AssignToVar="createResponse" Name="createOXLC" HandleException="true">
+                          <TO_XML SelectList="$xmlUIFormatter/*"/>
+                        </REQUEST>
+                      </ELSE>
+                    </IF_TEST>
+                    <IF_TEST Test="count($createResponse/*/_ERRORS) != 0 or $createResponse/@Status = 'Error'">
+                      <THEN>
+                        <SET Var="errorCount" FromValue="{$errorCount+1}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Property="FIELDEDITABLE" DocVar="currElem" FromValue="true"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <IF_TEST Test="$errorCount > 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="xmlErrorMsg">
+                    <_ERRORS>
+                      <_ERROR Value="{$createResponse/RESPONSE/@Description}"/>
+                    </_ERRORS>
+                  </TO_DOCVAR>
+                  <SET Var="booCrtLoc0" FromValue="false"/>
+                  <SET Var="booCrtLoc1" FromValue="true"/>
+                  <SET Var="booValLoc" FromValue="true"/>
+                  <SET Var="booSavLoc" FromValue="false"/>
+                  <SET Var="booCrtSgm0" FromValue="true"/>
+                  <SET Var="booCrtSgm" FromValue="true"/>
+                  <SET Var="booSavSgm" FromValue="false"/>
+                  <SET Var="booValSgm" FromValue="true"/>
+                </THEN>
+                <ELSE>
+                  <REMOVE_CHILDREN ChildName="_ERROR" DocVar="xmlErrorMsg"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$errorCount &lt;= 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="xmlSuccessMsg">
+                    <ROOT>
+                      <!--SUCCESS_MESSAGE Value="Segment {$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA/SEGMENT_SLAS/BUFFER_SLA/SGMNAME/@Value} has been successfully created!"/-->
+                      <SUCCESS_MESSAGE Value="Record(s) has been created successfully!"/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <SET Var="booCrtLoc0" FromValue="false"/>
+                  <SET Var="booCrtLoc1" FromValue="true"/>
+                  <SET Var="booValLoc" FromValue="true"/>
+                  <SET Var="booSavLoc" FromValue="false"/>
+                  <SET Var="booCrtSgm0" FromValue="true"/>
+                  <SET Var="booCrtSgm" FromValue="false"/>
+                  <SET Var="booSavSgm" FromValue="true"/>
+                  <SET Var="booValSgm" FromValue="true"/>
+                </THEN>
+                <ELSE>
+                  <REMOVE_CHILDREN ChildName="SUCCESS_MESSAGE" DocVar="xmlSuccessMsg"/>
+                </ELSE>
+              </IF_TEST>
+              <!--SET Var="booCrtLoc0" FromValue="false"/>
+              <SET Var="booCrtLoc1" FromValue="true"/>
+              <SET Var="booValLoc" FromValue="true"/>
+              <SET Var="booSavLoc" FromValue="false"/>
+              <SET Var="booCrtSgm0" FromValue="true"/>
+              <SET Var="booCrtSgm" FromValue="false"/>
+              <SET Var="booSavSgm" FromValue="true"/>
+              <SET Var="booValSgm" FromValue="true"/-->
+              <!--TO_DOCVAR AssignToVar="xmlSuccessMsg">
+        <ROOT>
+          <SUCCESS_MESSAGE Value="Segment {$xmlLocationBucketForCreate/REAL_DATA/MULTI_COLLAB_DATA/LOCATION_SLAS/BUFFER_SLA/SEGMENT_SLAS/BUFFER_SLA/SGMNAME/@Value} has been successfully created!"/>
+        </ROOT>
+      </TO_DOCVAR-->
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='APPLY'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='CREATE_LOC'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CREATE_SGMNT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='VALIDATE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SAVE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='VALIDATE_LOC'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='VALIDATE_SGMNT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SAVE_LOC'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SAVE_SGMNT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='selectLocation'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search Location" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='selectSegment'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search Segment" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <sub_workflow Name="Search Segment" InputVar="{nodeInXml,xml}" Workflow="wfFSCSelectSegment">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutXml,xml}"/>
+      <input>
+        <TO_XML SelectList="$thisParam/*"/>
+      </input>
+    </sub_workflow>
+    <sub_workflow Name="Search Location" InputVar="{nodeInXml,xml}" Workflow="wfTLSelectLocation">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutXml,xml}"/>
+      <input>
+        <TO_XML SelectList="$thisParam/*"/>
+      </input>
+    </sub_workflow>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start location="209,90" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start>
+      <done location="413,90" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done>
+      <Create location="304,89" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Create" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </Create>
+      <mgcnode Name="Search Segment" location="209,147" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Search Segment" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Search Location" location="413,26" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Search Location" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="241,112" endpoint="304,111" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="285,110,4,4" ctrlRect2="254,109,4,4"/>
+      </start>
+      <Create>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="320,134" endpoint="320,134" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="318,207,4,4" ctrlRect2="351,149,4,4" textRect="326,177,21,7">
+          <textProps text="APP" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="304,111" endpoint="304,111" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="227,109,4,4" ctrlRect2="270,134,4,4" textRect="240,119,20,8">
+          <textProps text="CLB" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="336,111" endpoint="336,111" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="409,109,4,4" ctrlRect2="357,134,4,4" textRect="375,119,21,8">
+          <textProps text="CSB" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="304,111" endpoint="304,111" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="227,109,4,4" ctrlRect2="271,71,4,4" textRect="241,89,20,7">
+          <textProps text="VLB" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="336,111" endpoint="336,111" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="409,109,4,4" ctrlRect2="357,83,4,4" textRect="375,94,21,8">
+          <textProps text="VSB" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="320,134" endpoint="320,134" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="318,207,4,4" ctrlRect2="280,142,4,4" textRect="292,172,19,8">
+          <textProps text="SLB" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="320,89" endpoint="320,89" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="318,12,4,4" ctrlRect2="285,71,4,4" textRect="293,39,20,8">
+          <textProps text="SSB" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="336,111" endpoint="413,48" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="391,109,4,4" ctrlRect2="353,46,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="304,111" endpoint="241,170" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="256,109,4,4" ctrlRect2="287,168,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="336,111" endpoint="413,112" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="391,109,4,4" ctrlRect2="353,110,4,4"/>
+      </Create>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,9" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="11" textAttrsKey0="booCrtLoc0 : boolean" textAttrsKey1="booCrtLoc1 : boolean" textAttrsKey2="booCrtSgm : boolean" textAttrsKey3="booCrtSgm0 : boolean" textAttrsKey4="booSavLoc : boolean" textAttrsKey5="booSavSgm : boolean" textAttrsKey6="booValLoc : boolean" textAttrsKey7="booValSgm : boolean" textAttrsKey8="cntWklyBkt : int" textAttrsKey9="selectListPeriod : xml" textAttrsKey10="... and 14 more">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="booCrtLoc0" Type="boolean" Comment=""/>
+        <variable Name="booCrtLoc1" Type="boolean" Comment=""/>
+        <variable Name="booCrtSgm" Type="boolean" Comment=""/>
+        <variable Name="booCrtSgm0" Type="boolean" Comment=""/>
+        <variable Name="booSavLoc" Type="boolean" Comment=""/>
+        <variable Name="booSavSgm" Type="boolean" Comment=""/>
+        <variable Name="booValLoc" Type="boolean" Comment=""/>
+        <variable Name="booValSgm" Type="boolean" Comment=""/>
+        <variable Name="selectListPeriod" Type="xml" Comment=""/>
+        <variable Name="selectListWeek" Type="xml" Comment=""/>
+        <variable Name="selectListYear" Type="xml" Comment=""/>
+        <variable Name="strEWPERIOD" Type="string" Comment=""/>
+        <variable Name="strEWWEEK" Type="string" Comment=""/>
+        <variable Name="strEWYEAR" Type="string" Comment=""/>
+        <variable Name="strEndDate" Type="string" Comment=""/>
+        <variable Name="strSWPERIOD" Type="string" Comment=""/>
+        <variable Name="strSWWEEK" Type="string" Comment=""/>
+        <variable Name="strSWYEAR" Type="string" Comment=""/>
+        <variable Name="strStartDate" Type="string" Comment=""/>
+        <variable Name="xmlErrorMsg" Type="xml" Comment=""/>
+        <variable Name="xmlLocationBucketForCreate" Type="xml" Comment=""/>
+        <variable Name="xmlSuccessMsg" Type="xml" Comment=""/>
+        <variable Name="xmlWklyBktInfo" Type="xml" Comment=""/>
+        <variable Name="cntWklyBkt" Type="int" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

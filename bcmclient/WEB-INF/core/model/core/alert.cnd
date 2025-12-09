@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<x2:commands description="_" 
+             xmlns:FUNCTION="http://www.i2.com/FUNCTION" 
+             xmlns:REMOVE="http://www.i2.com/REMOVE" 
+             xmlns:cfg="http://www.i2.com/configurability" 
+             xmlns:core="http://www.i2.com/core" 
+             xmlns:omx="http://www.i2.com/omx" 
+             xmlns:perm="http://www.i2.com/permissibility" 
+             xmlns:util="http://www.i2.com/util" 
+             xmlns:web="http://www.i2.com/web" 
+             xmlns:x2="http://www.i2.com/x2" 
+             xmlns:xapl="http://www.i2.com/xapl" 
+             xmlns:xcore="http://www.i2.com/xcore" 
+             xmlns:xcore-db="http://www.i2.com/xcore-db" 
+             xmlns:docutil="http://www.i2.com/docutil" 
+             xmlns:xudl="http://www.i2.com/xudl"
+             xmlns:identity="http://www.i2.com/identity">  
+  
+  
+  <!-- ********************************************************************** 
+  *********************************************************************** -->    
+  <x2:command name="init" public="yes" description="_">
+    <xapl:variable name="tempForm" resolver="session" global="true"/>
+  </x2:command>
+
+  <!-- ********************************************************************** 
+  *********************************************************************** -->    
+  <x2:command public="yes" description="_" name="redirectToAlert">
+    
+    <xapl:variable name="reCirculationID"/>
+      
+    <xapl:variable name="page">
+      <xapl:value-of select="$this/PAGE/@Value"/>
+    </xapl:variable>
+    
+    <xapl:variable name="param"><ROOT></ROOT></xapl:variable>
+    
+    <xapl:for-each select="$this/RE_CIR_PARAM_NAME" varName="id">
+      <docutil:add select="$param">
+        <docutil:element name="{$id/@Value}" Value="{$this/*[name()= $id/@Value]/@Value}"/>
+      </docutil:add>
+    </xapl:for-each>
+    
+    <xapl:if test="string-length($this/RE_CIR_ID_NAME/@Value) != 0">
+      <xapl:set-variable name="reCirculationID">
+        <docutil:element name="{$this/RE_CIR_ID_NAME/@Value}" Value="{$this/*[name()= $this/RE_CIR_ID_NAME/@Value]/@Value}"/>
+      </xapl:set-variable>
+    </xapl:if>
+    
+    <xapl:print>reCirculationID<xapl:value-of select="$reCirculationID"/></xapl:print>
+    
+    <xapl:set-variable name="tempForm">
+      <TEMP_FORM>
+        <xapl:value-of select="$this/*"/>
+      </TEMP_FORM>
+    </xapl:set-variable>
+    
+    <xapl:print>Page in alert<xapl:value-of select="$page"/></xapl:print>
+    
+    <web:display-page>
+      <web:get-page name="{$page}">
+        <REFRESH Value="true"/>
+        <xapl:if test="string-length($this/USER_ID/@Value) != 0">
+          <USER_ID Value="{$this/USER_ID/@Value}"/>
+        </xapl:if>
+        <xapl:if test="string-length($this/UPDATE/@Value) != 0">
+          <UPDATE Value="true"/>
+        </xapl:if>          
+        <xapl:value-of select="$reCirculationID"/>        
+        <xapl:value-of select="$param/*"/>
+      </web:get-page>
+    </web:display-page>
+    
+  </x2:command>
+  
+
+
+
+  <x2:command public="yes" description="_" name="saveAlertsFromThis">
+      
+    <xapl:set-variable name="tempForm">
+      <TEMP_FORM>
+        <xapl:value-of select="$this/*"/>
+      </TEMP_FORM>
+    </xapl:set-variable>
+    
+  </x2:command>
+
+
+
+  <!--************************************************************************-->  
+  
+  <x2:command public="yes" description="_" name="getAlerts">
+    <x2:param name="pRefresh"/>
+    <x2:param name="pERROR"/>
+    <x2:param name="pStatusMsg"/>
+      
+    <xapl:variable name="alerts"/>
+    
+    <xapl:print>REFRESH <xapl:value-of select="$pRefresh"/></xapl:print>
+
+    <xapl:set-variable name="alerts">
+      <xapl:choose>
+        <xapl:when test="$pRefresh = 'true'">
+          <ALERTS>
+            <xapl:for-each varName="missfld" select="{$tempForm/MISSING_FIELD}">
+              <ALERT>
+                <MISSING_FIELD Value="{$missfld/@Value}"/>
+              </ALERT>
+            </xapl:for-each>
+            <xapl:choose>
+              <xapl:when test="{string-length($pERROR) != 0}">
+                <ALERT>
+                  <RESULT Value="'ERROR'"/>
+                </ALERT>
+                <MESSAGE Value="{$pERROR}"/>
+              </xapl:when>
+              <xapl:otherwise>
+                <MESSAGE Value="'*denotes required field'"/>
+              </xapl:otherwise>
+            </xapl:choose>
+            <FONT_COLOR Value="red"/>
+          </ALERTS>
+          <ERROR_MESSAGE Value="{$pERROR}"/>
+        </xapl:when>
+        <xapl:otherwise>
+          <ALERTS>
+            <ALERT>
+              <RESULT Value="'SUCCESS'"/>
+            </ALERT>
+            <FONT_COLOR Value="green"/>
+            <MESSAGE Value="{$pStatusMsg}"/>
+          </ALERTS>
+          <SUCCESS_MESSAGE Value="{$pStatusMsg}"/>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:set-variable>
+    
+    <xapl:print>ALERTS!!!<xapl:value-of select="{$alerts}"/></xapl:print>
+    
+    <xapl:return>
+      <xapl:value-of select="{$alerts}"/>
+    </xapl:return>
+    
+  </x2:command>
+  
+  <!--************************************************************************-->  
+  
+  <x2:command public="yes" description="_" name="redirectToConfirm">
+
+    <web:display-page>
+      <web:get-page name="alert">
+        <xapl:value-of select="{$this/*}"/>
+      </web:get-page>
+    </web:display-page>
+    
+  </x2:command>
+  
+  <!--************************************************************************-->  
+  
+  <x2:command public="yes" description="_" name="getConfirmations">
+    
+    <docutil:remove select="{$confirm_buttons}"/>
+    <xapl:variable name="confirm_buttons">
+      <xapl:choose>
+        <xapl:when test="{$this/ACTION}">
+          <BUTTONS>
+            <BUTTON>
+              <NAME Value="Ok"/>
+              <ACTION Value="javascript:document.confirmForm.submit();"/>
+            </BUTTON>
+            <BUTTON>
+              <NAME Value="Cancel"/>
+              <ACTION Value="javascript:top.window.close();"/>
+            </BUTTON>
+          </BUTTONS>
+        </xapl:when>
+        <xapl:otherwise>
+          <BUTTONS>
+            <BUTTON>
+              <NAME Value="Close"/>
+              <ACTION Value="javascript:top.window.close();"/>
+            </BUTTON>
+          </BUTTONS>
+        </xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>
+    
+    <xapl:return>
+      <xapl:value-of select="{$confirm_buttons}"/>
+      <xapl:value-of select="{$this/*}"/>
+    </xapl:return>
+    
+  </x2:command>
+  
+  <!--************************************************************************-->  
+
+
+<!--************************************************************************-->  
+  
+  <x2:command public="yes" description="_" name="getAlertsFromThis">
+    <x2:param name="pMessage" select="$this/ACTION_STATUS_MSG/@Value"/>
+    <x2:param name="pMessageType" select="$this/ACTION_STATUS_TYPE/@Value"/>
+
+    
+    <xapl:variable name="result">
+      <xapl:choose>
+        <xapl:when test="count($this/MISSING_FIELD) > 0">ERROR</xapl:when>
+        <xapl:when test="$pMessageType = 'Error'">ERROR</xapl:when>
+        <xapl:otherwise>SUCCESS</xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>  
+    
+    <xapl:variable name="fontColor">
+      <xapl:choose>
+        <xapl:when test="count($this/MISSING_FIELD) > 0">red</xapl:when>
+        <xapl:when test="$pMessageType = 'Error'">red</xapl:when>
+        <xapl:when test="$pMessageType = 'Success'">green</xapl:when>
+        <xapl:otherwise></xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>    
+    
+    <xapl:variable name="message">
+      <xapl:choose>
+       <xapl:when test="string-length($pMessage) > 0"><xapl:value-of select="$pMessage"/></xapl:when>
+        <xapl:when test="count($this/MISSING_FIELD) > 0">*denotes required field</xapl:when>
+        <xapl:otherwise>*denotes required field</xapl:otherwise>
+      </xapl:choose>
+    </xapl:variable>    
+    
+    <xapl:variable name="alerts">
+      <ALERTS>
+        <xapl:for-each varName="missfld" select="{$this/MISSING_FIELD}">
+          <ALERT>
+            <MISSING_FIELD Value="{$missfld/@Value}"/>
+          </ALERT>
+        </xapl:for-each>
+        <RESULT Value="{$result}"/>
+        <MESSAGE Value="{$message}"/>
+        <FONT_COLOR Value="{$fontColor}"/>
+      </ALERTS>
+      <xapl:choose>
+        <xapl:when test="$fontColor = 'red'">
+          <ERR0R_MESSAGE Value="{$message}"/>
+        </xapl:when>
+        <xapl:when test="$fontColor = 'green'">
+          <SUCCESS_MESSAGE Value="{$message}"/>
+        </xapl:when>
+      </xapl:choose>
+    </xapl:variable>
+    <xapl:print>  alerts <xapl:value-of select="{$alerts}"/> </xapl:print>
+    <xapl:return>
+      <xapl:value-of select="{$alerts}"/>
+    </xapl:return>
+    
+  </x2:command>
+  
+</x2:commands>
