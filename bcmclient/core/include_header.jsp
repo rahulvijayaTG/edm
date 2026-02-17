@@ -1,1 +1,0 @@
-<%@ page contentType="text/html; charset=UTF-8" %><%@ taglib uri="/WEB-INF/system/tld/xrequest.tld" prefix="x2" %><x2:execute command="core.common:validateIdentity" output="false"/><%@ taglib uri="/WEB-INF/system/tld/i2uitaglib.tld" prefix="i2" %><%@ taglib uri="/WEB-INF/system/tld/i18n.tld" prefix="i18n" %>

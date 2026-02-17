@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<ui:page-group xmlns:ui="http://www.i2.com/ui" displayText="Program Review" source="core.search.refresh_navframe:load">
-   <ui:container id="refresh" collapsable="false" scrollable="true">
-    <ui:step id="refresh">
-      <ui:script select="$root/JAVASCRIPT/@Value"/>
-    </ui:step>
-  </ui:container>
-</ui:page-group>
